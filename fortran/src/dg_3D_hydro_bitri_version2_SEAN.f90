@@ -1628,9 +1628,9 @@ subroutine glflux
             sumy = 0.
             sumz = 0.
             do iqfa = 1,nface
-                sumx = sumx + wgt2d(iqfa)*(flux_x(iqfa,i+1,j,k,ieq) - flux_x(iqfa,i,j,k,ieq))
-                sumy = sumy + wgt2d(iqfa)*(flux_y(iqfa,i,j+1,k,ieq) - flux_y(iqfa,i,j,k,ieq))
-                sumz = sumz + wgt2d(iqfa)*(flux_z(iqfa,i,j,k+1,ieq) - flux_z(iqfa,i,j,k,ieq))
+                sumx = sumx + 0.25*dxi*wgt2d(iqfa)*(flux_x(iqfa,i+1,j,k,ieq) - flux_x(iqfa,i,j,k,ieq))
+                sumy = sumy + 0.25*dyi*wgt2d(iqfa)*(flux_y(iqfa,i,j+1,k,ieq) - flux_y(iqfa,i,j,k,ieq))
+                sumz = sumz + 0.25*dzi*wgt2d(iqfa)*(flux_z(iqfa,i,j,k+1,ieq) - flux_z(iqfa,i,j,k,ieq))
             end do
             glflux_r(i,j,k,ieq,1) = sumx + sumy + sumz
         end do
