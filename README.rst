@@ -4,7 +4,7 @@ PERSEUS Hydrodynamics
 
 PERSEUSHydro is a Discontinuous Galerkin (DG) numerical code written in Fortran and Python for simulating 3D compressible hydrodynamics.
 
-:Authors:      Charles Seyler, Sean Seyler
+:Authors:      Charles Seyler (primary), Sean Seyler
 :Organization: Cornell University, Arizona State University
 :Contact:      ces7@cornell.edu, slseyler@asu.edu
 :Year:         2016
