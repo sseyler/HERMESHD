@@ -27,7 +27,30 @@ openmpi/1.6.3/intel13.0/64
 /nfs/packages/opt/Linux_x86_64/intel/17.0/fortran/mkl/bin/mklvars.sh intel64 mod
 ```
 
-## Try compiling manually with
+## Try compiling manually
+
+Note that the `use` statement in a fortran file requires that the corresponding
+*.mod* file be included with `-I/path/to/dir/with/mod/file` when compiling. To
+use a module in *my_prog.f90* called `module_name` (i.e. `use MODULE_NAME`) in
+a file *my_module.f90*, first compile the module with something like
+
+```bash
+ifort -c my_module.f90
+```
+
+This will produce a module file with the module's name *MODULE_NAME.mod* and an
+object file *my_module.o*. Then, compile the program with
+
+```bash
+ifort -c my_prog.f90 -I/path/to/dir/with/mod/file
+```
+
+where the `-I<dir>` options provides the compiler with the path to search and
+locate the *MODULE_NAME.mod* file.
+
+
+
+### MPI compilation
 
 ```bash
 mpif90 -O2 -xHost lib_vtk_io.o dg_3D_hydro_bitri_version2_FH_test.f90 -o perseus_fh_test

@@ -8,8 +8,8 @@ FORT= ifort
 FORT= mpif90
 DEFS=
 PROGNAME= perseus1
-INCLUDES=  -I.
-LIBS= lib_vtk_io.o
+INCLUDES=  -I. #-I$(MKLINCLUDE)
+LIBS= lib_vtk_io.o #-L$(MKLPATH)
 
 
 DEFINES= $(INCLUDES) $(DEFS)
@@ -18,6 +18,7 @@ DEFINES= $(INCLUDES) $(DEFS)
 # FORTFLAGS= -O3 -coarray -coarray-num-images=4
 # FORTFLAGS= -O3 -openmp
 FORTFLAGS= -O2 -xHost #-CB -fpe:0 -traceback -check noarg_temp_created #-fpp
+# FORTFLAGS= -O2 -xHost -mkl #-CB -fpe:0 -traceback -check noarg_temp_created #-fpp
 
 # OBJS = dg_3D_geo_hydro_array_HLL.f90
 # OBJS = dg_3D_geo_hydro_array_HLLC2.f90
