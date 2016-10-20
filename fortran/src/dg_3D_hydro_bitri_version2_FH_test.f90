@@ -19,11 +19,8 @@
 
 program main
 use lib_vtk_io
-include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
 
-! Get Intel MKL types and functions
-use MKL_VSL_TYPE
-use MKL_VSL
+include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
 
 integer, parameter :: rh=1, mx=2, my=3, mz=4, en=5, pxx=6, pyy=7, pzz=8, pxy=9, pxz=10, pyz=11, nQ=11
 
@@ -73,7 +70,7 @@ real, parameter :: tf = 1000.
 
     real, parameter :: aindex = 5./3., mu = 18.
 
-real, parameter :: aindm1 = aindex - 1.0, cp = aindex/(aindex - 1.0), clt = 2., vis = 0.e-1, epsi = 5., amplv = 0.0, amplm = 0.0, amplen = 10.
+real, parameter :: aindm1 = aindex - 1.0, cp = aindex/(aindex - 1.0), clt = 2., vis = 0.e-1, epsi = 5., amplv = 1.0, amplm = 0.0, amplen = 10.
 
     ! dimensional units (expressed in MKS)
     real, parameter :: L0=1.0e-9, t0=1.0e-12, n0=3.32e28
@@ -281,8 +278,8 @@ iseed = 1317345*mpi_P + 5438432*mpi_Q + 38472613*mpi_R
 if (iam .eq. print_mpi) then
     print *,'total dim= ',mpi_nx*nx,mpi_ny*ny,mpi_nz*nz
     print *,'mpi dim= ',mpi_nx,mpi_ny,mpi_nz
-print *, 'te0 is: ', te0
-print *, 'dx is: ', ly/(ny*mpi_ny)*L0
+    print *, 'te0 is: ', te0
+    print *, 'dx is: ', ly/(ny*mpi_ny)*L0
     print *, 'iquad is: ',  iquad
     print *, 'nbasis is: ', nbasis
 end if
@@ -814,14 +811,16 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
     ! amplm is amplitude for stochastic momentum stuffz
     ! amplen is amplitude for stochastic energy (heat flux?)
     !---------------------------------------------------------------------------
-    ! real a,sigma,errcode,r,n
+    ! integer seed
+    ! real a,sigma,errcode,r(3),n
     ! TYPE (VSL_STREAM_STATE) :: stream
+    ! TYPE (MKL_INT) :: method, brng
     !
     ! brng = VSL_BRNG_MCG31
     ! method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
     ! seed = 1915321
     ! a = 0
-    ! sigma = amplv
+    ! sigma = 0.01*amplv
     ! n = 3
     !
     ! errcode = vslnewstream(stream, brng, seed)
@@ -829,15 +828,19 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
     !
     ! ! Computation is completed with de-allocation of system resources:
     ! errcode = vsldeletestream( stream )
+    !
+    ! ampx = r(0)
+    ! ampy = r(1)
+    ! ampz = r(2)
     !---------------------------------------------------------------------------
 
     nu = epsi*vis
     c2d3 = 2./3.
     c4d3 = 4./3.
 
-    ampx = 0*amplv*(ran(iseed) - 0.5)
-    ampy = 0*amplv*(ran(iseed) - 0.5)
-    ampz = 0*amplv*(ran(iseed) - 0.5)
+    ampx = 0.01*amplv*(ran(iseed) - 0.5)
+    ampy = 0.01*amplv*(ran(iseed) - 0.5)
+    ampz = 0.01*amplv*(ran(iseed) - 0.5)
     ampd = 0*amplen*(ran(iseed) - 0.5)
 
     do ife = 1,npnts
@@ -859,8 +862,8 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
             fpnts_r(ife,rh) = Qpnts_r(ife,mx)
 
             fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + P + Qpnts_r(ife,pxx) + ampx
-            fpnts_r(ife,my) = Qpnts_r(ife,my)*vx + Qpnts_r(ife,pxy)     + ampy
-            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx + Qpnts_r(ife,pxz)     + ampz
+            fpnts_r(ife,my) = Qpnts_r(ife,my)*vx     + Qpnts_r(ife,pxy) + ampy
+            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx     + Qpnts_r(ife,pxz) + ampz
 
             fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx - (Qpnts_r(ife,pxx)*vx + Qpnts_r(ife,pxy)*vy + Qpnts_r(ife,pxz)*vz)
 
@@ -877,9 +880,9 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
             fpnts_r(ife,rh) = Qpnts_r(ife,mxa(ixyz))
 
-            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy + Qpnts_r(ife,pxy)     + ampx
+            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy     + Qpnts_r(ife,pxy) + ampx
             fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + P + Qpnts_r(ife,pyy) + ampy
-            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy + Qpnts_r(ife,pyz)     + ampz
+            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy     + Qpnts_r(ife,pyz) + ampz
 
             fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy - (Qpnts_r(ife,pyy)*vy + Qpnts_r(ife,pxy)*vx + Qpnts_r(ife,pyz)*vz)
 
@@ -896,8 +899,8 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
             fpnts_r(ife,rh) = Qpnts_r(ife,mz)
 
-            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz + Qpnts_r(ife,pxz)     + ampx
-            fpnts_r(ife,my) = Qpnts_r(ife,my)*vz + Qpnts_r(ife,pyz)     + ampy
+            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz     + Qpnts_r(ife,pxz) + ampx
+            fpnts_r(ife,my) = Qpnts_r(ife,my)*vz     + Qpnts_r(ife,pyz) + ampy
             fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + P + Qpnts_r(ife,pzz) + ampz
 
             fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz - (Qpnts_r(ife,pzz)*vz + Qpnts_r(ife,pxz)*vx + Qpnts_r(ife,pyz)*vy)
@@ -1654,9 +1657,12 @@ subroutine glflux
             sumy = 0.
             sumz = 0.
             do iqfa = 1,nface
-                sumx = sumx + 0.25*dxi*wgt2d(iqfa)*(flux_x(iqfa,i+1,j,k,ieq) - flux_x(iqfa,i,j,k,ieq))
-                sumy = sumy + 0.25*dyi*wgt2d(iqfa)*(flux_y(iqfa,i,j+1,k,ieq) - flux_y(iqfa,i,j,k,ieq))
-                sumz = sumz + 0.25*dzi*wgt2d(iqfa)*(flux_z(iqfa,i,j,k+1,ieq) - flux_z(iqfa,i,j,k,ieq))
+                ! sumx = sumx + 0.25*dxi*wgt2d(iqfa)*(flux_x(iqfa,i+1,j,k,ieq) - flux_x(iqfa,i,j,k,ieq))
+                ! sumy = sumy + 0.25*dyi*wgt2d(iqfa)*(flux_y(iqfa,i,j+1,k,ieq) - flux_y(iqfa,i,j,k,ieq))
+                ! sumz = sumz + 0.25*dzi*wgt2d(iqfa)*(flux_z(iqfa,i,j,k+1,ieq) - flux_z(iqfa,i,j,k,ieq))
+                sumx = sumx + wgt2d(iqfa)*(flux_x(iqfa,i+1,j,k,ieq) - flux_x(iqfa,i,j,k,ieq))
+                sumy = sumy + wgt2d(iqfa)*(flux_y(iqfa,i,j+1,k,ieq) - flux_y(iqfa,i,j,k,ieq))
+                sumz = sumz + wgt2d(iqfa)*(flux_z(iqfa,i,j,k+1,ieq) - flux_z(iqfa,i,j,k,ieq))
             end do
             glflux_r(i,j,k,ieq,1) = sumx + sumy + sumz
         end do
@@ -2122,7 +2128,7 @@ end subroutine
     pname = trim(pname)
     pname = adjustr(pname)
     ! out_name='/data/data5/perseus_p'//pname//'_t'//tname//'.vtr'
-    out_name='data/perseus_p'//pname//'_t'//tname//'.vtr'
+    out_name='data/data2/perseus_p'//pname//'_t'//tname//'.vtr'
     ! print *, out_name
     out_name = trim(out_name)
     out_name = adjustr(out_name)
@@ -2281,7 +2287,7 @@ subroutine output_vtk(Qin,nout,iam)
     pname = trim(pname)
     pname = adjustr(pname)
     ! out_name='/data/data/perseus_p'//pname//'_t'//tname//'.vtr'
-    out_name='data/perseus_p'//pname//'_t'//tname//'.vtr'
+    out_name='data/data2/perseus_p'//pname//'_t'//tname//'.vtr'
     ! print *, out_name
     out_name = trim(out_name)
     out_name = adjustr(out_name)
