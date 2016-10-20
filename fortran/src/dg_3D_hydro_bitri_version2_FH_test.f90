@@ -20,7 +20,10 @@
 program main
 use lib_vtk_io
 include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
-include '/nfs/packages/opt/Linux_x86_64/intel/17.0/fortran/compilers_and_libraries_2017.0.098/linux/mkl/include'
+
+! Get Intel MKL types and functions
+use MKL_VSL_TYPE
+use MKL_VSL
 
 integer, parameter :: rh=1, mx=2, my=3, mz=4, en=5, pxx=6, pyy=7, pzz=8, pxy=9, pxz=10, pyz=11, nQ=11
 
@@ -805,6 +808,28 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
     real, dimension(npnts,nQ):: Qpnts_r, fpnts_r
     real dn,dni,vx,vy,vz,P,asqr,fac,Pre,dnei,Psol,dx2,Tem,smsq,nu,c2d3,c4d3
     real ampx,ampy,ampz,ampd
+
+    !---------------------------------------------------------------------------
+    ! amplv is amplitude for stochastic viscous stress tensor
+    ! amplm is amplitude for stochastic momentum stuffz
+    ! amplen is amplitude for stochastic energy (heat flux?)
+    !---------------------------------------------------------------------------
+    ! real a,sigma,errcode,r,n
+    ! TYPE (VSL_STREAM_STATE) :: stream
+    !
+    ! brng = VSL_BRNG_MCG31
+    ! method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
+    ! seed = 1915321
+    ! a = 0
+    ! sigma = amplv
+    ! n = 3
+    !
+    ! errcode = vslnewstream(stream, brng, seed)
+    ! errcode = vsRngGaussian(method, stream, n, r, a, sigma)
+    !
+    ! ! Computation is completed with de-allocation of system resources:
+    ! errcode = vsldeletestream( stream )
+    !---------------------------------------------------------------------------
 
     nu = epsi*vis
     c2d3 = 2./3.
