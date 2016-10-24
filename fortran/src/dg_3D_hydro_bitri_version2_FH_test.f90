@@ -447,7 +447,7 @@ subroutine prep_advance(Q_ri)
     call set_bc
     call flux_cal(Q_ri)
     call innerintegral(Q_ri)
-    call glflux
+    call glflux2  ! glflux currently breaks after "bug fix"
     call source_calc(Q_ri,t)
 
 end subroutine prep_advance
