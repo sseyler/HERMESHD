@@ -22,7 +22,6 @@ program main
 use lib_vtk_io
 
 include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
-! include 'mkl_vsl.f90'
 
 integer, parameter :: rh=1, mx=2, my=3, mz=4, en=5
 integer, parameter :: pxx=6, pyy=7, pzz=8, pxy=9, pxz=10, pyz=11, nQ=11
