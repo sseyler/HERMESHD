@@ -22,7 +22,7 @@ use lib_vtk_io
 
 include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
 
-integer, parameter :: rh=1, mx=2, my=3, mz=4, en=5,
+integer, parameter :: rh=1, mx=2, my=3, mz=4, en=5
 integer, parameter :: pxx=6, pyy=7, pzz=8, pxy=9, pxz=10, pyz=11, nQ=11
 
 integer, parameter :: nx=20, ny=20, nz=1, ngu=0, nbasis=8, nbastot=27
@@ -1756,12 +1756,12 @@ subroutine glflux
             sumy = 0.
             sumz = 0.
             do iqfa = 1,nface
-                ! sumx = sumx + 0.25*dxi*wgt2d(iqfa)*(flux_x(iqfa,i+1,j,k,ieq) - flux_x(iqfa,i,j,k,ieq))
-                ! sumy = sumy + 0.25*dyi*wgt2d(iqfa)*(flux_y(iqfa,i,j+1,k,ieq) - flux_y(iqfa,i,j,k,ieq))
-                ! sumz = sumz + 0.25*dzi*wgt2d(iqfa)*(flux_z(iqfa,i,j,k+1,ieq) - flux_z(iqfa,i,j,k,ieq))
-                sumx = sumx + wgt2d(iqfa)*(flux_x(iqfa,i+1,j,k,ieq) - flux_x(iqfa,i,j,k,ieq))
-                sumy = sumy + wgt2d(iqfa)*(flux_y(iqfa,i,j+1,k,ieq) - flux_y(iqfa,i,j,k,ieq))
-                sumz = sumz + wgt2d(iqfa)*(flux_z(iqfa,i,j,k+1,ieq) - flux_z(iqfa,i,j,k,ieq))
+                sumx = sumx + 0.25*dxi*wgt2d(iqfa)*(flux_x(iqfa,i+1,j,k,ieq) - flux_x(iqfa,i,j,k,ieq))
+                sumy = sumy + 0.25*dyi*wgt2d(iqfa)*(flux_y(iqfa,i,j+1,k,ieq) - flux_y(iqfa,i,j,k,ieq))
+                sumz = sumz + 0.25*dzi*wgt2d(iqfa)*(flux_z(iqfa,i,j,k+1,ieq) - flux_z(iqfa,i,j,k,ieq))
+                ! sumx = sumx + wgt2d(iqfa)*(flux_x(iqfa,i+1,j,k,ieq) - flux_x(iqfa,i,j,k,ieq))
+                ! sumy = sumy + wgt2d(iqfa)*(flux_y(iqfa,i,j+1,k,ieq) - flux_y(iqfa,i,j,k,ieq))
+                ! sumz = sumz + wgt2d(iqfa)*(flux_z(iqfa,i,j,k+1,ieq) - flux_z(iqfa,i,j,k,ieq))
             end do
             glflux_r(i,j,k,ieq,1) = sumx + sumy + sumz
         end do
@@ -2313,7 +2313,7 @@ end subroutine
     pname = trim(pname)
     pname = adjustr(pname)
     ! out_name='/data/data5/perseus_p'//pname//'_t'//tname//'.vtr'
-    out_name='data/data2/perseus_p'//pname//'_t'//tname//'.vtr'
+    out_name='data/data3/perseus_p'//pname//'_t'//tname//'.vtr'
     ! print *, out_name
     out_name = trim(out_name)
     out_name = adjustr(out_name)
@@ -2474,7 +2474,7 @@ subroutine output_vtk(Qin,nout,iam)
     pname = trim(pname)
     pname = adjustr(pname)
     ! out_name='/data/data/perseus_p'//pname//'_t'//tname//'.vtr'
-    out_name='data/data2/perseus_p'//pname//'_t'//tname//'.vtr'
+    out_name='data/data3/perseus_p'//pname//'_t'//tname//'.vtr'
     ! print *, out_name
     out_name = trim(out_name)
     out_name = adjustr(out_name)

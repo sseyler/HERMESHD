@@ -10,7 +10,7 @@ FORT= mpif90
 # MKLBIN=$(MKLPATH)/bin
 # MKLINCLUDE=$(MKLPATH)/include
 DEFS=
-PROGNAME= perseus1
+PROGNAME= perseus_fh_test
 INCLUDES=  -I. #-I$(MKLINCLUDE)
 LIBS= lib_vtk_io.o #-L$(MKLPATH)
 
