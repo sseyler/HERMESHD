@@ -25,7 +25,12 @@ openmpi/1.6.3/intel13.0/64
 
 ```bash
 /nfs/packages/opt/Linux_x86_64/intel/17.0/fortran/mkl/bin/mklvars.sh intel64 mod
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
 ```
+
+Where ``$(MKLROOT)`` is set by the *mklvars.sh* script and ``$(MKL_TARGET_ARCH)``
+should be set manually to "*intel64_lin*" (or "*intel64*", which is linked to
+"*intel64_lin*").
 
 ## Try compiling manually
 
