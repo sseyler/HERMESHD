@@ -20,8 +20,6 @@
 program main
 
 use lib_vtk_io
-use MKL_VSL_TYPE
-use MKL_VSL
 
 include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
 ! include 'mkl_vsl.f90'
@@ -433,6 +431,9 @@ do while (t<tf)
     end if
 
 end do
+
+! Computation is completed with de-allocation of system resources:
+vsl_errcode = vsldeletestream( vsl_stream )
 
 call MPI_Finalize (ierr)
 
@@ -904,47 +905,18 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
     ! ixyz=3: z-direction
 
     implicit none
-    integer ife, ixyz,npnts
-    real, dimension(npnts,nQ):: Qpnts_r, fpnts_r
+    integer ife,ixyz,npnts
+    real, dimension(npnts,nQ) :: Qpnts_r, fpnts_r
     real dn,dni,vx,vy,vz,P,asqr,fac,Pre,dnei,Psol,dx2,Tem,smsq,nu,c2d3,c4d3
     real ampx,ampy,ampz,ampd
-
-    !---------------------------------------------------------------------------
-    ! amplv is amplitude for stochastic viscous stress tensor
-    ! amplm is amplitude for stochastic momentum stuffz
-    ! amplen is amplitude for stochastic energy (heat flux?)
-    !---------------------------------------------------------------------------
-    integer seed,n
-    real a,sigma,errcode,r(3)
-    TYPE (VSL_STREAM_STATE) :: stream
-    ! TYPE (MKL_INT) :: method, brng
-    integer method, brng
-
-    brng = VSL_BRNG_MCG31
-    method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
-    seed = 1915321
-    a = 0
-    sigma = 0.01
-    n = 3
-
-    errcode = vslnewstream(stream, brng, seed)
-    errcode = vsRngGaussian(method, stream, n, r, a, sigma)
-
-    ! Computation is completed with de-allocation of system resources:
-    errcode = vsldeletestream( stream )
-
-    ampx = r(0)
-    ampy = r(1)
-    ampz = r(2)
-    !---------------------------------------------------------------------------
 
     nu = epsi*vis
     c2d3 = 2./3.
     c4d3 = 4./3.
 
-    ! ampx = 0.01*amplv*(ran(iseed) - 0.5)
-    ! ampy = 0.01*amplv*(ran(iseed) - 0.5)
-    ! ampz = 0.01*amplv*(ran(iseed) - 0.5)
+    ampx = 0.01*amplv*(ran(iseed) - 0.5)
+    ampy = 0.01*amplv*(ran(iseed) - 0.5)
+    ampz = 0.01*amplv*(ran(iseed) - 0.5)
     ampd = 0*amplen*(ran(iseed) - 0.5)
 
     do ife = 1,npnts
