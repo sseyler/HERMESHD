@@ -22,15 +22,18 @@ use lib_vtk_io
 
 include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
 
-integer, parameter :: rh=1, mx=2, my=3, mz=4, en=5, pxx=6, pyy=7, pzz=8, pxy=9, pxz=10, pyz=11, nQ=11
+integer, parameter :: rh=1, mx=2, my=3, mz=4, en=5,
+integer, parameter :: pxx=6, pyy=7, pzz=8, pxy=9, pxz=10, pyz=11, nQ=11
 
-integer, parameter :: nx = 20, ny = 20, nz = 1, ngu = 0, nbasis = 8, nbastot = 27
+integer, parameter :: nx=20, ny=20, nz=1, ngu=0, nbasis=8, nbastot=27
 ! nbasis = 4: {1,x,y,z}
 ! nbasis = 10: {1,x,y,z, P_2(x),P_2(y),P_2(z), yz, zx, xy}
-! nbasis = 20: nbasis10 + {xyz,xP2(y),yP2(x),xP2(z),zP2(x),yP2(z),zP2(y),P3(x),P3(y),P3(z)}
+! nbasis = 20: nbasis10 + {xyz,xP2(y),yP2(x),xP2(z),
+!                          zP2(x),yP2(z),zP2(y),P3(x),P3(y),P3(z)}
 
-! The jump in accuracy between the linear basis (nbasis = 4) and quadratic basis (nbasis = 10)
-! is much greater than the jump in accuracy between quadratic and cubic (nbasis = 20) bases.
+! The jump in accuracy between the linear basis (nbasis = 4) and quadratic basis
+! (nbasis = 10) is much greater than the jump in accuracy between quadratic and
+! cubic (nbasis = 20) bases.
 
 integer, parameter :: iquad=2, nedge = iquad
 ! iquad: number of Gaussian quadrature points per direction. iquad should not be
@@ -40,7 +43,8 @@ integer, parameter :: iquad=2, nedge = iquad
 ! there are only two cases of iquad for a given nbasis.  Both cases give similar
 ! results although the iquad = ipoly + 1 case is formally more accurate.
 
-integer, parameter :: nface = iquad*iquad, npg = nface*iquad, nfe = 2*nface, npge = 6*nface, nslim=npg+6*nface
+integer, parameter :: nface=iquad*iquad, npg=nface*iquad, nfe=2*nface
+integer, parameter :: npge=6*nface, nslim=npg+6*nface
 ! nface: number of quadrature points per cell face.
 ! npg: number of internal points per cell.
 
@@ -62,21 +66,23 @@ integer, parameter :: iread = 0, iwrite = 0
 character (4), parameter :: fpre = 'Qout'
 logical, parameter :: resuming = .false.
 
-real, parameter :: lx = 100., ly = 100., lz = 100./120.
+real, parameter :: lx = 300., ly = 300., lz = 300./120.
 
-real, parameter :: tf = 1000.
+real, parameter :: tf = 2000.
 
     real, parameter :: pi = 4.0*atan(1.0)
 
     real, parameter :: aindex = 5./3., mu = 18.
 
-real, parameter :: aindm1 = aindex - 1.0, cp = aindex/(aindex - 1.0), clt = 2., vis = 0.e-1, epsi = 5., amplv = 1.0, amplm = 0.0, amplen = 10.
+real, parameter :: aindm1=aindex - 1.0, cp=aindex/(aindex - 1.0), clt=2.
+real, parameter :: vis=1.e-1, epsi=5., amplv=0.0, amplm=0.0, amplen=10.
 
     ! dimensional units (expressed in MKS)
     real, parameter :: L0=1.0e-9, t0=1.0e-12, n0=3.32e28
 
     ! derived units
-    real, parameter :: v0=L0/t0, p0=mu*1.67e-27*n0*v0**2, te0=p0/n0/1.6e-19, P_1 = 2.15e9/7.2/p0, P_base = 1.01e5/p0 ! atmospheric pressure
+    real, parameter :: v0=L0/t0, p0=mu*1.67e-27*n0*v0**2, te0=p0/n0/1.6e-19
+    real, parameter :: P_1=2.15e9/7.2/p0, P_base=1.01e5/p0 ! atmo pressure
 
 ! rh_min is a minimum density to be used for ideal gas law EOS and rh_min is the
 ! minimum density below which the pressure becomes negative for the water EOS:
@@ -89,28 +95,36 @@ real, parameter :: aindm1 = aindex - 1.0, cp = aindex/(aindex - 1.0), clt = 2., 
 ! take into account ionic solutions. It would be worthwhile to investigate this
 ! further and experiment with different EOS's.
 
-real, parameter :: rh_floor = 1.e-1, rh_mult = 1.01, rh_min = rh_mult*(1. - P_base/P_1)**(1./7.2)
+real, parameter :: rh_floor=1.e-1, rh_mult=1.01, rh_min=rh_mult*(1. - P_base/P_1)**(1./7.2)
 
-real, parameter :: T_floor = 0.026/te0, P_floor = T_floor*rh_floor
+real, parameter :: T_floor=0.026/te0, P_floor=T_floor*rh_floor
 
-real, dimension(nx,ny,nz,nQ,nbasis) ::  Q_r0, Q_r1, Q_r2, Q_r3
-real, dimension(nx,ny,nz,nQ,nbasis) ::  glflux_r, source_r
+real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r0, Q_r1, Q_r2, Q_r3
+real, dimension(nx,ny,nz,nQ,nbasis) :: glflux_r, source_r
 real, dimension(nx,ny,nz,nQ,nbasis) :: integral_r
 
-    real eta(nx,ny,nz,npg),den0(nx,ny,nz),Ez0,Zdy(nx,ny,nz,npg)
-real flux_x(nface,1:nx+1,ny,nz,1:nQ), flux_y(nface,nx,1:ny+1,nz,1:nQ), flux_z(nface,nx,ny,1:nz+1,1:nQ)
+real eta(nx,ny,nz,npg),den0(nx,ny,nz),Ez0,Zdy(nx,ny,nz,npg)
+real flux_x(nface,1:nx+1,ny,nz,1:nQ)
+real flux_y(nface,nx,1:ny+1,nz,1:nQ)
+real flux_z(nface,nx,ny,1:nz+1,1:nQ)
     real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
 logical MMask(nx,ny,nz),BMask(nx,ny,nz)
 real xcell(npg), ycell(npg), zcell(npg), xface(npge), yface(npge), zface(npge)
 integer ticks, count_rate, count_max
 real t1, t2, t3, t4, elapsed_time, t_start, t_stop, dtoriginal
-    real t,dt,tout,dtout,vf,dxi,dyi,dzi,loc_lxd,loc_lyd,loc_lzd,check_Iz,sl, dz, dy, dx
-    real lxd,lxu,lyd,lyu,lzd,lzu,pin_rad,pin_height,foil_thickness,rh_foil,rh_fluid,pin_rad_in,pin_rad_out,rim_rad
+    real t,dt,tout,dtout,vf,dxi,dyi,dzi,loc_lxd,loc_lyd,loc_lzd,check_Iz,sl
+    real dz, dy, dx
+    real lxd,lxu,lyd,lyu,lzd,lzu
+    real pin_rad,pin_height,foil_thickness,rh_foil,rh_fluid
+    real pin_rad_in,pin_rad_out,rim_rad
     real disk_rad,disk_height,foil_rad,buf_rad,buf_z,dish_height,foil_height
     real gpz_rad,rh_gpz,kappa
-real Qxhigh_ext(ny,nz,nface,nQ), Qxlow_int(ny,nz,nface,nQ), Qxlow_ext(ny,nz,nface,nQ), Qxhigh_int(ny,nz,nface,nQ)
-real Qyhigh_ext(nx,nz,nface,nQ), Qylow_int(nx,nz,nface,nQ), Qylow_ext(nx,nz,nface,nQ), Qyhigh_int(nx,nz,nface,nQ)
-real Qzhigh_ext(nx,ny,nface,nQ), Qzlow_int(nx,ny,nface,nQ), Qzlow_ext(nx,ny,nface,nQ), Qzhigh_int(nx,ny,nface,nQ)
+real Qxhigh_ext(ny,nz,nface,nQ), Qxlow_int(ny,nz,nface,nQ)
+real Qxlow_ext(ny,nz,nface,nQ), Qxhigh_int(ny,nz,nface,nQ)
+real Qyhigh_ext(nx,nz,nface,nQ), Qylow_int(nx,nz,nface,nQ)
+real Qylow_ext(nx,nz,nface,nQ), Qyhigh_int(nx,nz,nface,nQ)
+real Qzhigh_ext(nx,ny,nface,nQ), Qzlow_int(nx,ny,nface,nQ)
+real Qzlow_ext(nx,ny,nface,nQ), Qzhigh_int(nx,ny,nface,nQ)
 integer mxa(3),mya(3),mza(3),kroe(nface),niter,iseed
 
 
@@ -121,21 +135,27 @@ real wgt1d(5), wgt2d(30), wgt3d(100), cbasis(nbastot)
 ! wgt2d: quadrature weights for 2-D integration
 ! wgt3d: quadrature weights for 3-D integration
 
-real, dimension(nface,nbastot) :: bfvals_zp, bfvals_zm, bfvals_yp, bfvals_ym, bfvals_xp, bfvals_xm
+real, dimension(nface,nbastot) :: bfvals_zp, bfvals_zm
+real, dimension(nface,nbastot) :: bfvals_yp, bfvals_ym
+real, dimension(nface,nbastot) :: bfvals_xp, bfvals_xm
 real bf_faces(nslim,nbastot), bfvals_int(npg,nbastot),xquad(20)
-    real bval_int_wgt(npg,nbastot),wgtbfvals_xp(nface,nbastot),wgtbfvals_yp(nface,nbastot),wgtbfvals_zp(nface,nbastot)
-    real wgtbfvals_xm(nface,nbastot),wgtbfvals_ym(nface,nbastot),wgtbfvals_zm(nface,nbastot)
-    real wgtbf_xmp(4,2,nbastot),wgtbf_ymp(4,2,nbastot),wgtbf_zmp(4,2,nbastot)
+    real bval_int_wgt(npg,nbastot)
+    real wgtbfvals_xp(nface,nbastot),wgtbfvals_xm(nface,nbastot)
+    real wgtbfvals_yp(nface,nbastot),wgtbfvals_ym(nface,nbastot)
+    real wgtbfvals_zp(nface,nbastot),wgtbfvals_zm(nface,nbastot)
+    real wgtbf_xmp(nface,2,nbastot),wgtbf_ymp(nface,2,nbastot),wgtbf_zmp(nface,2,nbastot)
     real sumx,sumy,sumz
     integer i2f,i01,i2fa
 
-    integer,parameter :: kx=2,ky=3,kz=4,kyz=5,kzx=6,kxy=7,kxyz=8,kxx=9,kyy=10,kzz=11,kyzz=12,kzxx=13,kxyy=14
-    integer,parameter :: kyyz=15,kzzx=16,kxxy=17,kyyzz=18,kzzxx=19,kxxyy=20,kyzxx=21,kzxyy=22,kxyzz=23
-    integer,parameter :: kxyyzz=24,kyzzxx=25,kzxxyy=26,kxxyyzz=27
+    integer, parameter :: kx=2,ky=3,kz=4,kyz=5,kzx=6,kxy=7,kxyz=8
+    integer, parameter :: kxx=9,kyy=10,kzz=11
+    integer, parameter :: kyzz=12,kzxx=13,kxyy=14,kyyz=15,kzzx=16,kxxy=17
+    integer, parameter :: kyyzz=18,kzzxx=19,kxxyy=20,kyzxx=21,kzxyy=22,kxyzz=23
+    integer, parameter :: kxyyzz=24,kyzzxx=25,kzxxyy=26,kxxyyzz=27
 
 ! Parameters for VTK output.
 
-integer, parameter :: nvtk=2
+integer, parameter :: nvtk=1 ! was 2
 integer, parameter :: nvtk2=nvtk*nvtk, nvtk3=nvtk*nvtk*nvtk
 integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
 real, dimension(nvtk3,nbastot) :: bfvtk, bfvtk_dx, bfvtk_dy, bfvtk_dz
@@ -158,18 +178,18 @@ if (nbasis .eq. 64) cflm = 0.08
 
 ! Initialize grid sizes and local lengths
 
-cbasis(1) = 1.               ! coefficient for basis function {1}
-cbasis(kx:kz) = 3.           ! coefficients for basis functions {x,y,z}
-cbasis(kyz:kxy) = 9.         ! coefficients for basis functions {yz,zx,xy}
-cbasis(kxyz) = 27.           ! coefficient for basis function {xyz}
+cbasis(1) = 1.              ! coeff for basis func {1}
+cbasis(kx:kz) = 3.          ! coeff for basis funcs {x,y,z}
+cbasis(kyz:kxy) = 9.        ! coeff for basis funcs {yz,zx,xy}
+cbasis(kxyz) = 27.          ! coeff for basis func {xyz}
 
-cbasis(kxx:kzz) = 5.         ! coefficients for basis functions {P2(x),P2(y),P2(z)}
-cbasis(kyzz:kxyy) = 15.      ! coefficients for basis functions {yP2(z),zP2(x),xP2(y)}
-cbasis(kyyz:kxxy) = 15.      ! coefficients for basis functions {P2(y)z,P2(z)y,P2(z)x}
-cbasis(kyyzz:kxxyy) = 25.    ! coefficients for basis functions {P2(y)P2(z),P2(z)P2(x),P2(x)P2(y)}
-cbasis(kyzxx:kxyzz) = 45.    ! coefficients for basis functions {yzP_2(x),zxP_2(y),xyP_2(z)}
-cbasis(kxyyzz:kzxxyy) = 75.  ! coefficients for basis functions {xP2(y)P2(z),yP2(z)P2(x),zP2(x)P2(y)}
-cbasis(kxxyyzz) = 125.       ! coefficients for basis functions {P2(x)P2(y)P2(z)}
+cbasis(kxx:kzz) = 5.        ! coeff for basis funcs {P2(x),P2(y),P2(z)}
+cbasis(kyzz:kxyy) = 15.     ! coeff for basis funcs {yP2(z),zP2(x),xP2(y)}
+cbasis(kyyz:kxxy) = 15.     ! coeff for basis funcs {P2(y)z,P2(z)y,P2(z)x}
+cbasis(kyyzz:kxxyy) = 25.   ! coeff for basis funcs {P2(y)P2(z),P2(z)P2(x),P2(x)P2(y)}
+cbasis(kyzxx:kxyzz) = 45.   ! coeff for basis funcs {yzP_2(x),zxP_2(y),xyP_2(z)}
+cbasis(kxyyzz:kzxxyy) = 75. ! coeff for basis funcs {xP2(y)P2(z),yP2(z)P2(x),zP2(x)P2(y)}
+cbasis(kxxyyzz) = 125.      ! coeff for basis funcs {P2(x)P2(y)P2(z)}
 
 call MPI_Init ( ierr )
 call MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierr)
@@ -264,12 +284,12 @@ do ir=1,nbasis
 end do
 
 do ir=1,nbasis
-    wgtbf_xmp(1:4,1,ir) = -0.25*cbasis(ir)*dxi*wgtbfvals_xm(1:nface,ir)
-    wgtbf_ymp(1:4,1,ir) = -0.25*cbasis(ir)*dyi*wgtbfvals_ym(1:nface,ir)
-    wgtbf_zmp(1:4,1,ir) = -0.25*cbasis(ir)*dzi*wgtbfvals_zm(1:nface,ir)
-    wgtbf_xmp(1:4,2,ir) = 0.25*cbasis(ir)*dxi*wgtbfvals_xp(1:nface,ir)
-    wgtbf_ymp(1:4,2,ir) = 0.25*cbasis(ir)*dyi*wgtbfvals_yp(1:nface,ir)
-    wgtbf_zmp(1:4,2,ir) = 0.25*cbasis(ir)*dzi*wgtbfvals_zp(1:nface,ir)
+    wgtbf_xmp(1:nface,1,ir) = -0.25*cbasis(ir)*dxi*wgtbfvals_xm(1:nface,ir)
+    wgtbf_ymp(1:nface,1,ir) = -0.25*cbasis(ir)*dyi*wgtbfvals_ym(1:nface,ir)
+    wgtbf_zmp(1:nface,1,ir) = -0.25*cbasis(ir)*dzi*wgtbfvals_zm(1:nface,ir)
+    wgtbf_xmp(1:nface,2,ir) = 0.25*cbasis(ir)*dxi*wgtbfvals_xp(1:nface,ir)
+    wgtbf_ymp(1:nface,2,ir) = 0.25*cbasis(ir)*dyi*wgtbfvals_yp(1:nface,ir)
+    wgtbf_zmp(1:nface,2,ir) = 0.25*cbasis(ir)*dzi*wgtbfvals_zp(1:nface,ir)
 end do
 
 call init_random_seed(123456789)
@@ -343,7 +363,9 @@ call output_vtk(Q_r0,nout,iam)
 
 do while (t<tf)
 
-    ! if (mod(niter,200) .eq. 0 .and. iam .eq. print_mpi) print *,'niter,t,dt = ',niter,t,dt,dtout*nout
+    ! if (mod(niter,200) .eq. 0 .and. iam .eq. print_mpi) then
+        ! print *,'niter,t,dt = ',niter,t,dt,dtout*nout
+    ! end if
     niter = niter + 1
     call get_min_dt(dt)
 
@@ -442,6 +464,7 @@ subroutine prep_advance(Q_ri)
 
     real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri
 
+    if(ieos .eq. 1) call limiter(Q_ri)  ! added in (from "viscosity" version)
     if(ieos .eq. 2) call limiter(Q_ri)
     call prepare_exchange(Q_ri)
     call set_bc
@@ -456,8 +479,10 @@ end subroutine prep_advance
 
 subroutine get_min_dt(dt)
 
-   real dt,dt_min,dt_val(numprocs-1),tt,cfl,vmax,vmag,valf,vmag0,valf0,vex,vey,vez,vem,vem0,dni,dn,vx,vy,vz,Pr,sqdni,vacc,vacc0,cs
-   integer :: i,j,k,main_proc=0,mpi_size=1,loc_reqs(numprocs-1),loc_stats(MPI_STATUS_SIZE,numprocs-1)
+   real dt,dt_min,dt_val(numprocs-1),tt,cfl,vmax,vmag,valf,vmag0,valf0
+   real vex,vey,vez,vem,vem0,dni,dn,vx,vy,vz,Pr,sqdni,vacc,vacc0,cs
+   integer :: i,j,k,main_proc=0,mpi_size=1
+   integer :: loc_reqs(numprocs-1),loc_stats(MPI_STATUS_SIZE,numprocs-1)
 
    vmag = 0.
 
@@ -543,42 +568,115 @@ subroutine fill_fluid
     ! test problem is an unstable flow jet in x with velocity perturbations in y
 
     do i = 1,nx
-        do j = 1,ny
-            do k = 1,nz
+    do j = 1,ny
+    do k = 1,nz
 
-                call random_number(rand_number)
-                rnum = (rand_number - 0.5)
+        call random_number(rand_number)
+        rnum = (rand_number - 0.5)
 
-                qquad(:,:) = 0.
+        !-------------------------------------------------------
+        ! from "viscosity" version
+        Q_r0(i,j,k,rh,1) = rh_floor
+        Q_r0(i,j,k,en,1) = wtev*Q_r0(i,j,k,rh,1)/(aindex - 1.)
 
-                do igrid=1,npg
+        xcc = xc(i)
+        ycc = yc(j)
+        zcc = zc(k)
 
-                    qquad(igrid,rh) = rh_floor
-                    qquad(igrid,en) = wtev*qquad(igrid,rh)/(aindex - 1.)
+                Q_r0(i,j,k,rh,1) = rh_fluid
+        Q_r0(i,j,k,my,1) = 0.001*rnum/cosh(20*yc(j)/lyu)**2
+        Q_r0(i,j,k,mz,1) = 0.
+        Q_r0(i,j,k,mx,1) = 1.0*Q_r0(i,j,k,rh,1)/cosh(20*ycc/lyu)/1.
+        Q_r0(i,j,k,en,1) = wtev*Q_r0(i,j,k,rh,1)/(aindex - 1.) + 0.5*(Q_r0(i,j,k,mx,1)**2 + Q_r0(i,j,k,my,1)**2 + Q_r0(i,j,k,mz,1)**2)/Q_r0(i,j,k,rh,1)
+        !-------------------------------------------------------
 
-                    xcc = xc(i) + bfvals_int(igrid,kx)*0.5/dxi
-                    ycc = yc(j) + bfvals_int(igrid,ky)*0.5/dyi
-                    zcc = zc(k) + bfvals_int(igrid,kz)*0.5/dzi
+        !-------------------------------------------------------
+        ! from "old" version
+        qquad(:,:) = 0.
 
-                    qquad(igrid,rh) = rh_fluid
-                    qquad(igrid,my) = 0.001*rnum/1.
-                    qquad(igrid,mz) = 0.
-                    qquad(igrid,mx) = 0.5*qquad(igrid,rh)/cosh(20*ycc/lyu)/1.
-                    qquad(igrid,en) = wtev*qquad(igrid,rh)/(aindex - 1.) + 0.5*(qquad(igrid,mx)**2 + qquad(igrid,my)**2 + qquad(igrid,mz)**2)/qquad(igrid,rh)
+        do igrid=1,npg
 
-                end do
+            qquad(igrid,rh) = rh_floor
+            qquad(igrid,en) = wtev*qquad(igrid,rh)/(aindex - 1.)
 
-                do ieq=rh,en
-                    do ir=1,nbasis
-                        Q_r0(i,j,k,ieq,ir) = 0.125*cbasis(ir)*sum(wgt3d(1:npg)*bfvals_int(1:npg,ir)*qquad(1:npg,ieq))
-                    end do
-                end do
+            xcc = xc(i) + bfvals_int(igrid,kx)*0.5/dxi
+            ycc = yc(j) + bfvals_int(igrid,ky)*0.5/dyi
+            zcc = zc(k) + bfvals_int(igrid,kz)*0.5/dzi
 
+            qquad(igrid,rh) = rh_fluid
+            qquad(igrid,my) = 0.001*rnum/1.
+            qquad(igrid,mz) = 0.
+            qquad(igrid,mx) = 0.5*qquad(igrid,rh)/cosh(20*ycc/lyu)/1.
+            qquad(igrid,en) = wtev*qquad(igrid,rh)/(aindex - 1.)                &
+                            + 0.5*( qquad(igrid,mx)**2                          &
+                            + qquad(igrid,my)**2                                &
+                            + qquad(igrid,mz)**2 )/qquad(igrid,rh)
+
+        end do
+        !-------------------------------------------------------
+
+        do ieq=rh,en
+            do ir=1,nbasis
+                Q_r0(i,j,k,ieq,ir) =                                            &
+                    0.125*cbasis(ir)                                            &
+                    *sum(wgt3d(1:npg)*bfvals_int(1:npg,ir)*qquad(1:npg,ieq))
             end do
         end do
+
+    end do
+    end do
     end do
 
 end subroutine fill_fluid
+
+
+!-------------------------------------------------------
+
+subroutine fill_fluid2
+
+!-------------------------------------------------------
+
+    integer i,j,k,izw(4),ixw(4),iyw(4),iw,iseed
+    real wirer,x,y,x0,y0,rhline,wtev,rx,ry,rnum,w0
+    iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
+
+    wtev = 2*T_floor
+	w0 = 0.3
+
+    do i = 1,nx
+    do j = 1,ny
+    do k = 1,nz
+        call random_number(rand_number)
+
+        rnum = (rand_number - 0.5)
+
+        Q_r0(i,j,k,rh,1) = rh_fluid!*exp(-zc(k)/Hscale)
+        Q_r0(i,j,k,my,1) = 0.005*rnum/cosh(20*yc(j)/lyu)**2
+        rnum = (rand_number - 0.5)
+        ! Q_r0(i,j,k,mz,1) = 0.005*rnum
+        ! Q_0(i,j,k,mx) = 1.0*Q_0(i,j,k,rh)/cosh(10*(yc(j)-0.25*lyu)/lyu) - 1.0*Q_0(i,j,k,rh)/cosh(10*(yc(j)-0.75*lyu)/lyu) &
+!                              - 1.0*Q_0(i,j,k,rh)/cosh(10*(yc(j)+0.25*lyu)/lyu) + 1.0*Q_0(i,j,k,rh)/cosh(10*(yc(j)+0.75*lyu)/lyu)
+        Q_r0(i,j,k,mx,1) = 1.0*Q_r0(i,j,k,rh,1)/cosh(20*yc(j)/lyu)
+        ! Q_0(i,j,k,my) = rh_fluid*sin(4*pi*xc(i)/lx)*cos(4*pi*yc(j)/ly)
+        ! Q_0(i,j,k,mx) = -rh_fluid*sin(4*pi*yc(j)/ly)  !*cos(4*pi*xc(i)/lx)
+        ! Q_0(i,j,k,en) = grav*Hscale*Q_0(i,j,k,rh)/(aindex - 1.) + 0.5*(Q_0(i,j,k,mx)**2 + Q_0(i,j,k,my)**2)/Q_0(i,j,k,rh)
+
+        ! rnum = (rand_number - 0.5)
+        ! Q_0(i,j,k,mx) = 3*rnum
+        ! rnum = (rand_number - 0.5)
+        ! Q_0(i,j,k,my) = 3*rnum
+        ! rnum = (rand_number - 0.5)
+        ! Q_0(i,j,k,mz) = 3*rnum
+
+        Q_r0(i,j,k,en,1) = wtev*Q_r0(i,j,k,rh,1)/(aindex - 1.) + 0.5*(Q_r0(i,j,k,mx,1)**2 + Q_r0(i,j,k,my,1)**2 + Q_r0(i,j,k,mz,1)**2)/Q_r0(i,j,k,rh,1)
+
+    end do
+    end do
+    end do
+
+end subroutine fill_fluid2
+!----------------------------------------------------------------------------------------------
+
 
 !----------------------------------------------------------------------------------------------
 
@@ -707,24 +805,24 @@ subroutine advance_time_level_gl(Q_ri,Q_rp)
     dti = 1./dt
 
     do k = 1,nz
-        do j = 1,ny
-            do i = 1,nx
+    do j = 1,ny
+    do i = 1,nx
 
-                do ieq = 1,nQ
-                    do ir=1,nbasis
-                        Q_rp(i,j,k,ieq,ir) = Q_ri(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir) + dt*source_r(i,j,k,ieq,ir)
-                    end do
-                end do
-
-                do ieq = 1,nQ
-                    if ( Q_rp(i,j,k,ieq,1) .ne. Q_rp(i,j,k,ieq,1)) then
-                        print *,'NaN. Bailing out...','  xc  =',xc(i),'  yc  =',yc(j),'  zc  =',zc(k),'  ieq  =',ieq
-                        call exit(-1)
-                    endif
-                end do
-
+        do ieq = 1,nQ
+            do ir=1,nbasis
+                Q_rp(i,j,k,ieq,ir) = Q_ri(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir) + dt*source_r(i,j,k,ieq,ir)
             end do
         end do
+
+        do ieq = 1,nQ
+            if ( Q_rp(i,j,k,ieq,1) .ne. Q_rp(i,j,k,ieq,1)) then
+                print *,'NaN. Bailing out...','  xc  =',xc(i),'  yc  =',yc(j),'  zc  =',zc(k),'  ieq  =',ieq
+                call exit(-1)
+            endif
+        end do
+
+    end do
+    end do
     end do
 
 end subroutine advance_time_level_gl
@@ -736,7 +834,8 @@ subroutine source_calc(Q_ri,t)
     implicit none
     integer i,j,k,ieq,ipg,ir
     real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri
-    real t,source(npg,nQ),Qin(nQ),dn,dni,Zin,vx,vy,vz,alpha,temp,dne,eta_a,Teev,Tiev,etaJ2,nuei,TemR,Tev,vmax
+    real t,source(npg,nQ),Qin(nQ),dn,dni,Zin,vx,vy,vz,alpha,temp,dne,eta_a
+    real Teev,Tiev,etaJ2,nuei,TemR,Tev,vmax
     real Tcoef,fac,en_floor,gyro,Pres,rh_buf
 
     source_r(:,:,:,:,:) = 0.0
@@ -1779,9 +1878,95 @@ real function cfcal(Qcf,cases)
 
 end function cfcal
 
+
 !----------------------------------------------------------------------------------
 
 subroutine limiter(Q_r)
+    implicit none
+    integer i, j, k, ieq, ipge, minindex, ir
+    real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
+    real Qedge(npge,nQ),theta,Qmin(nQ), deltaQ(nQ)
+    real epsi, Qrhmin, QPmin, P(npge), Pave, dn, dni, epsiP, thetaj
+    real*8 a, b, c
+
+    epsi = rh_floor
+    epsiP = rh_floor*T_floor
+
+    do k = 1,nz
+    do j = 1,ny
+    do i = 1,nx
+        if (Q_r(i,j,k,rh,1) < rh_floor) then
+            do ir=2,nbasis
+                Q_r(i,j,k,rh:en,ir) = 0.0
+            end do
+            Q_r(i,j,k,rh,1) = rh_floor
+        else
+            do ipge = 1,npge
+                Qedge(ipge,rh) = sum(bf_faces(ipge,1:nbasis)*Q_r(i,j,k,rh,1:nbasis))
+            end do
+
+            Qrhmin = minval(Qedge(:,rh))
+            if (Qrhmin < epsi) then
+                theta = (epsi-Q_r(i,j,k,rh,1))/(Qrhmin-Q_r(i,j,k,rh,1))
+                if (theta .gt. 1.) then
+                    theta = 1.
+                end if
+
+                if (theta .lt. 0) then
+                    theta = 0.
+                end if
+                do ir=2,nbasis
+                    Q_r(i,j,k,rh,ir) = abs(theta)*Q_r(i,j,k,rh,ir)
+                end do
+
+            end if
+
+            Pave = (aindex-1.)*(Q_r(i,j,k,en,1) - 0.5*(Q_r(i,j,k,mx,1)**2 + Q_r(i,j,k,my,1)**2 + Q_r(i,j,k,mz,1)**2)/Q_r(i,j,k,rh,1))
+
+            if (Pave < epsiP) then
+                do ir=2,nbasis
+                    Q_r(i,j,k,rh:en,ir) = 0.0
+                end do
+            else
+                theta = 1.
+                do ipge = 1,npge
+                    do ieq = 1,5
+                        Qedge(ipge,ieq) = sum(bf_faces(ipge,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
+                    end do
+
+                    dn = Qedge(ipge,rh)
+                    dni = 1./dn
+                    P(ipge) = (aindex - 1.)*(Qedge(ipge,en) - 0.5*(Qedge(ipge,mx)**2+Qedge(ipge,my)**2+Qedge(ipge,mz)**2)*dni)
+
+                    if (P(ipge) < epsiP) then
+                        if (Pave .ne. P(ipge)) then
+                            thetaj = (Pave - epsiP)/(Pave - P(ipge))
+                            theta = min(theta,thetaj)
+                        end if
+                    end if
+                end do
+                if (theta .gt. 1.) then
+                    theta = 1.
+                end if
+
+                if (theta .lt. 0.) then
+                    theta = 0.
+                end if
+                do ir=2,nbasis
+                    Q_r(i,j,k,rh:en,ir) = theta*Q_r(i,j,k,rh:en,ir)
+                end do
+            end if
+        end if
+    end do
+    end do
+    end do
+
+
+end subroutine limiter
+!----------------------------------------------------------------------------------
+
+!----------------------------------------------------------------------------------
+subroutine limiter2(Q_r)
 
     implicit none
     integer i, j, k, ieq, ipge, minindex, ir
@@ -1831,7 +2016,7 @@ subroutine limiter(Q_r)
     end do
     end do
 
-end subroutine limiter
+end subroutine limiter2
 
 !----------------------------------------------------------------------------------------------
 
@@ -2204,8 +2389,10 @@ end subroutine
                 vx = Qin(i,j,k,mx,1)*dni
                 vy = Qin(i,j,k,my,1)*dni
                 vz = Qin(i,j,k,mz,1)*dni
-                if(ieos .eq. 1)P = (aindex - 1)*(Qin(i,j,k,en,1) - 0.5*Qin(i,j,k,rh,1)*(vx**2 + vy**2 + vz**2))
 
+                ! from "viscosity" version
+                P = (aindex - 1)*(Qin(i,j,k,en,1) - 0.5*Qin(i,j,k,rh,1)*(vx**2 + vy**2 + vz**2))
+                ! if(ieos .eq. 1)P = (aindex - 1)*(Qin(i,j,k,en,1) - 0.5*Qin(i,j,k,rh,1)*(vx**2 + vy**2 + vz**2))
                 var_xml_val_x(l)=P
             enddo
         enddo
@@ -2395,7 +2582,7 @@ subroutine output_vtk(Qin,nout,iam)
         enddo
     enddo
     E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
-                       varname = 'Ideal EOS Temperature',                    &
+                       varname = 'Temperature',                    &
                        var     = var_xml_val_x)
 
     do i=1+nb,nnx-nb
@@ -2406,12 +2593,15 @@ subroutine output_vtk(Qin,nout,iam)
                 vx = qvtk(i,j,k,mx)*dni
                 vy = qvtk(i,j,k,my)*dni
                 vz = qvtk(i,j,k,mz)*dni
-                if(ieos .eq. 1) P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
-                if(ieos .eq. 2)then
-                    P = P_1*(qvtk(i,j,k,rh)**7.2 - 1.) + P_base
-                    if(P < P_floor) P= P_floor
-                end if
-                var_xml_val_x(l) = P*P0
+                ! from "viscosity" version
+                P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
+                var_xml_val_x(l)=P
+                ! if(ieos .eq. 1) P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
+                ! if(ieos .eq. 2)then
+                !     P = P_1*(qvtk(i,j,k,rh)**7.2 - 1.) + P_base
+                !     if(P < P_floor) P= P_floor
+                ! end if
+                ! var_xml_val_x(l) = P*P0
             enddo
         enddo
     enddo
@@ -2445,6 +2635,18 @@ subroutine output_vtk(Qin,nout,iam)
                        varname = 'Vorticity',                    &
                        var     = var_xml_val_x)
 
+    ! from "viscosity" version
+    do i=1+nb,nnx-nb
+        do j=1+nb,nny-nb
+            do k=1+nb,nnz-nb
+                l=(i-nb)+(j-nb-1)*(nx-2*nb)+(k-nb-1)*(nx-2*nb)*(ny-2*nb)
+                    var_xml_val_x(l)= -2*(Q_r2(i,j,k,my,2)-Q_r2(i,j,k,mx,3))/Q_r2(i,j,k,rh,1)*dxi/t0
+            enddo
+        enddo
+    enddo
+    E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
+                      varname = 'Vorticity2',                    &
+                      var     = var_xml_val_x)
 
     E_IO = VTK_DAT_XML(var_location     = 'cell', &
                        var_block_action = 'Close')
