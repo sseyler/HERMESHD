@@ -4,7 +4,9 @@ PERSEUS Hydrodynamics
 
 PERSEUSHydro is a Discontinuous Galerkin (DG) numerical code written in Fortran and Python for simulating 3D compressible hydrodynamics.
 
-:Authors:      Charles Seyler (primary), Sean Seyler
+Note: Originally written by Charles Seyler, PERSEUSHydro will be adapted to fluctuating hydrodynamics (FH) simulations by Sean Seyler. See Background below!
+
+:Authors:      Charles Seyler (original), Sean Seyler (FH code)
 :Organization: Cornell University, Arizona State University
 :Contact:      ces7@cornell.edu, slseyler@asu.edu
 :Year:         2016
@@ -14,7 +16,7 @@ PERSEUSHydro is a Discontinuous Galerkin (DG) numerical code written in Fortran 
 Background
 ===========
 
-The original PERSEUS (Physics of the Extended-mhd Relaxation System using an Efficient Upwind Scheme) numerical code is a 3D finite volume (FV) method developed by Matt Martin and Charles Seyler in 2011 for solving the extended magnetohydrodynamics (XMHD) equations [1]_. PERSEUS finds applications in simulating High Energy Density (HED) plasmas, such as dense z-pinches, where a wide range of dynamical length scales and densities are encountered. In 2014, Xuan Zhao, Nat Hamlin, and Charles Seyler developed a discontinuous Galerkin method extending the original PERSEUS FV algorithm, further improving its accuracy and computational efficiency in HED applications [2]_. PERSEUSHydro is a specialized extension of the PERSEUS XMHD DG algorithm that solves the compressible Euler equations in three dimensions.
+The original PERSEUS (Physics of the Extended-mhd Relaxation System using an Efficient Upwind Scheme) numerical code is a 3D finite volume (FV) method developed by Matt Martin and Charles Seyler in 2011 for solving the extended magnetohydrodynamics (XMHD) equations [1]_. PERSEUS finds applications in simulating High Energy Density (HED) plasmas, such as dense z-pinches, where a wide range of dynamical length scales and densities are encountered. In 2014, Xuan Zhao, Nat Hamlin, and Charles Seyler developed a discontinuous Galerkin method extending the original PERSEUS FV algorithm, further improving its accuracy and computational efficiency in HED applications [2]_. PERSEUSHydro is a specialized extension of the PERSEUS XMHD DG algorithm that solves the compressible Euler equations in three dimensions. The code is being extended by Sean Seyler (as part of his Blue Waters Graduate Fellowship Project) to model fluctuating hydrodynamics.
 
 Overview
 =========
