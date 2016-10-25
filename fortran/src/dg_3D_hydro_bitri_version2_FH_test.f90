@@ -25,7 +25,7 @@ include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
 integer, parameter :: rh=1, mx=2, my=3, mz=4, en=5
 integer, parameter :: pxx=6, pyy=7, pzz=8, pxy=9, pxz=10, pyz=11, nQ=11
 
-integer, parameter :: nx=20, ny=20, nz=1, ngu=0, nbasis=8, nbastot=27
+integer, parameter :: nx=40, ny=40, nz=1, ngu=0, nbasis=8, nbastot=27
 ! nbasis = 4: {1,x,y,z}
 ! nbasis = 10: {1,x,y,z, P_2(x),P_2(y),P_2(z), yz, zx, xy}
 ! nbasis = 20: nbasis10 + {xyz,xP2(y),yP2(x),xP2(z),
