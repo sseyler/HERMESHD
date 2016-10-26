@@ -291,9 +291,13 @@ bfvtk_dz = np.zeros((nvtk3,nbastot))
 xgrid = np.zeros((20))
 # dxvtk,dyvtk,dzvtk
 
-
+################################################################################
 # MPI definitions
-
+#------------------------------------
+# The prefix "MPI_" is present in global space, exchange_flux, and get_min_dt,
+# while "mpi_" is present in same places as "MPI_" plus the "fill_fluid"
+# routines, set_bc, writeQ, and readQ
+#------------------------------------
 mpi_nx = 6
 mpi_ny = 6
 print_mpi = 0
@@ -301,29 +305,28 @@ print_mpi = 0
 # integer iam,ierr,mpi_nz,numprocs,reorder,cartcomm,mpi_P,mpi_Q,mpi_R
 # integer dims(3),coords(3),periods(3),nbrs(6),reqs(4),stats(MPI_STATUS_SIZE,4)
 # integer,parameter:: NORTH=1,SOUTH=2,EAST=3,WEST=4,UP=5,DOWN=6,MPI_TT=MPI_REAL4
-dims    = np.zeros((3))
-coords  = np.zeros((3))
-periods = np.zeros((3))
-nbrs    = np.zeros((6))
-reqs    = np.zeros((4))
-stats   = np.zeros((MPI_STATUS_SIZE,4))
+dims    = np.zeros((3))  # only in toplevel
+coords  = np.zeros((3))  # only in toplevel
+periods = np.zeros((3))  # only in toplevel
+nbrs    = np.zeros((6))  # present in exchange_flux
+reqs    = np.zeros((4))  # present in exchange_flux and get_min_dt
+stats   = np.zeros((MPI_STATUS_SIZE,4))  # present in exchange_flux and get_min_dt
 
-NORTH = 1
-SOUTH = 2
-EAST  = 3
-WEST  = 4
-UP    = 5
-DOWN  = 6
-MPI_TT = MPI_REAL4
+NORTH = 1  # present in exchange_flux
+SOUTH = 2  # present in exchange_flux
+EAST  = 3  # present in exchange_flux
+WEST  = 4  # present in exchange_flux
+UP    = 5  # present in exchange_flux
+DOWN  = 6  # present in exchange_flux
+MPI_TT = MPI_REAL4  # present in exchange_flux and get_min_dt
+################################################################################
 
 # real cflm
-
 if nbasis <=  8: cflm = 0.14
 if nbasis == 27: cflm = 0.1
 if nbasis == 64: cflm = 0.08
 
 # Initialize grid sizes and local lengths
-
 cbasis[0]         = 1.      # coefficient for basis function {1}
 cbasis[kx:kz+1]   = 3.      # coefficients for basis functions {x,y,z}
 cbasis[kyz:kxy+1] = 9.      # coefficients for basis functions {yz,zx,xy}
@@ -640,8 +643,8 @@ def initial_condition():
     wtev = T_floor
 
     Q_r0[:,:,:,:,:] = 0.0
-    Q_r0[:,:,:,rh,0] = rh_floor
-    Q_r0[:,:,:,en,0] = T_floor*rh_floor/(aindex - 1.)
+    Q_r0[:,:,:,rh,1] = rh_floor
+    Q_r0[:,:,:,en,1] = T_floor*rh_floor/(aindex - 1.)
     MMask[:,:,:] = False
 
     call fill_fluid
