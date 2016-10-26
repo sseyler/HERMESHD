@@ -594,7 +594,9 @@ def init_random_seed(iseed):
 
 #-------------------------------------------------------------------------------
 
-def prep_advance(Q_ri):
+def prep_advance(Q_ri, bfvals_xm, bfvals_xp,
+                       bfvals_ym, bfvals_yp,
+                       bfvals_zm, bfvals_zp):
     ############################################################################
     # Necessary functions
     #------------------------------------
@@ -608,6 +610,9 @@ def prep_advance(Q_ri):
     #  * Qxlow_ext, Qxlow_int, Qxhigh_ext, Qxhigh_int
     #  * Qylow_ext, Qylow_int, Qyhigh_ext, Qyhigh_int
     #  * Qzlow_ext, Qzlow_int, Qzhigh_ext, Qzhigh_int
+    #  * bfvals_xm, bfvals_xp
+    #  * bfvals_ym, bfvals_yp
+    #  * bfvals_zm, bfvals_zp
     #  * nx, ny, nz
     #  * mx, my, mz
     #  * xlbc, ylbc, zlbc
@@ -622,7 +627,9 @@ def prep_advance(Q_ri):
     if ieos == 2:
         call limiter2(Q_ri)
 
-    call prepare_exchange(Q_ri)
+    prepare_exchange(Q_ri, bfvals_xm, bfvals_xp,
+                           bfvals_ym, bfvals_yp,
+                           bfvals_zm, bfvals_zp)
     set_bc(Qxlow_ext, Qxlow_int, Qxhigh_ext, Qxhigh_int,
            Qylow_ext, Qylow_int, Qyhigh_ext, Qyhigh_int,
            Qzlow_ext, Qzlow_int, Qzhigh_ext, Qzhigh_int)
@@ -1934,47 +1941,63 @@ def limiter2(Q_ri, bf_faces):
 
 #----------------------------------------------------------------------------------------------
 
-def prepare_exchange(Q_r):
+def prepare_exchange(Q_ri,
+                     bfvals_xm, bfvals_xp,
+                     bfvals_ym, bfvals_yp,
+                     bfvals_zm, bfvals_zp):
+    ############################################################################
+    # Necessary functions
+    #------------------------------------
+    # PERSEUS:
+    #
+    # EXT LIBS:
+    #  * np.sum()
+    #
+    # Necessary parameters and variables
+    #------------------------------------
+    # GLOBAL:
+    #  * nx, ny, nz, nQ
+    #  * rh, mx, my, mz, en
+    #  * rh_floor, epsi, npge, nface
+    #  * bf_faces(nslim,nbastot)
+    # LOCAL:
+    #  * i, j, k, ieq, ipnt (loop vars)
+    #  * bfvals_zm, bfvals_zp  (both shape (nface,nbastot))
+    #  * bfvals_ym, bfvals_yp  (both shape (nface,nbastot))
+    #  * bfvals_xm, bfvals_xp  (both shape (nface,nbastot))
+    #  * Q_ri (pass-by-ref w/ shape (nx,ny,nz,nQ,nbasis))
+    ############################################################################
     # integer ieq, i, j, k, ipnt
     # real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
 
     for ieq in xrange(nQ):
-        do j = 1,ny
-            do i = 1,nx
-                do ipnt=1,nface
-                    Qzlow_int(i,j,ipnt,ieq) = sum(bfvals_zm(ipnt,1:nbasis)*Q_r(i,j,1,ieq,1:nbasis))
-                    Qzhigh_int(i,j,ipnt,ieq) = sum(bfvals_zp(ipnt,1:nbasis)*Q_r(i,j,nz,ieq,1:nbasis))
-                end do
-            end do
-        end do
+        for j in xrange(ny):
+            for i in xrange(nx):
+                for ipnt in xrange(nface):
+                    Qzlow_int[i,j,ipnt,ieq] = np.sum(bfvals_zm[ipnt,0:nbasis]*Q_ri[i,j,0,ieq,0:nbasis])
+                    Qzhigh_int[i,j,ipnt,ieq] = np.sum(bfvals_zp[ipnt,0:nbasis]*Q_ri[i,j,nz,ieq,0:nbasis])
 
     for ieq in xrange(nQ):
-        do k = 1,nz
-            do i = 1,nx
-                do ipnt=1,nface
-                    Qylow_int(i,k,ipnt,ieq) = sum(bfvals_ym(ipnt,1:nbasis)*Q_r(i,1,k,ieq,1:nbasis))
-                    Qyhigh_int(i,k,ipnt,ieq) = sum(bfvals_yp(ipnt,1:nbasis)*Q_r(i,ny,k,ieq,1:nbasis))
-                end do
-            end do
-        end do
+        for k in xrange(nz):
+            for i in xrange(nx):
+                for ipnt in xrange(nface):
+                    Qylow_int[i,k,ipnt,ieq] = np.sum(bfvals_ym[ipnt,0:nbasis]*Q_ri[i,0,k,ieq,0:nbasis])
+                    Qyhigh_int[i,k,ipnt,ieq] = np.sum(bfvals_yp[ipnt,0:nbasis]*Q_ri[i,ny,k,ieq,0:nbasis])
 
     for ieq in xrange(nQ):
-        do k = 1,nz
-            do j = 1,ny
-                do ipnt=1,nface
-                    Qxlow_int(j,k,ipnt,ieq) = sum(bfvals_xm(ipnt,1:nbasis)*Q_r(1,j,k,ieq,1:nbasis))
-                    Qxhigh_int(j,k,ipnt,ieq) = sum(bfvals_xp(ipnt,1:nbasis)*Q_r(nx,j,k,ieq,1:nbasis))
-                end do
-            end do
-        end do
+        for k in xrange(nz):
+            for j in xrange(ny):
+                for ipnt in xrange(nface):
+                    Qxlow_int[j,k,ipnt,ieq] = np.sum(bfvals_xm[ipnt,0:nbasis]*Q_ri[0,j,k,ieq,0:nbasis])
+                    Qxhigh_int[j,k,ipnt,ieq] = np.sum(bfvals_xp[ipnt,0:nbasis]*Q_ri[nx,j,k,ieq,0:nbasis])
 
-    call exchange_flux
+    call exchange_flux  # FIXME
 
 end subroutine
 
 #----------------------------------------------------------------------------------------------
 
-
+# FIXME
 def exchange_flux():
     # integer mpi_size
 
