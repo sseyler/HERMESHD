@@ -17,8 +17,7 @@
 #
 #-------------------------------------------------------------------------------------------------------------------------------------------
 
-use lib_vtk_io
-include 'mpif.h'
+import numpy as np
 
 # Indices for dynamical variables
 rh  = 0
@@ -281,9 +280,9 @@ kxxyyzz = 26
 nvtk  = 2
 nvtk2 = nvtk*nvtk
 nvtk3 = nvtk*nvtk*nvtk
-nnx   = nx*nvtk * np.ones((I4P))
-nny   = ny*nvtk * np.ones((I4P))
-nnz   = nz*nvtk * np.ones((I4P))
+nnx   = nx*nvtk * np.ones((I4P))  # FIXME
+nny   = ny*nvtk * np.ones((I4P))  # FIXME
+nnz   = nz*nvtk * np.ones((I4P))  # FIXME
 bfvtk    = np.zeros((nvtk3,nbastot))
 bfvtk_dx = np.zeros((nvtk3,nbastot))
 bfvtk_dy = np.zeros((nvtk3,nbastot))
@@ -291,39 +290,38 @@ bfvtk_dz = np.zeros((nvtk3,nbastot))
 xgrid = np.zeros((20))
 # dxvtk,dyvtk,dzvtk
 
-
+################################################################################
 # MPI definitions
-
-mpi_nx = 6
-mpi_ny = 6
-print_mpi = 0
+#------------------------------------
+# mpi_nx = 6
+# mpi_ny = 6
+# print_mpi = 0
 
 # integer iam,ierr,mpi_nz,numprocs,reorder,cartcomm,mpi_P,mpi_Q,mpi_R
 # integer dims(3),coords(3),periods(3),nbrs(6),reqs(4),stats(MPI_STATUS_SIZE,4)
 # integer,parameter:: NORTH=1,SOUTH=2,EAST=3,WEST=4,UP=5,DOWN=6,MPI_TT=MPI_REAL4
-dims    = np.zeros((3))
-coords  = np.zeros((3))
-periods = np.zeros((3))
-nbrs    = np.zeros((6))
-reqs    = np.zeros((4))
-stats   = np.zeros((MPI_STATUS_SIZE,4))
-
-NORTH = 1
-SOUTH = 2
-EAST  = 3
-WEST  = 4
-UP    = 5
-DOWN  = 6
-MPI_TT = MPI_REAL4
+# dims    = np.zeros((3))
+# coords  = np.zeros((3))
+# periods = np.zeros((3))
+# nbrs    = np.zeros((6))
+# reqs    = np.zeros((4))
+# stats   = np.zeros((MPI_STATUS_SIZE,4))
+#
+# NORTH = 1
+# SOUTH = 2
+# EAST  = 3
+# WEST  = 4
+# UP    = 5
+# DOWN  = 6
+# MPI_TT = MPI_REAL4
+################################################################################
 
 # real cflm
-
 if nbasis <=  8: cflm = 0.14
 if nbasis == 27: cflm = 0.1
 if nbasis == 64: cflm = 0.08
 
 # Initialize grid sizes and local lengths
-
 cbasis[0]         = 1.      # coefficient for basis function {1}
 cbasis[kx:kz+1]   = 3.      # coefficients for basis functions {x,y,z}
 cbasis[kyz:kxy+1] = 9.      # coefficients for basis functions {yz,zx,xy}
@@ -337,14 +335,19 @@ cbasis[kyzxx:kxyzz+1]   = 45.   # coefficients for basis functions {yzP_2(x),zxP
 cbasis[kxyyzz:kzxxyy+1] = 75.   # coefficients for basis functions {xP2(y)P2(z),yP2(z)P2(x),zP2(x)P2(y)}
 cbasis[kxxyyzz]         = 125.  # coefficients for basis functions {P2(x)P2(y)P2(z)}
 
-call MPI_Init ( ierr )
-call MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierr)
+################################################################################
+# MPI stuff
+#------------------------------------
+# call MPI_Init ( ierr )
+# call MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierr)
+#
+# mpi_nz = numprocs/(mpi_nx*mpi_ny)
+#
+# dims[0] = mpi_nx
+# dims[1] = mpi_ny
+# dims[2] = mpi_nz
+################################################################################
 
-mpi_nz = numprocs/(mpi_nx*mpi_ny)
-
-dims[0] = mpi_nx
-dims[1] = mpi_ny
-dims[2] = mpi_nz
 
 periods[:] = 0
 if xhbc == 2:
@@ -355,15 +358,19 @@ if zhbc == 2:
     periods[2] = 1
 reorder = 1
 
-call MPI_CART_CREATE(MPI_COMM_WORLD, 3, dims, periods, reorder,cartcomm, ierr)
-call MPI_COMM_RANK (cartcomm, iam, ierr )
-call MPI_CART_COORDS(cartcomm, iam, 3, coords, ierr)
-mpi_P = coords[0] + 1
-mpi_Q = coords[1] + 1
-mpi_R = coords[2] + 1
-call MPI_CART_SHIFT(cartcomm, 0, 1, nbrs(WEST), nbrs(EAST), ierr)
-call MPI_CART_SHIFT(cartcomm, 1, 1, nbrs(SOUTH), nbrs(NORTH), ierr)
-call MPI_CART_SHIFT(cartcomm, 2, 1, nbrs(DOWN), nbrs(UP), ierr)
+################################################################################
+# MPI stuff
+#------------------------------------
+# call MPI_CART_CREATE(MPI_COMM_WORLD, 3, dims, periods, reorder,cartcomm, ierr)
+# call MPI_COMM_RANK (cartcomm, iam, ierr )
+# call MPI_CART_COORDS(cartcomm, iam, 3, coords, ierr)
+# mpi_P = coords[0] + 1
+# mpi_Q = coords[1] + 1
+# mpi_R = coords[2] + 1
+# call MPI_CART_SHIFT(cartcomm, 0, 1, nbrs(WEST), nbrs(EAST), ierr)
+# call MPI_CART_SHIFT(cartcomm, 1, 1, nbrs(SOUTH), nbrs(NORTH), ierr)
+# call MPI_CART_SHIFT(cartcomm, 2, 1, nbrs(DOWN), nbrs(UP), ierr)
+################################################################################
 
 half_length = lx/2.0
 lxd = -half_length
@@ -375,30 +382,27 @@ half_length = lz/2.0
 lzd = -half_length
 lzu = half_length
 
-dxi = (nx*mpi_nx)/(lxu-lxd)
-dyi = (ny*mpi_ny)/(lyu-lyd)
-dzi = (nz*mpi_nz)/(lzu-lzd)
+dxi = nx/(lxu-lxd)
+dyi = ny/(lyu-lyd)
+dzi = nz/(lzu-lzd)
 
 dx = 1./dxi
 dy = 1./dyi
 dz = 1./dzi
-loc_lxd = lxd + (mpi_P-1)*(lxu-lxd)/mpi_nx
-loc_lyd = lyd + (mpi_Q-1)*(lyu-lyd)/mpi_ny
-loc_lzd = lzd + (mpi_R-1)*(lzu-lzd)/mpi_nz
+################################################################################
+# MPI stuff
+#------------------------------------
+# loc_lxd = lxd + (mpi_P-1)*(lxu-lxd)/mpi_nx
+# loc_lyd = lyd + (mpi_Q-1)*(lyu-lyd)/mpi_ny
+# loc_lzd = lzd + (mpi_R-1)*(lzu-lzd)/mpi_nz
 
 rh_fluid = 1.0
 
 # indices used in poynting() for computing Poynting Maxwell flux
 
-mxa[0] = mx
-mxa[1] = my
-mxa[2] = mz
-mya[0] = my
-mya[1] = mz
-mya[2] = mx
-mza[0] = mz
-mza[1] = mx
-mza[2] = my
+mxa[0:3] = np.array([mx, my, mz])
+mya[0:3] = np.array([my, mz, mx])
+mza[0:3] = np.array([mz, mx, my])
 
 t          = 0.0
 dt         = cflm*dx/clt
@@ -409,7 +413,7 @@ dtout = tf/ntout
 
 # Evaluate local cell values of basis functions on cell interior and faces.
 # This is done for 1, 2, or 3 point Gaussian quadrature.
-call set_bfvals_3D
+call set_bfvals_3D  # FIXME
 
 for ir in xrange(nbasis):
     for ipg in xrange(npg):
@@ -431,27 +435,34 @@ for ir in xrange(nbasis):
    wgtbf_ymp[0:5,1,ir] =  0.25*cbasis[ir]*dyi*wgtbfvals_yp[0:nface,ir]
    wgtbf_zmp[0:5,1,ir] =  0.25*cbasis[ir]*dzi*wgtbfvals_zp[0:nface,ir]
 
-call init_random_seed(123456789)
-iseed = 1317345*mpi_P + 5438432*mpi_Q + 38472613*mpi_R
+call init_random_seed(123456789)  # FIXME
+################################################################################
+# MPI stuff
+#------------------------------------
+# iseed = 1317345*mpi_P + 5438432*mpi_Q + 38472613*mpi_R
 
-if iam == print_mpi:
-    print 'total dim= ', mpi_nx*nx,mpi_ny*ny,mpi_nz*nz
-    print 'mpi dim= ',   mpi_nx,mpi_ny,mpi_nz
-    print 'te0 is: ',    te0
-    print 'dx is: ',     ly/(ny*mpi_ny)*L0
-    print 'iquad is: ',  iquad
-    print 'nbasis is: ', nbasis
+# if iam == print_mpi:
+#     print 'total dim= ', nx, ny, nz
+#     print 'te0 is: ',    te0
+#     print 'dx is: ',     ly/(ny)*L0
+#     print 'iquad is: ',  iquad
+#     print 'nbasis is: ', nbasis
+################################################################################
 
-call system_clock(ticks, count_rate, count_max)
+call system_clock(ticks, count_rate, count_max)  # FIXME
 t_start = ticks*1.0/count_rate
 
 if iread == 0:
-    call initial_condition
+    initial_condition(Q_r0, MMask)
 else:
     # This applies only if the initial data are being read from an input file.
     # - If resuming a run, keep the previous clock (i.e., t at nout) running.
     # - If not resuming a run, treat input as initial conditions at t=0, nout=0.
-    call readQ(fpre,iam,iread,Q_r0,t_p,dt_p,nout_p,mpi_nx_p,mpi_ny_p,mpi_nz_p)
+    ################################################################################
+    # MPI stuff
+    #------------------------------------
+    # call readQ(fpre,iam,iread,Q_r0,t_p,dt_p,nout_p,mpi_nx_p,mpi_ny_p,mpi_nz_p)
+    ################################################################################
 
     if resuming:
         t    = t_p
@@ -462,30 +473,34 @@ else:
         dtout_p = t_p / (nout_p - 1)
     else:  # Automatically pass consistency check
         dtout_p = dtout
-    if iam == print_mpi:
-        print 'resuming = ', resuming
-        print 't = ', t
-        print 'dt = ', dt
-        print 'nout = ', nout
-        print 'dtout_p = ', dtout_p, ' dtout = ', dtout
-        print 'mpi_nx_p = ', mpi_nx_p, ' mpi_nx = ', mpi_nx
-        print 'mpi_ny_p = ', mpi_ny_p, ' mpi_ny = ', mpi_ny
-        print 'mpi_nz_p = ', mpi_nz_p, ' mpi_nz = ', mpi_nz
+    ################################################################################
+    # MPI stuff
+    #------------------------------------
+    # if iam == print_mpi:
+    #     print 'resuming = ', resuming
+    #     print 't = ', t
+    #     print 'dt = ', dt
+    #     print 'nout = ', nout
+    #     print 'dtout_p = ', dtout_p, ' dtout = ', dtout
 
+    ################################################################################
+    # MPI stuff
+    #------------------------------------
     # Quit if dtout is incompatible with input t/(nout-1)
     if abs(dtout_p-dtout)/dt_p > 1.01:
-        if iam == print_mpi:
-            print 'Bad restart, non-matching dtout'
-        call exit(-1)
-    if (mpi_nx_p != mpi_nx) or (mpi_ny_p != mpi_ny) or (mpi_nz_p != mpi_nz):
-        if iam == print_mpi:
-            print 'Bad restart, non-matching mpi_nx, mpi_ny, or mpi_nz'
-        call exit(-1)
+        # if iam == print_mpi:
+        #     print 'Bad restart, non-matching dtout'
+        call exit(-1)  # FIXME
+    # if (mpi_nx_p != mpi_nx) or (mpi_ny_p != mpi_ny) or (mpi_nz_p != mpi_nz):
+    #     if iam == print_mpi:
+    #         print 'Bad restart, non-matching mpi_nx, mpi_ny, or mpi_nz'
+    #     call exit(-1)
+    ################################################################################
 
 
-call system_clock( ticks, count_rate, count_max )
+call system_clock( ticks, count_rate, count_max )  # FIXME
 t1 = 1.0*ticks / count_rate
-call output_vtk(Q_r0,nout,iam)
+call output_vtk(Q_r0,nout,iam)  # FIXME
 
 while t < tf:
 
@@ -502,53 +517,63 @@ while t < tf:
 
         Q_r0 = 0.5*(Q_r0 + Q_r2)
 
-    if iorder == 3:
-        call prep_advance(Q_r0)
-        call advance_time_level_gl(Q_r0,Q_r1)
-
-        call prep_advance(Q_r1)
-        call advance_time_level_gl(Q_r1,Q_r2)
-
-        Q_r3 = 0.75*Q_r0 + 0.25*Q_r2
-
-        call prep_advance(Q_r3)
-        call advance_time_level_gl(Q_r3,Q_r2)
-
-        Q_r0 = (Q_r0 + 2.*Q_r2)/3.
+    # if iorder == 3:
+    #     call prep_advance(Q_r0)
+    #     call advance_time_level_gl(Q_r0,Q_r1)
+    #
+    #     call prep_advance(Q_r1)
+    #     call advance_time_level_gl(Q_r1,Q_r2)
+    #
+    #     Q_r3 = 0.75*Q_r0 + 0.25*Q_r2
+    #
+    #     call prep_advance(Q_r3)
+    #     call advance_time_level_gl(Q_r3,Q_r2)
+    #
+    #     Q_r0 = (Q_r0 + 2.*Q_r2)/3.
 
     t = t+dt
 
     if t > dtout*nout:
         nout = nout + 1
         if iam == print_mpi:
-            call system_clock(ticks, count_rate, count_max)
+            call system_clock(ticks, count_rate, count_max)  # FIXME
             t2 = 1.0*ticks/count_rate
             print 'Iteration time', (t2-t1), 'seconds'
             t1 = t2
             print 'nout = ', nout
             print "        t= ",t*100.,"         dt= ",dt
 
-        call MPI_BARRIER(cartcomm,ierr)
-        call output_vtk(Q_r0,nout,iam)
+        ################################################################################
+        # MPI stuff
+        #------------------------------------
+        # call MPI_BARRIER(cartcomm,ierr)
+        call output_vtk(Q_r0,nout,iam)  # FIXME
 
         # write checkpoint files; assign an odd/even id to ensure last two sets are kept
         if iwrite == 1:
-            ioe = 2 - mod(nout,2)
-            call writeQ(fpre,iam,ioe,Q_r0,t,dt,nout,mpi_nx,mpi_ny,mpi_nz)
+            ioe = 2 - mod(nout,2)  # FIXME
+            call writeQ(fpre,iam,ioe,Q_r0,t,dt,nout,mpi_nx,mpi_ny,mpi_nz)  # FIXME
 
-        call MPI_BARRIER(cartcomm,ierr)
+        ################################################################################
+        # MPI stuff
+        #------------------------------------
+        # call MPI_BARRIER(cartcomm,ierr)
 
         if iam == print_mpi:
-            call system_clock(ticks, count_rate, count_max)
+            call system_clock(ticks, count_rate, count_max)  # FIXME
             t2 = ticks/count_rate
             print 'Output time', (t2-t1), 'seconds'
             t1 = t2
 
-call MPI_Finalize (ierr)
+################################################################################
+# MPI stuff
+#------------------------------------
+# call MPI_Finalize (ierr)
 
-contains
+# contains
 
 #------------------------------------------
+# FIXME
 def init_random_seed(iseed):
     # integer :: i, n, clock,iseed
     # integer, dimension(:), allocatable :: seed
@@ -570,12 +595,37 @@ def init_random_seed(iseed):
 #-------------------------------------------------------------------------------
 
 def prep_advance(Q_ri):
+    ############################################################################
+    # Necessary functions
+    #------------------------------------
+    # PERSEUS:
+    #
+    # EXT LIBS:
+    #
+    # Necessary parameters and variables
+    #------------------------------------
+    # GLOBAL:
+    #  * Qxlow_ext, Qxlow_int, Qxhigh_ext, Qxhigh_int
+    #  * Qylow_ext, Qylow_int, Qyhigh_ext, Qyhigh_int
+    #  * Qzlow_ext, Qzlow_int, Qzhigh_ext, Qzhigh_int
+    #  * nx, ny, nz
+    #  * mx, my, mz
+    #  * xlbc, ylbc, zlbc
+    #  * t
+    # LOCAL:
+    #  * Q_ri (pass-by-ref w/ shape (nx,ny,nz,nQ,nbasis))
+    ############################################################################
     # real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri
 
-    if ieos == 2:
+    if ieos == 1:
         call limiter(Q_ri)
+    if ieos == 2:
+        call limiter2(Q_ri)
+
     call prepare_exchange(Q_ri)
-    call set_bc
+    set_bc(Qxlow_ext, Qxlow_int, Qxhigh_ext, Qxhigh_int,
+           Qylow_ext, Qylow_int, Qyhigh_ext, Qyhigh_int,
+           Qzlow_ext, Qzlow_int, Qzhigh_ext, Qzhigh_int)
     call flux_cal(Q_ri)
     call innerintegral(Q_ri)
     call glflux
@@ -632,10 +682,22 @@ def get_min_dt(dt):
 
 #----------------------------------------------------------------------------------------------
 
-def initial_condition():
-    # integer i,j,k
-    # real coeff
-    # real den, Pre, wtev
+def initial_condition(Q_r0, MMask):
+    ############################################################################
+    # Necessary functions
+    #------------------------------------
+    # PERSEUS:
+    #
+    # EXT LIBS:
+    #
+    # Necessary parameters and variables
+    #------------------------------------
+    # GLOBAL:
+    #  * rh, en
+    #  * T_floor, aindex, rh_fluid
+    # LOCAL:
+    #  * wtev
+    ############################################################################
 
     wtev = T_floor
 
@@ -644,7 +706,7 @@ def initial_condition():
     Q_r0[:,:,:,en,0] = T_floor*rh_floor/(aindex - 1.)
     MMask[:,:,:] = False
 
-    call fill_fluid
+    fill_fluid(Q_r0)
 
 #-------------------------------------------------------
 
@@ -652,214 +714,170 @@ def initial_condition():
 
 #-------------------------------------------------------
 
-def fill_fluid():
+def fill_fluid(Q_r0):
 
-#-------------------------------------------------------
+    ############################################################################
+    # Necessary functions
+    #------------------------------------
+    # PERSEUS:
+    # * xc(), yc(), zc()
+    #
+    # EXT LIBS:
+    # * np.cosh(), np.uniform()
+    #
+    # Necessary parameters and variables
+    #------------------------------------
+    # GLOBAL:
+    #  * nx, ny, nz
+    #  * rh, mx, my, mz, en
+    #  * T_floor, aindex, rh_fluid, lyu
+    # LOCAL:
+    #  * i, j, k (loop vars)
+    #  * wtev, rnum, xcc, ycc, zcc
+    ############################################################################
 
-    # integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,igrid,ieq,inds(nbasis)
-    # real wirer,x,y,x0,y0,rhline,wtev,rx,ry,rnum,w0
-    # real qquad(npg,nQ),xcc,ycc,zcc  ! bfint(npg,nbasis),qquadv(npg)
-    iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
+    ############################################################################
+    # MPI stuff
+    #------------------------------------
+    # iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
 
     wtev = T_floor
-    w0 = 0.3
 
     # test problem is an unstable flow jet in x with velocity perturbations in y
-
     for i in xrange(nx):
         for j in xrange(ny):
             for k in xrange(nz):
 
-                call random_number(rand_number)
-                rnum = (rand_number - 0.5)
+                rnum = np.uniform(low=-0.5, high=0.5)
 
-                #-------------------------------------------------------
-                # from "viscosity" version
-                Q_r0(i,j,k,rh,1) = rh_floor
-                Q_r0(i,j,k,en,1) = wtev*Q_r0(i,j,k,rh,1)/(aindex - 1.)
+                Q_r0[i,j,k,rh,0] = rh_floor
+                Q_r0[i,j,k,en,0] = wtev*Q_r0[i,j,k,rh,0]/(aindex-1.0)
 
                 xcc = xc(i)
                 ycc = yc(j)
                 zcc = zc(k)
 
-                Q_r0(i,j,k,rh,1) = rh_fluid
-                Q_r0(i,j,k,my,1) = 0.001*rnum/cosh(20*yc(j)/lyu)**2
-                Q_r0(i,j,k,mz,1) = 0.
-                Q_r0(i,j,k,mx,1) = 1.0*Q_r0(i,j,k,rh,1)/cosh(20*ycc/lyu)/1.
-                Q_r0(i,j,k,en,1) = wtev*Q_r0(i,j,k,rh,1)/(aindex - 1.) + 0.5*(Q_r0(i,j,k,mx,1)**2 + Q_r0(i,j,k,my,1)**2 + Q_r0(i,j,k,mz,1)**2)/Q_r0(i,j,k,rh,1)
-                #-------------------------------------------------------
+                Q_r0[i,j,k,rh,0] = rh_fluid
+                Q_r0[i,j,k,my,0] = 0.001*rnum/np.cosh(20*ycc/lyu)**2
+                Q_r0[i,j,k,mz,0] = 0.0
+                Q_r0[i,j,k,mx,0] = 1.0*Q_r0[i,j,k,rh,0]/np.cosh(20*ycc/lyu)/1.0
+                Q_r0[i,j,k,en,0] = wtev*Q_r0[i,j,k,rh,0]/(aindex-1.0)           \
+                                 + 0.5*(Q_r0[i,j,k,mx,0]**2                     \
+                                      + Q_r0[i,j,k,my,0]**2                     \
+                                      + Q_r0[i,j,k,mz,0]**2)/Q_r0[i,j,k,rh,0]
+#----------------------------------------------------------------------------------------------
 
-#-------------------------------------------------------
+def set_bc(Qxlow_ext, Qxlow_int, Qxhigh_ext, Qxhigh_int,
+           Qylow_ext, Qylow_int, Qyhigh_ext, Qyhigh_int,
+           Qzlow_ext, Qzlow_int, Qzhigh_ext, Qzhigh_int):
+    ############################################################################
+    # Necessary functions
+    #------------------------------------
+    # PERSEUS:
+    # * r()
+    #
+    # EXT LIBS:
+    # * np.min(), np.max()
+    #
+    # Necessary parameters and variables
+    #------------------------------------
+    # GLOBAL:
+    #  * Qxlow_ext, Qxlow_int, Qxhigh_ext, Qxhigh_int
+    #  * Qylow_ext, Qylow_int, Qyhigh_ext, Qyhigh_int
+    #  * Qzlow_ext, Qzlow_int, Qzhigh_ext, Qzhigh_int
+    #  * nx, ny, nz
+    #  * mx, my, mz
+    #  * xlbc, ylbc, zlbc
+    #  * nface, lxu, dx
+    # LOCAL:
+    #  * i, j, k, i4 (loop vars)
+    #  * disk_rad (optional)
+    ############################################################################
 
-def fill_fluid2():
+    #---------------------------------------------------------
+    # Set BCs for x-boundaries
+    if xlbc != 2:
+        set_bc_x(Qxlow_ext, Qxlow_int, Qxhigh_ext, Qxhigh_int)
 
-#-------------------------------------------------------
+    #---------------------------------------------------------
+    # Set BCs for x-boundaries
+    if ylbc != 2:
+        set_bc_y(Qylow_ext, Qylow_int, Qyhigh_ext, Qyhigh_int)
 
-    # integer i,j,k,izw(4),ixw(4),iyw(4),iw,iseed
-    # real wirer,x,y,x0,y0,rhline,wtev,rx,ry,rnum,w0
-    iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
+    #---------------------------------------------------------
+    # Set BCs for x-boundaries
+    if zlbc != 2:
+        set_bc_z(Qzlow_ext, Qzlow_int, Qzhigh_ext, Qzhigh_int)
 
-    wtev = 2*T_floor
-	w0 = 0.3
 
-    for i in xrange(nx):
+def set_bc_x(Qxlow_ext, Qxlow_int, Qxhigh_ext, Qxhigh_int):
+    #--------------------------------------------------------
+    # Set B.C.'s at bottom x-boundary
+    for k in xrange(nz):
         for j in xrange(ny):
-            for k in xrange(nz):
-                call random_number(rand_number)
 
-                rnum = (rand_number - 0.5)
+            for i4 in xrange(nface):
+                Qxlow_ext[j,k,i4,:] = Qxlow_int[j,k,i4,:]
 
-                Q_r0(i,j,k,rh,1) = rh_fluid!*exp(-zc(k)/Hscale)
-                Q_r0(i,j,k,my,1) = 0.005*rnum/cosh(20*yc(j)/lyu)**2
-                rnum = (rand_number - 0.5)
-                # Q_r0(i,j,k,mz,1) = 0.005*rnum
-                # Q_0(i,j,k,mx) = 1.0*Q_0(i,j,k,rh)/cosh(10*(yc(j)-0.25*lyu)/lyu) - 1.0*Q_0(i,j,k,rh)/cosh(10*(yc(j)-0.75*lyu)/lyu) &
-                #                      - 1.0*Q_0(i,j,k,rh)/cosh(10*(yc(j)+0.25*lyu)/lyu) + 1.0*Q_0(i,j,k,rh)/cosh(10*(yc(j)+0.75*lyu)/lyu)
-                Q_r0(i,j,k,mx,1) = 1.0*Q_r0(i,j,k,rh,1)/cosh(20*yc(j)/lyu)
-                # Q_0(i,j,k,my) = rh_fluid*sin(4*pi*xc(i)/lx)*cos(4*pi*yc(j)/ly)
-                # Q_0(i,j,k,mx) = -rh_fluid*sin(4*pi*yc(j)/ly)  #*cos(4*pi*xc(i)/lx)
-                # Q_0(i,j,k,en) = grav*Hscale*Q_0(i,j,k,rh)/(aindex - 1.) + 0.5*(Q_0(i,j,k,mx)**2 + Q_0(i,j,k,my)**2)/Q_0(i,j,k,rh)
+            if np.max(Qxlow_ext[j,k,0:nface,mx]) > 0.0:
+                Qxlow_ext[j,k,0:nface,mx] = 0.
 
-                # rnum = (rand_number - 0.5)
-                # Q_0(i,j,k,mx) = 3*rnum
-                # rnum = (rand_number - 0.5)
-                # Q_0(i,j,k,my) = 3*rnum
-                # rnum = (rand_number - 0.5)
-                # Q_0(i,j,k,mz) = 3*rnum
+    #--------------------------------------------------------
+    # Set B.C.'s at top x-boundary
+    for k in xrange(nz):
+        for j in xrange(ny):
 
-                Q_r0(i,j,k,en,1) = wtev*Q_r0(i,j,k,rh,1)/(aindex - 1.) + 0.5*(Q_r0(i,j,k,mx,1)**2 + Q_r0(i,j,k,my,1)**2 + Q_r0(i,j,k,mz,1)**2)/Q_r0(i,j,k,rh,1)
+            for i4 in xrange(nface):
+                Qxhigh_ext[j,k,i4,:] = Qxhigh_int[j,k,i4,:]
+            if np.min(Qxhigh_ext[j,k,0:nface,mx]) < 0.0:
+                Qxhigh_ext[j,k,0:nface,mx] = 0.
+
+
+def set_bc_y(Qylow_ext, Qylow_int, Qyhigh_ext, Qyhigh_int):
+    #--------------------------------------------------------
+    # Set B.C.'s at bottom y-boundary
+    for k in xrange(nz):
+        for i in xrange(nx):
+
+            for i4 in xrange(nface):
+                Qylow_ext[i,k,i4,:] = Qylow_int[i,k,i4,:]
+            if np.max(Qylow_ext[i,k,0:nface,my]) > 0.0:
+                Qylow_ext[i,k,0:nface,my] = 0.
+
+    #--------------------------------------------------------
+    # Set B.C.'s at top y-boundary
+    for k in xrange(nz):
+        for i in xrange(nx):
+
+            for i4 in xrange(nface):
+                Qyhigh_ext[i,k,i4,:] = Qyhigh_int[i,k,i4,:]
+            if np.min(Qyhigh_ext[i,k,0:nface,my]) < 0.0:
+                Qyhigh_ext[i,k,0:nface,my] = 0.
+
+
+def set_bc_z(Qzlow_ext, Qzlow_int, Qzhigh_ext, Qzhigh_int):
+    #--------------------------------------------------------
+    # Set B.C.'s at bottom z-boundary
+    for j in xrange(ny):
+        for i in xrange(nx):
+
+            if r(i,j) > disk_rad and r(i,j) < (lxu - 2.0*dx):
+                for i4 in xrange(nface):
+                    Qzlow_ext[i,j,i4,:] = Qzlow_int[i,j,i4,:]
+            if np.max(Qzlow_ext[i,j,0:nface,mz]) > 0.0:
+                Qzlow_ext[i,j,0:nface,mz] = 0.
+
+    #-----------------------------------------------------------
+    # Set B.C.'s at top z-boundary
+    for j in xrange(ny):
+        for i in xrange(nx):
+
+            Qzhigh_ext[i,j,0:nface,:] = Qzhigh_int[i,j,0:nface,:]
+            if np.min(Qzhigh_ext[i,j,0:nface,mz]) < 0.0:
+                Qzhigh_ext[i,j,0:nface,mz] = 0
 
 #----------------------------------------------------------------------------------------------
 
-def fill_fluid0():
-    # integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,igrid,ieq,inds(nbasis)
-    # real wirer,x,y,x0,y0,rhline,wtev,rx,ry,rnum,w0
-    # real qquad(npg,nQ),xcc,ycc,zcc  # bfint(npg,nbasis),qquadv(npg)
-    iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
-
-    wtev = T_floor
-    w0 = 0.3
-
-#       test problem is an unstable flow jet in x with velocity perturbations in y
-
-    for i in xrange(nx):
-        for j in xrange(ny):
-            for k in xrange(nz):
-
-                call random_number(rand_number)
-                rnum = (rand_number - 0.5)
-
-                qquad(:,:) = 0.
-
-                for igrid in xrange(npg):
-
-                    qquad[igrid,rh] = rh_floor
-                    qquad[igrid,en] = wtev*qquad[igrid,rh]/(aindex - 1.)
-
-                    xcc = xc[i] + bfvals_int[igrid,kx]*0.5/dxi
-                    ycc = yc[j] + bfvals_int[igrid,ky]*0.5/dyi
-                    zcc = zc[k] + bfvals_int[igrid,kz]*0.5/dzi
-
-                    qquad[igrid,rh] = rh_fluid
-                    qquad[igrid,my] = 0.001*rnum/1.
-                    qquad[igrid,mz] = 0.
-                    qquad[igrid,mx] = 0.5*qquad[igrid,rh]/cosh(20*ycc/lyu)/1.
-                    qquad[igrid,en] = wtev*qquad[igrid,rh]/(aindex - 1.) + 0.5*(qquad[igrid,mx]**2 + qquad[igrid,my]**2 + qquad[igrid,mz]**2)/qquad[igrid,rh]
-
-                for ieq in xrange(rh, en+1):
-                    for ir in xrange(nbasis):
-                        Q_r0[i,j,k,ieq,ir] = 0.125*cbasis[ir]*sum(wgt3d[0:npg]*bfvals_int[0:npg,ir]*qquad[0:npg,ieq])
-
-
-#----------------------------------------------------------------------------------------------
-
-def set_bc():
-    # real P1, P2, den, vz(nface)
-    # integer i,j,k,ne,ieq,l,i4
-
-    if mpi_P == 1 and xlbc != 2:
-        # Set B.C.'s at bottom x-boundary.
-
-        for k in xrange(nz):
-            for j in xrange(ny):
-
-                for i4 in xrange(nface):
-                    Qxlow_ext[j,k,i4,:] = Qxlow_int[j,k,i4,:]
-
-                if maxval(Qxlow_ext[j,k,0:nface,mx]) > 0.0:
-                    Qxlow_ext[j,k,0:nface,mx] = 0.
-
-#---------------------------------------------------------
-
-    if mpi_P == mpi_nx and xlbc != 2:
-        # Set B.C.'s at top x-boundary.
-
-        for k in xrange(nz):
-            for j in xrange(ny):
-
-                for i4 in xrange(nface):
-                    Qxhigh_ext[j,k,i4,:] = Qxhigh_int[j,k,i4,:]
-
-                if minval(Qxhigh_ext[j,k,0:nface,mx]) < 0.0:
-                    Qxhigh_ext[j,k,0:nface,mx] = 0.
-
-#----------------------------------------------------
-
-    if mpi_Q == 1 and ylbc != 2:
-        # Set B.C.'s at bottom y-boundary.
-
-        for k in xrange(nz):
-            for i in xrange(nx):
-
-                for i4 in xrange(nface):
-                    Qylow_ext[i,k,i4,:] = Qylow_int[i,k,i4,:]
-
-                if maxval(Qylow_ext[i,k,0:nface,my]) > 0.0:
-                    Qylow_ext[i,k,0:nface,my] = 0.
-
-#------------------------------------------------------
-
-    if mpi_Q == mpi_ny and ylbc != 2:
-        # Set B.C.'s at top y-boundary.
-
-        for k in xrange(nz):
-            for i in xrange(nx):
-
-                for i4 in xrange(nface):
-                    Qyhigh_ext[i,k,i4,:] = Qyhigh_int[i,k,i4,:]
-
-                if minval(Qyhigh_ext[i,k,0:nface,my]) < 0.0:
-                    Qyhigh_ext[i,k,0:nface,my] = 0.
-
-#--------------------------------------------------------
-
-    if mpi_R == 1 and zlbc != 2:
-        # Set B.C.'s at bottom z-boundary.
-
-        for j in xrange(ny):
-            for i in xrange(nx):
-
-                if r(i,j) > disk_rad and r(i,j) < (lxu - 2.0*dx):
-                    for i4 in xrange(nface):
-                        Qzlow_ext[i,j,i4,:] = Qzlow_int[i,j,i4,:]
-
-                if maxval(Qzlow_ext[i,j,0:nface,mz]) > 0.0:
-                    Qzlow_ext[i,j,0:nface,mz] = 0.
-
-#-----------------------------------------------------------
-
-    if mpi_R == mpi_nz and zlbc != 2:
-        # Set B.C.'s at top z-boundary.
-
-        for j in xrange(ny):
-            for i in xrange(nx):
-
-                Qzhigh_ext[i,j,1:nface,:] = Qzhigh_int[i,j,1:nface,:]
-
-                if minval(Qzhigh_ext[i,j,0:nface,mz]) < 0.0:
-                    Qzhigh_ext[i,j,0:nface,mz] = 0
-
-#----------------------------------------------------------------------------------------------
 
 def advance_time_level_gl(Q_ri,Q_rp):
     # integer i,j,k,ieq,ir
@@ -1788,12 +1806,28 @@ end function cfcal
 
 #----------------------------------------------------------------------------------
 
-def limiter(Q_r):
-    # integer i, j, k, ieq, ipge, minindex, ir
-    # real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
-    # real Qedge(npge,nQ),theta,Qmin(nQ), deltaQ(nQ)
-    # real epsi, Qrhmin, QPmin, P(npge), Pave, dn, dni, epsiP, thetaj
-    # real*8 a, b, c
+def limiter(Q_ri, bf_faces):
+    ############################################################################
+    # Necessary functions
+    #------------------------------------
+    # PERSEUS:
+    #
+    # EXT LIBS:
+    #  * np.sum(), np.min(), abs()
+    #
+    # Necessary parameters and variables
+    #------------------------------------
+    # GLOBAL:
+    #  * nx, ny, nz, nQ
+    #  * rh, mx, my, mz, en
+    #  * rh_floor, T_floor, aindex, npge, nbasis
+    #  * bf_faces(nslim,nbastot)
+    # LOCAL:
+    #  * i, j, k, ieq, ir, ipge (loop vars)
+    #  * Qrhmin, epsi, epsiP, thetaj, dn, dni, Pave
+    #  * Qedge(npge,nQ), P(npge)
+    #  * Q_ri (pass-by-ref w/ shape (nx,ny,nz,nQ,nbasis))
+    ############################################################################
 
     epsi = rh_floor
     epsiP = rh_floor*T_floor
@@ -1801,60 +1835,49 @@ def limiter(Q_r):
     for k in xrange(nz):
         for j in xrange(ny):
             for i in xrange(nx):
-                if Q_r(i,j,k,rh,1) < rh_floor:
-                    do ir=2,nbasis
-                        Q_r(i,j,k,rh:en,ir) = 0.0
-                    end do
-                    Q_r(i,j,k,rh,1) = rh_floor
+                if Q_ri[i,j,k,rh,0] < rh_floor:
+                    for ir in xrange(1, nbasis):
+                        Q_ri[i,j,k,rh:en+1,ir] = 0.0
+                    Q_ri[i,j,k,rh,0] = rh_floor
+
                 else:
-                    do ipge = 1,npge
-                        Qedge(ipge,rh) = sum(bf_faces(ipge,1:nbasis)*Q_r(i,j,k,rh,1:nbasis))
-                    end do
+                    for ipge in xrange(npge):
+                        Qedge[ipge,rh] = np.sum(bf_faces[ipge,0:nbasis]*Q_ri[i,j,k,rh,0:nbasis])
 
-                    Qrhmin = minval(Qedge(:,rh))
+                    Qrhmin = np.min(Qedge[:,rh])
                     if Qrhmin < epsi:
-                        theta = (epsi-Q_r(i,j,k,rh,1))/(Qrhmin-Q_r(i,j,k,rh,1))
-                        if theta > 1.0:
-                            theta = 1.0
+                        theta = (epsi-Q_ri[i,j,k,rh,0])/(Qrhmin-Q_ri[i,j,k,rh,0])
+                        theta = 1.0 if theta > 1.0 else 0.0
 
-                        if theta < 0:
-                            theta = 0.
-                        do ir=2,nbasis
-                            Q_r(i,j,k,rh,ir) = abs(theta)*Q_r(i,j,k,rh,ir)
-                        end do
+                        for ir in xrange(1, nbasis):
+                            Q_ri[i,j,k,rh,ir] = abs(theta)*Q_ri[i,j,k,rh,ir]
 
-                    Pave = (aindex-1.)*(Q_r(i,j,k,en,1) - 0.5*(Q_r(i,j,k,mx,1)**2 + Q_r(i,j,k,my,1)**2 + Q_r(i,j,k,mz,1)**2)/Q_r(i,j,k,rh,1))
+                    Pave = (aindex-1.)*(Q_ri[i,j,k,en,0] - 0.5*(Q_ri[i,j,k,mx,0]**2 + Q_ri[i,j,k,my,0]**2 + Q_ri[i,j,k,mz,0]**2)/Q_ri[i,j,k,rh,0])
 
                     if Pave < epsiP:
-                        do ir=2,nbasis
-                            Q_r(i,j,k,rh:en,ir) = 0.0
-                        end do
+                        for ir in xrange(1, nbasis):
+                            Q_ri[i,j,k,rh:en+1,ir] = 0.0
+
                     else:
                         theta = 1.0
-                        do ipge = 1,npge
-                            do ieq = 1,5
-                                Qedge(ipge,ieq) = sum(bf_faces(ipge,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
-                            end do
+                        for ipge in xrange(npge):
+                            for ieq in xrange(5):
+                                Qedge[ipge,ieq] = np.sum(bf_faces[ipge,0:nbasis]*Q_ri[i,j,k,ieq,0:nbasis])
 
-                            dn = Qedge(ipge,rh)
+                            dn = Qedge[ipge,rh]
                             dni = 1./dn
-                            P(ipge) = (aindex - 1.)*(Qedge(ipge,en) - 0.5*(Qedge(ipge,mx)**2+Qedge(ipge,my)**2+Qedge(ipge,mz)**2)*dni)
+                            P[ipge] = (aindex - 1.)*(Qedge[ipge,en] - 0.5*(Qedge[ipge,mx]**2+Qedge[ipge,my]**2+Qedge[ipge,mz]**2)*dni)
 
-                            if P(ipge) < epsiP:
-                                if Pave != P(ipge):
-                                    thetaj = (Pave - epsiP)/(Pave - P(ipge))
-                                    theta = min(theta,thetaj)
-                        end do
-                        if theta > 1.0:
-                            theta = 1.
+                            if P[ipge] < epsiP:
+                                if Pave != P[ipge]:
+                                    thetaj = (Pave - epsiP)/(Pave - P[ipge])
+                                    theta = np.min(theta, thetaj)
 
-                        if theta < 0.0:
-                            theta = 0.
-                        do ir=2,nbasis
-                            Q_r(i,j,k,rh:en,ir) = theta*Q_r(i,j,k,rh:en,ir)
-                        end do
+                        theta = 1.0 if theta > 1.0 else 0.0
 
-end subroutine limiter
+                        for ir in xrange(1, nbasis):
+                            Q_ri[i,j,k,rh:en+1,ir] = theta*Q_ri[i,j,k,rh:en+1,ir]
+
 
 #----------------------------------------------------------------------------------
 
@@ -1878,9 +1901,8 @@ def limiter2(Q_r):
                     Q_r(i,j,k,rh,1) = eps
 
                 else:
-                    do ipge = 1,npge
+                    for ipge in xrange(npge):
                         Qedge(ipge,rh) = sum(bf_faces(ipge,1:nbasis)*Q_r(i,j,k,rh,1:nbasis))
-                    end do
 
                     Qrhmin = minval(Qedge(:,rh))
 
@@ -2034,17 +2056,17 @@ end subroutine
 #-----------------------------------------------------------
 
 def xc(i):
-    return loc_lxd + (i - 0.5)*dx
+    return (i - 0.5)*dx
 
 #-----------------------------------------------------------
 
 def yc(j):
-    return loc_lyd + (j - 0.5)*dy
+    return (j - 0.5)*dy
 
 #-----------------------------------------------------------
 
 def zc(k):
-    return loc_lzd + (k - 0.5)*dz
+    return (k - 0.5)*dz
 
 #-----------------------------------------------------------
 
@@ -2054,7 +2076,7 @@ def rz(i,j):
 #-----------------------------------------------------------
 
 def r(i,j):
-    return sqrt(xc(i)**2 + yc(j)**2)
+    return (xc(i)**2 + yc(j)**2)**0.5
 
 #-----------------------------------------------------------
 
