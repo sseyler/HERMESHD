@@ -1829,7 +1829,9 @@ def limiter(Q_ri, bf_faces):
     #  * Q_ri (pass-by-ref w/ shape (nx,ny,nz,nQ,nbasis))
     ############################################################################
 
-    epsi = rh_floor
+    Qedge = np.zeros((npge,nQ))
+    P     = np.zeros((npge))
+    epsi  = rh_floor
     epsiP = rh_floor*T_floor
 
     for k in xrange(nz):
@@ -1881,43 +1883,54 @@ def limiter(Q_ri, bf_faces):
 
 #----------------------------------------------------------------------------------
 
-def limiter2(Q_r):
-    # integer i, j, k, ieq, ipge, minindex, ir
-    # real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
-    # real Qedge(npge,nQ),theta,Qmin(nQ), deltaQ(nQ)
-    # real eps, Qrhmin, QPmin, P(npge), Pave, dn, dni, epsiP, thetaj
-    # real*8 a, b, c
+def limiter2(Q_ri, bf_faces):
+    ############################################################################
+    # Necessary functions
+    #------------------------------------
+    # PERSEUS:
+    #
+    # EXT LIBS:
+    #  * np.sum(), np.min(), abs()
+    #
+    # Necessary parameters and variables
+    #------------------------------------
+    # GLOBAL:
+    #  * nx, ny, nz, nQ
+    #  * rh, mx, my, mz, en
+    #  * rh_floor, epsi, npge, nbasis
+    #  * bf_faces(nslim,nbastot)
+    # LOCAL:
+    #  * i, j, k, ieq, ir, ipge (loop vars)
+    #  * Qrhmin, theta
+    #  * Qedge(npge,nQ)
+    #  * Q_ri (pass-by-ref w/ shape (nx,ny,nz,nQ,nbasis))
+    ############################################################################
 
-    eps = rh_min
+    Qedge = np.zeros((npge,nQ))
+    epsi = rh_floor
 
     for k in xrange(nz):
         for j in xrange(ny):
             for i in xrange(nx):
 
-                if Q_r(i,j,k,rh,1) < eps:
-                    do ir=2,nbasis
-                        Q_r(i,j,k,rh:en,ir) = 0.0
-                    end do
-                    Q_r(i,j,k,rh,1) = eps
+                if Q_ri[i,j,k,rh,0] < epsi:
+                    for ir in xrange(1, nbasis):
+                        Q_ri[i,j,k,rh:en+1,ir] = 0.0
+
+                    Q_ri[i,j,k,rh,0] = epsi
 
                 else:
                     for ipge in xrange(npge):
-                        Qedge(ipge,rh) = sum(bf_faces(ipge,1:nbasis)*Q_r(i,j,k,rh,1:nbasis))
+                        Qedge[ipge,rh] = np.sum(bf_faces[ipge,0:nbasis]*Q_ri[i,j,k,rh,0:nbasis])
 
-                    Qrhmin = minval(Qedge(:,rh))
+                    Qrhmin = np.min(Qedge[:,rh])
 
-                    if Qrhmin < eps:
-                        theta = (eps - Q_r(i,j,k,rh,1))/(Qrhmin - Q_r(i,j,k,rh,1))
-                        if theta > 1.0:
-                            theta = 1.
+                    if Qrhmin < epsi:
+                        theta = (epsi - Q_ri[i,j,k,rh,0])/(Qrhmin - Q_ri[i,j,k,rh,0])
+                        theta = 1.0 if theta > 1.0 else 0.0
 
-                        if theta < 0:
-                            theta = 0.
-                        do ir=2,nbasis
-                            Q_r(i,j,k,rh,ir) = abs(theta)*Q_r(i,j,k,rh,ir)
-                        end do
-
-end subroutine limiter
+                        for ir in xrange(1, nbasis):
+                            Q_ri[i,j,k,rh,ir] = abs(theta)*Q_ri[i,j,k,rh,ir]
 
 #----------------------------------------------------------------------------------------------
 
