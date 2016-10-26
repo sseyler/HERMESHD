@@ -607,12 +607,13 @@ def prep_advance(Q_ri, bfvals_xm, bfvals_xp,
     # Necessary parameters and variables
     #------------------------------------
     # GLOBAL:
-    #  * Qxlow_ext, Qxlow_int, Qxhigh_ext, Qxhigh_int
-    #  * Qylow_ext, Qylow_int, Qyhigh_ext, Qyhigh_int
-    #  * Qzlow_ext, Qzlow_int, Qzhigh_ext, Qzhigh_int
-    #  * bfvals_xm, bfvals_xp
-    #  * bfvals_ym, bfvals_yp
-    #  * bfvals_zm, bfvals_zp
+    #  * bf_faces (limiter)
+    #  * bfvals_xm, bfvals_xp (prepare_exchange)
+    #  * bfvals_ym, bfvals_yp (prepare_exchange)
+    #  * bfvals_zm, bfvals_zp (prepare_exchange)
+    #  * Qxlow_ext, Qxlow_int, Qxhigh_ext, Qxhigh_int (set_bc)
+    #  * Qylow_ext, Qylow_int, Qyhigh_ext, Qyhigh_int (set_bc)
+    #  * Qzlow_ext, Qzlow_int, Qzhigh_ext, Qzhigh_int (set_bc)
     #  * nx, ny, nz
     #  * mx, my, mz
     #  * xlbc, ylbc, zlbc
@@ -623,9 +624,9 @@ def prep_advance(Q_ri, bfvals_xm, bfvals_xp,
     # real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri
 
     if ieos == 1:
-        call limiter(Q_ri)
+        call limiter(Q_ri, bf_faces)
     if ieos == 2:
-        call limiter2(Q_ri)
+        call limiter2(Q_ri, bf_faces)
 
     prepare_exchange(Q_ri, bfvals_xm, bfvals_xp,
                            bfvals_ym, bfvals_yp,
@@ -633,7 +634,9 @@ def prep_advance(Q_ri, bfvals_xm, bfvals_xp,
     set_bc(Qxlow_ext, Qxlow_int, Qxhigh_ext, Qxhigh_int,
            Qylow_ext, Qylow_int, Qyhigh_ext, Qyhigh_int,
            Qzlow_ext, Qzlow_int, Qzhigh_ext, Qzhigh_int)
-    call flux_cal(Q_ri)
+    call flux_cal(Q_ri, bfvals_xm, bfvals_xp,
+                        bfvals_ym, bfvals_yp,
+                        bfvals_zm, bfvals_zp))
     call innerintegral(Q_ri)
     call glflux
     call source_calc(Q_ri,t)
@@ -1095,14 +1098,41 @@ end subroutine
 
 #----------------------------------------------------------------------------------------------
 
-def flux_cal(Q_r):
-    # integer i,j,k,ieq,iback,jleft,kdown,i4,i4p,ipnt
-    # real Qface_x(nfe,nQ), Qface_y(nfe,nQ),Qface_z(nfe,nQ),fface_x(nfe,nQ), fface_y(nfe,nQ), fface_z(nfe,nQ)
-    # real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
-    # real cwavex(nfe),cwavey(nfe),cwavez(nfe),Pre,dni,B2, cfbound, cfx(nface,nQ),cfy(nface,nQ),cfz(nface,nQ)
-    # real fhllc_x(nface,5),fhllc_y(nface,5),fhllc_z(nface,5),fs(nface,nQ),qvin(nQ)
-
-#--------------------------------------------------------------
+def flux_cal(Q_ri,
+             bfvals_xm, bfvals_xp,
+             bfvals_ym, bfvals_yp,
+             bfvals_zm, bfvals_zp):
+    ############################################################################
+    # Necessary functions
+    #------------------------------------
+    # PERSEUS:
+    #  * flux_hllc(), flux_roe(), flux_calc_pnts_r()
+    #
+    # EXT LIBS:
+    #  * np.sum()
+    #
+    # Necessary parameters and variables
+    #------------------------------------
+    # GLOBAL:
+    #  * nx, ny, nz, nQ
+    #  * rh, mx, my, mz, en
+    #  * rh_floor, epsi, npge, nface
+    #  * ihllc, iroe
+    #  * kroe(nface)
+    #  * bf_faces(nslim,nbastot)
+    #  * Q_ri (pass-by-ref, shape (nx,ny,nz,nQ,nbasis))
+    # LOCAL:
+    #  * i, j, k, ieq, ipnt, i4 (loop vars)
+    #  * iback, jleft, kdown
+    #  * bfvals_zm, bfvals_zp  (shape (nface,nbastot))
+    #  * bfvals_ym, bfvals_yp  (shape (nface,nbastot))
+    #  * bfvals_xm, bfvals_xp  (shape (nface,nbastot))
+    #  * Qface_x, Qface_y, Qface_z  (shape (nfe,nQ))
+    #  * fface_x, fface_y, fface_z  (shape (nfe,nQ))
+    #  * fhllc_x ,fhllc_y ,fhllc_z  (shape (nface,5))
+    #  * cwavex, cwavey, cwavez  (shape (nfe))
+    #  * qvin (shape (nQ))
+    ############################################################################
 
     kroe[:] = 1
 
@@ -1115,7 +1145,7 @@ def flux_cal(Q_r):
                 if i > 1:
                     for ieq in xrange(nQ):
                         for ipnt in xrange(nface):
-                            Qface_x[ipnt,ieq] = sum(bfvals_xp[ipnt,0:nbasis]*Q_r[iback,j,k,ieq,0:nbasis])
+                            Qface_x[ipnt,ieq] = sum(bfvals_xp[ipnt,0:nbasis]*Q_ri[iback,j,k,ieq,0:nbasis])
 
                 if i == 1:
                     for ieq in xrange(nQ):
@@ -1124,7 +1154,7 @@ def flux_cal(Q_r):
                 if i < nx+1:
                     for ieq in xrange(nQ):
                         for ipnt in xrange(nface):
-                            Qface_x[ipnt+nface,ieq] = sum(bfvals_xm[ipnt,0:nbasis]*Q_r[i,j,k,ieq,0:nbasis])
+                            Qface_x[ipnt+nface,ieq] = sum(bfvals_xm[ipnt,0:nbasis]*Q_ri[i,j,k,ieq,0:nbasis])
 
                 if i == nx+1:
                     for ieq in xrange(nQ):
@@ -1170,7 +1200,7 @@ def flux_cal(Q_r):
                 if j > 1:
                     for ieq in xrange(nQ):
                         for ipnt in xrange(nface):
-                              Qface_y[ipnt,ieq] = sum(bfvals_yp[ipnt,0:nbasis]*Q_r[i,jleft,k,ieq,0:nbasis])
+                              Qface_y[ipnt,ieq] = sum(bfvals_yp[ipnt,0:nbasis]*Q_ri[i,jleft,k,ieq,0:nbasis])
                 if j == 1:
                     for ieq in xrange(nQ):
                        Qface_y[0:nface,ieq] = Qylow_ext[i,k,0:nface,ieq]
@@ -1178,7 +1208,7 @@ def flux_cal(Q_r):
                 if j < ny+1:
                     for ieq in xrange(nQ):
                         for ipnt in xrange(nface):
-                            Qface_y[ipnt+nface,ieq] = sum(bfvals_ym[ipnt,0:nbasis]*Q_r[i,j,k,ieq,0:nbasis])
+                            Qface_y[ipnt+nface,ieq] = sum(bfvals_ym[ipnt,0:nbasis]*Q_ri[i,j,k,ieq,0:nbasis])
                 if j == ny+1:
                     for ieq in xrange(nQ):
                        Qface_y[nface:nfe,ieq] = Qyhigh_ext[i,k,0:nface,ieq]
@@ -1223,7 +1253,7 @@ def flux_cal(Q_r):
                 if k > 1:
                     for ieq in xrange(nQ):
                         for ipnt in xrange(nface):
-                            Qface_z[ipnt,ieq] = sum(bfvals_zp[ipnt,0:nbasis]*Q_r[i,j,kdown,ieq,0:nbasis])
+                            Qface_z[ipnt,ieq] = sum(bfvals_zp[ipnt,0:nbasis]*Q_ri[i,j,kdown,ieq,0:nbasis])
                 if k == 1:
                     for ieq in xrange(nQ):
                         Qface_z[0:nface,ieq] = Qzlow_ext[i,j,0:nface,ieq]
@@ -1231,7 +1261,7 @@ def flux_cal(Q_r):
                 if k < nz+1:
                     for ieq in xrange(nQ):
                         for ipnt in xrange(nface):
-                            Qface_z[ipnt+nface,ieq] = sum(bfvals_zm[ipnt,0:nbasis]*Q_r[i,j,k,ieq,0:nbasis])
+                            Qface_z[ipnt+nface,ieq] = sum(bfvals_zm[ipnt,0:nbasis]*Q_ri[i,j,k,ieq,0:nbasis])
                 if k == nz+1:
                     for ieq in xrange(nQ):
                         Qface_z[nface:nfe,ieq] = Qzhigh_ext[i,j,0:nface,ieq]
@@ -1264,8 +1294,6 @@ def flux_cal(Q_r):
                         for i4 in xrange(nface):
                         if kroe[i4] > 0:
                             flux_z[i4,i,j,k,ieq] = fhllc_z[i4,ieq]
-
-end subroutine flux_cal
 
 #----------------------------------------------------------------------------------------------
 
@@ -1323,7 +1351,7 @@ def flux_hllc(Qlr,flr,fhllc,ixyz):
         k2 = k + nface
         if ieos == 2:
             cslr[k] = vlr[k,0] - sqrt(7.2*P_1*rhov[k]**6.2 + plr[k]*rho_i)     # lambda_M(Q_l)
-            cslr[k2] = vlr[k2,0] + sqrt(7.2*P_1*rhov[k2]**6.2 + plr[k2]*rho_i)     # lambda_P(Q_r)
+            cslr[k2] = vlr[k2,0] + sqrt(7.2*P_1*rhov[k2]**6.2 + plr[k2]*rho_i)     # lambda_P(Q_ri)
         else:
             cslr[k] = vlr[k,0] - sqrt(aindex*plr[k]/rhov[k])       # lambda_M(Q_l)
             cslr[k2] = vlr[k2,0] + sqrt(aindex*plr[k2]/rhov[k2] )      # lambda_P(Q_r)
@@ -1829,11 +1857,11 @@ def limiter(Q_ri, bf_faces):
     #  * rh, mx, my, mz, en
     #  * rh_floor, T_floor, aindex, npge, nbasis
     #  * bf_faces(nslim,nbastot)
+    #  * Q_ri (pass-by-ref, shape (nx,ny,nz,nQ,nbasis))
     # LOCAL:
     #  * i, j, k, ieq, ir, ipge (loop vars)
     #  * Qrhmin, epsi, epsiP, thetaj, dn, dni, Pave
     #  * Qedge(npge,nQ), P(npge)
-    #  * Q_ri (pass-by-ref w/ shape (nx,ny,nz,nQ,nbasis))
     ############################################################################
 
     Qedge = np.zeros((npge,nQ))
@@ -1906,11 +1934,11 @@ def limiter2(Q_ri, bf_faces):
     #  * rh, mx, my, mz, en
     #  * rh_floor, epsi, npge, nbasis
     #  * bf_faces(nslim,nbastot)
+    #  * Q_ri (pass-by-ref, shape (nx,ny,nz,nQ,nbasis))
     # LOCAL:
     #  * i, j, k, ieq, ir, ipge (loop vars)
     #  * Qrhmin, theta
     #  * Qedge(npge,nQ)
-    #  * Q_ri (pass-by-ref w/ shape (nx,ny,nz,nQ,nbasis))
     ############################################################################
 
     Qedge = np.zeros((npge,nQ))
@@ -1960,12 +1988,12 @@ def prepare_exchange(Q_ri,
     #  * rh, mx, my, mz, en
     #  * rh_floor, epsi, npge, nface
     #  * bf_faces(nslim,nbastot)
+    #  * Q_ri (pass-by-ref, shape (nx,ny,nz,nQ,nbasis))
     # LOCAL:
     #  * i, j, k, ieq, ipnt (loop vars)
     #  * bfvals_zm, bfvals_zp  (both shape (nface,nbastot))
     #  * bfvals_ym, bfvals_yp  (both shape (nface,nbastot))
     #  * bfvals_xm, bfvals_xp  (both shape (nface,nbastot))
-    #  * Q_ri (pass-by-ref w/ shape (nx,ny,nz,nQ,nbasis))
     ############################################################################
     # integer ieq, i, j, k, ipnt
     # real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
