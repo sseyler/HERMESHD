@@ -950,12 +950,12 @@ def source_calc(Q_ri,t):
                     # eps -> 0, this becomes partial_t u = D * partial_x^2 u
                     # The following are the sources for this problem where epsi = 1/eps
 
-                    source[ipg,pxx] = -epsi*Qin[pxx] !+ amplv*(ran(iseed) - 0.5)
-                    source[ipg,pyy] = -epsi*Qin[pyy] !+ amplv*(ran(iseed) - 0.5)
-                    source[ipg,pzz] = -epsi*Qin[pzz] !+ amplv*(ran(iseed) - 0.5)
-                    source[ipg,pxy] = -epsi*Qin[pxy] !+ amplv*(ran(iseed) - 0.5)
-                    source[ipg,pxz] = -epsi*Qin[pxz] !+ amplv*(ran(iseed) - 0.5)
-                    source[ipg,pyz] = -epsi*Qin[pyz] !+ amplv*(ran(iseed) - 0.5)
+                    source[ipg,pxx] = -epsi*Qin[pxx] #+ amplv*(ran(iseed) - 0.5)
+                    source[ipg,pyy] = -epsi*Qin[pyy] #+ amplv*(ran(iseed) - 0.5)
+                    source[ipg,pzz] = -epsi*Qin[pzz] #+ amplv*(ran(iseed) - 0.5)
+                    source[ipg,pxy] = -epsi*Qin[pxy] #+ amplv*(ran(iseed) - 0.5)
+                    source[ipg,pxz] = -epsi*Qin[pxz] #+ amplv*(ran(iseed) - 0.5)
+                    source[ipg,pyz] = -epsi*Qin[pyz] #+ amplv*(ran(iseed) - 0.5)
 
 
                 for ir in xrange(nbasis):
