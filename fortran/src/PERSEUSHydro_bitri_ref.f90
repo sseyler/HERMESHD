@@ -1362,13 +1362,13 @@ subroutine flux_hllc(Qlr,flr,fhllc,ixyz)
     if (ibatten .eq. 0) then
         do k=1,nface
             k2 = k + nface
-            if(ieos .eq. 2)then
+            if(ieos .eq. 2) then
                 qslr(k) = vlr(k2,1) - sqrt(7.2*P_1*rhov(k2)**6.2 + plr(k2)*rho_i)       ! lambda_M(Q_r)
                 qslr(k2) = vlr(k,1) + sqrt(7.2*P_1*rhov(k)**6.2 + plr(k)*rho_i)       ! lambda_P(Q_l)
             else
                 qslr(k) = vlr(k2,1) - sqrt(aindex*plr(k2)/rhov(k2))       ! lambda_M(Q_r)
                 qslr(k2) = vlr(k,1) + sqrt(aindex*plr(k)/rhov(k))       ! lambda_P(Q_l)
-                end if
+            end if
         end do
     end if
 
