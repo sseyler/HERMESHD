@@ -613,94 +613,16 @@ subroutine fill_fluid
         Q_r0(i,j,k,my,1) = 0.001*rnum/cosh(20*yc(j)/lyu)**2
         Q_r0(i,j,k,mz,1) = 0.
         Q_r0(i,j,k,mx,1) = 1.0*Q_r0(i,j,k,rh,1)/cosh(20*ycc/lyu)/1.
-        Q_r0(i,j,k,en,1) = wtev*Q_r0(i,j,k,rh,1)/(aindex - 1.) + 0.5*(Q_r0(i,j,k,mx,1)**2 + Q_r0(i,j,k,my,1)**2 + Q_r0(i,j,k,mz,1)**2)/Q_r0(i,j,k,rh,1)
-        !-------------------------------------------------------
-
-        !-------------------------------------------------------
-        ! from "old" version
-        ! qquad(:,:) = 0.
-        !
-        ! do igrid=1,npg
-        !
-        !     qquad(igrid,rh) = rh_floor
-        !     qquad(igrid,en) = wtev*qquad(igrid,rh)/(aindex - 1.)
-        !
-        !     xcc = xc(i) + bfvals_int(igrid,kx)*0.5/dxi
-        !     ycc = yc(j) + bfvals_int(igrid,ky)*0.5/dyi
-        !     zcc = zc(k) + bfvals_int(igrid,kz)*0.5/dzi
-        !
-        !     qquad(igrid,rh) = rh_fluid
-        !     qquad(igrid,my) = 0.001*rnum/1.
-        !     qquad(igrid,mz) = 0.
-        !     qquad(igrid,mx) = 0.5*qquad(igrid,rh)/cosh(20*ycc/lyu)/1.
-        !     qquad(igrid,en) = wtev*qquad(igrid,rh)/(aindex - 1.)                &
-        !                     + 0.5*( qquad(igrid,mx)**2                          &
-        !                     + qquad(igrid,my)**2                                &
-        !                     + qquad(igrid,mz)**2 )/qquad(igrid,rh)
-        !
-        ! end do
-        ! do ieq=rh,en
-        !     do ir=1,nbasis
-        !         Q_r0(i,j,k,ieq,ir) =                                            &
-        !             0.125*cbasis(ir)                                            &
-        !             *sum(wgt3d(1:npg)*bfvals_int(1:npg,ir)*qquad(1:npg,ieq))
-        !     end do
-        ! end do
-        !-------------------------------------------------------
+        Q_r0(i,j,k,en,1) = wtev*Q_r0(i,j,k,rh,1)/(aindex - 1.)                  &
+                         + 0.5*( Q_r0(i,j,k,mx,1)**2                            &
+                              +  Q_r0(i,j,k,my,1)**2                            &
+                              +  Q_r0(i,j,k,mz,1)**2 ) / Q_r0(i,j,k,rh,1)
 
     end do
     end do
     end do
 
 end subroutine fill_fluid
-
-
-!-------------------------------------------------------
-
-subroutine fill_fluid2
-
-!-------------------------------------------------------
-
-    integer i,j,k,izw(4),ixw(4),iyw(4),iw,iseed
-    real wirer,x,y,x0,y0,rhline,wtev,rx,ry,rnum,w0
-    iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
-
-    wtev = 2*T_floor
-	w0 = 0.3
-
-    do i = 1,nx
-    do j = 1,ny
-    do k = 1,nz
-        call random_number(rand_number)
-
-        rnum = (rand_number - 0.5)
-
-        Q_r0(i,j,k,rh,1) = rh_fluid!*exp(-zc(k)/Hscale)
-        Q_r0(i,j,k,my,1) = 0.005*rnum/cosh(20*yc(j)/lyu)**2
-        rnum = (rand_number - 0.5)
-        ! Q_r0(i,j,k,mz,1) = 0.005*rnum
-        ! Q_0(i,j,k,mx) = 1.0*Q_0(i,j,k,rh)/cosh(10*(yc(j)-0.25*lyu)/lyu) - 1.0*Q_0(i,j,k,rh)/cosh(10*(yc(j)-0.75*lyu)/lyu) &
-!                              - 1.0*Q_0(i,j,k,rh)/cosh(10*(yc(j)+0.25*lyu)/lyu) + 1.0*Q_0(i,j,k,rh)/cosh(10*(yc(j)+0.75*lyu)/lyu)
-        Q_r0(i,j,k,mx,1) = 1.0*Q_r0(i,j,k,rh,1)/cosh(20*yc(j)/lyu)
-        ! Q_0(i,j,k,my) = rh_fluid*sin(4*pi*xc(i)/lx)*cos(4*pi*yc(j)/ly)
-        ! Q_0(i,j,k,mx) = -rh_fluid*sin(4*pi*yc(j)/ly)  !*cos(4*pi*xc(i)/lx)
-        ! Q_0(i,j,k,en) = grav*Hscale*Q_0(i,j,k,rh)/(aindex - 1.) + 0.5*(Q_0(i,j,k,mx)**2 + Q_0(i,j,k,my)**2)/Q_0(i,j,k,rh)
-
-        ! rnum = (rand_number - 0.5)
-        ! Q_0(i,j,k,mx) = 3*rnum
-        ! rnum = (rand_number - 0.5)
-        ! Q_0(i,j,k,my) = 3*rnum
-        ! rnum = (rand_number - 0.5)
-        ! Q_0(i,j,k,mz) = 3*rnum
-
-        Q_r0(i,j,k,en,1) = wtev*Q_r0(i,j,k,rh,1)/(aindex - 1.) + 0.5*(Q_r0(i,j,k,mx,1)**2 + Q_r0(i,j,k,my,1)**2 + Q_r0(i,j,k,mz,1)**2)/Q_r0(i,j,k,rh,1)
-
-    end do
-    end do
-    end do
-
-end subroutine fill_fluid2
-!----------------------------------------------------------------------------------------------
 
 
 !----------------------------------------------------------------------------------------------
@@ -835,7 +757,8 @@ subroutine advance_time_level_gl(Q_ri,Q_rp)
 
         do ieq = 1,nQ
             do ir=1,nbasis
-                Q_rp(i,j,k,ieq,ir) = Q_ri(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir) + dt*source_r(i,j,k,ieq,ir)
+                Q_rp(i,j,k,ieq,ir) = Q_ri(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir) &
+                                                        + dt*source_r(i,j,k,ieq,ir)
             end do
         end do
 
@@ -955,27 +878,29 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
     ! ! Computation is completed with de-allocation of system resources:
     ! vsl_errcode = vsldeletestream( vsl_stream )
     !
-    ! ampx = vsl_r(0)
-    ! ampy = vsl_r(1)
-    ! ampz = vsl_r(2)
+    ! Sx = vsl_r(0)
+    ! Sy = vsl_r(1)
+    ! Sz = vsl_r(2)
     !---------------------------------------------------------------------------
 
     !---------------------------------------------------------------------------
     ! GLOBALLY generated random matrix -- seems to be marginally faster (maybe)
     !---------------------------------------------------------------------------
     vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
-    ampx = vsl_r(0)
-    ampy = vsl_r(1)
-    ampz = vsl_r(2)
+    Sx = vsl_r(0)
+    Sy = vsl_r(1)
+    Sz = vsl_r(2)
     !---------------------------------------------------------------------------
 
     nu = epsi*vis
     c2d3 = 2./3.
     c4d3 = 4./3.
+    c2d3nu = c2d3*nu
+    c4d3nu = c4d3*nu
 
-    ! ampx = 0.01*amplv*(ran(iseed) - 0.5)
-    ! ampy = 0.01*amplv*(ran(iseed) - 0.5)
-    ! ampz = 0.01*amplv*(ran(iseed) - 0.5)
+    ! Sx = 0.01*amplv*(ran(iseed) - 0.5)
+    ! Sy = 0.01*amplv*(ran(iseed) - 0.5)
+    ! Sz = 0.01*amplv*(ran(iseed) - 0.5)
     ampd = 0*amplen*(ran(iseed) - 0.5)
 
     do ife = 1,npnts
@@ -996,15 +921,18 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
             fpnts_r(ife,rh) = Qpnts_r(ife,mx)
 
-            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + P + Qpnts_r(ife,pxx) + ampx
-            fpnts_r(ife,my) = Qpnts_r(ife,my)*vx     + Qpnts_r(ife,pxy) + ampy
-            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx     + Qpnts_r(ife,pxz) + ampz
+            ! NOTE: the stress terms may need minus sign in the momentum flux!!!
+            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + P + Qpnts_r(ife,pxx) + Sx
+            fpnts_r(ife,my) = Qpnts_r(ife,my)*vx     + Qpnts_r(ife,pxy) + Sy
+            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx     + Qpnts_r(ife,pxz) + Sz
 
-            fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx - (Qpnts_r(ife,pxx)*vx + Qpnts_r(ife,pxy)*vy + Qpnts_r(ife,pxz)*vz)
+            fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx - (Qpnts_r(ife,pxx)*vx   &
+                                                       +  Qpnts_r(ife,pxy)*vy   &
+                                                       +  Qpnts_r(ife,pxz)*vz)
 
-            fpnts_r(ife,pxx) = c4d3*nu*vx
-            fpnts_r(ife,pyy) = -c2d3*nu*vx
-            fpnts_r(ife,pzz) = -c2d3*nu*vx
+            fpnts_r(ife,pxx) =  c4d3nu*vx
+            fpnts_r(ife,pyy) = -c2d3nu*vx
+            fpnts_r(ife,pzz) = -c2d3nu*vx
 
             fpnts_r(ife,pxy) = nu*vy
             fpnts_r(ife,pxz) = nu*vz
@@ -1015,15 +943,17 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
             fpnts_r(ife,rh) = Qpnts_r(ife,mxa(ixyz))
 
-            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy     + Qpnts_r(ife,pxy) + ampx
-            fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + P + Qpnts_r(ife,pyy) + ampy
-            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy     + Qpnts_r(ife,pyz) + ampz
+            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy     + Qpnts_r(ife,pxy) + Sx
+            fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + P + Qpnts_r(ife,pyy) + Sy
+            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy     + Qpnts_r(ife,pyz) + Sz
 
-            fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy - (Qpnts_r(ife,pyy)*vy + Qpnts_r(ife,pxy)*vx + Qpnts_r(ife,pyz)*vz)
+            fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy - (Qpnts_r(ife,pyy)*vy   &
+                                                       +  Qpnts_r(ife,pxy)*vx   &
+                                                       +  Qpnts_r(ife,pyz)*vz)
 
-            fpnts_r(ife,pxx) = -c2d3*nu*vy
-            fpnts_r(ife,pyy) = c4d3*nu*vy
-            fpnts_r(ife,pzz) = -c2d3*nu*vy
+            fpnts_r(ife,pxx) = -c2d3nu*vy
+            fpnts_r(ife,pyy) =  c4d3nu*vy
+            fpnts_r(ife,pzz) = -c2d3nu*vy
 
             fpnts_r(ife,pxy) = nu*vx
             fpnts_r(ife,pxz) = 0
@@ -1034,57 +964,23 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
             fpnts_r(ife,rh) = Qpnts_r(ife,mz)
 
-            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz     + Qpnts_r(ife,pxz) + ampx
-            fpnts_r(ife,my) = Qpnts_r(ife,my)*vz     + Qpnts_r(ife,pyz) + ampy
-            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + P + Qpnts_r(ife,pzz) + ampz
+            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz     + Qpnts_r(ife,pxz) + Sx
+            fpnts_r(ife,my) = Qpnts_r(ife,my)*vz     + Qpnts_r(ife,pyz) + Sy
+            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + P + Qpnts_r(ife,pzz) + Sz
 
-            fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz - (Qpnts_r(ife,pzz)*vz + Qpnts_r(ife,pxz)*vx + Qpnts_r(ife,pyz)*vy)
+            fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz - (Qpnts_r(ife,pzz)*vz   &
+                                                       +  Qpnts_r(ife,pxz)*vx   &
+                                                       +  Qpnts_r(ife,pyz)*vy)
 
-            fpnts_r(ife,pxx) = -c2d3*nu*vz
-            fpnts_r(ife,pyy) = -c2d3*nu*vz
-            fpnts_r(ife,pzz) = c4d3*nu*vz
+            fpnts_r(ife,pxx) = -c2d3nu*vz
+            fpnts_r(ife,pyy) = -c2d3nu*vz
+            fpnts_r(ife,pzz) =  c4d3nu*vz
 
             fpnts_r(ife,pxy) = 0.
             fpnts_r(ife,pxz) = nu*vx
             fpnts_r(ife,pyz) = nu*vy
 
         end if
-
-    end do
-
-end subroutine
-
-!----------------------------------------------------------------------------------------------
-
-subroutine flux_calc_pnts_r2(Qpnts_r,fpnts_r,ixyz,npnts)
-    ! Calculate the flux "fpnts_r" in direction "ixyz" (x, y, or z) at a set of
-    ! points corresponding to conserved quantities "Qpnts_r".
-
-    ! ixyz=1: x-direction
-    ! ixyz=2: y-direction
-    ! ixyz=3: z-direction
-
-    implicit none
-    integer ife, ixyz,npnts
-    real, dimension(npnts,nQ):: Qpnts_r, fpnts_r
-    real dn,dni,vr,P,asqr,fac,Pre,dnei,Psol,dx2,Tem,smsq
-
-    do ife = 1,npnts
-
-        dn = Qpnts_r(ife,rh)
-        dni = 1./dn
-
-        smsq = Qpnts_r(ife,mx)**2 + Qpnts_r(ife,my)**2 + Qpnts_r(ife,mz)**2
-        vr = Qpnts_r(ife,mxa(ixyz))*dni
-
-        P = (aindex - 1.)*(Qpnts_r(ife,en) - 0.5*dni*smsq)
-        if (P < P_floor) P = P_floor
-
-        fpnts_r(ife,rh) = Qpnts_r(ife,mxa(ixyz))
-        fpnts_r(ife,mx:mz) = Qpnts_r(ife,mx:mz)*vr
-        fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vr
-
-        fpnts_r(ife,mxa(ixyz)) = fpnts_r(ife,mxa(ixyz)) + P
 
     end do
 
@@ -1156,7 +1052,8 @@ subroutine flux_cal(Q_r)
                 do ieq = 1,nQ
                     do i4=1,nface
                         i4p = i4 + nface
-                        flux_x(i4,i,j,k,ieq) = 0.5*(fface_x(i4,ieq) + fface_x(i4p,ieq)) - 0.5*cfrx(i4,ieq)*(Qface_x(i4p,ieq) - Qface_x(i4,ieq))
+                        flux_x(i4,i,j,k,ieq) = 0.5*(fface_x(i4,ieq) + fface_x(i4p,ieq)) &
+                                             - 0.5*cfrx(i4,ieq)*(Qface_x(i4p,ieq) - Qface_x(i4,ieq))
                     end do
                 end do
 
@@ -1230,7 +1127,8 @@ subroutine flux_cal(Q_r)
                 do ieq = 1,nQ
                     do i4=1,nface
                         i4p = i4 + nface
-                        flux_y(i4,i,j,k,ieq) = 0.5*(fface_y(i4,ieq) + fface_y(i4p,ieq)) - 0.5*cfry(i4,ieq)*(Qface_y(i4p,ieq) - Qface_y(i4,ieq))
+                        flux_y(i4,i,j,k,ieq) = 0.5*(fface_y(i4,ieq) + fface_y(i4p,ieq)) &
+                                             - 0.5*cfry(i4,ieq)*(Qface_y(i4p,ieq) - Qface_y(i4,ieq))
                     end do
                 end do
 
@@ -1263,7 +1161,8 @@ subroutine flux_cal(Q_r)
                 if (k .gt. 1) then
                     do ieq = 1,nQ
                         do ipnt=1,nface
-                            Qface_z(ipnt,ieq) = sum(bfvals_zp(ipnt,1:nbasis)*Q_r(i,j,kdown,ieq,1:nbasis))
+                            Qface_z(ipnt,ieq) = sum( bfvals_zp(ipnt,1:nbasis)   &
+                                                    *Q_r(i,j,kdown,ieq,1:nbasis))
                         end do
                     end do
                 end if
@@ -1276,7 +1175,8 @@ subroutine flux_cal(Q_r)
                 if (k .lt. nz+1) then
                     do ieq = 1,nQ
                         do ipnt=1,nface
-                            Qface_z(ipnt+nface,ieq) = sum(bfvals_zm(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
+                            Qface_z(ipnt+nface,ieq) = sum( bfvals_zm(ipnt,1:nbasis) &
+                                                          *Q_r(i,j,k,ieq,1:nbasis))
                         end do
                     end do
                 end if
@@ -1304,7 +1204,8 @@ subroutine flux_cal(Q_r)
                 do ieq = 1,nQ
                     do i4=1,nface
                         i4p = i4 + nface
-                        flux_z(i4,i,j,k,ieq) = 0.5*(fface_z(i4,ieq) + fface_z(i4p,ieq)) - 0.5*cfrz(i4,ieq)*(Qface_z(i4p,ieq) - Qface_z(i4,ieq))
+                        flux_z(i4,i,j,k,ieq) = 0.5*(fface_z(i4,ieq) + fface_z(i4p,ieq)) &
+                                             - 0.5*cfrz(i4,ieq)*(Qface_z(i4p,ieq) - Qface_z(i4,ieq))
                     end do
                 end do
 
@@ -1345,7 +1246,8 @@ subroutine flux_hllc(Qlr,flr,fhllc,ixyz)
     real sm_num(nface),sm_den(nface),qtilde(nface,5),rtrho(nfe),rtrho_i(nface),qsq(nfe)
     real s_lr(nfe),ctilde(nface),hlr(nfe),cslr(nfe),ctsq(nface),Zi, mfact, csfac
     real aq(nfe),bq(nfe),Qstar(nfe,6),fstar(nfe,6),pstar(nface),s_m(nface)
-    real rhov(nfe),vlr(nfe,3),plr(nfe),slsm_i(nface),rho_i,qslr(nfe),sq_lr(nfe),slrm_i(nfe),B2(nfe),cf(nfe)
+    real rhov(nfe),vlr(nfe,3),plr(nfe),rho_i
+    real qslr(nfe),sq_lr(nfe),slrm_i(nfe),B2(nfe),cf(nfe)
     integer ixyz,i4,i4p1,nr,jie,k,k2,ieq,iparr,iperp1,iperp2,ibatten
     integer rhj,mxj,myj,mzj,enj,psj,ivar(5),ipassive,nhll,ib1,ib2
 
@@ -1500,182 +1402,6 @@ subroutine flux_hllc(Qlr,flr,fhllc,ixyz)
 
 end subroutine flux_hllc
 
-    !----------------------------------------------------------------
-
-subroutine flux_roe(Qlr,flr,froef,ixyz)
-
-    implicit none
-    integer ixyz,i9,j9,ilr,iparr,iperp
-    real Qlr(nfe,nQ),flr(nfe,nQ),froef(nface,5)
-    real dflux(nface,5),dwr(nface,5),dsk(nface),Qri
-    real evec(5,5),swr(2,nface,5),skr(2,nface),asq,lam9(5),a9(5),sk9
-    real a9e,ea2i,vsq,Pri,vels(3),dnii,en_floor
-    real vc(3),hc,dele(nface),delrho(nface),delmom1(nface),delmom2(nface),delmom3(nface),sc9,vcsq,vcdel,csq,gmi,bsq
-
-
-    ! approximate Roe solver for non-relativistic two-fluid, from Eulderink and Mellema, 1994
-
-    ! Starting from HD equations for a given fluid (either electrons or ions), this routine
-    ! computes "dflux_i = (cQ)_i+1 - (cQ)_i" terms by characteristic wave decomposition using
-    ! a Roe matrix.
-
-    ! INPUT is Qr(,1)=conserved density, Qr(,2)=energy, Qr(,3:5)=momentum
-    !       Qpr(,1)=density, Qpr(,2)=pressure, Qpr(,3:5)=velocity
-    !       n = number of spatial points in given direction (x or y)
-
-    !        ixyz = 1: flux is being computed in x-direction
-    !        ixyz = 2: flux is being computed in y-direction
-
-
-    ! OUTPUT is  "dflux_i = (cQ)_i+1 - (cQ)_i"
-    !    dflux(,1)=density term, dflux(,2)=energy term, dflux(,3:5)=momentum terms
-
-
-
-    ! evec(,1) through evec(,5) are the eigenvectors of the Roe matrix.
-
-    en_floor = P_floor*aindm1
-    gmi = 1./(aindex - 1.)
-
-    evec(:,:) = 0.
-    evec(1,1) = 1.
-    evec(1,2) = 1.
-    evec(1,3) = 1.
-    evec(4,4) = 1.
-    evec(5,5) = 1.
-
-
-    do i9=1,nface
-        kroe(i9) = 1
-        do j9=1,2
-            if (j9 .eq. 1) ilr = i9
-            if (j9 .eq. 2) ilr = i9 + nface
-
-            ! Make sure density, pressure, and energy are at least at floor values.
-
-            dnii = 1./Qlr(ilr,rh)
-            vels(1) = Qlr(ilr,mxa(ixyz))*dnii
-            vels(2) = Qlr(ilr,mya(ixyz))*dnii
-            vels(3) = Qlr(ilr,mza(ixyz))*dnii
-            vsq = vels(1)**2 + vels(2)**2 + vels(3)**2
-            Pri = aindm1*(Qlr(ilr,en) - 0.5*Qlr(ilr,rh)*vsq)
-
-            skr(j9,i9) = sqrt(Qlr(ilr,rh))
-            swr(j9,i9,1) = skr(j9,i9)*vels(1)  ! sqrt(rho) * v_x
-            swr(j9,i9,2) = skr(j9,i9)*vels(2)  ! sqrt(rho) * v_y
-            swr(j9,i9,3) = skr(j9,i9)*vels(3)  ! sqrt(rho) * v_z
-            swr(j9,i9,4) = 0.5*skr(j9,i9)*(vsq + cp*Pri/Qlr(ilr,rh))
-        end do
-    end do
-
-    do i9=1,nface
-        Qri = 1./Qlr(i9,rh)    ! Increments in conserved quantities are normalized w.r.t. density.
-
-        delrho(i9) = Qlr(i9+nface,rh)*Qri - 1.    ! delrho = increment in conserved density
-        dele(i9) = (Qlr(i9+nface,en) - Qlr(i9,en))*Qri    ! *one_mime(jie)
-        ! dele = increment in conserved energy
-
-        delmom1(i9) = (Qlr(i9+nface,mxa(ixyz)) - Qlr(i9,mxa(ixyz)))*Qri    ! del1 = increment in x-momentum
-        delmom2(i9) = (Qlr(i9+nface,mya(ixyz)) - Qlr(i9,mya(ixyz)))*Qri    ! del2 = increment in y-momentum
-        delmom3(i9) = (Qlr(i9+nface,mza(ixyz)) - Qlr(i9,mza(ixyz)))*Qri    ! del3 = increment in z-momentum
-        ! dwr(i,1:3) = 0.5*[sqrt(rho_i)v_{1:3,i} + sqrt(rho_{i+1})v_{1:3,i+1}]
-        ! dwr(i,4) = 0.5*[sqrt(rho_i) enthalpy(i)/rho(i) + sqrt(rho_{i+1}) enthalpy(i+1)/rho(i+1)]
-
-        do j9=1,4
-            dwr(i9,j9) = 0.5*(swr(2,i9,j9) + swr(1,i9,j9))
-        enddo
-        dsk(i9) = 0.5*(skr(2,i9) + skr(1,i9))
-
-    enddo
-
-    ! The Roe average of a quantity is the arithmetic average
-    ! between neighboring cells weighted by the square root of density.
-    ! For example, for "v_x" at position "i" the Roe average "v_{cx}" is
-
-    !    v_{cx} = [sqrt(rho_i)v_{xi} + sqrt(rho_{i+1}) v_{x,i+1}]/[sqrt(rho_i) + sqrt(rho_{i+1})]
-
-    do i9=1,nface
-        vc(1) = dwr(i9,1)/dsk(i9)    ! component 1 of Roe-averaged velocity (x if jie=1, y if jie=2)
-        vc(2) = dwr(i9,2)/dsk(i9)    ! component 2 of Roe-averaged velocity (y if jie=1, x if jie=2)
-        vc(3) = dwr(i9,3)/dsk(i9)    ! component 3 of Roe-averaged velocity (z-component)
-        hc = dwr(i9,4)/dsk(i9)    ! Roe-averaged enthalpy/density
-
-        vcsq = vc(1)*vc(1) + vc(2)*vc(2) + vc(3)*vc(3)
-        asq = aindm1*(hc - 0.5*vcsq)    ! squared sound speed
-        if (asq .le. 0.0) then
-            kroe(i9) = 0    ! asq = (aindex - 1.0d0)*hc
-        end if
-        sc9 = sqrt(asq)    ! sound speed
-
-
-        ! Define the characteristic speeds (eigenvalues of the Roe matrix).
-        lam9(1) = abs(vc(1) - sc9)
-        lam9(2) = abs(vc(1) + sc9)
-        lam9(3) = abs(vc(1))
-        lam9(4) = lam9(3)
-        lam9(5) = lam9(3)
-
-        ! Define the eigenvectors evec(,1)...evec(,5) of the Roe matrix.
-        evec(2,1) = hc - sc9*vc(1)
-        evec(3,1) = vc(1) - sc9
-        evec(4,1) = vc(2)
-        evec(5,1) = vc(3)
-
-        evec(2,2) = hc + sc9*vc(1)
-        evec(3,2) = vc(1) + sc9
-        evec(4,2) = vc(2)
-        evec(5,2) = vc(3)
-
-        evec(2,3) = 0.5*vcsq
-        evec(3,3) = vc(1)
-        evec(4,3) = vc(2)
-        evec(5,3) = vc(3)
-        evec(2,4) = vc(2)
-        evec(2,5) = vc(3)
-
-        ! Define a few intermediate variables needed for computing the expansion coefficients.
-
-        ea2i = aindm1/asq
-        vcdel = vc(1)*delmom1(i9) + vc(2)*delmom2(i9) + vc(3)*delmom3(i9) - dele(i9)
-        a9e = 0.5*ea2i*(0.5*vcsq*delrho(i9) - vcdel)
-        sk9 = 0.5*(delmom1(i9) - vc(1)*delrho(i9))/sc9
-
-        ! Define the expansion coefficients a9_1...a9_5 such that
-        !     Delta Q = {delrho,dele,del1,del2,del3} = sum [a9_j evec(,j)]
-
-        a9(1) = a9e - sk9
-        a9(2) = a9e + sk9
-        a9(3) = ea2i*((hc - vcsq)*delrho(i9) + vcdel)
-        a9(4) = delmom2(i9) - vc(2)*delrho(i9)
-        a9(5) = delmom3(i9) - vc(3)*delrho(i9)
-
-        ! The flux increments "dflux" are now given by   Delta F = sum [a9_j lam_j evec(,j)]
-
-        dflux(i9,1:5) = 0.
-        do j9=1,5
-            dflux(i9,1) = dflux(i9,1) + a9(j9)*lam9(j9)*evec(1,j9)
-            dflux(i9,2) = dflux(i9,2) + a9(j9)*lam9(j9)*evec(2,j9)
-            dflux(i9,3) = dflux(i9,3) + a9(j9)*lam9(j9)*evec(3,j9)
-            dflux(i9,4) = dflux(i9,4) + a9(j9)*lam9(j9)*evec(4,j9)
-            dflux(i9,5) = dflux(i9,5) + a9(j9)*lam9(j9)*evec(5,j9)
-        enddo
-        dflux(i9,1) = dflux(i9,1)*Qlr(i9,rh)     ! flux increment in density
-        dflux(i9,2) = dflux(i9,2)*Qlr(i9,rh)     ! flux increment in energy
-        dflux(i9,3) = dflux(i9,3)*Qlr(i9,rh)     ! flux increment in parallel momentum
-        dflux(i9,4) = dflux(i9,4)*Qlr(i9,rh)     ! flux increment in perpendicular momentum
-        dflux(i9,5) = dflux(i9,5)*Qlr(i9,rh)     ! flux increment in z-momentum
-
-        if (kroe(i9) .gt. 0) then
-            froef(i9,rh) = 0.5*(flr(i9,rh) + flr(i9+nface,rh) - dflux(i9,1))
-            froef(i9,en) = 0.5*(flr(i9,en) + flr(i9+nface,en) - dflux(i9,2))
-            froef(i9,mxa(ixyz)) = 0.5*(flr(i9,mxa(ixyz)) + flr(i9+nface,mxa(ixyz)) - dflux(i9,3))
-            froef(i9,mya(ixyz)) = 0.5*(flr(i9,mya(ixyz)) + flr(i9+nface,mya(ixyz)) - dflux(i9,4))
-            froef(i9,mza(ixyz)) = 0.5*(flr(i9,mza(ixyz)) + flr(i9+nface,mza(ixyz)) - dflux(i9,5))
-        end if
-
-    end do
-
-end subroutine flux_roe
 
 !----------------------------------------------------------------------------------------------
 
@@ -1808,9 +1534,12 @@ subroutine glflux
                 sumy = 0.
                 sumz = 0.
                 do iqfa = 1,nface
-                    sumx = sumx + wgtbf_xmp(iqfa,1,ir)*flux_x(iqfa,i,j,k,ieq) + wgtbf_xmp(iqfa,2,ir)*flux_x(iqfa,i+1,j,k,ieq)
-                    sumy = sumy + wgtbf_ymp(iqfa,1,ir)*flux_y(iqfa,i,j,k,ieq) + wgtbf_ymp(iqfa,2,ir)*flux_y(iqfa,i,j+1,k,ieq)
-                    sumz = sumz + wgtbf_zmp(iqfa,1,ir)*flux_z(iqfa,i,j,k,ieq) + wgtbf_zmp(iqfa,2,ir)*flux_z(iqfa,i,j,k+1,ieq)
+                    sumx = sumx + wgtbf_xmp(iqfa,1,ir)*flux_x(iqfa,i,j,k,ieq)   &
+                                + wgtbf_xmp(iqfa,2,ir)*flux_x(iqfa,i+1,j,k,ieq)
+                    sumy = sumy + wgtbf_ymp(iqfa,1,ir)*flux_y(iqfa,i,j,k,ieq)   &
+                                + wgtbf_ymp(iqfa,2,ir)*flux_y(iqfa,i,j+1,k,ieq)
+                    sumz = sumz + wgtbf_zmp(iqfa,1,ir)*flux_z(iqfa,i,j,k,ieq)   &
+                                + wgtbf_zmp(iqfa,2,ir)*flux_z(iqfa,i,j,k+1,ieq)
                 end do
                 glflux_r(i,j,k,ieq,ir) = sumx + sumy + sumz - integral_r(i,j,k,ieq,ir)
             end do
@@ -1852,19 +1581,20 @@ subroutine glflux2
         do ir=2,nbasis
             do i = 1,nx
 
-                glflux_r(i,j,k,ieq,ir) = wgtbf_xmp(1,2,ir)*flux_x(1,i+1,j,k,ieq) + wgtbf_xmp(1,1,ir)*flux_x(1,i,j,k,ieq)  &
-                               + wgtbf_ymp(1,2,ir)*flux_y(1,i,j+1,k,ieq) + wgtbf_ymp(1,1,ir)*flux_y(1,i,j,k,ieq)  &
-                               + wgtbf_zmp(1,2,ir)*flux_z(1,i,j,k+1,ieq) + wgtbf_zmp(1,1,ir)*flux_z(1,i,j,k,ieq)  &
-                               + wgtbf_xmp(2,2,ir)*flux_x(2,i+1,j,k,ieq) + wgtbf_xmp(2,1,ir)*flux_x(2,i,j,k,ieq)  &
-                               + wgtbf_ymp(2,2,ir)*flux_y(2,i,j+1,k,ieq) + wgtbf_ymp(2,1,ir)*flux_y(2,i,j,k,ieq)  &
-                               + wgtbf_zmp(2,2,ir)*flux_z(2,i,j,k+1,ieq) + wgtbf_zmp(2,1,ir)*flux_z(2,i,j,k,ieq)  &
-                               + wgtbf_xmp(3,2,ir)*flux_x(3,i+1,j,k,ieq) + wgtbf_xmp(3,1,ir)*flux_x(3,i,j,k,ieq)  &
-                               + wgtbf_ymp(3,2,ir)*flux_y(3,i,j+1,k,ieq) + wgtbf_ymp(3,1,ir)*flux_y(3,i,j,k,ieq)  &
-                               + wgtbf_zmp(3,2,ir)*flux_z(3,i,j,k+1,ieq) + wgtbf_zmp(3,1,ir)*flux_z(3,i,j,k,ieq)  &
-                               + wgtbf_xmp(4,2,ir)*flux_x(4,i+1,j,k,ieq) + wgtbf_xmp(4,1,ir)*flux_x(4,i,j,k,ieq)  &
-                               + wgtbf_ymp(4,2,ir)*flux_y(4,i,j+1,k,ieq) + wgtbf_ymp(4,1,ir)*flux_y(4,i,j,k,ieq)  &
-                               + wgtbf_zmp(4,2,ir)*flux_z(4,i,j,k+1,ieq) + wgtbf_zmp(4,1,ir)*flux_z(4,i,j,k,ieq)  &
-                                   - integral_r(i,j,k,ieq,ir)
+                glflux_r(i,j,k,ieq,ir) =                                        &
+                     wgtbf_xmp(1,2,ir)*flux_x(1,i+1,j,k,ieq) + wgtbf_xmp(1,1,ir)*flux_x(1,i,j,k,ieq)  &
+                   + wgtbf_ymp(1,2,ir)*flux_y(1,i,j+1,k,ieq) + wgtbf_ymp(1,1,ir)*flux_y(1,i,j,k,ieq)  &
+                   + wgtbf_zmp(1,2,ir)*flux_z(1,i,j,k+1,ieq) + wgtbf_zmp(1,1,ir)*flux_z(1,i,j,k,ieq)  &
+                   + wgtbf_xmp(2,2,ir)*flux_x(2,i+1,j,k,ieq) + wgtbf_xmp(2,1,ir)*flux_x(2,i,j,k,ieq)  &
+                   + wgtbf_ymp(2,2,ir)*flux_y(2,i,j+1,k,ieq) + wgtbf_ymp(2,1,ir)*flux_y(2,i,j,k,ieq)  &
+                   + wgtbf_zmp(2,2,ir)*flux_z(2,i,j,k+1,ieq) + wgtbf_zmp(2,1,ir)*flux_z(2,i,j,k,ieq)  &
+                   + wgtbf_xmp(3,2,ir)*flux_x(3,i+1,j,k,ieq) + wgtbf_xmp(3,1,ir)*flux_x(3,i,j,k,ieq)  &
+                   + wgtbf_ymp(3,2,ir)*flux_y(3,i,j+1,k,ieq) + wgtbf_ymp(3,1,ir)*flux_y(3,i,j,k,ieq)  &
+                   + wgtbf_zmp(3,2,ir)*flux_z(3,i,j,k+1,ieq) + wgtbf_zmp(3,1,ir)*flux_z(3,i,j,k,ieq)  &
+                   + wgtbf_xmp(4,2,ir)*flux_x(4,i+1,j,k,ieq) + wgtbf_xmp(4,1,ir)*flux_x(4,i,j,k,ieq)  &
+                   + wgtbf_ymp(4,2,ir)*flux_y(4,i,j+1,k,ieq) + wgtbf_ymp(4,1,ir)*flux_y(4,i,j,k,ieq)  &
+                   + wgtbf_zmp(4,2,ir)*flux_z(4,i,j,k+1,ieq) + wgtbf_zmp(4,1,ir)*flux_z(4,i,j,k,ieq)  &
+                   - integral_r(i,j,k,ieq,ir)
 
             end do
         end do
@@ -1999,60 +1729,6 @@ subroutine limiter(Q_r)
 
 
 end subroutine limiter
-!----------------------------------------------------------------------------------
-
-!----------------------------------------------------------------------------------
-subroutine limiter2(Q_r)
-
-    implicit none
-    integer i, j, k, ieq, ipge, minindex, ir
-    real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
-    real Qedge(npge,nQ),theta,Qmin(nQ), deltaQ(nQ)
-    real eps, Qrhmin, QPmin, P(npge), Pave, dn, dni, epsiP, thetaj
-    real*8 a, b, c
-
-    eps = rh_min
-
-    do k = 1,nz
-    do j = 1,ny
-    do i = 1,nx
-
-        if (Q_r(i,j,k,rh,1) < eps) then
-
-            do ir=2,nbasis
-                Q_r(i,j,k,rh:en,ir) = 0.0
-            end do
-            Q_r(i,j,k,rh,1) = eps
-
-        else
-
-            do ipge = 1,npge
-                Qedge(ipge,rh) = sum(bf_faces(ipge,1:nbasis)*Q_r(i,j,k,rh,1:nbasis))
-            end do
-
-            Qrhmin = minval(Qedge(:,rh))
-
-            if (Qrhmin < eps) then
-                theta = (eps - Q_r(i,j,k,rh,1))/(Qrhmin - Q_r(i,j,k,rh,1))
-                if (theta .gt. 1.) then
-                    theta = 1.
-                end if
-
-                if (theta .lt. 0) then
-                    theta = 0.
-                end if
-                do ir=2,nbasis
-                    Q_r(i,j,k,rh,ir) = abs(theta)*Q_r(i,j,k,rh,ir)
-                end do
-            end if
-
-        end if
-
-    end do
-    end do
-    end do
-
-end subroutine limiter2
 
 !----------------------------------------------------------------------------------------------
 
