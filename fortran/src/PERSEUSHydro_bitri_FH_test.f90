@@ -144,19 +144,14 @@ real, parameter :: zeta_sd = (zeta_base*T_base/3.)**0.5  ! stdev of fluctuations
 !---------------------------------------------------------------------------
 ! GLOBAL approach to MKL random matrix generation
 !---------------------------------------------------------------------------
-integer vsl_seed
-! integer :: vsl_ndim = 9*nface
-real vsl_mean,vsl_sigma,vsl_errcode
+real vsl_errcode
 TYPE (VSL_STREAM_STATE) :: vsl_stream
-integer vsl_method, vsl_brng
-!
-vsl_brng = VSL_BRNG_MCG31
-vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
-vsl_seed = 1915321
-vsl_mean = 0.0
-vsl_sigma = 1.0
 
-vsl_errcode = vslnewstream(vsl_stream, vsl_brng, vsl_seed)
+integer :: vsl_brng = VSL_BRNG_MCG31
+integer :: vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
+real :: vsl_seed = 1915321
+real :: vsl_mean = 0.0
+real :: vsl_sigma = 1.0
 
 !===============================================================================
 
@@ -348,6 +343,15 @@ end do
 call init_random_seed(123456789)
 iseed = 1317345*mpi_P + 5438432*mpi_Q + 38472613*mpi_R
 
+
+!===============================================================================
+! Initialize MKL random number generator
+!---------------------------------------------------------------------------
+! NOTE: might want to move random number generator initialzation into subroutine
+vsl_errcode = vslnewstream(vsl_stream, vsl_brng, iseed)
+!===============================================================================
+
+
 if (iam .eq. print_mpi) then
     print *,'total dim= ',mpi_nx*nx,mpi_ny*ny,mpi_nz*nz
     print *,'mpi dim= ',mpi_nx,mpi_ny,mpi_nz
@@ -526,9 +530,6 @@ subroutine prep_advance(Q_ri)
     if(ieos .eq. 2) call limiter(Q_ri)
     call prepare_exchange(Q_ri)
     call set_bc
-
-    call get_random_stresses !! FIXME
-
     call flux_cal(Q_ri)
     call innerintegral(Q_ri)
     call glflux2  ! glflux currently breaks after "bug fix"
@@ -1037,10 +1038,12 @@ subroutine get_GRM(GRMpnts_r, npnts)
 !----------------------------------------------------------------------------------------------
 
     implicit none
-    integer ife
+    integer ife,npnts,b,e,vsl_ndim
     real, dimension(npnts,3,3) :: GRMpnts_r
-    real :: vsl_ndim = npnts*3*3
-    real, dimension(vsl_ndim) :: grn
+    real, allocatable :: grn(:)
+
+    vsl_ndim = npnts*3*3
+    allocate(grn(vsl_ndim))
 
     vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
 
@@ -1053,7 +1056,6 @@ subroutine get_GRM(GRMpnts_r, npnts)
         GRMpnts_r(ife,3,:) = grn(b+6:e)
     end do
 
-
 end subroutine get_GRM
 !----------------------------------------------------------------------------------------------
 
@@ -1063,14 +1065,11 @@ subroutine random_stresses_pnts_r(GRMpnts_r, Spnts_r, npnts)
 !----------------------------------------------------------------------------------------------
 
     implicit none
-    integer ife
+    integer ife,npnts
     real, dimension(npnts,3,3) :: GRMpnts_r, Spnts_r
-    real Sxx,Syy,Szz
-    real Sxy,Sxz,Syz
-
-    real Gxx,Gyy,Gzz
-    real Gxy,Gxz,Gyz
-    real trG
+    real Sxx,Syy,Szz,Sxy,Sxz,Syz
+    real Gxx,Gyy,Gzz,Gxy,Gxz,Gyz
+    real trG,trGd3,trG_zeta
 
     call get_GRM(GRMpnts_r, npnts)
 
@@ -1084,8 +1083,6 @@ subroutine random_stresses_pnts_r(GRMpnts_r, Spnts_r, npnts)
         Gxz = sqrt2i*( GRMpnts_r(ife,1,3) + GRMpnts_r(ife,3,1) )
         Gyz = sqrt2i*( GRMpnts_r(ife,2,3) + GRMpnts_r(ife,3,2) )
 
-        diag_coef = bulk_sd*trG
-
         Spnts_r(ife,1,2) = eta_sd*Gxy
         Spnts_r(ife,1,3) = eta_sd*Gxz
         Spnts_r(ife,2,3) = eta_sd*Gyz
@@ -1097,9 +1094,9 @@ subroutine random_stresses_pnts_r(GRMpnts_r, Spnts_r, npnts)
         trGd3 = trG/3.0
         trG_zeta = zeta_sd*trG
 
-        Spnts_r(ife,1,1) = eta_sd*(Gxx - trGd3) + trG_bulk
-        Spnts_r(ife,2,2) = eta_sd*(Gyy - trGd3) + trG_bulk
-        Spnts_r(ife,3,3) = eta_sd*(Gzz - trGd3) + trG_bulk
+        Spnts_r(ife,1,1) = eta_sd*(Gxx - trGd3) + trG_zeta
+        Spnts_r(ife,2,2) = eta_sd*(Gyy - trGd3) + trG_zeta
+        Spnts_r(ife,3,3) = eta_sd*(Gzz - trGd3) + trG_zeta
     end do
 
 
@@ -1118,9 +1115,10 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
     implicit none
     integer ife,ixyz,npnts
     real, dimension(npnts,nQ) :: Qpnts_r, fpnts_r
-    real dn,dni,vx,vy,vz,P,asqr,fac,Pre,dnei,Psol,dx2,Tem,smsq,nu,c2d3,c4d3
+    real dn,dni,vx,vy,vz,P,asqr,fac,Pre,dnei,Psol,dx2,Tem,smsq,nu,c2d3,c4d3,c2d3nu,c4d3nu
 
     real, dimension(npnts,3,3) :: GRMpnts_r, Spnts_r
+    real Sxx,Syy,Szz,Sxy,Sxz,Syz
     real ampx,ampy,ampz,ampd
 
     nu = epsi*vis
