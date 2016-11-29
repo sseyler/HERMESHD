@@ -118,33 +118,35 @@ real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
 ! Stuff for random matrix generation
 !---------------------------------------------------------------------------
 real, parameter :: sqrt2 = 2**0.5
+real, parameter :: sqrt2i = 1.0/sqrt2
 real, parameter :: T_base = 300/te0  ! system temperature (for isothermal case)
 real, parameter :: eta_base = vis*epsi  ! dynamic viscosity
 real, parameter :: zeta_base = eta_base  ! bulk viscosity---will need to change this!
 
 real, parameter :: eta_sd = (2*eta_base*T_base)**0.5  ! stdev of fluctuations for shear viscosity terms
-real, parameter :: zeta_sd = (zeta_base*T_base)**0.5  ! stdev of fluctuations for bulk viscosity term
+real, parameter :: zeta_sd = (zeta_base*T_base/3.)**0.5  ! stdev of fluctuations for bulk viscosity term
+! real, parameter :: bulk_sd = zeta_sd - eta_sd/3.
 
 ! Storage for random stresses for all cell interface grid points in the domain
-real Sflux_x(nface, 1:nx+1, ny,     nz,     1:5)
-real Sflux_y(nface, nx,     1:ny+1, nz,     1:5)
-real Sflux_z(nface, nx,     ny,     1:nz+1, 1:5)
+! real Sflux_x(nface, 1:nx+1, ny,     nz,     3,3)
+! real Sflux_y(nface, nx,     1:ny+1, nz,     3,3)
+! real Sflux_z(nface, nx,     ny,     1:nz+1, 3,3)
 
 ! 3x3 Gaussian random matrices for naively constructing the random stress tensor
 !   This is inefficient since we only need 5 (rather than 9) Gaussian r.v.s
 !   for each point in space (and time) because it's symmetric and traceless
-real GRM_x(nface, 1:nx+1, ny,     nz,     1:9)
-real GRM_y(nface, nx,     1:ny+1, nz,     1:9)
-real GRM_z(nface, nx,     ny,     1:nz+1, 1:9)
+! real GRM_x(nface, 1:nx+1, ny,     nz,     3,3)
+! real GRM_y(nface, nx,     1:ny+1, nz,     3,3)
+! real GRM_z(nface, nx,     ny,     1:nz+1, 3,3)
 !---------------------------------------------------------------------------
 
 !---------------------------------------------------------------------------
 ! GLOBAL approach to MKL random matrix generation
 !---------------------------------------------------------------------------
-integer vsl_seed,vsl_ndim
+integer vsl_seed
+! integer :: vsl_ndim = 9*nface
 real vsl_mean,vsl_sigma,vsl_errcode
 TYPE (VSL_STREAM_STATE) :: vsl_stream
-! TYPE (MKL_INT) :: method, brng
 integer vsl_method, vsl_brng
 !
 vsl_brng = VSL_BRNG_MCG31
@@ -152,8 +154,7 @@ vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
 vsl_seed = 1915321
 vsl_mean = 0
 vsl_sigma = 1
-vsl_ndim = 9*nface
-!
+
 vsl_errcode = vslnewstream(vsl_stream, vsl_brng, vsl_seed)
 !---------------------------------------------------------------------------
 
@@ -809,99 +810,160 @@ end subroutine advance_time_level_gl
 
 
 !----------------------------------------------------------------------------------------------
-subroutine get_random_stresses(Q_ri, npts)
+! subroutine get_random_stresses(Q_ri, npnts)
+! !----------------------------------------------------------------------------------------------
+!
+!     implicit none
+!     integer i,j,k,i4,b,e
+!
+!     real Gxx,Gyy,Gzz
+!     real Gxy,Gxz,Gyz
+!
+!     real trG, diag_coef
+!
+!     if(ixyz .eq. 1) then
+!         do k = 1,nz
+!             do j = 1,ny
+!                 do i = 1,nx+1
+!                     do i4 = 1,nface
+!                         e = i4*9
+!                         b = e - 8
+!
+!                         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
+!                         GRM_x(i4,i,j,k,1,1) = vsl_r(b)
+!                         GRM_x(i4,i,j,k,1,2) = vsl_r(b+1)
+!                         GRM_x(i4,i,j,k,1,3) = vsl_r(b+2)
+!                         GRM_x(i4,i,j,k,2,1) = vsl_r(b+3)
+!                         GRM_x(i4,i,j,k,2,2) = vsl_r(b+4)
+!                         GRM_x(i4,i,j,k,2,3) = vsl_r(b+5)
+!                         GRM_x(i4,i,j,k,3,1) = vsl_r(b+6)
+!                         GRM_x(i4,i,j,k,3,2) = vsl_r(b+7)
+!                         GRM_x(i4,i,j,k,3,3) = vsl_r(b+8)
+!
+!                         Gxx = GRM_x(:,:,:,:,1,1)
+!                         Gyy = GRM_x(:,:,:,:,2,2)
+!                         Gzz = GRM_x(:,:,:,:,3,3)
+!
+!                         Gxy = sqrt2i*( GRM_x(:,:,:,:,1,2) + GRM_x(:,:,:,:,2,1) )
+!                         Gxz = sqrt2i*( GRM_x(:,:,:,:,1,3) + GRM_x(:,:,:,:,3,1) )
+!                         Gyz = sqrt2i*( GRM_x(:,:,:,:,2,3) + GRM_x(:,:,:,:,3,2) )
+!
+!                         trG = (Gxx + Gyy + Gzz)
+!                         diag_coef = bulk_sd*trG
+!
+!                         Sflux_x(:,:,:,:,1,2) = eta_sd*Gxy
+!                         Sflux_x(:,:,:,:,2,1) = Sflux_x(:,:,:,:,1,2)
+!                         Sflux_x(:,:,:,:,1,3) = eta_sd*Gxz
+!                         Sflux_x(:,:,:,:,3,1) = Sflux_x(:,:,:,:,1,3)
+!                         Sflux_x(:,:,:,:,2,3) = eta_sd*Gyz
+!                         Sflux_x(:,:,:,:,3,2) = Sflux_x(:,:,:,:,2,3)
+!
+!                         ! Probably want to re-write to make it exactly traceless by avoiding roundoff error
+!                         Sflux_x(:,:,:,:,1,1) = eta_sd*Gxx + diag_coef
+!                         Sflux_x(:,:,:,:,2,2) = eta_sd*Gyy + diag_coef
+!                         Sflux_x(:,:,:,:,3,3) = eta_sd*Gzz + diag_coef
+!                     end do
+!                 end do
+!             end do
+!         end do
+!     end if
+!
+!     if(ixyz .eq. 2) then
+!         do k = 1,nz
+!             do j = 1,ny+1
+!                 do i = 1,nx
+!                     do i4 = 1,nface
+!                         e = i4*9
+!                         b = e - 8
+!
+!                         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
+!                         GRM_y(i4,i,j,k,1,1) = vsl_r(b)
+!                         GRM_y(i4,i,j,k,1,2) = vsl_r(b+1)
+!                         GRM_y(i4,i,j,k,1,3) = vsl_r(b+2)
+!                         GRM_y(i4,i,j,k,2,1) = vsl_r(b+3)
+!                         GRM_y(i4,i,j,k,2,2) = vsl_r(b+4)
+!                         GRM_y(i4,i,j,k,2,3) = vsl_r(b+5)
+!                         GRM_y(i4,i,j,k,3,1) = vsl_r(b+6)
+!                         GRM_y(i4,i,j,k,3,2) = vsl_r(b+7)
+!                         GRM_y(i4,i,j,k,3,3) = vsl_r(b+8)
+!
+!                         Gxx = GRM_y(:,:,:,:,1,1)
+!                         Gyy = GRM_y(:,:,:,:,2,2)
+!                         Gzz = GRM_y(:,:,:,:,3,3)
+!
+!                         Gxy = sqrt2i*( GRM_y(:,:,:,:,1,2) + GRM_y(:,:,:,:,2,1) )
+!                         Gxz = sqrt2i*( GRM_y(:,:,:,:,1,3) + GRM_y(:,:,:,:,3,1) )
+!                         Gyz = sqrt2i*( GRM_y(:,:,:,:,2,3) + GRM_y(:,:,:,:,3,2) )
+!
+!                         trG = (Gxx + Gyy + Gzz)
+!                         diag_coef = bulk_sd*trG
+!
+!                         Sflux_y(:,:,:,:,1,2) = eta_sd*Gxy
+!                         Sflux_y(:,:,:,:,2,1) = Sflux_y(:,:,:,:,1,2)
+!                         Sflux_y(:,:,:,:,1,3) = eta_sd*Gxz
+!                         Sflux_y(:,:,:,:,3,1) = Sflux_y(:,:,:,:,1,3)
+!                         Sflux_y(:,:,:,:,2,3) = eta_sd*Gyz
+!                         Sflux_y(:,:,:,:,3,2) = Sflux_y(:,:,:,:,2,3)
+!
+!                         ! Probably want to re-write to make it exactly traceless by avoiding roundoff error
+!                         Sflux_y(:,:,:,:,1,1) = eta_sd*Gxx + diag_coef
+!                         Sflux_y(:,:,:,:,2,2) = eta_sd*Gyy + diag_coef
+!                         Sflux_y(:,:,:,:,3,3) = eta_sd*Gzz + diag_coef
+!                     end do
+!                 end do
+!             end do
+!         end do
+!     end if
+!
+!     if(ixyz .eq. 3) then
+!         do k = 1,nz+1
+!             do j = 1,ny
+!                 do i = 1,nx
+!                     do i4 = 1,nface
+!                         e = i4*9
+!                         b = e - 8
+!
+!                         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
+!                         GRM_z(i4,i,j,k,1,1) = vsl_r(b)
+!                         GRM_z(i4,i,j,k,1,2) = vsl_r(b+1)
+!                         GRM_z(i4,i,j,k,1,3) = vsl_r(b+2)
+!                         GRM_z(i4,i,j,k,2,1) = vsl_r(b+3)
+!                         GRM_z(i4,i,j,k,2,2) = vsl_r(b+4)
+!                         GRM_z(i4,i,j,k,2,3) = vsl_r(b+5)
+!                         GRM_z(i4,i,j,k,3,1) = vsl_r(b+6)
+!                         GRM_z(i4,i,j,k,3,2) = vsl_r(b+7)
+!                         GRM_z(i4,i,j,k,3,3) = vsl_r(b+8)
+!
+!                         Gxx = GRM_z(:,:,:,:,1,1)
+!                         Gyy = GRM_z(:,:,:,:,2,2)
+!                         Gzz = GRM_z(:,:,:,:,3,3)
+!
+!                         Gxy = sqrt2i*( GRM_z(:,:,:,:,1,2) + GRM_z(:,:,:,:,2,1) )
+!                         Gxz = sqrt2i*( GRM_z(:,:,:,:,1,3) + GRM_z(:,:,:,:,3,1) )
+!                         Gyz = sqrt2i*( GRM_z(:,:,:,:,2,3) + GRM_z(:,:,:,:,3,2) )
+!
+!                         trG = (Gxx + Gyy + Gzz)
+!                         diag_coef = bulk_sd*trG
+!
+!                         Sflux_z(:,:,:,:,1,2) = eta_sd*Gxy
+!                         Sflux_z(:,:,:,:,2,1) = Sflux_z(:,:,:,:,1,2)
+!                         Sflux_z(:,:,:,:,1,3) = eta_sd*Gxz
+!                         Sflux_z(:,:,:,:,3,1) = Sflux_z(:,:,:,:,1,3)
+!                         Sflux_z(:,:,:,:,2,3) = eta_sd*Gyz
+!                         Sflux_z(:,:,:,:,3,2) = Sflux_z(:,:,:,:,2,3)
+!
+!                         ! Probably want to re-write to make it exactly traceless by avoiding roundoff error
+!                         Sflux_z(:,:,:,:,1,1) = eta_sd*Gxx + diag_coef
+!                         Sflux_z(:,:,:,:,2,2) = eta_sd*Gyy + diag_coef
+!                         Sflux_z(:,:,:,:,3,3) = eta_sd*Gzz + diag_coef
+!                     end do
+!                 end do
+!             end do
+!         end do
+!     end if
+!
+! end subroutine get_random_stresses
 !----------------------------------------------------------------------------------------------
-
-    implicit none
-    integer i,j,k,i4
-
-    real Gxx,Gyy,Gzz
-    real Gxy,Gxz,Gyz
-
-    real trace
-
-    if(ixyz .eq. 1) then
-        do k = 1,nz
-            do j = 1,ny
-                do i = 1,nx+1
-                    do i4 = 1,nface
-                        e = i4*9
-                        b = e - 8
-                        Gxx =
-
-                        vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
-                        GRM_x(i4,i,j,k,:) = vsl_r(b:e)
-                    end do
-                end do
-            end do
-        end do
-    end if
-
-    Gxx = GRM_x(:,:,:,:,1)
-    Gyy = GRM_x(:,:,:,:,5)
-    Gzz = GRM_x(:,:,:,:,9)
-    ! The first three indices of Sflux_<x,y,z> are the xy, xz, and yz components
-    Sflux_x(:,:,:,:,1) = sqrt(2)*Gxx
-    Sflux_x(:,:,:,:,5) = sqrt(2)*Gyy
-    Sflux_x(:,:,:,:,9) = sqrt(2)*Gzz
-
-    trace = sqrt(2)*()
-
-
-    Sflux_x(:,:,:,:,) GRM_x(nface, 1:nx+1, ny,     nz,     1:9)
-
-!----------------------------------------------------------------------------------------------
-
-
-!----------------------------------------------------------------------------------------------
-subroutine get_random_matrices
-!----------------------------------------------------------------------------------------------
-
-    implicit none
-    integer i,j,k,i4
-    real vsl_r(vsl_ndim)
-
-    if(ixyz .eq. 1) then
-        do k = 1,nz
-            do j = 1,ny
-                do i = 1,nx+1
-                    do i4 = 1,nface
-                        e = i4*9
-                        b = e - 8
-                        vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
-                        GRM_x(i4,i,j,k,:) = vsl_r(b:e)
-                    end do
-                end do
-            end do
-        end do
-    end if
-
-    if(ixyz .eq. 2) then
-        do k = 1,nz
-            do j = 1,ny+1
-                do i = 1,nx
-                    do i4 = 1,nface
-                        GRM_y(i4,i,j,k,(i4-1)*9+1:i4*9)
-                    end do
-                end do
-            end do
-        end do
-    end if
-
-    if(ixyz .eq. 3) then
-        do k = 1,nz+1
-            do j = 1,ny
-                do i = 1,nx
-                    do i4 = 1,nface
-                        GRM_z(i4,i,j,k,(i4-1)*9+1:i4*9)
-                    end do
-                end do
-            end do
-        end do
-    end if
-
-!----------------------------------------------------------------------------------------------
-
 
 subroutine source_calc(Q_ri,t)
 
@@ -967,40 +1029,106 @@ end subroutine source_calc
 
 !----------------------------------------------------------------------------------------------
 
+
+!----------------------------------------------------------------------------------------------
+subroutine get_GRM(GRMpnts_r, npnts)
+!----------------------------------------------------------------------------------------------
+
+    implicit none
+    integer ife
+    real, dimension(npnts,3,3) :: GRMpnts_r
+    real :: vsl_ndim = npnts*3*3
+    real, dimension(vsl_ndim) :: grn
+
+    vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
+
+    ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
+    do ife = 1,npnts
+        e = 9*ife
+        b = e - 8
+        GRMpnts_r(ife,1,:) = grn(b:b+2)
+        GRMpnts_r(ife,2,:) = grn(b+3:b+5)
+        GRMpnts_r(ife,3,:) = grn(b+6:e)
+    end do
+
+
+end subroutine get_GRM
+!----------------------------------------------------------------------------------------------
+
+
+!----------------------------------------------------------------------------------------------
+subroutine random_stresses_pnts_r(GRMpnts_r, Spnts_r, npnts)
+!----------------------------------------------------------------------------------------------
+
+    implicit none
+    integer ife
+    real, dimension(npnts,3,3) :: GRMpnts_r, Spnts_r
+    real Sxx,Syy,Szz
+    real Sxy,Sxz,Syz
+
+    real Gxx,Gyy,Gzz
+    real Gxy,Gxz,Gyz
+    real trG
+
+    call get_GRM(GRMpnts_r, npnts)
+
+    ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
+    do ife = 1,npnts
+        Gxx = GRMpnts_r(ife,1,1)
+        Gyy = GRMpnts_r(ife,2,2)
+        Gzz = GRMpnts_r(ife,3,3)
+
+        Gxy = sqrt2i*( GRMpnts_r(ife,1,2) + GRMpnts_r(ife,2,1) )
+        Gxz = sqrt2i*( GRMpnts_r(ife,1,3) + GRMpnts_r(ife,3,1) )
+        Gyz = sqrt2i*( GRMpnts_r(ife,2,3) + GRMpnts_r(ife,3,2) )
+
+        diag_coef = bulk_sd*trG
+
+        Spnts_r(ife,1,2) = eta_sd*Gxy
+        Spnts_r(ife,1,3) = eta_sd*Gxz
+        Spnts_r(ife,2,3) = eta_sd*Gyz
+        Spnts_r(ife,2,1) = Spnts_r(ife,1,2)
+        Spnts_r(ife,3,1) = Spnts_r(ife,1,3)
+        Spnts_r(ife,3,2) = Spnts_r(ife,2,3)
+
+        trG = (Gxx + Gyy + Gzz)
+        trGd3 = trG/3.0
+        trG_zeta = zeta_sd*trG
+
+        Spnts_r(ife,1,1) = eta_sd*(Gxx - trGd3) + trG_bulk
+        Spnts_r(ife,2,2) = eta_sd*(Gyy - trGd3) + trG_bulk
+        Spnts_r(ife,3,3) = eta_sd*(Gzz - trGd3) + trG_bulk
+    end do
+
+
+end subroutine random_stresses_pnts_r
+!----------------------------------------------------------------------------------------------
+
+!----------------------------------------------------------------------------------------------
 subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
     ! Calculate the flux "fpnts_r" in direction "ixyz" (x, y, or z) at a set of
-    ! points corresponding to conserved quantities "Qpnts_r".
-
-    ! ixyz=1: x-direction
-    ! ixyz=2: y-direction
-    ! ixyz=3: z-direction
+    ! points corresponding to conserved quantities "Qpnts_r":
+    !   ixyz=1: x-direction
+    !   ixyz=2: y-direction
+    !   ixyz=3: z-direction
 
     implicit none
     integer ife,ixyz,npnts
     real, dimension(npnts,nQ) :: Qpnts_r, fpnts_r
     real dn,dni,vx,vy,vz,P,asqr,fac,Pre,dnei,Psol,dx2,Tem,smsq,nu,c2d3,c4d3
-    real ampx,ampy,ampz,ampd
 
-    !---------------------------------------------------------------------------
-    ! GLOBALLY generated random matrix -- seems to be marginally faster (maybe)
-    !---------------------------------------------------------------------------
-    vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
-    Sx = vsl_r(0)
-    Sy = vsl_r(1)
-    Sz = vsl_r(2)
-    !---------------------------------------------------------------------------
+    real, dimension(npnts,3,3) :: GRMpnts_r, Spnts_r
+    real ampx,ampy,ampz,ampd
 
     nu = epsi*vis
     c2d3 = 2./3.
     c4d3 = 4./3.
     c2d3nu = c2d3*nu
     c4d3nu = c4d3*nu
+    ! ampd = 0*amplen*(ran(iseed) - 0.5)
 
-    ! Sx = 0.01*amplv*(ran(iseed) - 0.5)
-    ! Sy = 0.01*amplv*(ran(iseed) - 0.5)
-    ! Sz = 0.01*amplv*(ran(iseed) - 0.5)
-    ampd = 0*amplen*(ran(iseed) - 0.5)
+    call random_stresses_pnts_r(GRMpnts_r, Spnts_r, npnts)
 
     do ife = 1,npnts
 
@@ -1016,14 +1144,22 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
         vy = Qpnts_r(ife,my)*dni
         vz = Qpnts_r(ife,mz)*dni
 
+        ! NOTE: may not need all values since ixyz choose flux direction
+        Sxx = Spnts_r(ife,1,1)
+        Syy = Spnts_r(ife,2,2)
+        Szz = Spnts_r(ife,3,3)
+        Sxy = Spnts_r(ife,1,2)
+        Sxz = Spnts_r(ife,1,3)
+        Syz = Spnts_r(ife,2,3)
+
         if(ixyz .eq. 1) then
 
             fpnts_r(ife,rh) = Qpnts_r(ife,mx)
 
             ! NOTE: the stress terms may need minus sign in the momentum flux!!!
-            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + P + Qpnts_r(ife,pxx) + Sx
-            fpnts_r(ife,my) = Qpnts_r(ife,my)*vx     + Qpnts_r(ife,pxy) + Sy
-            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx     + Qpnts_r(ife,pxz) + Sz
+            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + P + Qpnts_r(ife,pxx) + Sxx
+            fpnts_r(ife,my) = Qpnts_r(ife,my)*vx     + Qpnts_r(ife,pxy) + Sxy
+            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx     + Qpnts_r(ife,pxz) + Sxz
 
             fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx - (Qpnts_r(ife,pxx)*vx   &
                                                        +  Qpnts_r(ife,pxy)*vy   &
@@ -1042,9 +1178,9 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
             fpnts_r(ife,rh) = Qpnts_r(ife,mxa(ixyz))
 
-            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy     + Qpnts_r(ife,pxy) + Sx
-            fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + P + Qpnts_r(ife,pyy) + Sy
-            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy     + Qpnts_r(ife,pyz) + Sz
+            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy     + Qpnts_r(ife,pxy) + Sxy
+            fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + P + Qpnts_r(ife,pyy) + Syy
+            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy     + Qpnts_r(ife,pyz) + Syz
 
             fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy - (Qpnts_r(ife,pyy)*vy   &
                                                        +  Qpnts_r(ife,pxy)*vx   &
@@ -1063,9 +1199,9 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
             fpnts_r(ife,rh) = Qpnts_r(ife,mz)
 
-            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz     + Qpnts_r(ife,pxz) + Sx
-            fpnts_r(ife,my) = Qpnts_r(ife,my)*vz     + Qpnts_r(ife,pyz) + Sy
-            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + P + Qpnts_r(ife,pzz) + Sz
+            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz     + Qpnts_r(ife,pxz) + Sxz
+            fpnts_r(ife,my) = Qpnts_r(ife,my)*vz     + Qpnts_r(ife,pyz) + Syz
+            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + P + Qpnts_r(ife,pzz) + Szz
 
             fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz - (Qpnts_r(ife,pzz)*vz   &
                                                        +  Qpnts_r(ife,pxz)*vx   &
