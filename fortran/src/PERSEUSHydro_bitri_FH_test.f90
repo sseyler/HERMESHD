@@ -107,11 +107,57 @@ real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r0, Q_r1, Q_r2, Q_r3
 real, dimension(nx,ny,nz,nQ,nbasis) :: glflux_r, source_r
 real, dimension(nx,ny,nz,nQ,nbasis) :: integral_r
 
-real eta(nx,ny,nz,npg),den0(nx,ny,nz),Ez0,Zdy(nx,ny,nz,npg)
+real den0(nx,ny,nz),Ez0,Zdy(nx,ny,nz,npg) !eta(nx,ny,nz,npg)
 real flux_x(nface,1:nx+1,ny,nz,1:nQ)
 real flux_y(nface,nx,1:ny+1,nz,1:nQ)
 real flux_z(nface,nx,ny,1:nz+1,1:nQ)
-    real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
+real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
+
+
+!---------------------------------------------------------------------------
+! Stuff for random matrix generation
+!---------------------------------------------------------------------------
+real, parameter :: sqrt2 = 2**0.5
+real, parameter :: T_base = 300/te0  ! system temperature (for isothermal case)
+real, parameter :: eta_base = vis*epsi  ! dynamic viscosity
+real, parameter :: zeta_base = eta_base  ! bulk viscosity---will need to change this!
+
+real, parameter :: eta_sd = (2*eta_base*T_base)**0.5  ! stdev of fluctuations for shear viscosity terms
+real, parameter :: zeta_sd = (zeta_base*T_base)**0.5  ! stdev of fluctuations for bulk viscosity term
+
+! Storage for random stresses for all cell interface grid points in the domain
+real Sflux_x(nface, 1:nx+1, ny,     nz,     1:5)
+real Sflux_y(nface, nx,     1:ny+1, nz,     1:5)
+real Sflux_z(nface, nx,     ny,     1:nz+1, 1:5)
+
+! 3x3 Gaussian random matrices for naively constructing the random stress tensor
+!   This is inefficient since we only need 5 (rather than 9) Gaussian r.v.s
+!   for each point in space (and time) because it's symmetric and traceless
+real GRM_x(nface, 1:nx+1, ny,     nz,     1:9)
+real GRM_y(nface, nx,     1:ny+1, nz,     1:9)
+real GRM_z(nface, nx,     ny,     1:nz+1, 1:9)
+!---------------------------------------------------------------------------
+
+!---------------------------------------------------------------------------
+! GLOBAL approach to MKL random matrix generation
+!---------------------------------------------------------------------------
+integer vsl_seed,vsl_ndim
+real vsl_mean,vsl_sigma,vsl_errcode
+TYPE (VSL_STREAM_STATE) :: vsl_stream
+! TYPE (MKL_INT) :: method, brng
+integer vsl_method, vsl_brng
+!
+vsl_brng = VSL_BRNG_MCG31
+vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
+vsl_seed = 1915321
+vsl_mean = 0
+vsl_sigma = 1
+vsl_ndim = 9*nface
+!
+vsl_errcode = vslnewstream(vsl_stream, vsl_brng, vsl_seed)
+!---------------------------------------------------------------------------
+
+
 logical MMask(nx,ny,nz),BMask(nx,ny,nz)
 real xcell(npg), ycell(npg), zcell(npg), xface(npge), yface(npge), zface(npge)
 integer ticks, count_rate, count_max
@@ -175,25 +221,6 @@ integer :: mpi_nx=4, mpi_ny=4, print_mpi=0
     integer,parameter:: NORTH=1,SOUTH=2,EAST=3,WEST=4,UP=5,DOWN=6,MPI_TT=MPI_REAL4
 
     real cflm
-
-!---------------------------------------------------------------------------
-! GLOBAL approach to MKL random matrix generation
-!---------------------------------------------------------------------------
-integer vsl_seed,vsl_ndim
-real vsl_mean,vsl_sigma,vsl_errcode,vsl_r(3)
-TYPE (VSL_STREAM_STATE) :: vsl_stream
-! TYPE (MKL_INT) :: method, brng
-integer vsl_method, vsl_brng
-!
-vsl_brng = VSL_BRNG_MCG31
-vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
-vsl_seed = 1915321
-vsl_mean = 0
-vsl_sigma = 0.01
-vsl_ndim = 3
-!
-vsl_errcode = vslnewstream(vsl_stream, vsl_brng, vsl_seed)
-!---------------------------------------------------------------------------
 
 if (nbasis .le. 8) cflm = 0.14
 if (nbasis .eq. 27) cflm = 0.1
@@ -453,8 +480,10 @@ do while (t<tf)
 
 end do
 
-! Computation is completed with de-allocation of system resources:
+!-------------------------------------------------------------------------------
+! RNG is completed with de-allocation of system resources:
 vsl_errcode = vsldeletestream( vsl_stream )
+!-------------------------------------------------------------------------------
 
 call MPI_Finalize (ierr)
 
@@ -494,6 +523,9 @@ subroutine prep_advance(Q_ri)
     if(ieos .eq. 2) call limiter(Q_ri)
     call prepare_exchange(Q_ri)
     call set_bc
+
+    call get_random_stresses !! FIXME
+
     call flux_cal(Q_ri)
     call innerintegral(Q_ri)
     call glflux2  ! glflux currently breaks after "bug fix"
@@ -775,7 +807,101 @@ subroutine advance_time_level_gl(Q_ri,Q_rp)
 
 end subroutine advance_time_level_gl
 
+
 !----------------------------------------------------------------------------------------------
+subroutine get_random_stresses(Q_ri, npts)
+!----------------------------------------------------------------------------------------------
+
+    implicit none
+    integer i,j,k,i4
+
+    real Gxx,Gyy,Gzz
+    real Gxy,Gxz,Gyz
+
+    real trace
+
+    if(ixyz .eq. 1) then
+        do k = 1,nz
+            do j = 1,ny
+                do i = 1,nx+1
+                    do i4 = 1,nface
+                        e = i4*9
+                        b = e - 8
+                        Gxx =
+
+                        vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
+                        GRM_x(i4,i,j,k,:) = vsl_r(b:e)
+                    end do
+                end do
+            end do
+        end do
+    end if
+
+    Gxx = GRM_x(:,:,:,:,1)
+    Gyy = GRM_x(:,:,:,:,5)
+    Gzz = GRM_x(:,:,:,:,9)
+    ! The first three indices of Sflux_<x,y,z> are the xy, xz, and yz components
+    Sflux_x(:,:,:,:,1) = sqrt(2)*Gxx
+    Sflux_x(:,:,:,:,5) = sqrt(2)*Gyy
+    Sflux_x(:,:,:,:,9) = sqrt(2)*Gzz
+
+    trace = sqrt(2)*()
+
+
+    Sflux_x(:,:,:,:,) GRM_x(nface, 1:nx+1, ny,     nz,     1:9)
+
+!----------------------------------------------------------------------------------------------
+
+
+!----------------------------------------------------------------------------------------------
+subroutine get_random_matrices
+!----------------------------------------------------------------------------------------------
+
+    implicit none
+    integer i,j,k,i4
+    real vsl_r(vsl_ndim)
+
+    if(ixyz .eq. 1) then
+        do k = 1,nz
+            do j = 1,ny
+                do i = 1,nx+1
+                    do i4 = 1,nface
+                        e = i4*9
+                        b = e - 8
+                        vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
+                        GRM_x(i4,i,j,k,:) = vsl_r(b:e)
+                    end do
+                end do
+            end do
+        end do
+    end if
+
+    if(ixyz .eq. 2) then
+        do k = 1,nz
+            do j = 1,ny+1
+                do i = 1,nx
+                    do i4 = 1,nface
+                        GRM_y(i4,i,j,k,(i4-1)*9+1:i4*9)
+                    end do
+                end do
+            end do
+        end do
+    end if
+
+    if(ixyz .eq. 3) then
+        do k = 1,nz+1
+            do j = 1,ny
+                do i = 1,nx
+                    do i4 = 1,nface
+                        GRM_z(i4,i,j,k,(i4-1)*9+1:i4*9)
+                    end do
+                end do
+            end do
+        end do
+    end if
+
+!----------------------------------------------------------------------------------------------
+
 
 subroutine source_calc(Q_ri,t)
 
@@ -796,7 +922,10 @@ subroutine source_calc(Q_ri,t)
 
                 do ipg = 1,npg
 
-                    do ieq = 1,nQ
+                    ! do ieq = 1,nQ
+                    !     Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,ieq,1:nbasis))
+                    ! end do
+                    do ieq = pxx,nQ
                         Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,ieq,1:nbasis))
                     end do
 
@@ -852,36 +981,6 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
     real, dimension(npnts,nQ) :: Qpnts_r, fpnts_r
     real dn,dni,vx,vy,vz,P,asqr,fac,Pre,dnei,Psol,dx2,Tem,smsq,nu,c2d3,c4d3
     real ampx,ampy,ampz,ampd
-
-    !---------------------------------------------------------------------------
-    ! LOCAL generation of random matrix -- ~5.5 vs ~4 sec/step
-    ! amplv is amplitude for stochastic viscous stress tensor
-    ! amplm is amplitude for stochastic momentum stuffz
-    ! amplen is amplitude for stochastic energy (heat flux?)
-    !---------------------------------------------------------------------------
-    ! integer vsl_seed,vsl_ndim
-    ! real vsl_mean,vsl_sigma,vsl_errcode,vsl_r(3)
-    ! TYPE (VSL_STREAM_STATE) :: vsl_stream
-    ! ! TYPE (MKL_INT) :: vsl_method, vsl_brng
-    ! integer vsl_method, vsl_brng
-    !
-    ! vsl_brng = VSL_BRNG_MCG31
-    ! vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
-    ! vsl_seed = 1915321
-    ! vsl_a = 0
-    ! vsl_sigma = 0.01
-    ! vsl_n = 3
-    !
-    ! vsl_errcode = vslnewstream(vsl_stream, vsl_brng, vsl_seed)
-    ! vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
-    !
-    ! ! Computation is completed with de-allocation of system resources:
-    ! vsl_errcode = vsldeletestream( vsl_stream )
-    !
-    ! Sx = vsl_r(0)
-    ! Sy = vsl_r(1)
-    ! Sz = vsl_r(2)
-    !---------------------------------------------------------------------------
 
     !---------------------------------------------------------------------------
     ! GLOBALLY generated random matrix -- seems to be marginally faster (maybe)
@@ -2288,8 +2387,8 @@ subroutine output_vtk(Qin,nout,iam)
                 vx = qvtk(i,j,k,mx)*dni
                 vy = qvtk(i,j,k,my)*dni
                 vz = qvtk(i,j,k,mz)*dni
-                P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))*dni
-                var_xml_val_x(l)=P*te0
+                P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
+                var_xml_val_x(l)=P*te0*dni
             enddo
         enddo
     enddo
