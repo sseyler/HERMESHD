@@ -114,12 +114,14 @@ real flux_z(nface,nx,ny,1:nz+1,1:nQ)
 real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
 
 
+!===============================================================================
+
 !---------------------------------------------------------------------------
 ! Stuff for random matrix generation
 !---------------------------------------------------------------------------
 real, parameter :: sqrt2 = 2**0.5
 real, parameter :: sqrt2i = 1.0/sqrt2
-real, parameter :: T_base = 300/te0  ! system temperature (for isothermal case)
+real, parameter :: T_base = 300/te0  ! system temperature (for isothermal assumption)
 real, parameter :: eta_base = vis*epsi  ! dynamic viscosity
 real, parameter :: zeta_base = eta_base  ! bulk viscosity---will need to change this!
 
@@ -127,18 +129,17 @@ real, parameter :: eta_sd = (2*eta_base*T_base)**0.5  ! stdev of fluctuations fo
 real, parameter :: zeta_sd = (zeta_base*T_base/3.)**0.5  ! stdev of fluctuations for bulk viscosity term
 ! real, parameter :: bulk_sd = zeta_sd - eta_sd/3.
 
-! Storage for random stresses for all cell interface grid points in the domain
-! real Sflux_x(nface, 1:nx+1, ny,     nz,     3,3)
-! real Sflux_y(nface, nx,     1:ny+1, nz,     3,3)
-! real Sflux_z(nface, nx,     ny,     1:nz+1, 3,3)
-
 ! 3x3 Gaussian random matrices for naively constructing the random stress tensor
 !   This is inefficient since we only need 5 (rather than 9) Gaussian r.v.s
 !   for each point in space (and time) because it's symmetric and traceless
 ! real GRM_x(nface, 1:nx+1, ny,     nz,     3,3)
 ! real GRM_y(nface, nx,     1:ny+1, nz,     3,3)
 ! real GRM_z(nface, nx,     ny,     1:nz+1, 3,3)
-!---------------------------------------------------------------------------
+
+! Storage for random stresses for all cell interface grid points in the domain
+! real Sflux_x(nface, 1:nx+1, ny,     nz,     3,3)
+! real Sflux_y(nface, nx,     1:ny+1, nz,     3,3)
+! real Sflux_z(nface, nx,     ny,     1:nz+1, 3,3)
 
 !---------------------------------------------------------------------------
 ! GLOBAL approach to MKL random matrix generation
@@ -152,11 +153,12 @@ integer vsl_method, vsl_brng
 vsl_brng = VSL_BRNG_MCG31
 vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
 vsl_seed = 1915321
-vsl_mean = 0
-vsl_sigma = 1
+vsl_mean = 0.0
+vsl_sigma = 1.0
 
 vsl_errcode = vslnewstream(vsl_stream, vsl_brng, vsl_seed)
-!---------------------------------------------------------------------------
+
+!===============================================================================
 
 
 logical MMask(nx,ny,nz),BMask(nx,ny,nz)
