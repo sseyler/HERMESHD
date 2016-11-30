@@ -78,7 +78,7 @@ real, parameter :: tf = 2000.
 
     real, parameter :: aindex = 5./3., mu = 18.
 
-real, parameter :: aindm1=aindex - 1.0, cp=aindex/(aindex - 1.0), clt=2.
+real, parameter :: aindm1=aindex - 1.0, cp=aindex/(aindex - 1.0), clt=2. ! 2 is default clm
 real, parameter :: vis=1.e-1, epsi=5., amplv=0.0, amplm=0.0, amplen=10.
 
     ! dimensional units (expressed in MKS)
@@ -124,9 +124,13 @@ real, parameter :: sqrt2i = 1.0/sqrt2
 real, parameter :: T_base = 300/te0  ! system temperature (for isothermal assumption)
 real, parameter :: eta_base = vis*epsi  ! dynamic viscosity
 real, parameter :: zeta_base = eta_base  ! bulk viscosity---will need to change this!
+real, parameter :: kappa_base = 1.e-1
 
-real, parameter :: eta_sd = (2*eta_base*T_base)**0.5  ! stdev of fluctuations for shear viscosity terms
-real, parameter :: zeta_sd = (zeta_base*T_base/3.)**0.5  ! stdev of fluctuations for bulk viscosity term
+real, parameter :: test_fac = 1.0e-2
+
+real, parameter :: eta_sd = test_fac*(2*eta_base*T_base)**0.5  ! stdev of fluctuations for shear viscosity terms
+real, parameter :: zeta_sd = test_fac*(zeta_base*T_base/3.)**0.5  ! stdev of fluctuations for bulk viscosity term
+real, parameter :: kappa_sd = (2*kappa_base*te0*T_base**2)**0.5
 ! real, parameter :: bulk_sd = zeta_sd - eta_sd/3.
 
 ! 3x3 Gaussian random matrices for naively constructing the random stress tensor
@@ -149,7 +153,6 @@ TYPE (VSL_STREAM_STATE) :: vsl_stream
 
 integer :: vsl_brng = VSL_BRNG_MCG31
 integer :: vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
-real :: vsl_seed = 1915321
 real :: vsl_mean = 0.0
 real :: vsl_sigma = 1.0
 
@@ -812,162 +815,6 @@ subroutine advance_time_level_gl(Q_ri,Q_rp)
 end subroutine advance_time_level_gl
 
 
-!----------------------------------------------------------------------------------------------
-! subroutine get_random_stresses(Q_ri, npnts)
-! !----------------------------------------------------------------------------------------------
-!
-!     implicit none
-!     integer i,j,k,i4,b,e
-!
-!     real Gxx,Gyy,Gzz
-!     real Gxy,Gxz,Gyz
-!
-!     real trG, diag_coef
-!
-!     if(ixyz .eq. 1) then
-!         do k = 1,nz
-!             do j = 1,ny
-!                 do i = 1,nx+1
-!                     do i4 = 1,nface
-!                         e = i4*9
-!                         b = e - 8
-!
-!                         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
-!                         GRM_x(i4,i,j,k,1,1) = vsl_r(b)
-!                         GRM_x(i4,i,j,k,1,2) = vsl_r(b+1)
-!                         GRM_x(i4,i,j,k,1,3) = vsl_r(b+2)
-!                         GRM_x(i4,i,j,k,2,1) = vsl_r(b+3)
-!                         GRM_x(i4,i,j,k,2,2) = vsl_r(b+4)
-!                         GRM_x(i4,i,j,k,2,3) = vsl_r(b+5)
-!                         GRM_x(i4,i,j,k,3,1) = vsl_r(b+6)
-!                         GRM_x(i4,i,j,k,3,2) = vsl_r(b+7)
-!                         GRM_x(i4,i,j,k,3,3) = vsl_r(b+8)
-!
-!                         Gxx = GRM_x(:,:,:,:,1,1)
-!                         Gyy = GRM_x(:,:,:,:,2,2)
-!                         Gzz = GRM_x(:,:,:,:,3,3)
-!
-!                         Gxy = sqrt2i*( GRM_x(:,:,:,:,1,2) + GRM_x(:,:,:,:,2,1) )
-!                         Gxz = sqrt2i*( GRM_x(:,:,:,:,1,3) + GRM_x(:,:,:,:,3,1) )
-!                         Gyz = sqrt2i*( GRM_x(:,:,:,:,2,3) + GRM_x(:,:,:,:,3,2) )
-!
-!                         trG = (Gxx + Gyy + Gzz)
-!                         diag_coef = bulk_sd*trG
-!
-!                         Sflux_x(:,:,:,:,1,2) = eta_sd*Gxy
-!                         Sflux_x(:,:,:,:,2,1) = Sflux_x(:,:,:,:,1,2)
-!                         Sflux_x(:,:,:,:,1,3) = eta_sd*Gxz
-!                         Sflux_x(:,:,:,:,3,1) = Sflux_x(:,:,:,:,1,3)
-!                         Sflux_x(:,:,:,:,2,3) = eta_sd*Gyz
-!                         Sflux_x(:,:,:,:,3,2) = Sflux_x(:,:,:,:,2,3)
-!
-!                         ! Probably want to re-write to make it exactly traceless by avoiding roundoff error
-!                         Sflux_x(:,:,:,:,1,1) = eta_sd*Gxx + diag_coef
-!                         Sflux_x(:,:,:,:,2,2) = eta_sd*Gyy + diag_coef
-!                         Sflux_x(:,:,:,:,3,3) = eta_sd*Gzz + diag_coef
-!                     end do
-!                 end do
-!             end do
-!         end do
-!     end if
-!
-!     if(ixyz .eq. 2) then
-!         do k = 1,nz
-!             do j = 1,ny+1
-!                 do i = 1,nx
-!                     do i4 = 1,nface
-!                         e = i4*9
-!                         b = e - 8
-!
-!                         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
-!                         GRM_y(i4,i,j,k,1,1) = vsl_r(b)
-!                         GRM_y(i4,i,j,k,1,2) = vsl_r(b+1)
-!                         GRM_y(i4,i,j,k,1,3) = vsl_r(b+2)
-!                         GRM_y(i4,i,j,k,2,1) = vsl_r(b+3)
-!                         GRM_y(i4,i,j,k,2,2) = vsl_r(b+4)
-!                         GRM_y(i4,i,j,k,2,3) = vsl_r(b+5)
-!                         GRM_y(i4,i,j,k,3,1) = vsl_r(b+6)
-!                         GRM_y(i4,i,j,k,3,2) = vsl_r(b+7)
-!                         GRM_y(i4,i,j,k,3,3) = vsl_r(b+8)
-!
-!                         Gxx = GRM_y(:,:,:,:,1,1)
-!                         Gyy = GRM_y(:,:,:,:,2,2)
-!                         Gzz = GRM_y(:,:,:,:,3,3)
-!
-!                         Gxy = sqrt2i*( GRM_y(:,:,:,:,1,2) + GRM_y(:,:,:,:,2,1) )
-!                         Gxz = sqrt2i*( GRM_y(:,:,:,:,1,3) + GRM_y(:,:,:,:,3,1) )
-!                         Gyz = sqrt2i*( GRM_y(:,:,:,:,2,3) + GRM_y(:,:,:,:,3,2) )
-!
-!                         trG = (Gxx + Gyy + Gzz)
-!                         diag_coef = bulk_sd*trG
-!
-!                         Sflux_y(:,:,:,:,1,2) = eta_sd*Gxy
-!                         Sflux_y(:,:,:,:,2,1) = Sflux_y(:,:,:,:,1,2)
-!                         Sflux_y(:,:,:,:,1,3) = eta_sd*Gxz
-!                         Sflux_y(:,:,:,:,3,1) = Sflux_y(:,:,:,:,1,3)
-!                         Sflux_y(:,:,:,:,2,3) = eta_sd*Gyz
-!                         Sflux_y(:,:,:,:,3,2) = Sflux_y(:,:,:,:,2,3)
-!
-!                         ! Probably want to re-write to make it exactly traceless by avoiding roundoff error
-!                         Sflux_y(:,:,:,:,1,1) = eta_sd*Gxx + diag_coef
-!                         Sflux_y(:,:,:,:,2,2) = eta_sd*Gyy + diag_coef
-!                         Sflux_y(:,:,:,:,3,3) = eta_sd*Gzz + diag_coef
-!                     end do
-!                 end do
-!             end do
-!         end do
-!     end if
-!
-!     if(ixyz .eq. 3) then
-!         do k = 1,nz+1
-!             do j = 1,ny
-!                 do i = 1,nx
-!                     do i4 = 1,nface
-!                         e = i4*9
-!                         b = e - 8
-!
-!                         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
-!                         GRM_z(i4,i,j,k,1,1) = vsl_r(b)
-!                         GRM_z(i4,i,j,k,1,2) = vsl_r(b+1)
-!                         GRM_z(i4,i,j,k,1,3) = vsl_r(b+2)
-!                         GRM_z(i4,i,j,k,2,1) = vsl_r(b+3)
-!                         GRM_z(i4,i,j,k,2,2) = vsl_r(b+4)
-!                         GRM_z(i4,i,j,k,2,3) = vsl_r(b+5)
-!                         GRM_z(i4,i,j,k,3,1) = vsl_r(b+6)
-!                         GRM_z(i4,i,j,k,3,2) = vsl_r(b+7)
-!                         GRM_z(i4,i,j,k,3,3) = vsl_r(b+8)
-!
-!                         Gxx = GRM_z(:,:,:,:,1,1)
-!                         Gyy = GRM_z(:,:,:,:,2,2)
-!                         Gzz = GRM_z(:,:,:,:,3,3)
-!
-!                         Gxy = sqrt2i*( GRM_z(:,:,:,:,1,2) + GRM_z(:,:,:,:,2,1) )
-!                         Gxz = sqrt2i*( GRM_z(:,:,:,:,1,3) + GRM_z(:,:,:,:,3,1) )
-!                         Gyz = sqrt2i*( GRM_z(:,:,:,:,2,3) + GRM_z(:,:,:,:,3,2) )
-!
-!                         trG = (Gxx + Gyy + Gzz)
-!                         diag_coef = bulk_sd*trG
-!
-!                         Sflux_z(:,:,:,:,1,2) = eta_sd*Gxy
-!                         Sflux_z(:,:,:,:,2,1) = Sflux_z(:,:,:,:,1,2)
-!                         Sflux_z(:,:,:,:,1,3) = eta_sd*Gxz
-!                         Sflux_z(:,:,:,:,3,1) = Sflux_z(:,:,:,:,1,3)
-!                         Sflux_z(:,:,:,:,2,3) = eta_sd*Gyz
-!                         Sflux_z(:,:,:,:,3,2) = Sflux_z(:,:,:,:,2,3)
-!
-!                         ! Probably want to re-write to make it exactly traceless by avoiding roundoff error
-!                         Sflux_z(:,:,:,:,1,1) = eta_sd*Gxx + diag_coef
-!                         Sflux_z(:,:,:,:,2,2) = eta_sd*Gyy + diag_coef
-!                         Sflux_z(:,:,:,:,3,3) = eta_sd*Gzz + diag_coef
-!                     end do
-!                 end do
-!             end do
-!         end do
-!     end if
-!
-! end subroutine get_random_stresses
-!----------------------------------------------------------------------------------------------
-
 subroutine source_calc(Q_ri,t)
 
     implicit none
@@ -1104,6 +951,35 @@ end subroutine random_stresses_pnts_r
 !----------------------------------------------------------------------------------------------
 
 !----------------------------------------------------------------------------------------------
+subroutine random_heatflux_pnts_r(GRVpnts_r, Hpnts_r, npnts)
+!----------------------------------------------------------------------------------------------
+
+    implicit none
+    integer ife,npnts
+    real, dimension(npnts,3) :: GRVpnts_r, Hpnts_r
+    real Qx,Qy,Qz
+    real Gx,Gy,Gz
+    real trG,trGd3,trG_zeta
+
+    call get_GRM(GRMpnts_r, npnts)
+
+    ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
+    do ife = 1,npnts
+        Gx = GRVpnts_r(ife,1,1)
+        Gy = GRVpnts_r(ife,2,2)
+        Gz = GRVpnts_r(ife,3,3)
+
+        Hpnts_r(ife,1) = eta_sd*Gx
+        Hpnts_r(ife,2) = eta_sd*Gy
+        Hpnts_r(ife,3) = eta_sd*Gz
+
+    end do
+
+
+end subroutine random_heatflux_pnts_r
+!----------------------------------------------------------------------------------------------
+
+!----------------------------------------------------------------------------------------------
 subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
     ! Calculate the flux "fpnts_r" in direction "ixyz" (x, y, or z) at a set of
@@ -1128,7 +1004,8 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
     c4d3nu = c4d3*nu
     ! ampd = 0*amplen*(ran(iseed) - 0.5)
 
-    call random_stresses_pnts_r(GRMpnts_r, Spnts_r, npnts)
+    ! call random_stresses_pnts_r(GRMpnts_r, Spnts_r, npnts)
+    Spnts_r(:,:,:) = 0.0
 
     do ife = 1,npnts
 
@@ -1156,7 +1033,7 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
             fpnts_r(ife,rh) = Qpnts_r(ife,mx)
 
-            ! NOTE: the stress terms may need minus sign in the momentum flux!!!
+            ! NOTE: the stress terms may need plus sign in the energy flux!!!
             fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + P + Qpnts_r(ife,pxx) + Sxx
             fpnts_r(ife,my) = Qpnts_r(ife,my)*vx     + Qpnts_r(ife,pxy) + Sxy
             fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx     + Qpnts_r(ife,pxz) + Sxz
@@ -3250,5 +3127,163 @@ subroutine set_weights_3D
 end subroutine set_weights_3D
 
 !--------------------------------------------------------------------------------
+
+
+!----------------------------------------------------------------------------------------------
+! subroutine get_random_stresses(Q_ri, npnts)
+! !----------------------------------------------------------------------------------------------
+!
+!     implicit none
+!     integer i,j,k,i4,b,e
+!
+!     real Gxx,Gyy,Gzz
+!     real Gxy,Gxz,Gyz
+!
+!     real trG, diag_coef
+!
+!     if(ixyz .eq. 1) then
+!         do k = 1,nz
+!             do j = 1,ny
+!                 do i = 1,nx+1
+!                     do i4 = 1,nface
+!                         e = i4*9
+!                         b = e - 8
+!
+!                         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
+!                         GRM_x(i4,i,j,k,1,1) = vsl_r(b)
+!                         GRM_x(i4,i,j,k,1,2) = vsl_r(b+1)
+!                         GRM_x(i4,i,j,k,1,3) = vsl_r(b+2)
+!                         GRM_x(i4,i,j,k,2,1) = vsl_r(b+3)
+!                         GRM_x(i4,i,j,k,2,2) = vsl_r(b+4)
+!                         GRM_x(i4,i,j,k,2,3) = vsl_r(b+5)
+!                         GRM_x(i4,i,j,k,3,1) = vsl_r(b+6)
+!                         GRM_x(i4,i,j,k,3,2) = vsl_r(b+7)
+!                         GRM_x(i4,i,j,k,3,3) = vsl_r(b+8)
+!
+!                         Gxx = GRM_x(:,:,:,:,1,1)
+!                         Gyy = GRM_x(:,:,:,:,2,2)
+!                         Gzz = GRM_x(:,:,:,:,3,3)
+!
+!                         Gxy = sqrt2i*( GRM_x(:,:,:,:,1,2) + GRM_x(:,:,:,:,2,1) )
+!                         Gxz = sqrt2i*( GRM_x(:,:,:,:,1,3) + GRM_x(:,:,:,:,3,1) )
+!                         Gyz = sqrt2i*( GRM_x(:,:,:,:,2,3) + GRM_x(:,:,:,:,3,2) )
+!
+!                         trG = (Gxx + Gyy + Gzz)
+!                         diag_coef = bulk_sd*trG
+!
+!                         Sflux_x(:,:,:,:,1,2) = eta_sd*Gxy
+!                         Sflux_x(:,:,:,:,2,1) = Sflux_x(:,:,:,:,1,2)
+!                         Sflux_x(:,:,:,:,1,3) = eta_sd*Gxz
+!                         Sflux_x(:,:,:,:,3,1) = Sflux_x(:,:,:,:,1,3)
+!                         Sflux_x(:,:,:,:,2,3) = eta_sd*Gyz
+!                         Sflux_x(:,:,:,:,3,2) = Sflux_x(:,:,:,:,2,3)
+!
+!                         ! Probably want to re-write to make it exactly traceless by avoiding roundoff error
+!                         Sflux_x(:,:,:,:,1,1) = eta_sd*Gxx + diag_coef
+!                         Sflux_x(:,:,:,:,2,2) = eta_sd*Gyy + diag_coef
+!                         Sflux_x(:,:,:,:,3,3) = eta_sd*Gzz + diag_coef
+!                     end do
+!                 end do
+!             end do
+!         end do
+!     end if
+!
+!     if(ixyz .eq. 2) then
+!         do k = 1,nz
+!             do j = 1,ny+1
+!                 do i = 1,nx
+!                     do i4 = 1,nface
+!                         e = i4*9
+!                         b = e - 8
+!
+!                         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
+!                         GRM_y(i4,i,j,k,1,1) = vsl_r(b)
+!                         GRM_y(i4,i,j,k,1,2) = vsl_r(b+1)
+!                         GRM_y(i4,i,j,k,1,3) = vsl_r(b+2)
+!                         GRM_y(i4,i,j,k,2,1) = vsl_r(b+3)
+!                         GRM_y(i4,i,j,k,2,2) = vsl_r(b+4)
+!                         GRM_y(i4,i,j,k,2,3) = vsl_r(b+5)
+!                         GRM_y(i4,i,j,k,3,1) = vsl_r(b+6)
+!                         GRM_y(i4,i,j,k,3,2) = vsl_r(b+7)
+!                         GRM_y(i4,i,j,k,3,3) = vsl_r(b+8)
+!
+!                         Gxx = GRM_y(:,:,:,:,1,1)
+!                         Gyy = GRM_y(:,:,:,:,2,2)
+!                         Gzz = GRM_y(:,:,:,:,3,3)
+!
+!                         Gxy = sqrt2i*( GRM_y(:,:,:,:,1,2) + GRM_y(:,:,:,:,2,1) )
+!                         Gxz = sqrt2i*( GRM_y(:,:,:,:,1,3) + GRM_y(:,:,:,:,3,1) )
+!                         Gyz = sqrt2i*( GRM_y(:,:,:,:,2,3) + GRM_y(:,:,:,:,3,2) )
+!
+!                         trG = (Gxx + Gyy + Gzz)
+!                         diag_coef = bulk_sd*trG
+!
+!                         Sflux_y(:,:,:,:,1,2) = eta_sd*Gxy
+!                         Sflux_y(:,:,:,:,2,1) = Sflux_y(:,:,:,:,1,2)
+!                         Sflux_y(:,:,:,:,1,3) = eta_sd*Gxz
+!                         Sflux_y(:,:,:,:,3,1) = Sflux_y(:,:,:,:,1,3)
+!                         Sflux_y(:,:,:,:,2,3) = eta_sd*Gyz
+!                         Sflux_y(:,:,:,:,3,2) = Sflux_y(:,:,:,:,2,3)
+!
+!                         ! Probably want to re-write to make it exactly traceless by avoiding roundoff error
+!                         Sflux_y(:,:,:,:,1,1) = eta_sd*Gxx + diag_coef
+!                         Sflux_y(:,:,:,:,2,2) = eta_sd*Gyy + diag_coef
+!                         Sflux_y(:,:,:,:,3,3) = eta_sd*Gzz + diag_coef
+!                     end do
+!                 end do
+!             end do
+!         end do
+!     end if
+!
+!     if(ixyz .eq. 3) then
+!         do k = 1,nz+1
+!             do j = 1,ny
+!                 do i = 1,nx
+!                     do i4 = 1,nface
+!                         e = i4*9
+!                         b = e - 8
+!
+!                         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, vsl_r, vsl_mean, vsl_sigma)
+!                         GRM_z(i4,i,j,k,1,1) = vsl_r(b)
+!                         GRM_z(i4,i,j,k,1,2) = vsl_r(b+1)
+!                         GRM_z(i4,i,j,k,1,3) = vsl_r(b+2)
+!                         GRM_z(i4,i,j,k,2,1) = vsl_r(b+3)
+!                         GRM_z(i4,i,j,k,2,2) = vsl_r(b+4)
+!                         GRM_z(i4,i,j,k,2,3) = vsl_r(b+5)
+!                         GRM_z(i4,i,j,k,3,1) = vsl_r(b+6)
+!                         GRM_z(i4,i,j,k,3,2) = vsl_r(b+7)
+!                         GRM_z(i4,i,j,k,3,3) = vsl_r(b+8)
+!
+!                         Gxx = GRM_z(:,:,:,:,1,1)
+!                         Gyy = GRM_z(:,:,:,:,2,2)
+!                         Gzz = GRM_z(:,:,:,:,3,3)
+!
+!                         Gxy = sqrt2i*( GRM_z(:,:,:,:,1,2) + GRM_z(:,:,:,:,2,1) )
+!                         Gxz = sqrt2i*( GRM_z(:,:,:,:,1,3) + GRM_z(:,:,:,:,3,1) )
+!                         Gyz = sqrt2i*( GRM_z(:,:,:,:,2,3) + GRM_z(:,:,:,:,3,2) )
+!
+!                         trG = (Gxx + Gyy + Gzz)
+!                         diag_coef = bulk_sd*trG
+!
+!                         Sflux_z(:,:,:,:,1,2) = eta_sd*Gxy
+!                         Sflux_z(:,:,:,:,2,1) = Sflux_z(:,:,:,:,1,2)
+!                         Sflux_z(:,:,:,:,1,3) = eta_sd*Gxz
+!                         Sflux_z(:,:,:,:,3,1) = Sflux_z(:,:,:,:,1,3)
+!                         Sflux_z(:,:,:,:,2,3) = eta_sd*Gyz
+!                         Sflux_z(:,:,:,:,3,2) = Sflux_z(:,:,:,:,2,3)
+!
+!                         ! Probably want to re-write to make it exactly traceless by avoiding roundoff error
+!                         Sflux_z(:,:,:,:,1,1) = eta_sd*Gxx + diag_coef
+!                         Sflux_z(:,:,:,:,2,2) = eta_sd*Gyy + diag_coef
+!                         Sflux_z(:,:,:,:,3,3) = eta_sd*Gzz + diag_coef
+!                     end do
+!                 end do
+!             end do
+!         end do
+!     end if
+!
+! end subroutine get_random_stresses
+!----------------------------------------------------------------------------------------------
+
 
 end program
