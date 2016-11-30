@@ -914,7 +914,6 @@ subroutine random_stresses_pnts_r(GRMpnts_r, Spnts_r, npnts)
     implicit none
     integer ife,npnts
     real, dimension(npnts,3,3) :: GRMpnts_r, Spnts_r
-    real Sxx,Syy,Szz,Sxy,Sxz,Syz
     real Gxx,Gyy,Gzz,Gxy,Gxz,Gyz
     real trG,trGd3,trG_zeta
 
@@ -946,7 +945,6 @@ subroutine random_stresses_pnts_r(GRMpnts_r, Spnts_r, npnts)
         Spnts_r(ife,3,3) = eta_sd*(Gzz - trGd3) + trG_zeta
     end do
 
-
 end subroutine random_stresses_pnts_r
 !----------------------------------------------------------------------------------------------
 
@@ -957,24 +955,28 @@ subroutine random_heatflux_pnts_r(GRVpnts_r, Hpnts_r, npnts)
     implicit none
     integer ife,npnts
     real, dimension(npnts,3) :: GRVpnts_r, Hpnts_r
-    real Qx,Qy,Qz
     real Gx,Gy,Gz
-    real trG,trGd3,trG_zeta
+    real, allocatable :: grn(:)
 
-    call get_GRM(GRMpnts_r, npnts)
+    vsl_ndim = npnts*3
+    allocate(grn(vsl_ndim))
+
+    vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
 
     ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
     do ife = 1,npnts
-        Gx = GRVpnts_r(ife,1,1)
-        Gy = GRVpnts_r(ife,2,2)
-        Gz = GRVpnts_r(ife,3,3)
+        e = 3*ife
+        b = e - 2
+        GRVpnts_r(ife,1:3) = grn(b:e)
 
-        Hpnts_r(ife,1) = eta_sd*Gx
-        Hpnts_r(ife,2) = eta_sd*Gy
-        Hpnts_r(ife,3) = eta_sd*Gz
+        Gx = GRVpnts_r(ife,1)
+        Gy = GRVpnts_r(ife,2)
+        Gz = GRVpnts_r(ife,3)
 
+        Hpnts_r(ife,1) = kappa_sd*Gx
+        Hpnts_r(ife,2) = kappa_sd*Gy
+        Hpnts_r(ife,3) = kappa_sd*Gz
     end do
-
 
 end subroutine random_heatflux_pnts_r
 !----------------------------------------------------------------------------------------------
@@ -995,6 +997,7 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
     real, dimension(npnts,3,3) :: GRMpnts_r, Spnts_r
     real Sxx,Syy,Szz,Sxy,Sxz,Syz
+    real Qx,Qy,Qz
     real ampx,ampy,ampz,ampd
 
     nu = epsi*vis
@@ -1028,6 +1031,10 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
         Sxy = Spnts_r(ife,1,2)
         Sxz = Spnts_r(ife,1,3)
         Syz = Spnts_r(ife,2,3)
+
+        Qx = Hpnts_r(ife,1)
+        Qy = Hpnts_r(ife,2)
+        Qz = Hpnts_r(ife,3)
 
         if(ixyz .eq. 1) then
 
