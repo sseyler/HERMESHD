@@ -29,7 +29,7 @@ include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
 integer, parameter :: rh=1, mx=2, my=3, mz=4, en=5
 integer, parameter :: pxx=6, pyy=7, pzz=8, pxy=9, pxz=10, pyz=11, nQ=11
 
-integer, parameter :: nx=40, ny=40, nz=1, ngu=0, nbasis=8, nbastot=27
+integer, parameter :: nx=20, ny=20, nz=1, ngu=0, nbasis=8, nbastot=27
 ! nbasis = 4: {1,x,y,z}
 ! nbasis = 10: {1,x,y,z, P_2(x),P_2(y),P_2(z), yz, zx, xy}
 ! nbasis = 20: nbasis10 + {xyz,xP2(y),yP2(x),xP2(z),
@@ -56,7 +56,8 @@ integer, parameter :: xlbc = 2, xhbc = 2, ylbc = 2, yhbc = 2, zlbc = 2, zhbc = 2
 ! Boundary condition parameters: if  = 2 then periodic.  MPI does this for you.
 ! If  = 0, then the set_bc subroutine is used to prescribe BCs
 
-integer, parameter :: ntout = 100, iorder = 2
+integer, parameter :: ntout = 200, iorder = 2, id = 2  ! sets ICs of problem
+character (10), parameter :: outdir = 'data/data5'
 
 integer, parameter :: ihllc = 1, iroe = 0, ieos = 1
 ! Choose Riemann solver for computing fluxes.  Set chosen solver = 1.
@@ -70,14 +71,12 @@ integer, parameter :: iread = 0, iwrite = 0
 character (4), parameter :: fpre = 'Qout'
 logical, parameter :: resuming = .false.
 
-real, parameter :: lx = 300., ly = 300., lz = 300./120.
-
-real, parameter :: tf = 2000.
+real, parameter :: lx = 100., ly = 100., lz = 100./120.
+real, parameter :: tf = 4000.
 
     real, parameter :: pi = 4.0*atan(1.0)
 
-    real, parameter :: aindex = 5./3., mu = 18.
-
+real, parameter :: aindex = 5./3., mu = 18.
 real, parameter :: aindm1=aindex - 1.0, cp=aindex/(aindex - 1.0), clt=2. ! 2 is default clm
 real, parameter :: vis=1.e-1, epsi=5., amplv=0.0, amplm=0.0, amplen=10.
 
@@ -85,7 +84,7 @@ real, parameter :: vis=1.e-1, epsi=5., amplv=0.0, amplm=0.0, amplen=10.
     real, parameter :: L0=1.0e-9, t0=1.0e-12, n0=3.32e28
 
     ! derived units
-    real, parameter :: v0=L0/t0, p0=mu*1.67e-27*n0*v0**2, te0=p0/n0/1.6e-19
+    real, parameter :: v0=L0/t0, p0=mu*1.67e-27*n0*v0**2, te0=p0/n0/1.6e-19  ! in eV
     real, parameter :: P_1=2.15e9/7.2/p0, P_base=1.01e5/p0 ! atmo pressure
 
 ! rh_min is a minimum density to be used for ideal gas law EOS and rh_min is the
@@ -115,23 +114,26 @@ real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
 
 
 !===============================================================================
-
 !---------------------------------------------------------------------------
+! NOTE: this is new stuff!
 ! Stuff for random matrix generation
 !---------------------------------------------------------------------------
-real, parameter :: sqrt2 = 2**0.5
-real, parameter :: sqrt2i = 1.0/sqrt2
-real, parameter :: T_base = 300/te0  ! system temperature (for isothermal assumption)
-real, parameter :: eta_base = vis*epsi  ! dynamic viscosity
-real, parameter :: zeta_base = eta_base  ! bulk viscosity---will need to change this!
+real, parameter :: c1d3=1./3., c1d5=1./5.
+real, parameter :: c2d3=2./3., c4d3=4./3.
+real, parameter :: nu = epsi*vis
+real, parameter :: c2d3nu=c2d3*nu, c4d3nu=c4d3*nu
+
+real sqrt_dsi
+real, parameter :: sqrt2=2.**0.5, sqrt2i=1./sqrt2
+
+real, parameter :: T_base     = 300.0/1.16e4/te0  ! system temperature (for isothermal assumption)
+real, parameter :: eta_base   = vis    ! dynamic viscosity
+real, parameter :: zeta_base  = 0.  ! bulk viscosity---will need to adjust this!
 real, parameter :: kappa_base = 1.e-1
 
-real, parameter :: test_fac = 1.0e-2
-
-real, parameter :: eta_sd = test_fac*(2*eta_base*T_base)**0.5  ! stdev of fluctuations for shear viscosity terms
-real, parameter :: zeta_sd = test_fac*(zeta_base*T_base/3.)**0.5  ! stdev of fluctuations for bulk viscosity term
-real, parameter :: kappa_sd = (2*kappa_base*te0*T_base**2)**0.5
-! real, parameter :: bulk_sd = zeta_sd - eta_sd/3.
+real, parameter :: eta_sd   = (2.*eta_base*T_base)**0.5  ! stdev of fluctuations for shear viscosity terms
+real, parameter :: zeta_sd  = (zeta_base*T_base/3.)**0.5  ! stdev of fluctuations for bulk viscosity term
+real, parameter :: kappa_sd = (2.*kappa_base*T_base**2)**0.5
 
 ! 3x3 Gaussian random matrices for naively constructing the random stress tensor
 !   This is inefficient since we only need 5 (rather than 9) Gaussian r.v.s
@@ -139,23 +141,17 @@ real, parameter :: kappa_sd = (2*kappa_base*te0*T_base**2)**0.5
 ! real GRM_x(nface, 1:nx+1, ny,     nz,     3,3)
 ! real GRM_y(nface, nx,     1:ny+1, nz,     3,3)
 ! real GRM_z(nface, nx,     ny,     1:nz+1, 3,3)
-
-! Storage for random stresses for all cell interface grid points in the domain
 ! real Sflux_x(nface, 1:nx+1, ny,     nz,     3,3)
 ! real Sflux_y(nface, nx,     1:ny+1, nz,     3,3)
 ! real Sflux_z(nface, nx,     ny,     1:nz+1, 3,3)
 
-!---------------------------------------------------------------------------
-! GLOBAL approach to MKL random matrix generation
-!---------------------------------------------------------------------------
 real vsl_errcode
 TYPE (VSL_STREAM_STATE) :: vsl_stream
 
-integer :: vsl_brng = VSL_BRNG_MCG31
-integer :: vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
-real :: vsl_mean = 0.0
-real :: vsl_sigma = 1.0
-
+integer, parameter :: vsl_brng   = VSL_BRNG_MCG31
+integer, parameter :: vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
+real, parameter :: vsl_mean  = 0.0
+real, parameter :: vsl_sigma = 1.0
 !===============================================================================
 
 
@@ -163,7 +159,7 @@ logical MMask(nx,ny,nz),BMask(nx,ny,nz)
 real xcell(npg), ycell(npg), zcell(npg), xface(npge), yface(npge), zface(npge)
 integer ticks, count_rate, count_max
 real t1, t2, t3, t4, elapsed_time, t_start, t_stop, dtoriginal
-    real t,dt,tout,dtout,vf,dxi,dyi,dzi,loc_lxd,loc_lyd,loc_lzd,check_Iz,sl
+    real t,dt,dti,tout,dtout,vf,dxi,dyi,dzi,loc_lxd,loc_lyd,loc_lzd,check_Iz,sl
     real dz, dy, dx
     real lxd,lxu,lyd,lyu,lzd,lzu
     real pin_rad,pin_height,foil_thickness,rh_foil,rh_fluid
@@ -177,7 +173,6 @@ real Qylow_ext(nx,nz,nface,nQ), Qyhigh_int(nx,nz,nface,nQ)
 real Qzhigh_ext(nx,ny,nface,nQ), Qzlow_int(nx,ny,nface,nQ)
 real Qzlow_ext(nx,ny,nface,nQ), Qzhigh_int(nx,ny,nface,nQ)
 integer mxa(3),mya(3),mza(3),kroe(nface),niter,iseed
-
 
 ! Parameters relating to quadratures and basis functions.
 
@@ -214,7 +209,7 @@ real xgrid(20),dxvtk,dyvtk,dzvtk
 
 
 ! MPI definitions
-
+!   print_mpi is sets the MPI rank that will do any printing to console
 integer :: mpi_nx=4, mpi_ny=4, print_mpi=0
 
     integer iam,ierr,mpi_nz,numprocs,reorder,cartcomm,mpi_P,mpi_Q,mpi_R
@@ -315,6 +310,34 @@ nout = 0
 niter = 0
 dtout = tf/ntout
 
+
+!===============================================================================
+! NOTE: this is new stuff!
+! Volume of grid cells (for stochastic forcing terms)
+!   --> this should be chosen to be consistent with the spatial discretization
+!       i.e. stochastic terms are 4 points (iquad == 2) at each cell face, which
+!       are computed using Gaussian quadrature from the internal points
+
+! A spatial discretization that gives the correct equilibrium discrete
+! covariance is said to satisfy the discrete fluctuation-dissipation balance
+! (DFDB) condition [1, 2].
+! The condition guarantees that for sufficiently small time steps the statistics
+! of the discrete fluctuations are consistent with the continuum formulation.
+! For larger time steps, the difference between the discrete and continuum
+! covariances will depend on the order of weak accuracy of the temporal
+! discretization [3].
+!
+! [1] Donev, et al. On the accurracy... (2010)
+! [2] Delong, et al. Temporal integrators for... (2013)
+! [3] Mattingly,, et al. Convergence of numerical... (2010)
+!---------------------------------------------------------------------------
+dV = dx*dy*dz
+dVi = dxi*dyi*dzi
+dti = 1./dt
+sqrt_dsi = (dVi*dti)**0.5
+!===============================================================================
+
+
 ! Evaluate local cell values of basis functions on cell interior and faces.
 ! This is done for 1, 2, or 3 point Gaussian quadrature.
 call set_bfvals_3D
@@ -369,7 +392,7 @@ t_start = ticks*1./count_rate
 
 if (iread .eq. 0) then
 
-    call initial_condition
+    call initial_condition(id)
 
 else
 
@@ -428,6 +451,8 @@ do while (t<tf)
     ! end if
     niter = niter + 1
     call get_min_dt(dt)
+    dti = 1./dt
+    sqrt_dsi = (dVi*dti)**0.5  ! can move dVi into eta_sd to remove a multiplication
 
     if (iorder .eq. 2) then
         call prep_advance(Q_r0)
@@ -599,9 +624,9 @@ end subroutine get_min_dt
 
 !----------------------------------------------------------------------------------------------
 
-subroutine initial_condition
+subroutine initial_condition(id)
     implicit none
-    integer i,j,k
+    integer i,j,k,id
     real coeff
     real den, Pre, wtev
 
@@ -612,8 +637,12 @@ subroutine initial_condition
     Q_r0(:,:,:,en,1) = T_floor*rh_floor/(aindex - 1.)
     MMask(:,:,:) = .false.
 
-    call fill_fluid
-
+    if ( id .eq. 1 ) then
+        call fill_fluid
+    end if
+    if ( id .eq. 2 ) then
+        call fill_fluid2
+    end if
 end subroutine initial_condition
 
 !-------------------------------------------------------
@@ -623,13 +652,13 @@ subroutine fill_fluid
 !-------------------------------------------------------
 
     integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,igrid,ieq,inds(nbasis)
-    real wirer,x,y,x0,y0,rhline,wtev,rx,ry,rnum,w0
+    real wirer,x,y,x0,y0,rhline,wtev,rx,ry,rnum,w0,jet_strength
     real qquad(npg,nQ),xcc,ycc,zcc  ! bfint(npg,nbasis),qquadv(npg)
     iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
 
     wtev = T_floor
     w0 = 0.3
-
+    jet_strength = 0.5
     ! test problem is an unstable flow jet in x with velocity perturbations in y
 
     do i = 1,nx
@@ -651,7 +680,7 @@ subroutine fill_fluid
         Q_r0(i,j,k,rh,1) = rh_fluid
         Q_r0(i,j,k,my,1) = 0.001*rnum/cosh(20*yc(j)/lyu)**2
         Q_r0(i,j,k,mz,1) = 0.
-        Q_r0(i,j,k,mx,1) = 1.0*Q_r0(i,j,k,rh,1)/cosh(20*ycc/lyu)/1.
+        Q_r0(i,j,k,mx,1) = jet_strength*Q_r0(i,j,k,rh,1)/cosh(20*ycc/lyu)/1.
         Q_r0(i,j,k,en,1) = wtev*Q_r0(i,j,k,rh,1)/(aindex - 1.)                  &
                          + 0.5*( Q_r0(i,j,k,mx,1)**2                            &
                               +  Q_r0(i,j,k,my,1)**2                            &
@@ -663,6 +692,60 @@ subroutine fill_fluid
 
 end subroutine fill_fluid
 
+
+!-------------------------------------------------------
+
+subroutine fill_fluid2
+
+!-------------------------------------------------------
+
+    integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,igrid,ieq,inds(nbasis)
+    real wirer,x,y,x0,y0,rhline,wtev,rx,ry,rnum,w0
+    real qquad(npg,nQ),xcc,ycc,zcc  ! bfint(npg,nbasis),qquadv(npg)
+    iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
+
+    wtev = T_floor
+    w0 = 0.3
+
+    ! test problem is an unstable flow jet in x with velocity perturbations in y
+
+    do i = 1,nx
+        do j = 1,ny
+            do k = 1,nz
+
+                call random_number(rand_number)
+                rnum = (rand_number - 0.5)
+
+                qquad(:,:) = 0.
+
+                do igrid=1,npg
+
+                    qquad(igrid,rh) = rh_floor
+                    qquad(igrid,en) = wtev*qquad(igrid,rh)/(aindex - 1.)
+
+                    xcc = xc(i) + bfvals_int(igrid,kx)*0.5/dxi
+                    ycc = yc(j) + bfvals_int(igrid,ky)*0.5/dyi
+                    zcc = zc(k) + bfvals_int(igrid,kz)*0.5/dzi
+
+                    qquad(igrid,rh) = rh_fluid
+                    qquad(igrid,my) = 0.001*rnum/cosh(20*yc(j)/lyu)**2 !0.001*rnum/1.
+                    qquad(igrid,mz) = 0.
+                    qquad(igrid,mx) = 1.0*qquad(igrid,rh)/cosh(20*ycc/lyu)/1.
+                    qquad(igrid,en) = wtev*qquad(igrid,rh)/(aindex - 1.) + 0.5*(qquad(igrid,mx)**2 + qquad(igrid,my)**2 + qquad(igrid,mz)**2)/qquad(igrid,rh)
+
+                end do
+
+                do ieq=rh,en
+                    do ir=1,nbasis
+                        Q_r0(i,j,k,ieq,ir) = 0.125*cbasis(ir)*sum(wgt3d(1:npg)*bfvals_int(1:npg,ir)*qquad(1:npg,ieq))
+                    end do
+                end do
+
+            end do
+        end do
+    end do
+
+end subroutine fill_fluid2
 
 !----------------------------------------------------------------------------------------------
 
@@ -783,12 +866,7 @@ subroutine advance_time_level_gl(Q_ri,Q_rp)
     implicit none
     integer i,j,k,ieq,ir
     real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri, Q_rp
-    real Q_xtemp, Q_ytemp, Q_ztemp, dti
-    real c1d3, c1d5
-
-    c1d3 = 1./3.
-    c1d5 = 1./5.
-    dti = 1./dt
+    real Q_xtemp, Q_ytemp, Q_ztemp
 
     do k = 1,nz
     do j = 1,ny
@@ -796,8 +874,9 @@ subroutine advance_time_level_gl(Q_ri,Q_rp)
 
         do ieq = 1,nQ
             do ir=1,nbasis
-                Q_rp(i,j,k,ieq,ir) = Q_ri(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir) &
-                                                        + dt*source_r(i,j,k,ieq,ir)
+                Q_rp(i,j,k,ieq,ir) =                                            &
+                        Q_ri(i,j,k,ieq,ir) - dt*( glflux_r(i,j,k,ieq,ir)        &
+                                                - source_r(i,j,k,ieq,ir) )
             end do
         end do
 
@@ -833,28 +912,18 @@ subroutine source_calc(Q_ri,t)
             do i = 1,nx
 
                 do ipg = 1,npg
-
-                    ! do ieq = 1,nQ
-                    !     Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,ieq,1:nbasis))
-                    ! end do
                     do ieq = pxx,nQ
                         Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,ieq,1:nbasis))
                     end do
-
                     ! Sources for the fluid variables. Nonzero if randomly forced.
-                    source(ipg,rh) = 0 !amplen*(ran(iseed) - 0.5)
-                    source(ipg,mx) = 0 !amplm*(ran(iseed) - 0.5)
-                    source(ipg,my) = 0 !amplm*(ran(iseed) - 0.5)
-                    source(ipg,mz) = 0 !amplm*(ran(iseed) - 0.5)
-                    source(ipg,en) = 0 !amplen*(ran(iseed) - 0.5)
+                    source(ipg,rh:en) = 0.0 !amplen*(ran(iseed) - 0.5)
 
-                    ! Sources for the viscous stress tensor.  The viscous stress is computed using hyperbolic
-                    ! relaxation to a parabolic problem. This is a generalization of the problem:
-                    !
-                    !  partial_t u = partial_x v ,  eps * partial_t v - v = D * partial_x u
-                    !
-                    ! where eps is a small parameter and D is a diffusion coefficient. In the relaxation limit
-                    ! eps -> 0, this becomes partial_t u = D * partial_x^2 u
+                    ! Sources for the viscous stress tensor. The viscous stress
+                    ! is computed using hyperbolic relaxation to a parabolic problem:
+                    !     partial_t u = partial_x v , eps*partial_t v - v = D*partial_x u
+                    ! where eps is a small parameter and D is a diffusion coefficient.
+                    ! In the relaxation limit eps -> 0, this becomes:
+                    !     partial_t u = D*partial_x^2 u
                     ! The following are the sources for this problem where epsi = 1/eps
                     source(ipg,pxx) = -epsi*Qin(pxx) !+ amplv*(ran(iseed) - 0.5)
                     source(ipg,pyy) = -epsi*Qin(pyy) !+ amplv*(ran(iseed) - 0.5)
@@ -862,7 +931,6 @@ subroutine source_calc(Q_ri,t)
                     source(ipg,pxy) = -epsi*Qin(pxy) !+ amplv*(ran(iseed) - 0.5)
                     source(ipg,pxz) = -epsi*Qin(pxz) !+ amplv*(ran(iseed) - 0.5)
                     source(ipg,pyz) = -epsi*Qin(pyz) !+ amplv*(ran(iseed) - 0.5)
-
                 end do
 
                 do ir=1,nbasis
@@ -908,15 +976,18 @@ end subroutine get_GRM
 
 
 !----------------------------------------------------------------------------------------------
-subroutine random_stresses_pnts_r(GRMpnts_r, Spnts_r, npnts)
+subroutine random_stresses_pnts_r(Spnts_r, npnts)
 !----------------------------------------------------------------------------------------------
 
     implicit none
     integer ife,npnts
     real, dimension(npnts,3,3) :: GRMpnts_r, Spnts_r
     real Gxx,Gyy,Gzz,Gxy,Gxz,Gyz
+    real eta_d,zeta_d
     real trG,trGd3,trG_zeta
 
+    eta_d = eta_sd * sqrt_dsi
+    zeta_d = zeta_sd * sqrt_dsi
     call get_GRM(GRMpnts_r, npnts)
 
     ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
@@ -949,17 +1020,19 @@ end subroutine random_stresses_pnts_r
 !----------------------------------------------------------------------------------------------
 
 !----------------------------------------------------------------------------------------------
-subroutine random_heatflux_pnts_r(GRVpnts_r, Hpnts_r, npnts)
+subroutine random_heatflux_pnts_r(Hpnts_r, npnts)
 !----------------------------------------------------------------------------------------------
 
     implicit none
-    integer ife,npnts
+    integer ife,npnts,b,e,vsl_ndim
     real, dimension(npnts,3) :: GRVpnts_r, Hpnts_r
-    real Gx,Gy,Gz
+    real Gx,Gy,Gz,kappa_d
     real, allocatable :: grn(:)
 
     vsl_ndim = npnts*3
     allocate(grn(vsl_ndim))
+
+    kappa_d = kappa_sd * sqrt_dsi
 
     vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
 
@@ -989,26 +1062,22 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
     !   ixyz=1: x-direction
     !   ixyz=2: y-direction
     !   ixyz=3: z-direction
-
     implicit none
     integer ife,ixyz,npnts
     real, dimension(npnts,nQ) :: Qpnts_r, fpnts_r
-    real dn,dni,vx,vy,vz,P,asqr,fac,Pre,dnei,Psol,dx2,Tem,smsq,nu,c2d3,c4d3,c2d3nu,c4d3nu
+    real dn,dni,vx,vy,vz,P,asqr,fac,Pre,dnei,Psol,dx2,Tem,smsq,nu,c2d3nu,c4d3nu
 
-    real, dimension(npnts,3,3) :: GRMpnts_r, Spnts_r
+    real Spnts_r(npnts,3,3), Hpnts_r(npnts,3)
     real Sxx,Syy,Szz,Sxy,Sxz,Syz
     real Qx,Qy,Qz
-    real ampx,ampy,ampz,ampd
 
     nu = epsi*vis
-    c2d3 = 2./3.
-    c4d3 = 4./3.
     c2d3nu = c2d3*nu
     c4d3nu = c4d3*nu
-    ! ampd = 0*amplen*(ran(iseed) - 0.5)
 
-    ! call random_stresses_pnts_r(GRMpnts_r, Spnts_r, npnts)
     Spnts_r(:,:,:) = 0.0
+    Hpnts_r(:,:) = 0.0
+    call random_stresses_pnts_r(Spnts_r, npnts)
 
     do ife = 1,npnts
 
@@ -1041,13 +1110,14 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
             fpnts_r(ife,rh) = Qpnts_r(ife,mx)
 
             ! NOTE: the stress terms may need plus sign in the energy flux!!!
-            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + P + Qpnts_r(ife,pxx) + Sxx
-            fpnts_r(ife,my) = Qpnts_r(ife,my)*vx     + Qpnts_r(ife,pxy) + Sxy
-            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx     + Qpnts_r(ife,pxz) + Sxz
+            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + P + Qpnts_r(ife,pxx) - Sxx
+            fpnts_r(ife,my) = Qpnts_r(ife,my)*vx     + Qpnts_r(ife,pxy) - Sxy
+            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx     + Qpnts_r(ife,pxz) - Sxz
 
-            fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx - (Qpnts_r(ife,pxx)*vx   &
-                                                       +  Qpnts_r(ife,pxy)*vy   &
-                                                       +  Qpnts_r(ife,pxz)*vz)
+            fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx                          &
+                            - ( (Qpnts_r(ife,pxx) - Sxx)*vx                     &
+                            +   (Qpnts_r(ife,pxy) - Sxy)*vy                     &
+                            +   (Qpnts_r(ife,pxz) - Sxz)*vz )
 
             fpnts_r(ife,pxx) =  c4d3nu*vx
             fpnts_r(ife,pyy) = -c2d3nu*vx
@@ -1062,13 +1132,14 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
             fpnts_r(ife,rh) = Qpnts_r(ife,mxa(ixyz))
 
-            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy     + Qpnts_r(ife,pxy) + Sxy
-            fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + P + Qpnts_r(ife,pyy) + Syy
-            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy     + Qpnts_r(ife,pyz) + Syz
+            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy     + Qpnts_r(ife,pxy) - Sxy
+            fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + P + Qpnts_r(ife,pyy) - Syy
+            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy     + Qpnts_r(ife,pyz) - Syz
 
-            fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy - (Qpnts_r(ife,pyy)*vy   &
-                                                       +  Qpnts_r(ife,pxy)*vx   &
-                                                       +  Qpnts_r(ife,pyz)*vz)
+            fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy                          &
+                            - ( (Qpnts_r(ife,pyy) - Syy)*vy                     &
+                            +   (Qpnts_r(ife,pxy) - Sxy)*vx                     &
+                            +   (Qpnts_r(ife,pyz) - Syz)*vz )
 
             fpnts_r(ife,pxx) = -c2d3nu*vy
             fpnts_r(ife,pyy) =  c4d3nu*vy
@@ -1083,13 +1154,14 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
             fpnts_r(ife,rh) = Qpnts_r(ife,mz)
 
-            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz     + Qpnts_r(ife,pxz) + Sxz
-            fpnts_r(ife,my) = Qpnts_r(ife,my)*vz     + Qpnts_r(ife,pyz) + Syz
-            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + P + Qpnts_r(ife,pzz) + Szz
+            fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz     + Qpnts_r(ife,pxz) - Sxz
+            fpnts_r(ife,my) = Qpnts_r(ife,my)*vz     + Qpnts_r(ife,pyz) - Syz
+            fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + P + Qpnts_r(ife,pzz) - Szz
 
-            fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz - (Qpnts_r(ife,pzz)*vz   &
-                                                       +  Qpnts_r(ife,pxz)*vx   &
-                                                       +  Qpnts_r(ife,pyz)*vy)
+            fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz                          &
+                            - ( (Qpnts_r(ife,pzz) - Szz)*vz                     &
+                            +   (Qpnts_r(ife,pxz) - Sxz)*vx                     &
+                            +   (Qpnts_r(ife,pyz) - Syz)*vy )
 
             fpnts_r(ife,pxx) = -c2d3nu*vz
             fpnts_r(ife,pyy) = -c2d3nu*vz
@@ -2143,9 +2215,9 @@ end subroutine
     pname=pname1(2:5)
     pname = trim(pname)
     pname = adjustr(pname)
-    ! out_name='/data/data5/perseus_p'//pname//'_t'//tname//'.vtr'
     out_name='data/data3/perseus_p'//pname//'_t'//tname//'.vtr'
-    ! print *, out_name
+    ! out_name='data/data4/perseus_p'//pname//'_t'//tname//'.vtr'
+    print *, out_name
     out_name = trim(out_name)
     out_name = adjustr(out_name)
 
@@ -2283,7 +2355,7 @@ subroutine output_vtk(Qin,nout,iam)
     real(R4P), dimension(nnx*nny*nnz) :: var_xml_val_z
     real(R4P), dimension(nnx,nny,nnz,nQ) :: qvtk
     real(R4P), dimension(nnx,nny,nnz) :: qvtk_dxvy,qvtk_dyvx
-    real P, vx, vy, vz,  dni, dxrh,dyrh,dxmy,dymx
+    real P, vx, vy, vz, dni, dxrh,dyrh,dxmy,dymx
     integer(I4P):: E_IO,i,j,k,l,num,iam,igrid,ir,jr,kr,ib,jb,kb,ieq
     character (50) :: out_name
     character (4) :: tname
@@ -2304,9 +2376,11 @@ subroutine output_vtk(Qin,nout,iam)
     pname=pname1(2:5)
     pname = trim(pname)
     pname = adjustr(pname)
-    ! out_name='/data/data/perseus_p'//pname//'_t'//tname//'.vtr'
-    out_name='data/data3/perseus_p'//pname//'_t'//tname//'.vtr'
-    ! print *, out_name
+
+    ! "outdir" is a global variable specifying the output directory
+    out_name=''//outdir//'/perseus_p'//pname//'_t'//tname//'.vtr'
+
+    if (iam .eq. print_mpi) print *, out_name
     out_name = trim(out_name)
     out_name = adjustr(out_name)
 
