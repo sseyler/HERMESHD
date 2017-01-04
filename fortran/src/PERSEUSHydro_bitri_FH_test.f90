@@ -1115,7 +1115,7 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
             fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx     + Qpnts_r(ife,pxz) - Sxz
 
             fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx                          &
-                            - ( (Qpnts_r(ife,pxx) - Sxx)*vx                     &
+                            + ( (Qpnts_r(ife,pxx) - Sxx)*vx                     &
                             +   (Qpnts_r(ife,pxy) - Sxy)*vy                     &
                             +   (Qpnts_r(ife,pxz) - Sxz)*vz )
 
@@ -1137,7 +1137,7 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
             fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy     + Qpnts_r(ife,pyz) - Syz
 
             fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy                          &
-                            - ( (Qpnts_r(ife,pyy) - Syy)*vy                     &
+                            + ( (Qpnts_r(ife,pyy) - Syy)*vy                     &
                             +   (Qpnts_r(ife,pxy) - Sxy)*vx                     &
                             +   (Qpnts_r(ife,pyz) - Syz)*vz )
 
@@ -1159,7 +1159,7 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
             fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + P + Qpnts_r(ife,pzz) - Szz
 
             fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz                          &
-                            - ( (Qpnts_r(ife,pzz) - Szz)*vz                     &
+                            + ( (Qpnts_r(ife,pzz) - Szz)*vz                     &
                             +   (Qpnts_r(ife,pxz) - Sxz)*vx                     &
                             +   (Qpnts_r(ife,pyz) - Syz)*vy )
 
