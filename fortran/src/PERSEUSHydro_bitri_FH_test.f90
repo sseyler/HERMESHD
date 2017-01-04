@@ -39,7 +39,7 @@ integer, parameter :: nx=20, ny=20, nz=1, ngu=0, nbasis=8, nbastot=27
 ! (nbasis = 10) is much greater than the jump in accuracy between quadratic and
 ! cubic (nbasis = 20) bases.
 
-integer, parameter :: iquad=2, nedge = iquad
+integer, parameter :: iquad=2, nedge=iquad
 ! iquad: number of Gaussian quadrature points per direction. iquad should not be
 ! less than ipoly, where ipoly is the maximum Legendre polynomial order used,
 ! otherwise instability results. iquad should not be larger than ipoly + 1,
