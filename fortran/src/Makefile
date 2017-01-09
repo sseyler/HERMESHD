@@ -44,7 +44,6 @@ FORTFLAGS= -O2 -xHost -mkl -L$(MKLROOT)/lib/$(MKL_TARGET_ARCH)#-CB -fpe:0 -trace
 # OBJS = dg_3D_hydro_bitri_H2O_old.f90
 # OBJS = dg_3D_hydro_bitri_version2_SEAN.f90
 # OBJS = PERSEUSHydro_bitri_visc.f90
-OBJS = PERSEUSHydro_bitri_FH_test.f90
 # OBJS = dg_3D_hydro_H2O_sourceless.f90
 # OBJS = dg_3D_hydro.f90
 # OBJS = dg_3D_hydro_quad.f90
@@ -53,6 +52,8 @@ OBJS = PERSEUSHydro_bitri_FH_test.f90
 # OBJS = dg_3D_incompressible_NS.f90
 # OBJS = dg_3D_incompressible_NS_div_clean.f90
 # OBJS = dg_3D_incompressible_Euler_div_clean.f90
+# OBJS = PERSEUSHydro_bitri_FH_test.f90
+OBJS = parameters.f90 initial_condition_mod.f90 prepare_time_advance_mod.f90 auxiliary_mod.f90 basis_functions_mod.f90 io_mod.f90 perseushd_main.f90
 
 .c.o:
 	$(rm) $@
