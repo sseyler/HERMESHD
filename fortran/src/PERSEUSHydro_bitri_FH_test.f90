@@ -631,9 +631,9 @@ end subroutine get_min_dt
 
 !----------------------------------------------------------------------------------------------
 
-subroutine initial_condition(icid)
+subroutine initial_condition(id)
     implicit none
-    integer i,j,k,icid
+    integer i,j,k,id
     real coeff
     real den, Pre, wtev
 
@@ -644,10 +644,10 @@ subroutine initial_condition(icid)
     Q_r0(:,:,:,en,1) = T_floor*rh_floor/(aindex - 1.)
     MMask(:,:,:) = .false.
 
-    if ( icid .eq. 1 ) then
+    if ( id .eq. 1 ) then
         call fill_fluid
     end if
-    if ( icid .eq. 2 ) then
+    if ( id .eq. 2 ) then
         call fill_fluid2
     end if
 end subroutine initial_condition
