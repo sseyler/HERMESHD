@@ -7,8 +7,7 @@ use prepare_time_advance_mod
 use io_mod
 use basis_functions_mod
 
-
-include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
+! include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
 
 
     if (nbasis .le. 8) cflm = 0.14
@@ -316,7 +315,7 @@ include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
     call MPI_Finalize (ierr)
 
     if (iam .eq. print_mpi) then
-        print *, '\n'
+        print *, ''
         call system_clock(ticks, count_rate, count_max)
         print *, 'Wall time', (ticks/count_rate - t_start), 'seconds'
     end if

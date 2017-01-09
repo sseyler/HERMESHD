@@ -1,7 +1,7 @@
 module io_mod
 
-use lib_vtk_io
 use parameters_mod
+use auxiliary_mod
 
 contains
 

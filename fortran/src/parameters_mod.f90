@@ -1,7 +1,10 @@
 module parameters_mod
 
+    use lib_vtk_io
     use MKL_VSL_TYPE
     use MKL_VSL
+
+    include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
 
     integer, parameter :: rh=1, mx=2, my=3, mz=4, en=5
     integer, parameter :: pxx=6, pyy=7, pzz=8, pxy=9, pxz=10, pyz=11, nQ=11
@@ -33,8 +36,9 @@ module parameters_mod
     ! Boundary condition parameters: if  = 2 then periodic.  MPI does this for you.
     ! If  = 0, then the set_bc subroutine is used to prescribe BCs
 
-    integer, parameter :: ntout = 200, iorder = 2, id = 2  ! sets ICs of problem
-    character (10), parameter :: outdir = 'data/data5'
+    integer, parameter :: ntout = 20, iorder = 2
+    integer, parameter :: llns = 0, icid = 2  ! sets LL-NS or regular NS and ICs
+    character (8), parameter :: outdir = 'data/mod'
 
     integer, parameter :: ihllc = 1, iroe = 0, ieos = 1
     ! Choose Riemann solver for computing fluxes.  Set chosen solver = 1.
@@ -49,7 +53,7 @@ module parameters_mod
     logical, parameter :: resuming = .false.
 
     real, parameter :: lx = 100., ly = 100., lz = 100./120.
-    real, parameter :: tf = 4000.
+    real, parameter :: tf = 2000.
 
         real, parameter :: pi = 4.0*atan(1.0)
 

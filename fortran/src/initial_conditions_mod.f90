@@ -1,12 +1,13 @@
 module initial_condition_mod
 
 use parameters_mod
+use auxiliary_mod
 
 contains
 
-    subroutine initial_condition(id)
+    subroutine initial_condition(icid)
         implicit none
-        integer i,j,k,id
+        integer i,j,k,icid
         real coeff
         real den, Pre, wtev
 
@@ -17,10 +18,10 @@ contains
         Q_r0(:,:,:,en,1) = T_floor*rh_floor/(aindex - 1.)
         MMask(:,:,:) = .false.
 
-        if ( id .eq. 1 ) then
+        if ( icid .eq. 1 ) then
             call fill_fluid
         end if
-        if ( id .eq. 2 ) then
+        if ( icid .eq. 2 ) then
             call fill_fluid2
         end if
     end subroutine initial_condition

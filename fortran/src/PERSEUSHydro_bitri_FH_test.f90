@@ -56,8 +56,9 @@ integer, parameter :: xlbc = 2, xhbc = 2, ylbc = 2, yhbc = 2, zlbc = 2, zhbc = 2
 ! Boundary condition parameters: if  = 2 then periodic.  MPI does this for you.
 ! If  = 0, then the set_bc subroutine is used to prescribe BCs
 
-integer, parameter :: ntout = 10, iorder = 2, id = 2  ! sets ICs of problem
-character (10), parameter :: outdir = 'data/data5'
+integer, parameter :: ntout = 20, iorder = 2
+integer, parameter :: llns = 0, icid = 2  ! sets LL-NS or regular NS and ICs
+character (10), parameter :: outdir = 'data/bitri'
 
 integer, parameter :: ihllc = 1, iroe = 0, ieos = 1
 ! Choose Riemann solver for computing fluxes.  Set chosen solver = 1.
@@ -72,7 +73,7 @@ character (4), parameter :: fpre = 'Qout'
 logical, parameter :: resuming = .false.
 
 real, parameter :: lx = 100., ly = 100., lz = 100./120.
-real, parameter :: tf = 100.
+real, parameter :: tf = 2000.
 
     real, parameter :: pi = 4.0*atan(1.0)
 
@@ -523,7 +524,7 @@ vsl_errcode = vsldeletestream( vsl_stream )
 call MPI_Finalize (ierr)
 
 if (iam .eq. print_mpi) then
-    print *, '\n'
+    print *, ''
     call system_clock(ticks, count_rate, count_max)
     print *, 'Wall time', (ticks/count_rate - t_start), 'seconds'
 end if
@@ -630,9 +631,9 @@ end subroutine get_min_dt
 
 !----------------------------------------------------------------------------------------------
 
-subroutine initial_condition(id)
+subroutine initial_condition(icid)
     implicit none
-    integer i,j,k,id
+    integer i,j,k,icid
     real coeff
     real den, Pre, wtev
 
@@ -643,10 +644,10 @@ subroutine initial_condition(id)
     Q_r0(:,:,:,en,1) = T_floor*rh_floor/(aindex - 1.)
     MMask(:,:,:) = .false.
 
-    if ( id .eq. 1 ) then
+    if ( icid .eq. 1 ) then
         call fill_fluid
     end if
-    if ( id .eq. 2 ) then
+    if ( icid .eq. 2 ) then
         call fill_fluid2
     end if
 end subroutine initial_condition
@@ -1087,7 +1088,9 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
     Spnts_r(:,:,:) = 0.0
     Hpnts_r(:,:) = 0.0
-    call random_stresses_pnts_r(Spnts_r, npnts)
+    if (llns .eq. 1) then
+        call random_stresses_pnts_r(Spnts_r, npnts)
+    end if
 
     do ife = 1,npnts
 

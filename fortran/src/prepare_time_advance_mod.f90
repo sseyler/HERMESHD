@@ -1,6 +1,7 @@
 module prepare_time_advance_mod
 
 use parameters_mod
+use auxiliary_mod
 
 contains
 
@@ -299,7 +300,9 @@ contains
 
         Spnts_r(:,:,:) = 0.0
         Hpnts_r(:,:) = 0.0
-        call random_stresses_pnts_r(Spnts_r, npnts)
+        if (llns .eq. 1) then
+            call random_stresses_pnts_r(Spnts_r, npnts)
+        end if
 
         do ife = 1,npnts
 
