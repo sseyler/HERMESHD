@@ -43,7 +43,7 @@ ifeq ($(NAME),bitri)
 endif
 ifeq ($(NAME),mod)
 	OBJS = perseushd_main.f90
-	MODS = parameters_mod.f90 initial_conditions_mod.f90 prepare_time_advance_mod.f90 auxiliary_mod.f90 basis_functions_mod.f90 io_mod.f90
+	MODS = parameters_mod.f90 auxiliary_mod.f90 initial_conditions_mod.f90 prepare_time_advance_mod.f90 basis_functions_mod.f90 io_mod.f90
 endif
 
 .c.o:
