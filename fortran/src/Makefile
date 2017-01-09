@@ -20,7 +20,9 @@ DEFINES = $(INCLUDES) $(DEFS)
 # FORTFLAGS = -O3 -openmp
 # FORTFLAGS = -O2 -xHost #-CB -fpe:0 -traceback -check noarg_temp_created #-fpp
 
-#################################
+##################################################################
+# Intel compiler and MKL files
+#-----------------------------------------------------------------
 # ifortvars.sh -arch intel64 -platform linux
 # IGNORE := $(shell bash -c "source ifortvars.sh; env | sed 's/=/:=/' | sed 's/^/export /' > makeenv")
 # include makeenv
@@ -31,7 +33,12 @@ MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/fortran/mkl
 # MKLINCLUDE=$(MKLPATH)/include
 MKL_TARGET_ARCH = intel64_lin
 FORTFLAGS = -O2 -xHost -mkl -L$(MKLROOT)/lib/$(MKL_TARGET_ARCH)#-CB -fpe:0 -traceback -check noarg_temp_created #-fpp
+##################################################################
 
+
+##################################################################
+# Source files
+#-----------------------------------------------------------------
 # OBJS = dg_3D_hydro_bitri_H2O.f90
 # OBJS = dg_3D_hydro_bitri_H2O_old.f90
 # OBJS = dg_3D_hydro_bitri_version2_SEAN.f90
@@ -45,7 +52,12 @@ ifeq ($(NAME),mod)
 	OBJS = perseushd_main.f90
 	MODS = parameters_mod.f90 auxiliary_mod.f90 initial_conditions_mod.f90 prepare_time_advance_mod.f90 basis_functions_mod.f90 io_mod.f90
 endif
+##################################################################
 
+
+##################################################################
+# Recipes
+#-----------------------------------------------------------------
 .c.o:
 	$(rm) $@
 	$(FORT) $(FORTFLAGS) -c $*.f90
@@ -60,3 +72,4 @@ $(PROGNAME) : $(OBJS)
 
 clean:
 	$(rm) $(PROGNAME) core *~
+##################################################################
