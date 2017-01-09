@@ -184,7 +184,7 @@ use basis_functions_mod
 
     if (iread .eq. 0) then
 
-        call initial_condition(id)
+        call initial_condition(icid)
 
     else
 

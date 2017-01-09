@@ -36,7 +36,7 @@ module parameters_mod
     ! Boundary condition parameters: if  = 2 then periodic.  MPI does this for you.
     ! If  = 0, then the set_bc subroutine is used to prescribe BCs
 
-    integer, parameter :: ntout = 20, iorder = 2
+    integer, parameter :: ntout = 200, iorder = 2
     integer, parameter :: llns = 0, icid = 2  ! sets LL-NS or regular NS and ICs
     character (8), parameter :: outdir = 'data/mod'
 

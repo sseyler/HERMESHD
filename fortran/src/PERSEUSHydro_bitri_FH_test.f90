@@ -56,7 +56,7 @@ integer, parameter :: xlbc = 2, xhbc = 2, ylbc = 2, yhbc = 2, zlbc = 2, zhbc = 2
 ! Boundary condition parameters: if  = 2 then periodic.  MPI does this for you.
 ! If  = 0, then the set_bc subroutine is used to prescribe BCs
 
-integer, parameter :: ntout = 20, iorder = 2
+integer, parameter :: ntout = 200, iorder = 2
 integer, parameter :: llns = 0, icid = 2  ! sets LL-NS or regular NS and ICs
 character (10), parameter :: outdir = 'data/bitri'
 
@@ -393,7 +393,7 @@ t_start = ticks*1./count_rate
 
 if (iread .eq. 0) then
 
-    call initial_condition(id)
+    call initial_condition(icid)
 
 else
 
