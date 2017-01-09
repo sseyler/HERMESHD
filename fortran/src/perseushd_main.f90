@@ -315,6 +315,12 @@ include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
 
     call MPI_Finalize (ierr)
 
+    if (iam .eq. print_mpi) then
+        print *, '\n'
+        call system_clock(ticks, count_rate, count_max)
+        print *, 'Wall time', (ticks/count_rate - t_start), 'seconds'
+    end if
+
 
 contains
 
@@ -344,7 +350,7 @@ contains
     end subroutine
 
 
-    !-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
 
     subroutine get_min_dt(dt)
 
@@ -401,7 +407,7 @@ contains
 
     end subroutine get_min_dt
 
-    !----------------------------------------------------------------------------------------------
+!----------------------------------------------------------------------------------------------
 
     subroutine prep_advance(Q_ri)
 
@@ -419,7 +425,7 @@ contains
     end subroutine prep_advance
 
 
-    !----------------------------------------------------------------------------------------------
+!----------------------------------------------------------------------------------------------
 
     subroutine advance_time_level_gl(Q_ri,Q_rp)
 
@@ -453,7 +459,7 @@ contains
 
     end subroutine advance_time_level_gl
 
-    !----------------------------------------------------------------------------------------------
+!----------------------------------------------------------------------------------------------
 
 
 end program main

@@ -56,7 +56,7 @@ integer, parameter :: xlbc = 2, xhbc = 2, ylbc = 2, yhbc = 2, zlbc = 2, zhbc = 2
 ! Boundary condition parameters: if  = 2 then periodic.  MPI does this for you.
 ! If  = 0, then the set_bc subroutine is used to prescribe BCs
 
-integer, parameter :: ntout = 200, iorder = 2, id = 2  ! sets ICs of problem
+integer, parameter :: ntout = 10, iorder = 2, id = 2  ! sets ICs of problem
 character (10), parameter :: outdir = 'data/data5'
 
 integer, parameter :: ihllc = 1, iroe = 0, ieos = 1
@@ -72,7 +72,7 @@ character (4), parameter :: fpre = 'Qout'
 logical, parameter :: resuming = .false.
 
 real, parameter :: lx = 100., ly = 100., lz = 100./120.
-real, parameter :: tf = 4000.
+real, parameter :: tf = 100.
 
     real, parameter :: pi = 4.0*atan(1.0)
 
@@ -522,6 +522,12 @@ vsl_errcode = vsldeletestream( vsl_stream )
 
 call MPI_Finalize (ierr)
 
+if (iam .eq. print_mpi) then
+    print *, '\n'
+    call system_clock(ticks, count_rate, count_max)
+    print *, 'Wall time', (ticks/count_rate - t_start), 'seconds'
+end if
+
 contains
 
 !------------------------------------------
@@ -864,8 +870,10 @@ end subroutine set_bc
 subroutine advance_time_level_gl(Q_ri,Q_rp)
 
     implicit none
-    integer i,j,k,ieq,ir
     real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri, Q_rp
+    ! real, dimension(:,:,:,:,:) :: Q_ri, Q_rp
+
+    integer i,j,k,ieq,ir
     real Q_xtemp, Q_ytemp, Q_ztemp
 
     do k = 1,nz
@@ -897,8 +905,10 @@ end subroutine advance_time_level_gl
 subroutine source_calc(Q_ri,t)
 
     implicit none
-    integer i,j,k,ieq,ipg,ir
     real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri
+    ! real, dimension(:,:,:,:,:) :: Q_ri
+
+    integer i,j,k,ieq,ipg,ir
     real t,source(npg,nQ),Qin(nQ),dn,dni,Zin,vx,vy,vz,alpha,temp,dne,eta_a
     real Teev,Tiev,etaJ2,nuei,TemR,Tev,vmax
     real Tcoef,fac,en_floor,gyro,Pres,rh_buf
@@ -1182,9 +1192,11 @@ end subroutine
 subroutine flux_cal(Q_r)
 
     implicit none
+    real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
+    ! real, dimension(:,:,:,:,:) :: Q_r
+
     integer i,j,k,ieq,iback,jleft,kdown,i4,i4p,ipnt
     real Qface_x(nfe,nQ), Qface_y(nfe,nQ),Qface_z(nfe,nQ),fface_x(nfe,nQ), fface_y(nfe,nQ), fface_z(nfe,nQ)
-    real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
     real cwavex(nfe),cwavey(nfe),cwavez(nfe),Pre,dni,B2, cfbound, cfx(nface,nQ),cfy(nface,nQ),cfz(nface,nQ)
     real fhllc_x(nface,5),fhllc_y(nface,5),fhllc_z(nface,5),fs(nface,nQ),qvin(nQ)
 
@@ -1600,6 +1612,8 @@ subroutine innerintegral(Q_r)
 
     implicit none
     real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
+    ! real, dimension(:,:,:,:,:) :: Q_r
+
     integer i,j,k,ieq,ipg,ir
     real Qinner(npg,nQ),finner_x(npg,nQ), finner_y(npg,nQ), finner_z(npg,nQ), int_r(nbastot,nQ)
 
@@ -1840,8 +1854,10 @@ end function cfcal
 
 subroutine limiter(Q_r)
     implicit none
-    integer i, j, k, ieq, ipge, minindex, ir
     real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
+    ! real, dimension(:,:,:,:,:) :: Q_r
+
+    integer i, j, k, ieq, ipge, minindex, ir
     real Qedge(npge,nQ),theta,Qmin(nQ), deltaQ(nQ)
     real epsi, Qrhmin, QPmin, P(npge), Pave, dn, dni, epsiP, thetaj
     real*8 a, b, c
@@ -1925,8 +1941,10 @@ end subroutine limiter
 
 subroutine prepare_exchange(Q_r)
 
-    integer ieq, i, j, k, ipnt
     real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
+    ! real, dimension(:,:,:,:,:) :: Q_r
+
+    integer ieq, i, j, k, ipnt
 
     do ieq = 1,nQ
     do j = 1,ny
@@ -2184,7 +2202,9 @@ end subroutine
     subroutine output_vtk0(Qin,nout,iam)
 
     implicit none
-    real Qin(nx,ny,nz,nQ,nbasis)
+    real, dimension(nx,ny,nz,nQ,nbasis) :: Qin
+    ! real, dimension(:,:,:,:,:) :: Qin
+
     integer nout
     integer(I4P) , parameter :: nb=1*ngu,sprd=0*1
 !    integer(I4P), parameter:: nnx=nx-2*nb,nny=ny-2*nb,nnz=nz-2*nb
@@ -2343,7 +2363,9 @@ end subroutine output_vtk0
 subroutine output_vtk(Qin,nout,iam)
 
     implicit none
-    real Qin(nx,ny,nz,nQ,nbasis)
+    real, dimension(nx,ny,nz,nQ,nbasis) :: Qin
+    ! real, dimension(:,:,:,:,:) :: Qin
+
     integer nout
     integer(I4P) , parameter :: nb=1*ngu,sprd=0*1
 
@@ -2565,7 +2587,10 @@ end subroutine output_vtk
 subroutine writeQ(fprefix,irank,iddump,Qin,tnow,dtnow,noutnow,mpi_nxnow,mpi_nynow,mpi_nznow)
 
     implicit none
-    real :: Qin(nx,ny,nz,nQ,nbasis),tnow,dtnow
+    real, dimension(nx,ny,nz,nQ,nbasis) :: Qin
+    ! real, dimension(:,:,:,:,:) :: Qin
+
+    real :: tnow,dtnow
     integer :: irank,iddump,noutnow,mpi_nxnow,mpi_nynow,mpi_nznow,nump,numd,qq,k,j,i,ir
     character (4) :: fprefix,pname,dname
     character (5) :: pname1,dname1
@@ -2612,7 +2637,10 @@ end subroutine writeQ
 subroutine readQ(fprefix,irank,iddump,Qin,tnow,dtnow,noutnow,mpi_nxnow,mpi_nynow,mpi_nznow)
 
     implicit none
-    real :: Qin(nx,ny,nz,nQ,nbasis),tnow,dtnow
+    real, dimension(nx,ny,nz,nQ,nbasis) :: Qin
+    ! real, dimension(:,:,:,:,:) :: Qin
+
+    real :: tnow,dtnow
     integer :: irank,iddump,noutnow,mpi_nxnow,mpi_nynow,mpi_nznow,nump,numd,qq,k,j,i,ir
     character (4) :: fprefix,pname,dname
     character (5) :: pname1,dname1

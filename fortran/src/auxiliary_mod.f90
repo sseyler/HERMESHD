@@ -1,5 +1,6 @@
 module auxiliary_mod
 
+use parameters_mod
 
 contains
 
