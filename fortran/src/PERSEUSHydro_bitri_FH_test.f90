@@ -665,7 +665,7 @@ subroutine fill_fluid
 
     wtev = T_floor
     w0 = 0.3
-    jet_strength = 0.5
+    jet_strength = 1.0
     ! test problem is an unstable flow jet in x with velocity perturbations in y
 
     do i = 1,nx

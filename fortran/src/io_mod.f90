@@ -1,7 +1,6 @@
 module io_mod
 
 use parameters_mod
-use auxiliary_mod
 
 contains
 

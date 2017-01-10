@@ -1,11 +1,10 @@
 program main
 
 use parameters_mod
-use auxiliary_mod
-use initial_condition_mod
+use ic_mod
 use prepare_time_advance_mod
 use io_mod
-use basis_functions_mod
+use basis_funcs_mod
 
 ! include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
 
