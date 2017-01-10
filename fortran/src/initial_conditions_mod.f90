@@ -5,32 +5,34 @@ use auxiliary_mod
 
 contains
 
-    subroutine initial_condition(id)
+    subroutine initial_condition(Q_r, id)
         implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k,id
-        real coeff
-        real den, Pre, wtev
+        real wtev
 
         wtev = T_floor
 
-        Q_r0(:,:,:,:,:) = 0.0
-        Q_r0(:,:,:,rh,1) = rh_floor
-        Q_r0(:,:,:,en,1) = T_floor*rh_floor/(aindex - 1.)
+        Q_r(:,:,:,:,:) = 0.0
+        Q_r(:,:,:,rh,1) = rh_floor
+        Q_r(:,:,:,en,1) = T_floor*rh_floor/(aindex - 1.)
         MMask(:,:,:) = .false.
 
         if ( id .eq. 1 ) then
-            call fill_fluid
+            call fill_fluid(Q_r)
         end if
         if ( id .eq. 2 ) then
-            call fill_fluid2
+            call fill_fluid2(Q_r)
         end if
     end subroutine initial_condition
 
 !-------------------------------------------------------
 
-    subroutine fill_fluid
-        integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,igrid,ieq,inds(nbasis)
-        real wirer,x,y,x0,y0,rhline,wtev,rx,ry,rnum,w0,jet_strength
+    subroutine fill_fluid(Q_r)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
+        integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,ieq
+        real x,y,wtev,rnum,w0,jet_strength
         real qquad(npg,nQ),xcc,ycc,zcc  ! bfint(npg,nbasis),qquadv(npg)
         iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
 
@@ -73,10 +75,11 @@ contains
 
 !-------------------------------------------------------
 
-    subroutine fill_fluid2
-
-        integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,igrid,ieq,inds(nbasis)
-        real wirer,x,y,x0,y0,rhline,wtev,rx,ry,rnum,w0
+    subroutine fill_fluid2(Q_r)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
+        integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,igrid,ieq
+        real x,y,wtev,rnum,w0
         real qquad(npg,nQ),xcc,ycc,zcc  ! bfint(npg,nbasis),qquadv(npg)
         iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
 

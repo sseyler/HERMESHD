@@ -9,7 +9,7 @@ module parameters_mod
     integer, parameter :: rh=1, mx=2, my=3, mz=4, en=5
     integer, parameter :: pxx=6, pyy=7, pzz=8, pxy=9, pxz=10, pyz=11, nQ=11
 
-    integer, parameter :: nx=20, ny=20, nz=1, ngu=0, nbasis=8, nbastot=27
+    integer, parameter :: nx=40, ny=40, nz=1, ngu=0, nbasis=8, nbastot=27
     ! nbasis = 4: {1,x,y,z}
     ! nbasis = 10: {1,x,y,z, P_2(x),P_2(y),P_2(z), yz, zx, xy}
     ! nbasis = 20: nbasis10 + {xyz,xP2(y),yP2(x),xP2(z),
@@ -36,7 +36,7 @@ module parameters_mod
     ! Boundary condition parameters: if  = 2 then periodic.  MPI does this for you.
     ! If  = 0, then the set_bc subroutine is used to prescribe BCs
 
-    integer, parameter :: ntout = 200, iorder = 2
+    integer, parameter :: ntout = 100, iorder = 2
     integer, parameter :: llns = 0, icid = 2  ! sets LL-NS or regular NS and ICs
     character (8), parameter :: outdir = 'data/mod'
 
@@ -52,8 +52,8 @@ module parameters_mod
     character (4), parameter :: fpre = 'Qout'
     logical, parameter :: resuming = .false.
 
-    real, parameter :: lx = 100., ly = 100., lz = 100./120.
-    real, parameter :: tf = 2000.
+    real, parameter :: lx = 300., ly = 300., lz = 300./120.
+    real, parameter :: tf = 1000.
 
         real, parameter :: pi = 4.0*atan(1.0)
 

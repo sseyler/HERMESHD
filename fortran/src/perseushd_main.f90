@@ -184,7 +184,7 @@ use basis_functions_mod
 
     if (iread .eq. 0) then
 
-        call initial_condition(icid)
+        call initial_condition(Q_r0, icid)
 
     else
 
@@ -410,7 +410,7 @@ contains
 
     subroutine prep_advance(Q_ri)
 
-        real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_ri
 
         if(ieos .eq. 1) call limiter(Q_ri)  ! added in (from "viscosity" version)
         if(ieos .eq. 2) call limiter(Q_ri)
@@ -418,7 +418,7 @@ contains
         call set_bc
         call flux_cal(Q_ri)
         call innerintegral(Q_ri)
-        call glflux2  ! glflux currently breaks after "bug fix"
+        call glflux  ! glflux currently breaks after "bug fix"
         call source_calc(Q_ri,t)
 
     end subroutine prep_advance
@@ -426,11 +426,12 @@ contains
 
 !----------------------------------------------------------------------------------------------
 
-    subroutine advance_time_level_gl(Q_ri,Q_rp)
+    subroutine advance_time_level_gl(Q_ri, Q_rp)
 
         implicit none
         integer i,j,k,ieq,ir
-        real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri, Q_rp
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_ri
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_rp
         real Q_xtemp, Q_ytemp, Q_ztemp
 
         do k = 1,nz

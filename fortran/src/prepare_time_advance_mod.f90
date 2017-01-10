@@ -921,55 +921,6 @@ contains
     subroutine glflux
 
         implicit none
-        integer i,j,k,ieq,ir,iqfa
-
-        do ieq = 1,nQ
-        do k = 1,nz
-        do j = 1,ny
-
-            do i = 1,nx
-                sumx = 0.
-                sumy = 0.
-                sumz = 0.
-                do iqfa = 1,nface
-                    sumx = sumx + 0.25*dxi*wgt2d(iqfa)*(flux_x(iqfa,i+1,j,k,ieq) - flux_x(iqfa,i,j,k,ieq))
-                    sumy = sumy + 0.25*dyi*wgt2d(iqfa)*(flux_y(iqfa,i,j+1,k,ieq) - flux_y(iqfa,i,j,k,ieq))
-                    sumz = sumz + 0.25*dzi*wgt2d(iqfa)*(flux_z(iqfa,i,j,k+1,ieq) - flux_z(iqfa,i,j,k,ieq))
-                    ! sumx = sumx + wgt2d(iqfa)*(flux_x(iqfa,i+1,j,k,ieq) - flux_x(iqfa,i,j,k,ieq))
-                    ! sumy = sumy + wgt2d(iqfa)*(flux_y(iqfa,i,j+1,k,ieq) - flux_y(iqfa,i,j,k,ieq))
-                    ! sumz = sumz + wgt2d(iqfa)*(flux_z(iqfa,i,j,k+1,ieq) - flux_z(iqfa,i,j,k,ieq))
-                end do
-                glflux_r(i,j,k,ieq,1) = sumx + sumy + sumz
-            end do
-
-            do ir=2,nbasis
-                do i = 1,nx
-                    sumx = 0.
-                    sumy = 0.
-                    sumz = 0.
-                    do iqfa = 1,nface
-                        sumx = sumx + wgtbf_xmp(iqfa,1,ir)*flux_x(iqfa,i,j,k,ieq)   &
-                                    + wgtbf_xmp(iqfa,2,ir)*flux_x(iqfa,i+1,j,k,ieq)
-                        sumy = sumy + wgtbf_ymp(iqfa,1,ir)*flux_y(iqfa,i,j,k,ieq)   &
-                                    + wgtbf_ymp(iqfa,2,ir)*flux_y(iqfa,i,j+1,k,ieq)
-                        sumz = sumz + wgtbf_zmp(iqfa,1,ir)*flux_z(iqfa,i,j,k,ieq)   &
-                                    + wgtbf_zmp(iqfa,2,ir)*flux_z(iqfa,i,j,k+1,ieq)
-                    end do
-                    glflux_r(i,j,k,ieq,ir) = sumx + sumy + sumz - integral_r(i,j,k,ieq,ir)
-                end do
-            end do
-
-        end do
-        end do
-        end do
-
-    end subroutine glflux
-
-!----------------------------------------------------------------------------------------------
-
-    subroutine glflux2
-
-        implicit none
         integer i,j,k,ieq,ir
 
         do ieq = 1,nQ
@@ -1017,7 +968,7 @@ contains
         end do
         end do
 
-    end subroutine glflux2
+    end subroutine glflux
 
 !-----------------------------------------------------------!
 !*******************calculate freezing speeds***************!
