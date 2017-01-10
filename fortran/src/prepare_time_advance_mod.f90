@@ -119,14 +119,12 @@ contains
 !----------------------------------------------------------------------------------------------
 
 
-    subroutine source_calc(Q_ri,t)
+    subroutine source_calc(Q_ri)
 
         implicit none
         integer i,j,k,ieq,ipg,ir
         real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri
-        real t,source(npg,nQ),Qin(nQ),dn,dni,Zin,vx,vy,vz,alpha,temp,dne,eta_a
-        real Teev,Tiev,etaJ2,nuei,TemR,Tev,vmax
-        real Tcoef,fac,en_floor,gyro,Pres,rh_buf
+        real source(npg,nQ),Qin(nQ),dn,dni,vx,vy,vz,en_floor
 
         source_r(:,:,:,:,:) = 0.0
         source(:,:) = 0.0
@@ -287,15 +285,11 @@ contains
         implicit none
         integer ife,ixyz,npnts
         real, dimension(npnts,nQ) :: Qpnts_r, fpnts_r
-        real dn,dni,vx,vy,vz,P,asqr,fac,Pre,dnei,Psol,dx2,Tem,smsq,nu,c2d3nu,c4d3nu
+        real dn,dni,vx,vy,vz,P,asqr,fac,Pre,Psol,dx2,Tem,smsq
 
         real Spnts_r(npnts,3,3), Hpnts_r(npnts,3)
         real Sxx,Syy,Szz,Sxy,Sxz,Syz
         real Qx,Qy,Qz
-
-        nu = epsi*vis
-        c2d3nu = c2d3*nu
-        c4d3nu = c4d3*nu
 
         Spnts_r(:,:,:) = 0.0
         Hpnts_r(:,:) = 0.0
@@ -978,7 +972,7 @@ contains
         integer cases
         real Qcf(nQ)
         real Pi, Pe, P, B2, ne, cs
-        real dn,dni,vx,vy,vz,hx,hy,hz,dnei,va2,vf1,lil02,va,fac
+        real dn,dni,vx,vy,vz,hx,hy,hz,va2,vf1,lil02,va,fac
 
         dn = Qcf(rh)
         dni = 1./dn

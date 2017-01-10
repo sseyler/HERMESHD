@@ -507,7 +507,7 @@ do while (t<tf)
 
         if (iam .eq. print_mpi) then
             call system_clock(ticks, count_rate, count_max)
-            t2 = ticks/count_rate
+            t2 = 1.*ticks/count_rate
             print *, 'Output time', (t2-t1), 'seconds'
             t1 = t2
         end if
@@ -526,7 +526,7 @@ call MPI_Finalize (ierr)
 if (iam .eq. print_mpi) then
     print *, ''
     call system_clock(ticks, count_rate, count_max)
-    print *, 'Wall time', (ticks/count_rate - t_start), 'seconds'
+    print *, 'Wall time', (1.*ticks/count_rate - t_start), 'seconds'
 end if
 
 contains
@@ -685,7 +685,7 @@ subroutine fill_fluid
         zcc = zc(k)
 
         Q_r0(i,j,k,rh,1) = rh_fluid
-        Q_r0(i,j,k,my,1) = 0.001*rnum/cosh(20*yc(j)/lyu)**2
+        Q_r0(i,j,k,my,1) = 0.005*rnum/cosh(20*ycc/lyu)**2
         Q_r0(i,j,k,mz,1) = 0.
         Q_r0(i,j,k,mx,1) = jet_strength*Q_r0(i,j,k,rh,1)/cosh(20*ycc/lyu)/1.
         Q_r0(i,j,k,en,1) = wtev*Q_r0(i,j,k,rh,1)/(aindex - 1.)                  &
@@ -1076,15 +1076,11 @@ subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
     implicit none
     integer ife,ixyz,npnts
     real, dimension(npnts,nQ) :: Qpnts_r, fpnts_r
-    real dn,dni,vx,vy,vz,P,asqr,fac,Pre,dnei,Psol,dx2,Tem,smsq,nu,c2d3nu,c4d3nu
+    real dn,dni,vx,vy,vz,P,asqr,fac,Pre,dnei,Psol,dx2,Tem,smsq
 
     real Spnts_r(npnts,3,3), Hpnts_r(npnts,3)
     real Sxx,Syy,Szz,Sxy,Sxz,Syz
     real Qx,Qy,Qz
-
-    nu = epsi*vis
-    c2d3nu = c2d3*nu
-    c4d3nu = c4d3*nu
 
     Spnts_r(:,:,:) = 0.0
     Hpnts_r(:,:) = 0.0

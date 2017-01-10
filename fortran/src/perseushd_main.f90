@@ -297,7 +297,7 @@ use basis_funcs_mod
 
             if (iam .eq. print_mpi) then
                 call system_clock(ticks, count_rate, count_max)
-                t2 = ticks/count_rate
+                t2 = 1.*ticks/count_rate
                 print *, 'Output time', (t2-t1), 'seconds'
                 t1 = t2
             end if
@@ -316,7 +316,7 @@ use basis_funcs_mod
     if (iam .eq. print_mpi) then
         print *, ''
         call system_clock(ticks, count_rate, count_max)
-        print *, 'Wall time', (ticks/count_rate - t_start), 'seconds'
+        print *, 'Wall time', (1.*ticks/count_rate - t_start), 'seconds'
     end if
 
 
@@ -418,7 +418,7 @@ contains
         call flux_cal(Q_ri)
         call innerintegral(Q_ri)
         call glflux  ! glflux currently breaks after "bug fix"
-        call source_calc(Q_ri,t)
+        call source_calc(Q_ri)
 
     end subroutine prep_advance
 

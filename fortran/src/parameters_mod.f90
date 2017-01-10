@@ -9,7 +9,7 @@ module parameters_mod
     integer, parameter :: rh=1, mx=2, my=3, mz=4, en=5
     integer, parameter :: pxx=6, pyy=7, pzz=8, pxy=9, pxz=10, pyz=11, nQ=11
 
-    integer, parameter :: nx=40, ny=40, nz=1, ngu=0, nbasis=8, nbastot=27
+    integer, parameter :: nx=30, ny=30, nz=1, ngu=0, nbasis=8, nbastot=27
     ! nbasis = 4: {1,x,y,z}
     ! nbasis = 10: {1,x,y,z, P_2(x),P_2(y),P_2(z), yz, zx, xy}
     ! nbasis = 20: nbasis10 + {xyz,xP2(y),yP2(x),xP2(z),
@@ -53,13 +53,13 @@ module parameters_mod
     logical, parameter :: resuming = .false.
 
     real, parameter :: lx = 300., ly = 300., lz = 300./120.
-    real, parameter :: tf = 1000.
+    real, parameter :: tf = 4000.
 
         real, parameter :: pi = 4.0*atan(1.0)
 
     real, parameter :: aindex = 5./3., mu = 18.
     real, parameter :: aindm1=aindex - 1.0, cp=aindex/(aindex - 1.0), clt=2. ! 2 is default clm
-    real, parameter :: vis=1.e-1, epsi=5., amplv=0.0, amplm=0.0, amplen=10.
+    real, parameter :: vis=1.e-1, epsi=5.
 
         ! dimensional units (expressed in MKS)
         real, parameter :: L0=1.0e-9, t0=1.0e-12, n0=3.32e28
