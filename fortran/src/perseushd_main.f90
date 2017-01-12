@@ -170,12 +170,18 @@ use basis_funcs_mod
 
 
     if (iam .eq. print_mpi) then
-        print *,'total dim= ',mpi_nx*nx,mpi_ny*ny,mpi_nz*nz
-        print *,'mpi dim= ',mpi_nx,mpi_ny,mpi_nz
+        print *, ''
+        print *, '----------------------------------------------'
+        print *, 'Starting simulation...'
+        print *, '----------------------------------------------'
+        print *, 'total dim= ',mpi_nx*nx,mpi_ny*ny,mpi_nz*nz
+        print *, 'mpi dim= ',mpi_nx,mpi_ny,mpi_nz
         print *, 'te0 is: ', te0
         print *, 'dx is: ', ly/(ny*mpi_ny)*L0
         print *, 'iquad is: ',  iquad
         print *, 'nbasis is: ', nbasis
+        print *, '----------------------------------------------'
+        print *, ''
     end if
 
     call system_clock(ticks, count_rate, count_max)
@@ -276,12 +282,13 @@ use basis_funcs_mod
 
             nout = nout+1
             if (iam .eq. print_mpi) then
+                print *, 'nout = ', nout
+                print *, '   t = ',t*100.,'         dt= ',dt
+
                 call system_clock(ticks, count_rate, count_max)
                 t2 = 1.*ticks/count_rate
-                print *, 'Iteration time', (t2-t1), 'seconds'
+                print *, '  >> Iteration time', (t2-t1), 'seconds'
                 t1 = t2
-                print *, 'nout = ', nout
-                print *, "        t= ",t*100.,"         dt= ",dt
             end if
 
             call MPI_BARRIER(cartcomm,ierr)
@@ -298,7 +305,8 @@ use basis_funcs_mod
             if (iam .eq. print_mpi) then
                 call system_clock(ticks, count_rate, count_max)
                 t2 = 1.*ticks/count_rate
-                print *, 'Output time', (t2-t1), 'seconds'
+                print *, '  >> Output time', (t2-t1), 'seconds'
+                print *, ''
                 t1 = t2
             end if
 
@@ -314,7 +322,6 @@ use basis_funcs_mod
     call MPI_Finalize (ierr)
 
     if (iam .eq. print_mpi) then
-        print *, ''
         call system_clock(ticks, count_rate, count_max)
         print *, 'Wall time', (1.*ticks/count_rate - t_start), 'seconds'
     end if

@@ -41,7 +41,7 @@ contains
         pname = adjustr(pname)
         out_name='data/data3/perseus_p'//pname//'_t'//tname//'.vtr'
         ! out_name='data/data4/perseus_p'//pname//'_t'//tname//'.vtr'
-        print *, out_name
+        print *, '  Data written to:  ', out_name
         out_name = trim(out_name)
         out_name = adjustr(out_name)
 
@@ -204,7 +204,7 @@ contains
         ! "outdir" is a global variable specifying the output directory
         out_name=''//outdir//'/perseus_p'//pname//'_t'//tname//'.vtr'
 
-        if (iam .eq. print_mpi) print *, out_name
+        if (iam .eq. print_mpi) print *, '  Data written to:  ', out_name
         out_name = trim(out_name)
         out_name = adjustr(out_name)
 
