@@ -100,7 +100,7 @@ contains
             Q_r(i,j,k,rh,1) = rh_fluid
             Q_r(i,j,k,my,1) = 0.005*rnum/cosh(20*ycc/lyu)**2
             Q_r(i,j,k,mz,1) = 0.
-            Q_r(i,j,k,mx,1) = jet_strength*Q_r(i,j,k,rh,1)/cosh(20*ycc/lyu)/1.
+            Q_r(i,j,k,mx,1) = Q_r(i,j,k,rh,1)/cosh(20*ycc/lyu)/1.
             Q_r(i,j,k,en,1) = wtev*Q_r(i,j,k,rh,1)/(aindex - 1.)                  &
                              + 0.5*( Q_r(i,j,k,mx,1)**2                            &
                                   +  Q_r(i,j,k,my,1)**2                            &

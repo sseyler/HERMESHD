@@ -18,7 +18,7 @@ module parameters_mod
     !   nbasis = 10: nbasis4  + {P_2(x),P_2(y),P_2(z), yz, zx, xy}
     !   nbasis = 20: nbasis10 + {xyz,xP2(y),yP2(x),xP2(z),
     !                                zP2(x),yP2(z),zP2(y),P3(x),P3(y),P3(z)}
-    integer, parameter :: nx=40, ny=40, nz=1, ngu=0, nbasis=8, nbastot=27
+    integer, parameter :: nx=30, ny=30, nz=1, ngu=0, nbasis=8, nbastot=27
 
     ! iquad: # of Gaussian quadrature points per direction. iquad should not be:
     !   < ipoly (max Legendre polynomial order used) --> unstable
@@ -51,14 +51,14 @@ module parameters_mod
         ! LLF is very diffusive for the hydro problem.  Roe and HLLC are much less
         ! diffusive than LLF and give very similar results with similar cpu overhead
         ! Only HLLC is setup to handle water EOS (ieos = 2)
-    integer, parameter :: ihllc = 1, ieos = 1
+    integer, parameter :: ihllc = 1, iroe = 0, ieos = 1
 
     ! to restart from a checkpoint, set iread to 1 or 2 (when using the odd/even scheme)
     integer, parameter :: iread = 0, iwrite = 0
     character (4), parameter :: fpre = 'Qout'
     logical, parameter :: resuming = .false.
 
-    real, parameter :: lx = 600., ly = 600., lz = 1000./120.
+    real, parameter :: lx = 500., ly = 500., lz = 500./120.
     real, parameter :: tf = 10000.
     !---------------------------------------------------------------------------
 
@@ -94,9 +94,9 @@ module parameters_mod
         ! fluctuating hydrodynamics correct. There are much more sophisicated EOS's,
         ! some of which account for ionic solutions. Would be worthwhile to
         ! further investigate and experiment with different EOS's.
-        real, parameter :: rh_mult = 1.01, rh_min = rh_mult*(1.0-P_base/P_1)**(1./n_tm)
         real, parameter :: n_tm = 7.2  ! 7.2 (or 7.15) for water
         real, parameter :: P_1 = 2.15e9/n_tm/p0, P_base = 1.01e5/p0 ! atmo pressure
+        real, parameter :: rh_mult = 1.01, rh_min = rh_mult*(1.0-P_base/P_1)**(1./n_tm)
     !---------------------------------------------------------------------------
 
 
