@@ -41,7 +41,7 @@ module parameters_mod
     integer, parameter :: ylbc = 2, yhbc = 2
     integer, parameter :: zlbc = 2, zhbc = 2
 
-    integer, parameter :: ntout = 100, iorder = 2
+    integer, parameter :: ntout = 500, iorder = 2
     integer, parameter :: icid = 1       ! Flag to select initial conditions
     logical, parameter :: llns = .false. ! Do LLNS. False turns off fluctuations
     character (8), parameter :: outdir = 'data/mod'
@@ -58,8 +58,8 @@ module parameters_mod
     character (4), parameter :: fpre = 'Qout'
     logical, parameter :: resuming = .false.
 
-    real, parameter :: lx = 300., ly = 300., lz = 300./120.
-    real, parameter :: tf = 1000.
+    real, parameter :: lx = 200., ly = 200., lz = 200./120.
+    real, parameter :: tf = 10000.
     !---------------------------------------------------------------------------
 
     !===========================================================================

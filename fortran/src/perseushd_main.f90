@@ -248,6 +248,7 @@ use basis_funcs_mod
         ! end if
         niter = niter + 1
         call get_min_dt(dt)
+        ! dt =   ! NOTE: This is a hacked fix!!!
         dti = 1./dt
         sqrt_dVdt_i = (dVi*dti)**0.5  ! can move dVi into eta_sd to remove a multiplication
 
