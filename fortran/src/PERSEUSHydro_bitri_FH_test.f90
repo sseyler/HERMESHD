@@ -2175,27 +2175,6 @@ end subroutine
         thetavtk = atan2(yvtk(j),xvtk(i))
     end function thetavtk
 
-
-!------------More realistic COBRA  current driver -----------
-
-    real function E_z(t)
-        real t
-        if(t.le.tr) E_z = Ez0*sin(0.5*pi*t/tr)*cos(0.5*pi*t/tr)
-        if(t.ge.tr) E_z = 0.
-    end function E_z
-
-!------------More realistic COBRA  current driver -----------
-
-
-    real function Icur(t)
-        real t
-        if(t.le.tr) Icur = Ipeak*sin(0.5*pi*t/tr)**2
-        if(t.ge.tr) Icur = Ipeak
-!        if(t.ge.tr.and.t.le.2*tr)Icur = Ipeak
-!        if(t.ge.2*tr.and.t.le.3*tr)Icur = Ipeak*sin(0.5*pi*(t-tr)/tr)
-!        if(t.ge.3*tr)Icur = 0.
-    end function Icur
-
 !-----------------------------------------------------------
 
     subroutine output_vtk0(Qin,nout,iam)

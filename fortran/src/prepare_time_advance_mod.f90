@@ -207,8 +207,8 @@ contains
         real eta_d,zeta_d
         real trG,trGd3,trG_zeta
 
-        eta_d = eta_sd * sqrt_dsi
-        zeta_d = zeta_sd * sqrt_dsi
+        eta_d = eta_sd * sqrt_dVdt_i
+        zeta_d = zeta_sd * sqrt_dVdt_i
         call get_GRM(GRMpnts_r, npnts)
 
         ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
@@ -252,7 +252,7 @@ contains
         vsl_ndim = npnts*3
         allocate(grn(vsl_ndim))
 
-        kappa_d = kappa_sd * sqrt_dsi
+        kappa_d = kappa_sd * sqrt_dVdt_i
 
         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
 

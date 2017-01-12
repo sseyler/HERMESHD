@@ -125,7 +125,7 @@ use basis_funcs_mod
     dV = dx*dy*dz
     dVi = dxi*dyi*dzi
     dti = 1./dt
-    sqrt_dsi = (dVi*dti)**0.5
+    sqrt_dVdt_i = (dVi*dti)**0.5  ! Inv sq-root of (dV*dt), dV = grid cell volume
     !===============================================================================
 
 
@@ -183,7 +183,7 @@ use basis_funcs_mod
 
     if (iread .eq. 0) then
 
-        call initial_condition(Q_r0, icid)
+        call set_ic(Q_r0, icid)
 
     else
 
@@ -243,7 +243,7 @@ use basis_funcs_mod
         niter = niter + 1
         call get_min_dt(dt)
         dti = 1./dt
-        sqrt_dsi = (dVi*dti)**0.5  ! can move dVi into eta_sd to remove a multiplication
+        sqrt_dVdt_i = (dVi*dti)**0.5  ! can move dVi into eta_sd to remove a multiplication
 
         if (iorder .eq. 2) then
             call prep_advance(Q_r0)
