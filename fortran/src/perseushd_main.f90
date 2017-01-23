@@ -76,6 +76,9 @@ use basis_funcs_mod
     dx = 1./dxi
     dy = 1./dyi
     dz = 1./dzi
+
+    ! Set the starting x,y,z coords for the domain of this MPI process
+    !   Note: the center of the computational grid is the origin (0,0,0)
     loc_lxd = lxd + (mpi_P-1)*(lxu-lxd)/mpi_nx
     loc_lyd = lyd + (mpi_Q-1)*(lyu-lyd)/mpi_ny
     loc_lzd = lzd + (mpi_R-1)*(lzu-lzd)/mpi_nz

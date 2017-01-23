@@ -32,12 +32,11 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,ieq
-        real x,y,wtev,rnum,w0,jet_strength,rand_num
+        real x,y,wtev,rnum,jet_strength,rand_num
         real qquad(npg,nQ),xcc,ycc,zcc  ! bfint(npg,nbasis),qquadv(npg)
         iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
 
         wtev = T_floor
-        w0 = 0.3
         jet_strength = 1.0
 
         do i = 1,nx
@@ -58,9 +57,9 @@ contains
             Q_r(i,j,k,my,1) = 0.005*rnum/cosh(20*ycc/lyu)**2
             Q_r(i,j,k,mz,1) = 0.
             Q_r(i,j,k,mx,1) = jet_strength*Q_r(i,j,k,rh,1)/cosh(20*ycc/lyu)/1.
-            Q_r(i,j,k,en,1) = wtev*Q_r(i,j,k,rh,1)/(aindex - 1.)                  &
-                             + 0.5*( Q_r(i,j,k,mx,1)**2                            &
-                                  +  Q_r(i,j,k,my,1)**2                            &
+            Q_r(i,j,k,en,1) = wtev*Q_r(i,j,k,rh,1)/(aindex - 1.)                &
+                             + 0.5*( Q_r(i,j,k,mx,1)**2                         &
+                                  +  Q_r(i,j,k,my,1)**2                         &
                                   +  Q_r(i,j,k,mz,1)**2 ) / Q_r(i,j,k,rh,1)
 
         end do
@@ -72,39 +71,51 @@ contains
     !-------------------------------------------------------
 
     subroutine isentropic_vortex(Q_r)
+        !
+        ! Try -5 cm < x,y < 5 cm
+        !
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
-        integer i,j,k,ir,iseed
-        real wtev,w0,rnum,rand_num,xcc,ycc,zcc  ! bfint(npg,nbasis),qquadv(npg)
+        integer i,j,k
+        real rh_amb,vx_amb,vy_amb,vz_amb,p_amb,T_amb,vortex_strength
+        real xctr,yctr,zctr,xp,yp,r2,delta_vx,delta_vy,delta_T
+        real dn,vx,vy,vz,temp
 
-        iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
-        wtev = T_floor
-        w0 = 0.3
+        rh_amb = rh_fluid
+        vx_amb = 1.0
+        vy_amb = 1.0
+        vz_amb = 0.0
+        T_amb = T_base
+        p_amb  = T_amb*rh_amb
+
+        xctr = 0
+        yctr = 0
+        zctr = 0
 
         do i = 1,nx
         do j = 1,ny
         do k = 1,nz
 
-            call random_number(rand_num)
-            rnum = (rand_num - 0.5)
+            xp = xc(i) - xctr
+            yp = yc(j) - yctr
+            r2 = xp**2 + yp**2
 
-            !-------------------------------------------------------
-            ! from "viscosity" version
-            Q_r(i,j,k,rh,1) = rh_floor
-            Q_r(i,j,k,en,1) = wtev*Q_r(i,j,k,rh,1)/(aindex - 1.)
+            delta_vx = -yp*vortex_strength/(2*pi) * exp( (1 - r2)/2 )
+            delta_vy = -xp*vortex_strength/(2*pi) * exp( (1 - r2)/2 )
+            delta_T  = -aindm1*vortex_strength/(8*aindex*pi**2) * exp(1 - r2)
 
-            xcc = xc(i)
-            ycc = yc(j)
-            zcc = zc(k)
+            vx = vx_amb + delta_vx
+            vy = vy_amb + delta_vy
+            vz = vz_amb
 
-            Q_r(i,j,k,rh,1) = rh_fluid
-            Q_r(i,j,k,my,1) = 0.005*rnum/cosh(20*ycc/lyu)**2
-            Q_r(i,j,k,mz,1) = 0.
-            Q_r(i,j,k,mx,1) = Q_r(i,j,k,rh,1)/cosh(20*ycc/lyu)/1.
-            Q_r(i,j,k,en,1) = wtev*Q_r(i,j,k,rh,1)/(aindex - 1.)                  &
-                             + 0.5*( Q_r(i,j,k,mx,1)**2                            &
-                                  +  Q_r(i,j,k,my,1)**2                            &
-                                  +  Q_r(i,j,k,mz,1)**2 ) / Q_r(i,j,k,rh,1)
+            temp = T_amb + delta_T
+            dn = rh_amb * (temp/T_amb)**(1./aindm1)
+
+            Q_r(i,j,k,rh,1) = dn
+            Q_r(i,j,k,mx,1) = dn*vx
+            Q_r(i,j,k,my,1) = dn*vy
+            Q_r(i,j,k,mz,1) = dn*vz
+            Q_r(i,j,k,en,1) = temp*dn/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
 
         end do
         end do
@@ -118,12 +129,11 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,igrid,ieq
-        real x,y,wtev,rnum,w0,rand_num
+        real x,y,wtev,rnum,rand_num
         real qquad(npg,nQ),xcc,ycc,zcc  ! bfint(npg,nbasis),qquadv(npg)
         iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
 
         wtev = T_floor
-        w0 = 0.3
 
         ! test problem is an unstable flow jet in x with velocity perturbations in y
 
