@@ -41,10 +41,11 @@ module parameters_mod
     integer, parameter :: ylbc = 2, yhbc = 2
     integer, parameter :: zlbc = 2, zhbc = 2
 
-    integer, parameter :: ntout = 500, iorder = 2
-    integer, parameter :: icid = 1       ! Flag to select initial conditions
+    integer, parameter :: ntout = 200, iorder = 2
+    integer, parameter :: icid = 2       ! Flag to select initial conditions
     logical, parameter :: llns = .false. ! Do LLNS. False turns off fluctuations
-    character (8), parameter :: outdir = 'data/mod'
+    ! character (8), parameter :: outdir = 'data/mod'
+    character (13), parameter :: outdir = 'data/isen_vor'
 
     ! Choose Riemann solver for computing fluxes.  Set chosen solver = 1.
     ! If all of them = 0, then LLF is used for fluxes.
@@ -60,8 +61,9 @@ module parameters_mod
 
     ! real, parameter :: lx = 300., ly = 300., lz = 300./120.
     ! real, parameter :: tf = 10000.
-    real, parameter :: lx = 5.0e7, ly = 5.0e7, lz = 5.0e7/120.
-    real, parameter :: tf = 1.0e14.
+    real, parameter :: lx = 1.0e1, ly = 1.0e1, lz = 1.0e1/120.
+    real, parameter :: tf = 1.0e2
+    real, parameter :: vis = 0.0, epsi = 5., clt = 2. ! 2 is default clt
 
     !---------------------------------------------------------------------------
 
@@ -76,7 +78,7 @@ module parameters_mod
     ! Thermodynamic and transport parameters
     real, parameter :: mu = 18.
     real, parameter :: aindex = 5./3., aindm1 = aindex-1.0, cp = aindex/aindm1
-    real, parameter :: vis = 1.e-1, epsi = 5., clt = 2. ! 2 is default clt
+    ! real, parameter :: vis = 1.e-1, epsi = 5., clt = 2. ! 2 is default clt
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
     real, parameter :: L0=1.0e-9, t0=1.0e-12, n0=3.32e28
