@@ -26,6 +26,9 @@ contains
         if ( id .eq. 2 ) then
             call isentropic_vortex(Q_r)
         end if
+        if ( id .eq. 3 ) then
+            call sod_shock_tube(Q_r)
+        end if
 
     end subroutine set_ic
 
@@ -129,20 +132,16 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k
-        real rh_amb,vx_amb,vy_amb,vz_amb,p_amb,T_amb,beta
-        real xctr,yctr,zctr,xp,yp,r2,delta_vx,delta_vy,delta_T
-        real dn,vx,vy,vz,temp
+        real rh_left,rh_right,p_left,p_right
+        real xctr,xp,dn,vx,vy,vz,pres
 
-        beta = 5.0  ! vortex strength
         rh_left  = 1.0
         rh_right = 0.125
         p_left  =  1.0
         p_right =  0.1
-        vx_amb = 0.0
-        vy_amb = 0.0
-        vz_amb = 0.0
-        T_amb  = T_base
-        p_amb  = T_amb*rh_amb
+        vx = 0.0
+        vy = 0.0
+        vz = 0.0
 
         xctr = 0
 
@@ -151,25 +150,20 @@ contains
         do k = 1,nz
 
             xp = xc(i) - xctr
-            yp = yc(j) - yctr
-            r2 = xp**2 + yp**2
-
-            delta_vx = -yp*beta/(2*pi) * exp( (1 - r2)/2 )
-            delta_vy =  xp*beta/(2*pi) * exp( (1 - r2)/2 )
-            delta_T  = -aindm1*beta**2/(8*aindex*pi**2) * exp(1 - r2)
-
-            vx = vx_amb + delta_vx
-            vy = vy_amb + delta_vy
-            vz = vz_amb
-
-            temp = T_amb + delta_T
-            dn = rh_amb * temp**(1./aindm1)
+            if (xp .le. 0) then
+                dn = rh_left
+                pres = p_left
+            end if
+            if (xp .gt. 0) then
+                dn = rh_right
+                pres = p_right
+            end if
 
             Q_r(i,j,k,rh,1) = dn
-            Q_r(i,j,k,mx,1) = dn*vx
-            Q_r(i,j,k,my,1) = dn*vy
-            Q_r(i,j,k,mz,1) = dn*vz
-            Q_r(i,j,k,en,1) = temp*dn/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
+            Q_r(i,j,k,mx,1) = vx
+            Q_r(i,j,k,my,1) = vy
+            Q_r(i,j,k,mz,1) = vz
+            Q_r(i,j,k,en,1) = pres/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
 
         end do
         end do
