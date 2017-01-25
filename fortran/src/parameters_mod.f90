@@ -18,7 +18,7 @@ module parameters_mod
     !   nbasis = 10: nbasis4  + {P_2(x),P_2(y),P_2(z), yz, zx, xy}
     !   nbasis = 20: nbasis10 + {xyz,xP2(y),yP2(x),xP2(z),
     !                                zP2(x),yP2(z),zP2(y),P3(x),P3(y),P3(z)}
-    integer, parameter :: nx=30, ny=30, nz=1, ngu=0, nbasis=8, nbastot=27
+    integer, parameter :: nx=40, ny=1, nz=1, ngu=0, nbasis=8, nbastot=27
 
     ! iquad: # of Gaussian quadrature points per direction. iquad should not be:
     !   < ipoly (max Legendre polynomial order used) --> unstable
@@ -35,17 +35,21 @@ module parameters_mod
     !===========================================================================
     ! TODO:  CLASSIFY THESE PARAMETERS, SEAN!!!
     !---------------------------------------------------------------------------
-    ! Boundary condition parameters: if  = 2 then periodic.  MPI does this for you.
-    ! If  = 0, then the set_bc subroutine is used to prescribe BCs
-    integer, parameter :: xlbc = 2, xhbc = 2
+    ! Boundary condition parameters:
+    !   * 0 for set_bc subroutine used to prescribe BCs
+    !   * 1 for wall (vanishing normal velocities).
+    !   * 2 for periodic (MPI does this for you).
+    integer, parameter :: xlbc = 1, xhbc = 1
     integer, parameter :: ylbc = 2, yhbc = 2
     integer, parameter :: zlbc = 2, zhbc = 2
 
-    integer, parameter :: ntout = 200, iorder = 2
-    integer, parameter :: icid = 2       ! Flag to select initial conditions
+    integer, parameter :: ntout = 100, iorder = 2
+    integer, parameter :: icid = 3       ! Flag to select initial conditions
     logical, parameter :: llns = .false. ! Do LLNS. False turns off fluctuations
     ! character (8), parameter :: outdir = 'data/mod'
-    character (13), parameter :: outdir = 'data/isen_vor'
+
+    character (*), parameter :: datadir="data", outname="sod_1d_5"
+    character (*), parameter :: outdir = trim(datadir//"/"//outname)
 
     ! Choose Riemann solver for computing fluxes.  Set chosen solver = 1.
     ! If all of them = 0, then LLF is used for fluxes.
@@ -61,8 +65,22 @@ module parameters_mod
 
     ! real, parameter :: lx = 300., ly = 300., lz = 300./120.
     ! real, parameter :: tf = 10000.
-    real, parameter :: lx = 1.0e1, ly = 1.0e1, lz = 1.0e1/120.
-    real, parameter :: tf = 1.0e2
+
+    ! Isentropic vortex
+    ! real, parameter :: lx = 1.0e1, ly = 1.0e1, lz = 1.0e1/120.
+    ! real, parameter :: tf = 1.0e2
+    ! real, parameter :: vis = 0.0, epsi = 5., clt = 2. ! 2 is default clt
+
+    ! Sod Shock Tube
+    ! NOTE: must change to set_bc2 manually right now
+    ! real, parameter :: lx = 1.0e6, ly = 5.0e5, lz = 1.0e6/120.
+    ! real, parameter :: tf = 2.0e5
+    ! real, parameter :: vis = 0.0, epsi = 5., clt = 2. ! 2 is default clt
+
+    ! Sod Shock Tube angle
+    ! NOTE: must change to set_bc2 manually right now
+    real, parameter :: lx = 1.0e6, ly = 1.0e6, lz = 1.0e6/120.
+    real, parameter :: tf = 1.7e5
     real, parameter :: vis = 0.0, epsi = 5., clt = 2. ! 2 is default clt
 
     !---------------------------------------------------------------------------
@@ -221,7 +239,7 @@ module parameters_mod
     ! MPI definitions
     !---------------------------------------------------------------------------
     !   print_mpi is sets the MPI rank that will do any printing to console
-    integer :: mpi_nx=4, mpi_ny=4, print_mpi=0
+    integer :: mpi_nx=16, mpi_ny=1, print_mpi=0
         integer iam,ierr,mpi_nz,numprocs,reorder,cartcomm,mpi_P,mpi_Q,mpi_R
         integer dims(3),coords(3),periods(3),nbrs(6),reqs(4),stats(MPI_STATUS_SIZE,4)
         integer,parameter:: NORTH=1,SOUTH=2,EAST=3,WEST=4,UP=5,DOWN=6,MPI_TT=MPI_REAL4

@@ -425,7 +425,7 @@ contains
         if(ieos .eq. 1) call limiter(Q_ri)  ! added in (from "viscosity" version)
         if(ieos .eq. 2) call limiter(Q_ri)
         call prepare_exchange(Q_ri)
-        call set_bc
+        call set_bc2
         call flux_cal(Q_ri)
         call innerintegral(Q_ri)
         call glflux  ! glflux currently breaks after "bug fix"

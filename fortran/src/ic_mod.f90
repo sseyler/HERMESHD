@@ -27,7 +27,10 @@ contains
             call isentropic_vortex(Q_r)
         end if
         if ( id .eq. 3 ) then
-            call sod_shock_tube(Q_r)
+            call sod_shock_tube_1d(Q_r)
+        end if
+        if ( id .eq. 4 ) then
+            call sod_shock_tube_1d_angle(Q_r)
         end if
 
     end subroutine set_ic
@@ -128,17 +131,16 @@ contains
 
     !-------------------------------------------------------
 
-    subroutine sod_shock_tube(Q_r)
+    subroutine sod_shock_tube_1d(Q_r)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k
-        real rh_left,rh_right,p_left,p_right
-        real xctr,xp,dn,vx,vy,vz,pres
+        real rh_left,rh_right,p_left,p_right,xctr,xp,dn,vx,vy,vz,pres
 
-        rh_left  = 1.0
+        rh_left = 1.0
+        p_left  = 1.0  !*P_base  ! atmospheric pressure
         rh_right = 0.125
-        p_left  =  1.0
-        p_right =  0.1
+        p_right  = 0.1  !*P_base
         vx = 0.0
         vy = 0.0
         vz = 0.0
@@ -148,7 +150,6 @@ contains
         do i = 1,nx
         do j = 1,ny
         do k = 1,nz
-
             xp = xc(i) - xctr
             if (xp .le. 0) then
                 dn = rh_left
@@ -164,12 +165,58 @@ contains
             Q_r(i,j,k,my,1) = vy
             Q_r(i,j,k,mz,1) = vz
             Q_r(i,j,k,en,1) = pres/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
+        end do
+        end do
+        end do
+
+    end subroutine sod_shock_tube_1d
+
+    !-------------------------------------------------------
+
+    subroutine sod_shock_tube_1d_angle(Q_r)
+        ! Do Sod Shock Tube test at 45 degree angle in x-y domain
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
+        integer i,j,k
+        real rh_hi,rh_lo,p_hi,p_lo,xctr,yctr,xp,yp,dn,vx,vy,vz,pres
+
+        rh_hi = 1.0
+        p_hi  = 1.0 !*P_base  ! atmospheric pressure
+        rh_lo = 0.125
+        p_lo  = 0.1  !*P_base
+        vx = 0.0
+        vy = 0.0
+        vz = 0.0
+
+        xctr = 0
+        yctr = 0
+
+        do i = 1,nx
+        do j = 1,ny
+        do k = 1,nz
+
+            xp = xc(i) - xctr
+            yp = yc(j) - yctr
+            if ( xp+yp .le. 0 ) then
+                dn = rh_hi
+                pres = p_hi
+            end if
+            if ( xp+yp .gt. 0 ) then
+                dn = rh_lo
+                pres = p_lo
+            end if
+
+            Q_r(i,j,k,rh,1) = dn
+            Q_r(i,j,k,mx,1) = vx
+            Q_r(i,j,k,my,1) = vy
+            Q_r(i,j,k,mz,1) = vz
+            Q_r(i,j,k,en,1) = pres/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
 
         end do
         end do
         end do
 
-    end subroutine sod_shock_tube
+    end subroutine sod_shock_tube_1d_angle
 
     !-------------------------------------------------------
 
