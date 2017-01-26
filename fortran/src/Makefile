@@ -57,6 +57,12 @@ ifeq ($(NAME),mod)
 			   prepare_time_advance_mod.f90 basis_funcs_mod.f90 \
 			   io_mod.f90
 endif
+ifeq ($(NAME),mod2)
+	OBJS = main.f90
+	MODFILES = parameters.f90 input.f90 initialize.f90 helpers.f90 \
+			   ic_mod.f90 prepare_time_advance_mod.f90 \
+			   basis_funcs_mod.f90 io_mod.f90
+endif
 ##################################################################
 
 
