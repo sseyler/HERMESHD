@@ -27,10 +27,10 @@ contains
             call isentropic_vortex(Q_r)
         end if
         if ( id .eq. 3 ) then
-            call sod_shock_tube_1d(Q_r)
+            call sod_shock_tube_1d(Q_r, 0)
         end if
         if ( id .eq. 4 ) then
-            call sod_shock_tube_1d_angle(Q_r)
+            call sod_shock_tube_1d(Q_r, 1)
         end if
 
     end subroutine set_ic
@@ -131,34 +131,41 @@ contains
 
     !-------------------------------------------------------
 
-    subroutine sod_shock_tube_1d(Q_r)
+    subroutine sod_shock_tube_1d(Q_r, version)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
-        integer i,j,k
-        real rh_left,rh_right,p_left,p_right,xctr,xp,dn,vx,vy,vz,pres
+        integer i,j,k,version
+        real rh_hi,rh_lo,p_hi,p_lo,xctr,xp,dn,vx,vy,vz,pres
 
-        rh_left = 1.0
-        p_left  = 1.0  !*P_base  ! atmospheric pressure
-        rh_right = 0.125
-        p_right  = 0.1  !*P_base
+        rh_hi = 1.0e-4
+        p_hi  = 1.0*P_base  ! atmospheric pressure
+        rh_lo = 0.125e-4
+        p_lo  = 0.1*P_base
         vx = 0.0
         vy = 0.0
         vz = 0.0
 
         xctr = 0
+        yctr = 0  ! only needed if shock normal not aligned w/ x-direction
 
         do i = 1,nx
         do j = 1,ny
         do k = 1,nz
             xp = xc(i) - xctr
-            if (xp .le. 0) then
-                dn = rh_left
-                pres = p_left
-            end if
-            if (xp .gt. 0) then
-                dn = rh_right
-                pres = p_right
-            end if
+            if ( version .eq. 1 ) then
+                yp = yc(j) - yctr
+            else
+                yp = 0
+            endif
+
+            if ( xp+yp .le. 0 ) then
+                dn = rh_hi
+                pres = p_hi
+            endif
+            if ( xp+yp .gt. 0 ) then
+                dn = rh_lo
+                pres = p_lo
+            endif
 
             Q_r(i,j,k,rh,1) = dn
             Q_r(i,j,k,mx,1) = vx
@@ -173,50 +180,49 @@ contains
 
     !-------------------------------------------------------
 
-    subroutine sod_shock_tube_1d_angle(Q_r)
-        ! Do Sod Shock Tube test at 45 degree angle in x-y domain
+    subroutine pipe_cylinder_2d(Q_r, version)
+        ! Make sure:
+        !   * Re ~ 20 for laminar case (version 0)
+        !   * Re ~ 100 for periodic case (version 1)
+        ! Need outflow BCs on right wall:
+        !   nu d u/d eta - p*eta = 0
+        ! No-slip BCs everywhere else
+
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
-        integer i,j,k
-        real rh_hi,rh_lo,p_hi,p_lo,xctr,yctr,xp,yp,dn,vx,vy,vz,pres
+        integer i,j,k,version
+        real dn,pres,vx,vy,vz,u_amb,yp,yc0
 
-        rh_hi = 1.0
-        p_hi  = 1.0 !*P_base  ! atmospheric pressure
-        rh_lo = 0.125
-        p_lo  = 0.1  !*P_base
-        vx = 0.0
-        vy = 0.0
-        vz = 0.0
+        dn   = 1.0
+        pres = 1.0 !*P_base  ! can be adjusted to get stable results
+        vy   = 0.0
+        vz   = 0.0
 
-        xctr = 0
-        yctr = 0
+        select case(version)
+            case(0)
+                u_amb = 1.5
+            case(1)
+                u_amb = 0.3
+        end select
+
+        yc0 = yc(0)
 
         do i = 1,nx
         do j = 1,ny
         do k = 1,nz
-
-            xp = xc(i) - xctr
-            yp = yc(j) - yctr
-            if ( xp+yp .le. 0 ) then
-                dn = rh_hi
-                pres = p_hi
-            end if
-            if ( xp+yp .gt. 0 ) then
-                dn = rh_lo
-                pres = p_lo
-            end if
+            yp = yc(j) - yc0
+            vx = 4*u_amb*yp*(ly-yp)/ly**2
 
             Q_r(i,j,k,rh,1) = dn
             Q_r(i,j,k,mx,1) = vx
             Q_r(i,j,k,my,1) = vy
             Q_r(i,j,k,mz,1) = vz
             Q_r(i,j,k,en,1) = pres/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
-
         end do
         end do
         end do
 
-    end subroutine sod_shock_tube_1d_angle
+    end subroutine pipe_cylinder_2d
 
     !-------------------------------------------------------
 

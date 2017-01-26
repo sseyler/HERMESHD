@@ -48,7 +48,7 @@ module parameters_mod
     logical, parameter :: llns = .false. ! Do LLNS. False turns off fluctuations
     ! character (8), parameter :: outdir = 'data/mod'
 
-    character (*), parameter :: datadir="data", outname="sod_1d_5"
+    character (*), parameter :: datadir="data", outname="sod_1d_1"
     character (*), parameter :: outdir = trim(datadir//"/"//outname)
 
     ! Choose Riemann solver for computing fluxes.  Set chosen solver = 1.
@@ -63,25 +63,35 @@ module parameters_mod
     character (4), parameter :: fpre = 'Qout'
     logical, parameter :: resuming = .false.
 
+    !===========================================================================
+    ! Test problems
+    !---------------------------------------------------------------------------
+
     ! real, parameter :: lx = 300., ly = 300., lz = 300./120.
     ! real, parameter :: tf = 10000.
 
-    ! Isentropic vortex
+    ! 2D Isentropic vortex (inviscid, incompressible)
     ! real, parameter :: lx = 1.0e1, ly = 1.0e1, lz = 1.0e1/120.
     ! real, parameter :: tf = 1.0e2
     ! real, parameter :: vis = 0.0, epsi = 5., clt = 2. ! 2 is default clt
 
-    ! Sod Shock Tube
+    ! 1D Sod Shock Tube (inviscid, compressible)
     ! NOTE: must change to set_bc2 manually right now
     ! real, parameter :: lx = 1.0e6, ly = 5.0e5, lz = 1.0e6/120.
     ! real, parameter :: tf = 2.0e5
     ! real, parameter :: vis = 0.0, epsi = 5., clt = 2. ! 2 is default clt
 
-    ! Sod Shock Tube angle
+    ! 2D Sod Shock Tube
     ! NOTE: must change to set_bc2 manually right now
     real, parameter :: lx = 1.0e6, ly = 1.0e6, lz = 1.0e6/120.
-    real, parameter :: tf = 1.7e5
+    real, parameter :: tf = 8.5e4  ! 1.7e5
     real, parameter :: vis = 0.0, epsi = 5., clt = 2. ! 2 is default clt
+
+    ! 2D pipe flow around cylinder (viscous, incompressible)
+    ! NOTE: must change to set_bc4 manually right now
+    ! real, parameter :: lx = 2.2e6, ly = 4.1e5, lz = 1.0e6/120.
+    ! real, parameter :: tf = 3.3e4  ! 3.3 s for original problem
+    ! real, parameter :: vis = 1.0e-3, epsi = 5., clt = 2. ! vis = 0.001 orig prob
 
     !---------------------------------------------------------------------------
 
@@ -94,7 +104,7 @@ module parameters_mod
     real, parameter :: c1d5 = 1./5., c1d3 = 1./3., c2d3 = 2./3., c4d3 = 4./3.
 
     ! Thermodynamic and transport parameters
-    real, parameter :: mu = 18.
+    real, parameter :: mu = 2.
     real, parameter :: aindex = 5./3., aindm1 = aindex-1.0, cp = aindex/aindm1
     ! real, parameter :: vis = 1.e-1, epsi = 5., clt = 2. ! 2 is default clt
 
@@ -108,7 +118,7 @@ module parameters_mod
     ! rh_min is a min density to be used for ideal gas EOS, rh_min is min density
     ! below which the pressure becomes negative for the MT water EOS.
     ! The DG-based subroutine "limiter" keeps density above rh_mult*rh_min.
-    real, parameter :: rh_floor = 1.0e-1
+    real, parameter :: rh_floor = 5.0e-6
     real, parameter :: T_floor = 0.026/te0
     real, parameter :: P_floor = T_floor*rh_floor
         ! Murnaghan-Tait EOS

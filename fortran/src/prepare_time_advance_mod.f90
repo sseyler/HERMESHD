@@ -273,39 +273,39 @@ contains
         en_floor = P_floor/(aindex - 1.)
 
         do k = 1,nz
-            do j = 1,ny
-                do i = 1,nx
+        do j = 1,ny
+        do i = 1,nx
 
-                    do ipg = 1,npg
-                        do ieq = pxx,nQ
-                            Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,ieq,1:nbasis))
-                        end do
-                        ! Sources for the fluid variables. Nonzero if randomly forced.
-                        source(ipg,rh:en) = 0.0 !amplen*(ran(iseed) - 0.5)
+            do ipg = 1,npg
+                do ieq = pxx,nQ
+                    Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,ieq,1:nbasis))
+                end do
+                ! Sources for the fluid variables. Nonzero if randomly forced.
+                source(ipg,rh:en) = 0.0 !amplen*(ran(iseed) - 0.5)
 
-                        ! Sources for the viscous stress tensor. The viscous stress
-                        ! is computed using hyperbolic relaxation to a parabolic problem:
-                        !     partial_t u = partial_x v , eps*partial_t v - v = D*partial_x u
-                        ! where eps is a small parameter and D is a diffusion coefficient.
-                        ! In the relaxation limit eps -> 0, this becomes:
-                        !     partial_t u = D*partial_x^2 u
-                        ! The following are the sources for this problem where epsi = 1/eps
-                        source(ipg,pxx) = -epsi*Qin(pxx) !+ amplv*(ran(iseed) - 0.5)
-                        source(ipg,pyy) = -epsi*Qin(pyy) !+ amplv*(ran(iseed) - 0.5)
-                        source(ipg,pzz) = -epsi*Qin(pzz) !+ amplv*(ran(iseed) - 0.5)
-                        source(ipg,pxy) = -epsi*Qin(pxy) !+ amplv*(ran(iseed) - 0.5)
-                        source(ipg,pxz) = -epsi*Qin(pxz) !+ amplv*(ran(iseed) - 0.5)
-                        source(ipg,pyz) = -epsi*Qin(pyz) !+ amplv*(ran(iseed) - 0.5)
-                    end do
+                ! Sources for the viscous stress tensor. The viscous stress
+                ! is computed using hyperbolic relaxation to a parabolic problem:
+                !     partial_t u = partial_x v , eps*partial_t v - v = D*partial_x u
+                ! where eps is a small parameter and D is a diffusion coefficient.
+                ! In the relaxation limit eps -> 0, this becomes:
+                !     partial_t u = D*partial_x^2 u
+                ! The following are the sources for this problem where epsi = 1/eps
+                source(ipg,pxx) = -epsi*Qin(pxx) !+ amplv*(ran(iseed) - 0.5)
+                source(ipg,pyy) = -epsi*Qin(pyy) !+ amplv*(ran(iseed) - 0.5)
+                source(ipg,pzz) = -epsi*Qin(pzz) !+ amplv*(ran(iseed) - 0.5)
+                source(ipg,pxy) = -epsi*Qin(pxy) !+ amplv*(ran(iseed) - 0.5)
+                source(ipg,pxz) = -epsi*Qin(pxz) !+ amplv*(ran(iseed) - 0.5)
+                source(ipg,pyz) = -epsi*Qin(pyz) !+ amplv*(ran(iseed) - 0.5)
+            end do
 
-                    do ir=1,nbasis
-                        do ieq = 1,nQ
-                            source_r(i,j,k,ieq,ir) = 0.125*cbasis(ir)*sum(bval_int_wgt(1:npg,ir)*source(1:npg,ieq))
-                        end do
-                    end do
-
+            do ir=1,nbasis
+                do ieq = 1,nQ
+                    source_r(i,j,k,ieq,ir) = 0.125*cbasis(ir)*sum(bval_int_wgt(1:npg,ir)*source(1:npg,ieq))
                 end do
             end do
+
+        end do
+        end do
         end do
 
     end subroutine source_calc
@@ -552,76 +552,75 @@ contains
 
         do k=1,nz
             do j=1,ny
-                do i=1,nx+1
+            do i=1,nx+1
+                iback = i-1
 
-                    iback = i-1
-
-                    if (i .gt. 1) then
-                        do ieq = 1,nQ
-                            do ipnt=1,nface
-                                Qface_x(ipnt,ieq) = sum(bfvals_xp(ipnt,1:nbasis)*Q_r(iback,j,k,ieq,1:nbasis))
-                            end do
-                        end do
-                    end if
-                    if (i .eq. 1) then
-                        do ieq = 1,nQ
-                            Qface_x(1:nface,ieq) = Qxlow_ext(j,k,1:nface,ieq)
-                        end do
-                    end if
-
-                    if (i .lt. nx+1) then
-                        do ieq = 1,nQ
-                            do ipnt=1,nface
-                                Qface_x(ipnt+nface,ieq) = sum(bfvals_xm(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
-                            end do
-                        end do
-                    end if
-
-                    if (i .eq. nx+1) then
-                        do ieq = 1,nQ
-                            Qface_x(nface+1:nfe,ieq) = Qxhigh_ext(j,k,1:nface,ieq)
-                        end do
-                    end if
-
-                    call flux_calc_pnts_r(Qface_x,fface_x,1,nfe)
-
-                    if(iroe .ne. 1 .and. ihllc .ne. 1) then
-                        do i4=1,nfe
-                            do ieq=1,nQ
-                                qvin(ieq) = Qface_x(i4,ieq)
-                            end do
-                            cwavex(i4) = cfcal(qvin,1)
-                        end do
-
-                        do i4=1,nface
-                            cfrx(i4,rh:en) = max(cwavex(i4),cwavex(i4+nface))
-                        end do
-                    end if
-
+                if (i .gt. 1) then
                     do ieq = 1,nQ
-                        do i4=1,nface
-                            i4p = i4 + nface
-                            flux_x(i4,i,j,k,ieq) = 0.5*(fface_x(i4,ieq) + fface_x(i4p,ieq)) &
-                                                 - 0.5*cfrx(i4,ieq)*(Qface_x(i4p,ieq) - Qface_x(i4,ieq))
+                        do ipnt=1,nface
+                            Qface_x(ipnt,ieq) = sum(bfvals_xp(ipnt,1:nbasis)*Q_r(iback,j,k,ieq,1:nbasis))
                         end do
                     end do
+                end if
+                if (i .eq. 1) then
+                    do ieq = 1,nQ
+                        Qface_x(1:nface,ieq) = Qxlow_ext(j,k,1:nface,ieq)
+                    end do
+                end if
 
-                    kroe(1:nface) = 1
-
-                    if (ihllc .eq. 1) call flux_hllc(Qface_x,fface_x,fhllc_x,1)
-                    if (iroe .eq. 1) call flux_roe(Qface_x,fface_x,fhllc_x,1)
-
-                    if (ihllc .eq. 1 .or. iroe .eq. 1) then
-                        do ieq = 1,en
-                            do i4=1,nface
-                                if (kroe(i4) .gt. 0) then
-                                    flux_x(i4,i,j,k,ieq) = fhllc_x(i4,ieq)
-                                end if
-                            end do
+                if (i .lt. nx+1) then
+                    do ieq = 1,nQ
+                        do ipnt=1,nface
+                            Qface_x(ipnt+nface,ieq) = sum(bfvals_xm(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
                         end do
-                    end if
+                    end do
+                end if
 
+                if (i .eq. nx+1) then
+                    do ieq = 1,nQ
+                        Qface_x(nface+1:nfe,ieq) = Qxhigh_ext(j,k,1:nface,ieq)
+                    end do
+                end if
+
+                call flux_calc_pnts_r(Qface_x,fface_x,1,nfe)
+
+                if(iroe .ne. 1 .and. ihllc .ne. 1) then
+                    do i4=1,nfe
+                        do ieq=1,nQ
+                            qvin(ieq) = Qface_x(i4,ieq)
+                        end do
+                        cwavex(i4) = cfcal(qvin,1)
+                    end do
+
+                    do i4=1,nface
+                        cfrx(i4,rh:en) = max(cwavex(i4),cwavex(i4+nface))
+                    end do
+                end if
+
+                do ieq = 1,nQ
+                    do i4=1,nface
+                        i4p = i4 + nface
+                        flux_x(i4,i,j,k,ieq) = 0.5*(fface_x(i4,ieq) + fface_x(i4p,ieq)) &
+                                             - 0.5*cfrx(i4,ieq)*(Qface_x(i4p,ieq) - Qface_x(i4,ieq))
+                    end do
                 end do
+
+                kroe(1:nface) = 1
+
+                if (ihllc .eq. 1) call flux_hllc(Qface_x,fface_x,fhllc_x,1)
+                if (iroe .eq. 1) call flux_roe(Qface_x,fface_x,fhllc_x,1)
+
+                if (ihllc .eq. 1 .or. iroe .eq. 1) then
+                    do ieq = 1,en
+                        do i4=1,nface
+                            if (kroe(i4) .gt. 0) then
+                                flux_x(i4,i,j,k,ieq) = fhllc_x(i4,ieq)
+                            end if
+                        end do
+                    end do
+                end if
+
+            end do
             end do
         end do
 
@@ -629,74 +628,74 @@ contains
 
         do k=1,nz
             do j=1,ny+1
-                jleft = j-1
-                do i=1,nx
+            jleft = j-1
+            do i=1,nx
 
-                    if (j .gt. 1) then
-                        do ieq = 1,nQ
-                            do ipnt=1,nface
-                                Qface_y(ipnt,ieq) = sum(bfvals_yp(ipnt,1:nbasis)*Q_r(i,jleft,k,ieq,1:nbasis))
-                            end do
-                        end do
-                    end if
-                    if (j .eq. 1) then
-                        do ieq = 1,nQ
-                            Qface_y(1:nface,ieq) = Qylow_ext(i,k,1:nface,ieq)
-                        end do
-                    end if
-
-                    if (j .lt. ny+1) then
-                        do ieq = 1,nQ
-                            do ipnt=1,nface
-                                Qface_y(ipnt+nface,ieq) = sum(bfvals_ym(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
-                            end do
-                        end do
-                    end if
-                    if (j .eq. ny+1) then
-                        do ieq = 1,nQ
-                            Qface_y(nface+1:nfe,ieq) = Qyhigh_ext(i,k,1:nface,ieq)
-                        end do
-                    end if
-
-                    call flux_calc_pnts_r(Qface_y,fface_y,2,nfe)
-
-                    if(iroe .ne. 1 .and. ihllc .ne. 1) then
-                        do i4=1,nfe
-                            do ieq=1,nQ
-                                qvin(ieq) = Qface_y(i4,ieq)
-                            end do
-                            cwavey(i4) = cfcal(qvin,2)
-                        end do
-
-                        do i4=1,nface
-                            cfry(i4,rh:en) = max(cwavey(i4),cwavey(i4+nface))
-                        end do
-                    end if
-
+                if (j .gt. 1) then
                     do ieq = 1,nQ
-                        do i4=1,nface
-                            i4p = i4 + nface
-                            flux_y(i4,i,j,k,ieq) = 0.5*(fface_y(i4,ieq) + fface_y(i4p,ieq)) &
-                                                 - 0.5*cfry(i4,ieq)*(Qface_y(i4p,ieq) - Qface_y(i4,ieq))
+                        do ipnt=1,nface
+                            Qface_y(ipnt,ieq) = sum(bfvals_yp(ipnt,1:nbasis)*Q_r(i,jleft,k,ieq,1:nbasis))
                         end do
                     end do
+                end if
+                if (j .eq. 1) then
+                    do ieq = 1,nQ
+                        Qface_y(1:nface,ieq) = Qylow_ext(i,k,1:nface,ieq)
+                    end do
+                end if
 
-                    kroe(1:nface) = 1
-
-                    if (ihllc .eq. 1) call flux_hllc(Qface_y,fface_y,fhllc_y,2)
-                    if (iroe .eq. 1) call flux_roe(Qface_y,fface_y,fhllc_y,2)
-
-                    if (ihllc .eq. 1 .or. iroe .eq. 1) then
-                        do ieq = 1,en
-                            do i4=1,nface
-                                if (kroe(i4) .gt. 0) then
-                                    flux_y(i4,i,j,k,ieq) = fhllc_y(i4,ieq)
-                                end if
-                            end do
+                if (j .lt. ny+1) then
+                    do ieq = 1,nQ
+                        do ipnt=1,nface
+                            Qface_y(ipnt+nface,ieq) = sum(bfvals_ym(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
                         end do
-                    end if
+                    end do
+                end if
+                if (j .eq. ny+1) then
+                    do ieq = 1,nQ
+                        Qface_y(nface+1:nfe,ieq) = Qyhigh_ext(i,k,1:nface,ieq)
+                    end do
+                end if
 
+                call flux_calc_pnts_r(Qface_y,fface_y,2,nfe)
+
+                if(iroe .ne. 1 .and. ihllc .ne. 1) then
+                    do i4=1,nfe
+                        do ieq=1,nQ
+                            qvin(ieq) = Qface_y(i4,ieq)
+                        end do
+                        cwavey(i4) = cfcal(qvin,2)
+                    end do
+
+                    do i4=1,nface
+                        cfry(i4,rh:en) = max(cwavey(i4),cwavey(i4+nface))
+                    end do
+                end if
+
+                do ieq = 1,nQ
+                    do i4=1,nface
+                        i4p = i4 + nface
+                        flux_y(i4,i,j,k,ieq) = 0.5*(fface_y(i4,ieq) + fface_y(i4p,ieq)) &
+                                             - 0.5*cfry(i4,ieq)*(Qface_y(i4p,ieq) - Qface_y(i4,ieq))
+                    end do
                 end do
+
+                kroe(1:nface) = 1
+
+                if (ihllc .eq. 1) call flux_hllc(Qface_y,fface_y,fhllc_y,2)
+                if (iroe .eq. 1) call flux_roe(Qface_y,fface_y,fhllc_y,2)
+
+                if (ihllc .eq. 1 .or. iroe .eq. 1) then
+                    do ieq = 1,en
+                        do i4=1,nface
+                            if (kroe(i4) .gt. 0) then
+                                flux_y(i4,i,j,k,ieq) = fhllc_y(i4,ieq)
+                            end if
+                        end do
+                    end do
+                end if
+
+            end do
             end do
         end do
 
@@ -705,75 +704,75 @@ contains
         do k=1,nz+1
             kdown = k-1
             do j=1,ny
-                do i=1,nx
+            do i=1,nx
 
-                    if (k .gt. 1) then
-                        do ieq = 1,nQ
-                            do ipnt=1,nface
-                                Qface_z(ipnt,ieq) = sum( bfvals_zp(ipnt,1:nbasis)   &
-                                                        *Q_r(i,j,kdown,ieq,1:nbasis))
-                            end do
-                        end do
-                    end if
-                    if (k .eq. 1) then
-                        do ieq = 1,nQ
-                            Qface_z(1:nface,ieq) = Qzlow_ext(i,j,1:nface,ieq)
-                        end do
-                    end if
-
-                    if (k .lt. nz+1) then
-                        do ieq = 1,nQ
-                            do ipnt=1,nface
-                                Qface_z(ipnt+nface,ieq) = sum( bfvals_zm(ipnt,1:nbasis) &
-                                                              *Q_r(i,j,k,ieq,1:nbasis))
-                            end do
-                        end do
-                    end if
-                    if (k .eq. nz+1) then
-                        do ieq = 1,nQ
-                            Qface_z(nface+1:nfe,ieq) = Qzhigh_ext(i,j,1:nface,ieq)
-                        end do
-                    end if
-
-                    call flux_calc_pnts_r(Qface_z,fface_z,3,nfe)
-
-                    if(iroe .ne. 1 .and. ihllc .ne. 1) then
-                        do i4=1,nfe
-                            do ieq=1,nQ
-                                qvin(ieq) = Qface_z(i4,ieq)
-                            end do
-                            cwavez(i4) = cfcal(qvin,3)
-                        end do
-
-                        do i4=1,nface
-                            cfrz(i4,rh:en) = max(cwavez(i4),cwavez(i4+nface))
-                        end do
-                    end if
-
+                if (k .gt. 1) then
                     do ieq = 1,nQ
-                        do i4=1,nface
-                            i4p = i4 + nface
-                            flux_z(i4,i,j,k,ieq) = 0.5*(fface_z(i4,ieq) + fface_z(i4p,ieq)) &
-                                                 - 0.5*cfrz(i4,ieq)*(Qface_z(i4p,ieq) - Qface_z(i4,ieq))
+                        do ipnt=1,nface
+                            Qface_z(ipnt,ieq) = sum( bfvals_zp(ipnt,1:nbasis)   &
+                                                    *Q_r(i,j,kdown,ieq,1:nbasis))
                         end do
                     end do
+                end if
+                if (k .eq. 1) then
+                    do ieq = 1,nQ
+                        Qface_z(1:nface,ieq) = Qzlow_ext(i,j,1:nface,ieq)
+                    end do
+                end if
 
-                    kroe(1:nface) = 1
-
-                    if (ihllc .eq. 1) call flux_hllc(Qface_z,fface_z,fhllc_z,3)
-                    if (iroe .eq. 1) call flux_roe(Qface_z,fface_z,fhllc_z,3)
-
-                    if (ihllc .eq. 1 .or. iroe .eq. 1) then
-                        do ieq = 1,en
-                            do i4=1,nface
-                                if (kroe(i4) .gt. 0) then
-                                    flux_z(i4,i,j,k,ieq) = fhllc_z(i4,ieq)
-                                end if
-                            end do
+                if (k .lt. nz+1) then
+                    do ieq = 1,nQ
+                        do ipnt=1,nface
+                            Qface_z(ipnt+nface,ieq) = sum( bfvals_zm(ipnt,1:nbasis) &
+                                                          *Q_r(i,j,k,ieq,1:nbasis))
                         end do
-                    end if
+                    end do
+                end if
+                if (k .eq. nz+1) then
+                    do ieq = 1,nQ
+                        Qface_z(nface+1:nfe,ieq) = Qzhigh_ext(i,j,1:nface,ieq)
+                    end do
+                end if
 
+                call flux_calc_pnts_r(Qface_z,fface_z,3,nfe)
+
+                if(iroe .ne. 1 .and. ihllc .ne. 1) then
+                    do i4=1,nfe
+                        do ieq=1,nQ
+                            qvin(ieq) = Qface_z(i4,ieq)
+                        end do
+                        cwavez(i4) = cfcal(qvin,3)
+                    end do
+
+                    do i4=1,nface
+                        cfrz(i4,rh:en) = max(cwavez(i4),cwavez(i4+nface))
+                    end do
+                end if
+
+                do ieq = 1,nQ
+                    do i4=1,nface
+                        i4p = i4 + nface
+                        flux_z(i4,i,j,k,ieq) = 0.5*(fface_z(i4,ieq) + fface_z(i4p,ieq)) &
+                                             - 0.5*cfrz(i4,ieq)*(Qface_z(i4p,ieq) - Qface_z(i4,ieq))
+                    end do
                 end do
+
+                kroe(1:nface) = 1
+
+                if (ihllc .eq. 1) call flux_hllc(Qface_z,fface_z,fhllc_z,3)
+                if (iroe .eq. 1) call flux_roe(Qface_z,fface_z,fhllc_z,3)
+
+                if (ihllc .eq. 1 .or. iroe .eq. 1) then
+                    do ieq = 1,en
+                        do i4=1,nface
+                            if (kroe(i4) .gt. 0) then
+                                flux_z(i4,i,j,k,ieq) = fhllc_z(i4,ieq)
+                            end if
+                        end do
+                    end do
+                end if
+
+            end do
             end do
         end do
 
