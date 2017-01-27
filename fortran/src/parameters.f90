@@ -49,8 +49,6 @@ module parameters
     ! Test problems
     !---------------------------------------------------------------------------
 
-     ! 2 is default clt
-
     ! 2D pipe flow around cylinder (viscous, incompressible)
     ! NOTE: must change to set_bc4 manually right now
     ! real, parameter :: lx = 2.2e6, ly = 4.1e5, lz = 1.0e6/120.

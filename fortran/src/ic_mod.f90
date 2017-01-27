@@ -1,6 +1,7 @@
 module ic_mod
 
-use parameters_mod
+use parameters
+use helpers
 
 contains
 
@@ -135,7 +136,7 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k,version
-        real rh_hi,rh_lo,p_hi,p_lo,xctr,xp,dn,vx,vy,vz,pres
+        real rh_hi,rh_lo,p_hi,p_lo,xctr,yctr,xp,yp,dn,vx,vy,vz,pres
 
         rh_hi = 1.0e-4
         p_hi  = 1.0*P_base  ! atmospheric pressure

@@ -1,6 +1,6 @@
 module basis_funcs_mod
 
-use parameters_mod
+use parameters
 
 contains
 

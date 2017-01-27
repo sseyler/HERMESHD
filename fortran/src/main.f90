@@ -1,8 +1,8 @@
 program main
 
-use input
-use parameters
-use helpers
+! use input
+! use parameters
+! use helpers
 use initialize
 
 use ic_mod
@@ -10,75 +10,54 @@ use prepare_time_advance_mod
 use io_mod
 use basis_funcs_mod
 
-! include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
+! implicit none
 
-    !===============================================================================
-    ! NOTE: this is new stuff!
-    ! Volume of grid cells (for stochastic forcing terms)
-    !   --> this should be chosen to be consistent with the spatial discretization
-    !       i.e. stochastic terms are 4 points (iquad == 2) at each cell face, which
-    !       are computed using Gaussian quadrature from the internal points
+call perform_setup()
 
-    ! A spatial discretization that gives the correct equilibrium discrete
-    ! covariance is said to satisfy the discrete fluctuation-dissipation balance
-    ! (DFDB) condition [1, 2].
-    ! The condition guarantees that for sufficiently small time steps the statistics
-    ! of the discrete fluctuations are consistent with the continuum formulation.
-    ! For larger time steps, the difference between the discrete and continuum
-    ! covariances will depend on the order of weak accuracy of the temporal
-    ! discretization [3].
-    !
-    ! [1] Donev, et al. On the accurracy... (2010)
-    ! [2] Delong, et al. Temporal integrators for... (2013)
-    ! [3] Mattingly,, et al. Convergence of numerical... (2010)
-    !---------------------------------------------------------------------------
+t1 = get_clock_time()
+call output_vtk(Q_r0,nout,iam)
 
-    !===============================================================================
+do while (t<tf)
 
+    dt = get_min_dt()
+    dti = 1./dt
+    sqrt_dVdt_i = (dVi*dti)**0.5  ! can move dVi into eta_sd to remove a multiplication
 
-    t1 = get_clock_time()
-    call output_vtk(Q_r0,nout,iam)
+    select case(iorder)
+        case(2)
+            call update_2nd_order(Q_r0, Q_r1, Q_r2)
+        case(3)
+            call update_3rd_order(Q_r0, Q_r1, Q_r2, Q_r3)
+    end select
 
-    do while (t<tf)
+    t = t + dt
 
-        dt = get_min_dt()
-        dti = 1./dt
-        sqrt_dVdt_i = (dVi*dti)**0.5  ! can move dVi into eta_sd to remove a multiplication
-
-        select case(iorder)
-            case(2)
-                call update_2nd_order(Q_r0, Q_r1, Q_r2)
-            case(3)
-                call update_3rd_order(Q_r0, Q_r1, Q_r2, Q_r3)
-        end select
-
-        t = t + dt
-
-        if (t .gt. dtout*nout) then
-            call generate_output()
-        end if
-
-    end do
-
-    !-------------------------------------------------------------------------------
-    ! RNG is completed with de-allocation of system resources:
-    vsl_errcode = vsldeletestream( vsl_stream )
-
-    call MPI_Finalize(ierr)
-
-    if (iam .eq. print_mpi) then
-        print *, 'Wall time', (get_clock_time() - t_start), 'seconds'
+    if (t .gt. dtout*nout) then
+        call generate_output()
     end if
-    !-------------------------------------------------------------------------------
+
+end do
+
+!-------------------------------------------------------------------------------
+! RNG is completed with de-allocation of system resources:
+vsl_errcode = vsldeletestream( vsl_stream )
+
+call MPI_Finalize(ierr)
+
+if (iam .eq. print_mpi) then
+    print *, 'Wall time', (get_clock_time() - t_start), 'seconds'
+end if
+!-------------------------------------------------------------------------------
 
 contains
 
 
+    !-------------------------------------------------------------------------------
     subroutine update_2nd_order(Q_io, Q_1, Q_2)
 
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
-        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_1, Q_2
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2
 
         call euler_step(Q_io, Q_1)
         call euler_step(Q_1, Q_2)
@@ -91,7 +70,7 @@ contains
 
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
-        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_1, Q_2, Q_3
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2, Q_3
 
         call euler_step(Q_io, Q_1)
         call euler_step(Q_1, Q_2)
@@ -101,15 +80,16 @@ contains
         Q_io = c1d3 * ( Q_io + 2.0*Q_2 )
 
     end subroutine update_3rd_order
+    !-------------------------------------------------------------------------------
 
-
+    !-------------------------------------------------------------------------------
     subroutine euler_step(Q_in, Q_out)
 
         implicit none
-        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_in
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_in
         real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
 
-        call prep_advance(Q_ri)
+        call prep_advance(Q_in)
         call calc_rhs(Q_in)
         call advance_time_level_gl(Q_in, Q_out)
 
@@ -128,8 +108,6 @@ contains
 
     end subroutine prep_advance
 
-
-
     subroutine calc_rhs(Q_io)
 
         implicit none
@@ -142,8 +120,6 @@ contains
 
     end subroutine calc_rhs
 
-
-!----------------------------------------------------------------------------------------------
 
     subroutine advance_time_level_gl(Q_in, Q_out)
 
@@ -177,14 +153,13 @@ contains
         end do
 
     end subroutine advance_time_level_gl
+    !-------------------------------------------------------------------------------
+
 
 !----------------------------------------------------------------------------------------------
 
-
-    function get_min_dt()
-
+    real function get_min_dt()
         implicit none
-        real, intent(out) :: dt
 
         real dt_min,dt_val(numprocs-1),tt,cfl,vmax,vmag,valf,vmag0,valf0
         real vex,vey,vez,vem,vem0,dni,dn,vx,vy,vz,Pr,sqdni,vacc,vacc0,cs
@@ -244,6 +219,7 @@ contains
     subroutine generate_output()
 
         implicit none
+        integer ioe
 
         nout = nout+1
         if (iam .eq. print_mpi) then

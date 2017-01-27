@@ -37,7 +37,7 @@ module input
     integer, parameter :: zlbc = 2, zhbc = 2
 
     ! Simulation time
-    real, parameter :: tf = 3.3e4
+    real, parameter :: tf = 8.5e4
 
     ! Riemann solver
     integer, parameter :: ihllc = 1, iroe = 0, ieos = 1
@@ -56,13 +56,14 @@ module input
     ! Output frequency and directory
     integer, parameter :: ntout = 100
     character (*), parameter :: datadir="data"
-    character (*), parameter :: outname="sod_1d_1"
+    character (*), parameter :: outname="test_mod2_0"
     character (*), parameter :: outdir = trim(datadir//"/"//outname)
 
     ! Checkpointing
     !   set iread to 1 or 2 (when using the odd/even scheme)
-    integer, parameter :: iread = 0, iwrite = 0
-    character (4), parameter :: fpre = 'Qout'
+    integer, parameter :: iread = 0
+    integer, parameter :: iwrite = 0
     logical, parameter :: resuming = .false.
+    character (4), parameter :: fpre = 'Qout'
 
 end module input
