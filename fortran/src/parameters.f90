@@ -71,28 +71,6 @@ module parameters
     !---------------------------------------------------------------------------
 
 
-    !===========================================================================
-    ! Arrays for field variables, fluxes, inner integrals, and sources
-    !---------------------------------------------------------------------------
-    real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r0, Q_r1, Q_r2, Q_r3
-    real, dimension(nx,ny,nz,nQ,nbasis) :: glflux_r, source_r, integral_r
-
-    real den0(nx,ny,nz),Ez0,Zdy(nx,ny,nz,npg) !eta(nx,ny,nz,npg)
-    real flux_x(nface,1:nx+1,ny,nz,1:nQ)
-    real flux_y(nface,nx,1:ny+1,nz,1:nQ)
-    real flux_z(nface,nx,ny,1:nz+1,1:nQ)
-    real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
-
-    ! Boundary conditions
-    ! real Qxhigh_ext(ny,nz,nface,nQ), Qxlow_int(ny,nz,nface,nQ)
-    ! real Qxlow_ext(ny,nz,nface,nQ), Qxhigh_int(ny,nz,nface,nQ)
-    ! real Qyhigh_ext(nx,nz,nface,nQ), Qylow_int(nx,nz,nface,nQ)
-    ! real Qylow_ext(nx,nz,nface,nQ), Qyhigh_int(nx,nz,nface,nQ)
-    ! real Qzhigh_ext(nx,ny,nface,nQ), Qzlow_int(nx,ny,nface,nQ)
-    ! real Qzlow_ext(nx,ny,nface,nQ), Qzhigh_int(nx,ny,nface,nQ)
-    !---------------------------------------------------------------------------
-
-
     !===============================================================================
     !---------------------------------------------------------------------------
     ! NOTE: this is new stuff!
@@ -130,14 +108,10 @@ module parameters
     ! TODO:  CLASSIFY THESE PARAMETERS, SEAN!!!
     !---------------------------------------------------------------------------
     logical MMask(nx,ny,nz),BMask(nx,ny,nz)
-    real xcell(npg), ycell(npg), zcell(npg), xface(npge), yface(npge), zface(npge)
-    real t1, t2, t3, t4, elapsed_time, t_start, t_stop, dtoriginal
+    real t1, t2, elapsed_time, t_start, t_stop, dtoriginal
         real t, dt, tout, dtout, vf, sqrt_dVdt_i ! Inv sq-root of (dV*dt), dV = grid cell volume
-        real dz, dy, dx, dxi, dyi, dzi, dVi
-        real lxd,lxu,lyd,lyu,lzd,lzu
-        real disk_rad,kappa
 
-    integer mxa(3),mya(3),mza(3),kroe(nface),niter,iseed
+    integer kroe(nface),iseed
     !---------------------------------------------------------------------------
 
     !===========================================================================
@@ -153,12 +127,11 @@ module parameters
     real, dimension(nface,nbastot) :: bfvals_xp, bfvals_xm
     real bf_faces(nslim,nbastot), bfvals_int(npg,nbastot),xquad(20)
         real bval_int_wgt(npg,nbastot)
-        real wgtbfvals_xp(nface,nbastot),wgtbfvals_xm(nface,nbastot)
-        real wgtbfvals_yp(nface,nbastot),wgtbfvals_ym(nface,nbastot)
-        real wgtbfvals_zp(nface,nbastot),wgtbfvals_zm(nface,nbastot)
+        real wgtbfvals_xp(nface,nbastot),wgtbfvals_xm(nface,nbastot)  ! these are temps used to assign other vars
+        real wgtbfvals_yp(nface,nbastot),wgtbfvals_ym(nface,nbastot)  ! these are temps used to assign other vars
+        real wgtbfvals_zp(nface,nbastot),wgtbfvals_zm(nface,nbastot)  ! these are temps used to assign other vars
         real wgtbf_xmp(nface,2,nbastot),wgtbf_ymp(nface,2,nbastot),wgtbf_zmp(nface,2,nbastot)
         real sumx,sumy,sumz
-        integer i2f,i01,i2fa
 
         ! Basis function flags
         integer, parameter :: kx=2,ky=3,kz=4,kyz=5,kzx=6,kxy=7,kxyz=8
@@ -173,17 +146,14 @@ module parameters
     !---------------------------------------------------------------------------
     integer, parameter :: nvtk=1 ! was 2
     integer, parameter :: nvtk2=nvtk*nvtk, nvtk3=nvtk*nvtk*nvtk
-    integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
     real, dimension(nvtk3,nbastot) :: bfvtk, bfvtk_dx, bfvtk_dy, bfvtk_dz
-    real xgrid(20),dxvtk,dyvtk,dzvtk
+    real dxvtk,dyvtk,dzvtk
     !---------------------------------------------------------------------------
 
     !===========================================================================
     ! MPI definitions
     !---------------------------------------------------------------------------
     !   print_mpi is sets the MPI rank that will do any printing to console
-    integer :: print_mpi=0
-    integer iam,ierr,mpi_nz,numprocs,reorder,cartcomm,mpi_P,mpi_Q,mpi_R
     integer dims(3),coords(3),periods(3),nbrs(6),reqs(4),stats(MPI_STATUS_SIZE,4)
     integer,parameter:: NORTH=1,SOUTH=2,EAST=3,WEST=4,UP=5,DOWN=6,MPI_TT=MPI_REAL4
     !---------------------------------------------------------------------------

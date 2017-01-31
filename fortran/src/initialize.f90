@@ -9,10 +9,49 @@ use io
 
 implicit none
 
-integer :: nout
 
 
 !===============================================================================
+! Arrays for field variables, fluxes, inner integrals, and sources
+!---------------------------------------------------------------------------
+real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r0, Q_r1, Q_r2, Q_r3
+real, dimension(nx,ny,nz,nQ,nbasis) :: glflux_r, source_r, integral_r
+
+real den0(nx,ny,nz),Ez0,Zdy(nx,ny,nz,npg) !eta(nx,ny,nz,npg)
+real flux_x(nface,1:nx+1,ny,nz,1:nQ)
+real flux_y(nface,nx,1:ny+1,nz,1:nQ)
+real flux_z(nface,nx,ny,1:nz+1,1:nQ)
+real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
+!===============================================================================
+
+
+!===============================================================================
+! Helper variables (initialized here)
+!---------------------------------------------------------------------------
+real lxd,lxu,lyd,lyu,lzd,lzu  ! used indirectly by the helper functions
+real dz, dy, dx, dxi, dyi, dzi, dVi  ! used throughout
+
+integer mxa(3),mya(3),mza(3)  ! used in flux_calc_pnts_r()
+integer kroe(nface)  ! used in flux_cal()
+integer iseed  ! used for initializing random seeds
+!===============================================================================
+
+
+
+!===============================================================================
+! MPI definitions
+!---------------------------------------------------------------------------
+integer, parameter :: print_mpi = 0  ! sets the MPI rank that will do printing
+integer :: mpi_nz  ! used in apply_BC + init (set implicitly via mpi_nx/mpi_ny)
+integer :: mpi_P,mpi_Q,mpi_R  ! used in exchange_flux and apply_BC + init
+integer :: numprocs  ! used in get_min_dt + init
+integer :: iam,ierr  ! used all over (wherever MPI stuff seems to be)
+integer :: reorder  ! only used in init
+integer :: cartcomm  ! used all over (wherever MPI stuff seems to be)
+!===============================================================================
+
+
+
 contains
 
     subroutine perform_setup()

@@ -2,6 +2,9 @@ module basis_funcs
 
 use parameters
 
+integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
+real xgrid(20) ! used in set_vtk_vals_3D
+
 contains
 
 

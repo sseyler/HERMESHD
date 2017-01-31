@@ -23,7 +23,7 @@ abstract interface
 end interface
 
 procedure (update_ptr), pointer :: update => null ()
-
+integer :: nout
 
 !###############################################################################
 ! SETUP
@@ -72,7 +72,7 @@ do while( t < tf )
     t = t + dt
 
     if (t > dtout*nout) then
-        call generate_output()
+        call generate_output(nout)
     end if
 
 end do
@@ -243,8 +243,9 @@ contains
     !---------------------------------------------------------------------------
 
     !---------------------------------------------------------------------------
-    subroutine generate_output()
+    subroutine generate_output(nout)
         implicit none
+        integer, intent(inout) :: nout
         integer ioe
 
         nout = nout+1
