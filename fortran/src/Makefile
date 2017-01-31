@@ -66,9 +66,10 @@ ifeq ($(NAME),mod2)
 endif
 ifeq ($(NAME),modbc)
 	OBJS = main.f90
-	MODFILES = input.f90 parameters.f90 helpers.f90 boundaries.f90 \
-			   initialize.f90 init_conditions.f90 \
-			   prep_time_advance.f90 basis_funcs.f90 io.f90
+	MODFILES = input.f90 parameters.f90 helpers.f90 \
+			   boundaries.f90 initialcon.f90 initialize.f90 \
+			   sources.f90 prep_time_advance.f90 \
+			   basis_funcs.f90 output.f90
 endif
 ##################################################################
 

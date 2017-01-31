@@ -150,4 +150,126 @@ module parameters
     real cflm
 
 
+
+
+    !===============================================================================
+    ! Arrays for field variables, fluxes, inner integrals, sources, and time(s)
+    !---------------------------------------------------------------------------
+    real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r0, Q_r1, Q_r2, Q_r3
+    real, dimension(nx,ny,nz,nQ,nbasis) :: glflux_r, source_r, integral_r
+
+    real den0(nx,ny,nz),Ez0,Zdy(nx,ny,nz,npg) !eta(nx,ny,nz,npg)
+    real flux_x(nface,1:nx+1,ny,nz,1:nQ)
+    real flux_y(nface,nx,1:ny+1,nz,1:nQ)
+    real flux_z(nface,nx,ny,1:nz+1,1:nQ)
+    real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
+
+    real t, dt, dtout, sqrt_dVdt_i ! Inv sq-root of (dV*dt), dV = grid cell volume
+    !===============================================================================
+
+
+    !===============================================================================
+    ! Helper variables (initialized here)
+    !---------------------------------------------------------------------------
+    real t1,t2,elapsed_time,t_start,t_stop,dtoriginal  ! used for timing (dtoriginal optional)
+    real lxd,lxu,lyd,lyu,lzd,lzu  ! used indirectly by the grid coord functions
+    real loc_lxd,loc_lyd,loc_lzd  ! used directly by the grid coord functions
+    real dz, dy, dx, dxi, dyi, dzi, dVi  ! used throughout + directly by grid coord functions
+
+    integer mxa(3),mya(3),mza(3)  ! used in flux_calc_pnts_r()
+    integer kroe(nface)  ! used in flux_cal()
+    integer iseed  ! used for initializing random seeds
+    !===============================================================================
+
+
+    !===============================================================================
+    ! MPI definitions
+    !---------------------------------------------------------------------------
+    integer, parameter :: print_mpi = 0  ! sets the MPI rank that will do printing
+    integer :: mpi_nz  ! used in apply_BC + init (set implicitly via mpi_nx/mpi_ny)
+    integer :: mpi_P,mpi_Q,mpi_R  ! used in exchange_flux and apply_BC + init
+    integer :: numprocs  ! used in get_min_dt + init
+    integer :: iam,ierr  ! used all over (wherever MPI stuff seems to be)
+    integer :: reorder  ! only used in init
+    integer :: cartcomm  ! used all over (wherever MPI stuff seems to be)
+
+    integer, parameter :: NORTH = 1  ! used in exchange_flux + init
+    integer, parameter :: SOUTH = 2  ! used in exchange_flux + init
+    integer, parameter :: EAST  = 3  ! used in exchange_flux + init
+    integer, parameter :: WEST  = 4  ! used in exchange_flux + init
+    integer, parameter :: UP    = 5  ! used in exchange_flux + init
+    integer, parameter :: DOWN  = 6  ! used in exchange_flux + init
+    integer, parameter :: MPI_TT = MPI_REAL4  ! used in exchange_flux and get_min_dt + init
+    !===============================================================================
+
+contains
+
+    !-----------------------------------------------------------
+    !   Return the x coordinate of (the center of) cell i
+    !     Note: based on the location of this MPI domain (loc_lxd)
+    real function xc(i)
+        integer i
+        xc = loc_lxd + (i - 0.5)*dx
+    end function xc
+
+    !-----------------------------------------------------------
+    real function yc(j)
+        integer j
+        yc = loc_lyd + (j - 0.5)*dy
+    end function yc
+
+    !-----------------------------------------------------------
+    real function zc(k)
+        integer k
+        zc = loc_lzd + (k - 0.5)*dz
+    end function zc
+
+    !-----------------------------------------------------------
+    real function rz(i,j)
+        integer i,j
+        rz = sqrt(yc(j)**2)
+    end function rz
+
+    !-----------------------------------------------------------
+    real function r(i,j)
+        integer i,j,k
+        r = sqrt(xc(i)**2 + yc(j)**2)
+    end function r
+
+    !-----------------------------------------------------------
+    real function theta(i,j)
+        integer i,j
+        theta = atan2(yc(j),xc(i))
+    end function theta
+
+    !-----------------------------------------------------------
+    real function xvtk(i)
+        integer i
+        xvtk = loc_lxd + (i - 0.5)*dxvtk
+    end function xvtk
+
+    !-----------------------------------------------------------
+    real function yvtk(j)
+        integer j
+        yvtk = loc_lyd + (j - 0.5)*dyvtk
+    end function yvtk
+
+    !-----------------------------------------------------------
+    real function zvtk(k)
+        integer k
+        zvtk = loc_lzd + (k - 0.5)*dzvtk
+    end function zvtk
+
+    !-----------------------------------------------------------
+    real function rvtk(i,j)
+        integer i,j,k
+        rvtk = sqrt(xvtk(i)**2 + yvtk(j)**2)
+    end function rvtk
+
+    !-----------------------------------------------------------
+    real function thetavtk(i,j)
+        integer i,j
+        thetavtk = atan2(yvtk(j),xvtk(i))
+    end function thetavtk
+
 end module parameters

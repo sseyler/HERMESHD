@@ -3,67 +3,17 @@ module initialize
 use parameters
 use helpers
 
-use init_conditions
+use initialcon
 use basis_funcs
-use io
 
 implicit none
 
-
-!===============================================================================
-! Arrays for field variables, fluxes, inner integrals, sources, and time(s)
-!---------------------------------------------------------------------------
-real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r0, Q_r1, Q_r2, Q_r3
-real, dimension(nx,ny,nz,nQ,nbasis) :: glflux_r, source_r, integral_r
-
-real den0(nx,ny,nz),Ez0,Zdy(nx,ny,nz,npg) !eta(nx,ny,nz,npg)
-real flux_x(nface,1:nx+1,ny,nz,1:nQ)
-real flux_y(nface,nx,1:ny+1,nz,1:nQ)
-real flux_z(nface,nx,ny,1:nz+1,1:nQ)
-real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
-
-real t, dt, dtout, sqrt_dVdt_i ! Inv sq-root of (dV*dt), dV = grid cell volume
-!===============================================================================
-
-
-!===============================================================================
-! Helper variables (initialized here)
-!---------------------------------------------------------------------------
-real t1,t2,elapsed_time,t_start,t_stop,dtoriginal  ! used for timing (dtoriginal optional)
-real lxd,lxu,lyd,lyu,lzd,lzu  ! used indirectly by the helper functions
-real dz, dy, dx, dxi, dyi, dzi, dVi  ! used throughout
-
-integer mxa(3),mya(3),mza(3)  ! used in flux_calc_pnts_r()
-integer kroe(nface)  ! used in flux_cal()
-integer iseed  ! used for initializing random seeds
-!===============================================================================
-
-
-!===============================================================================
-! MPI definitions
-!---------------------------------------------------------------------------
-integer, parameter :: print_mpi = 0  ! sets the MPI rank that will do printing
-integer :: mpi_nz  ! used in apply_BC + init (set implicitly via mpi_nx/mpi_ny)
-integer :: mpi_P,mpi_Q,mpi_R  ! used in exchange_flux and apply_BC + init
-integer :: numprocs  ! used in get_min_dt + init
-integer :: iam,ierr  ! used all over (wherever MPI stuff seems to be)
-integer :: reorder  ! only used in init
-integer :: cartcomm  ! used all over (wherever MPI stuff seems to be)
-
-integer, parameter :: NORTH = 1  ! used in exchange_flux + init
-integer, parameter :: SOUTH = 2  ! used in exchange_flux + init
-integer, parameter :: EAST  = 3  ! used in exchange_flux + init
-integer, parameter :: WEST  = 4  ! used in exchange_flux + init
-integer, parameter :: UP    = 5  ! used in exchange_flux + init
-integer, parameter :: DOWN  = 6  ! used in exchange_flux + init
-integer, parameter :: MPI_TT = MPI_REAL4  ! used in exchange_flux and get_min_dt + init
-!===============================================================================
-
+integer :: nout
 
 contains
 
+    !---------------------------------------------------------------------------
     subroutine perform_setup()
-
         implicit none
         integer ir,ipg
         real half_length
@@ -187,7 +137,7 @@ contains
         end do
 
 
-        call init_random_seed(123456789)
+        call init_random_seed(iam, 123456789)
         iseed = 1317345*mpi_P + 5438432*mpi_Q + 38472613*mpi_R
 
         ! Initialize MKL random number generator
@@ -205,10 +155,11 @@ contains
         endif
 
     end subroutine perform_setup
+    !---------------------------------------------------------------------------
 
 
+    !---------------------------------------------------------------------------
     subroutine initialize_from_file(Q_r)
-
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         real t_p,dt_p,dtout_p
@@ -252,10 +203,11 @@ contains
             end if
             call exit(-1)
         end if
-
     end subroutine initialize_from_file
+    !---------------------------------------------------------------------------
 
 
+    !---------------------------------------------------------------------------
     subroutine print_startup_info()
 
         if (iam .eq. print_mpi) then
@@ -274,7 +226,7 @@ contains
         end if
 
     end subroutine print_startup_info
-    !-----------------------------------------------------------
+    !---------------------------------------------------------------------------
 
 
     !---------------------------------------------------------------------------
@@ -323,6 +275,7 @@ contains
         close(3)
 
     end subroutine writeQ
+    !---------------------------------------------------------------------------
 
 
     !---------------------------------------------------------------------------
@@ -368,5 +321,6 @@ contains
         close(3)
 
     end subroutine readQ
+    !---------------------------------------------------------------------------
 
 end module initialize

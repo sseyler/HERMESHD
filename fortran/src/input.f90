@@ -9,7 +9,7 @@ module input
     integer, parameter :: iquad = 2
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 80
+    integer, parameter :: nx = 70
     integer, parameter :: ny = 1
     integer, parameter :: nz = 1
 
@@ -47,7 +47,7 @@ module input
     !   LLF is very diffusive for the hydro problem. Roe and HLLC are much less
     !   diffusive than LLF and give very similar results with similar cpu overhead
     !   Only HLLC is setup to handle water EOS (ieos = 2)
-    integer, parameter :: ihllc = .true.
+    logical, parameter :: ihllc = .true.
 
     ! Thermodynamic and transport parameters
     real, parameter :: ieos = 1

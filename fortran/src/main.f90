@@ -2,14 +2,15 @@ program main
 
 use input!, only : nx,ny,nz
 use parameters!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
+use initialize
 use helpers!, only : xc,yc,zc,get_clock_time
 use boundaries
-use initialize
+use initialcon
 
-use init_conditions
+use sources
 use prep_time_advance
-use io
 use basis_funcs
+use output
 
 
 abstract interface
@@ -23,7 +24,6 @@ abstract interface
 end interface
 
 procedure (update_ptr), pointer :: update => null ()
-integer :: nout
 
 !###############################################################################
 ! SETUP
@@ -44,9 +44,9 @@ end select
 
 ! Select boundary conditions
 !-------------------------------------------------------------------------------
-call select_x_BC(xlbc, xhbc, set_xlbc, set_xhbc)
-call select_y_BC(ylbc, yhbc, set_ylbc, set_yhbc)
-call select_z_BC(zlbc, zhbc, set_zlbc, set_zhbc)
+call select_x_boundaries(xlbc, xhbc, set_xlbc, set_xhbc)
+call select_y_boundaries(ylbc, yhbc, set_ylbc, set_yhbc)
+call select_z_boundaries(zlbc, zhbc, set_zlbc, set_zhbc)
 !-------------------------------------------------------------------------------
 
 !###############################################################################
@@ -138,7 +138,7 @@ contains
 
         if (ieos .eq. 1 .or. ieos .eq. 2) call limiter(Q_io)
         call prepare_exchange(Q_io)
-        call apply_BC
+        call apply_boundaries
     end subroutine prep_advance
 
     subroutine calc_rhs(Q_io)

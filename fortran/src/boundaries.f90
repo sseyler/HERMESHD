@@ -35,16 +35,16 @@ module boundaries
     procedure(zbc_fcn_ptr), pointer :: set_zhbc => null ()
 
     ! Initialize arrays to store boundary conditions
-    real Qxhigh_ext(ny,nz,nface,nQ), Qxlow_int(ny,nz,nface,nQ)
-    real Qxlow_ext(ny,nz,nface,nQ), Qxhigh_int(ny,nz,nface,nQ)
-    real Qyhigh_ext(nx,nz,nface,nQ), Qylow_int(nx,nz,nface,nQ)
-    real Qylow_ext(nx,nz,nface,nQ), Qyhigh_int(nx,nz,nface,nQ)
-    real Qzhigh_ext(nx,ny,nface,nQ), Qzlow_int(nx,ny,nface,nQ)
-    real Qzlow_ext(nx,ny,nface,nQ), Qzhigh_int(nx,ny,nface,nQ)
+    real Qxhigh_ext(ny,nz,nface,nQ), Qxhigh_int(ny,nz,nface,nQ)
+    real Qxlow_ext(ny,nz,nface,nQ),   Qxlow_int(ny,nz,nface,nQ)
+    real Qyhigh_ext(nx,nz,nface,nQ), Qyhigh_int(nx,nz,nface,nQ)
+    real Qylow_ext(nx,nz,nface,nQ),   Qylow_int(nx,nz,nface,nQ)
+    real Qzhigh_ext(nx,ny,nface,nQ), Qzhigh_int(nx,ny,nface,nQ)
+    real Qzlow_ext(nx,ny,nface,nQ),   Qzlow_int(nx,ny,nface,nQ)
 
 contains
 
-    subroutine apply_BC
+    subroutine apply_boundaries
         if ( mpi_P .eq. 1 ) then
             call set_xlbc(Qxlow_int, Qxlow_ext)
         end if
@@ -65,74 +65,18 @@ contains
         if ( mpi_R .eq. mpi_nz ) then
             call set_zhbc(Qzhigh_int, Qzhigh_ext)
         end if
-    end subroutine apply_BC
-
-
-    !---------------------------------------------------------------------------
-    ! subroutine apply_BC
-    !     implicit none
-    !     integer i,j,k
-    !
-    !     if ( mpi_P .eq. 1 ) then
-    !         do k = 1,nz
-    !             do j = 1,ny
-    !                 call set_xlbc(j,k)
-    !             end do
-    !         end do
-    !     end if
-    !     if ( mpi_P .eq. mpi_nx ) then
-    !         do k = 1,nz
-    !             do j = 1,ny
-    !                 call set_xhbc(j,k)
-    !             end do
-    !         end do
-    !     end if
-    !     !----------------------------------------------------
-    !     if ( mpi_Q .eq. 1 ) then
-    !         do k = 1,nz
-    !             do i = 1,nx
-    !                 call set_ylbc(i,k)
-    !             end do
-    !         end do
-    !     end if
-    !     if ( mpi_Q .eq. mpi_ny ) then
-    !         do k = 1,nz
-    !             do i = 1,nx
-    !                 call set_yhbc(i,k)
-    !             end do
-    !         end do
-    !     end if
-    !     !--------------------------------------------------------
-    !     if ( mpi_R .eq. 1 ) then
-    !         do j = 1,ny
-    !             do i = 1,nx
-    !                 call set_zlbc(i,j)
-    !             end do
-    !         end do
-    !     end if
-    !     if ( mpi_R .eq. mpi_nz ) then
-    !         do j = 1,ny
-    !             do i = 1,nx
-    !                 call set_zhbc(i,j)
-    !             end do
-    !         end do
-    !     end if
-    !
-    ! end subroutine apply_BC
-    !---------------------------------------------------------------------------
+    end subroutine apply_boundaries
 
 
     !--------------------------------------------------------
     subroutine set_xlbc_outflow(Qxlo_e, Qxlo_i)
         real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxlo_e, Qxlo_i
-        ! integer j,k,i4
+        integer j,k
         do k = 1,nz
             do j = 1,ny
-                do i4=1,nface
-                    Qxlo_e(j,k,i4,:) = Qxlo_i(j,k,i4,:)
-                end do
+                    Qxlo_e(j,k,1:nface,:) = Qxlo_i(j,k,1:nface,:)
                 if (maxval(Qxlo_e(j,k,1:nface,mx)) > 0.) then
-                    Qxlo_e(j,k,1:nface,mx) = 0.
+                    Qxlo_e(j,k,1:nface,mx) = 0.0
                 end if
             enddo
         enddo
@@ -140,14 +84,12 @@ contains
 
     subroutine set_xhbc_outflow(Qxhi_e, Qxhi_i)
         real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxhi_e, Qxhi_i
-        ! integer j,k,i4
+        integer j,k
         do k = 1,nz
             do j = 1,ny
-                do i4=1,nface
-                    Qxhi_e(j,k,i4,:) = Qxhi_i(j,k,i4,:)
-                end do
+                Qxhi_e(j,k,1:nface,:) = Qxhi_i(j,k,1:nface,:)
                 if (minval(Qxhi_e(j,k,1:nface,mx)) < 0.) then
-                    Qxhi_e(j,k,1:nface,mx) = 0.
+                    Qxhi_e(j,k,1:nface,mx) = 0.0
                 end if
             enddo
         enddo
@@ -157,14 +99,12 @@ contains
     !--------------------------------------------------------
     subroutine set_ylbc_outflow(Qylo_e, Qylo_i)
         real, dimension(nx,nz,nface,nQ), intent(inout) :: Qylo_e, Qylo_i
-        ! integer i,k,i4
+        integer i,k
         do k = 1,nz
             do i = 1,nx
-                do i4=1,nface
-                    Qylo_e(i,k,i4,:) = Qylo_i(i,k,i4,:)
-                end do
+                Qylo_e(i,k,1:nface,:) = Qylo_i(i,k,1:nface,:)
                 if (maxval(Qylo_e(i,k,1:nface,my)) > 0.) then
-                    Qylo_e(i,k,1:nface,my) = 0.
+                    Qylo_e(i,k,1:nface,my) = 0.0
                 end if
             enddo
         enddo
@@ -172,14 +112,12 @@ contains
 
     subroutine set_yhbc_outflow(Qyhi_e, Qyhi_i)
         real, dimension(nx,nz,nface,nQ), intent(inout) :: Qyhi_e, Qyhi_i
-        ! integer i,k,i4
+        integer i,k
         do k = 1,nz
             do i = 1,nx
-                do i4=1,nface
-                    Qyhi_e(i,k,i4,:) = Qyhi_i(i,k,i4,:)
-                end do
+                Qyhi_e(i,k,1:nface,:) = Qyhi_i(i,k,1:nface,:)
                 if (minval(Qyhi_e(i,k,1:nface,my)) < 0.) then
-                    Qyhi_e(i,k,1:nface,my) = 0.
+                    Qyhi_e(i,k,1:nface,my) = 0.0
                 end if
             enddo
         enddo
@@ -189,14 +127,12 @@ contains
     !--------------------------------------------------------
     subroutine set_zlbc_outflow(Qzlo_e, Qzlo_i)
         real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzlo_e, Qzlo_i
-        ! integer i,j,i4
+        integer i,j
         do j = 1,ny
             do i = 1,nx
-                do i4=1,nface
-                    Qzlo_e(i,j,i4,:) = Qzlo_i(i,j,i4,:)
-                end do
+                Qzlo_e(i,j,1:nface,:) = Qzlo_i(i,j,1:nface,:)
                 if (maxval(Qzlo_e(i,j,1:nface,mz)) > 0.) then
-                    Qzlo_e(i,j,1:nface,mz) = 0.
+                    Qzlo_e(i,j,1:nface,mz) = 0.0
                 end if
             enddo
         enddo
@@ -204,14 +140,12 @@ contains
 
     subroutine set_zhbc_outflow(Qzhi_e, Qzhi_i)
         real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzhi_e, Qzhi_i
-        ! integer i,j,i4
+        integer i,j
         do j = 1,ny
             do i = 1,nx
-                do i4=1,nface
-                    Qzhi_e(i,j,i4,:) = Qzhi_i(i,j,i4,:)
-                end do
+                Qzhi_e(i,j,1:nface,:) = Qzhi_i(i,j,1:nface,:)
                 if (minval(Qzhi_e(i,j,1:nface,mz)) < 0.) then
-                    Qzhi_e(i,j,1:nface,mz) = 0.
+                    Qzhi_e(i,j,1:nface,mz) = 0.0
                 end if
             enddo
         enddo
@@ -222,10 +156,10 @@ contains
     !--------------------------------------------------------
     subroutine set_xlbc_wall(Qxlo_e, Qxlo_i)
         real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxlo_e, Qxlo_i
-        ! integer j,k
+        integer j,k
         do k = 1,nz
             do j = 1,ny
-                Qxlo_e(j,k,1:nface,mx) = 0.
+                Qxlo_e(j,k,1:nface,mx) = 0.0
             end do
         end do
 
@@ -233,10 +167,10 @@ contains
 
     subroutine set_xhbc_wall(Qxhi_e, Qxhi_i)
         real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxhi_e, Qxhi_i
-        ! integer j,k
+        integer j,k
         do k = 1,nz
             do j = 1,ny
-                Qxhi_e(j,k,1:nface,mx) = 0.
+                Qxhi_e(j,k,1:nface,mx) = 0.0
             end do
         end do
 
@@ -246,10 +180,10 @@ contains
     !--------------------------------------------------------
     subroutine set_ylbc_wall(Qylo_e, Qylo_i)
         real, dimension(nx,nz,nface,nQ), intent(inout) :: Qylo_e, Qylo_i
-        ! integer i,k
+        integer i,k
         do k = 1,nz
             do i = 1,nx
-                Qylo_e(i,k,1:nface,my) = 0.
+                Qylo_e(i,k,1:nface,my) = 0.0
             end do
         end do
 
@@ -257,10 +191,10 @@ contains
 
     subroutine set_yhbc_wall(Qyhi_e, Qyhi_i)
         real, dimension(nx,nz,nface,nQ), intent(inout) :: Qyhi_e, Qyhi_i
-        ! integer i,k
+        integer i,k
         do k = 1,nz
             do i = 1,nx
-                Qyhi_e(i,k,1:nface,my) = 0.
+                Qyhi_e(i,k,1:nface,my) = 0.0
             end do
         end do
 
@@ -270,10 +204,10 @@ contains
     !--------------------------------------------------------
     subroutine set_zlbc_wall(Qzlo_e, Qzlo_i)
         real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzlo_e, Qzlo_i
-        ! integer i,j
+        integer i,j
         do j = 1,ny
             do i = 1,nx
-                Qzlo_e(i,j,1:nface,mz) = 0.
+                Qzlo_e(i,j,1:nface,mz) = 0.0
             end do
         end do
 
@@ -281,10 +215,10 @@ contains
 
     subroutine set_zhbc_wall(Qzhi_e, Qzhi_i)
         real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzhi_e, Qzhi_i
-        ! integer i,j
+        integer i,j
         do j = 1,ny
             do i = 1,nx
-                Qzhi_e(i,j,1:nface,mz) = 0
+                Qzhi_e(i,j,1:nface,mz) = 0.0
             end do
         end do
 
@@ -323,7 +257,7 @@ contains
     !--------------------------------------------------------
 
 
-    subroutine select_x_BC(xlbc_flag, xhbc_flag, xlbc_ptr, xhbc_ptr)
+    subroutine select_x_boundaries(xlbc_flag, xhbc_flag, xlbc_ptr, xhbc_ptr)
         character(*), intent(in) :: xlbc_flag, xhbc_flag
         procedure(xbc_fcn_ptr), pointer :: xlbc_ptr, xhbc_ptr
 
@@ -351,10 +285,10 @@ contains
                 xhbc_ptr => set_xhbc_periodic
         end select
 
-    end subroutine select_x_BC
+    end subroutine select_x_boundaries
 
 
-    subroutine select_y_BC(ylbc_flag, yhbc_flag, ylbc_ptr, yhbc_ptr)
+    subroutine select_y_boundaries(ylbc_flag, yhbc_flag, ylbc_ptr, yhbc_ptr)
         character(*), intent(in) :: ylbc_flag, yhbc_flag
         procedure(ybc_fcn_ptr), pointer :: ylbc_ptr, yhbc_ptr
 
@@ -382,10 +316,10 @@ contains
                 yhbc_ptr => set_yhbc_periodic
         end select
 
-    end subroutine select_y_BC
+    end subroutine select_y_boundaries
 
 
-    subroutine select_z_BC(zlbc_flag, zhbc_flag, zlbc_ptr, zhbc_ptr)
+    subroutine select_z_boundaries(zlbc_flag, zhbc_flag, zlbc_ptr, zhbc_ptr)
         character(*), intent(in) :: zlbc_flag, zhbc_flag
         procedure(zbc_fcn_ptr), pointer :: zlbc_ptr, zhbc_ptr
 
@@ -413,8 +347,7 @@ contains
                 zhbc_ptr => set_zhbc_periodic
         end select
 
-    end subroutine select_z_BC
-
+    end subroutine select_z_boundaries
 
 
 end module boundaries
