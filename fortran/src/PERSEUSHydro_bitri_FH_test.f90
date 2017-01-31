@@ -779,7 +779,7 @@ subroutine set_bc
     end if
 
 !---------------------------------------------------------
-    if (mpi_P .eq. mpi_nx .and. xlbc .ne. 2) then
+    if (mpi_P .eq. mpi_nx .and. xhbc .ne. 2) then
         ! Set B.C.'s at top x-boundary.
         do k = 1,nz
             do j = 1,ny
@@ -813,7 +813,7 @@ subroutine set_bc
     end if
 
 !------------------------------------------------------
-    if (mpi_Q .eq. mpi_ny .and. ylbc .ne. 2) then
+    if (mpi_Q .eq. mpi_ny .and. yhbc .ne. 2) then
         ! Set B.C.'s at top y-boundary.
         do k = 1,nz
             do i = 1,nx
@@ -850,7 +850,7 @@ subroutine set_bc
     end if
 
 !-----------------------------------------------------------
-    if (mpi_R .eq. mpi_nz .and. zlbc .ne. 2) then
+    if (mpi_R .eq. mpi_nz .and. zhbc .ne. 2) then
         ! Set B.C.'s at top z-boundary.
         do j = 1,ny
             do i = 1,nx

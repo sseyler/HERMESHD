@@ -28,7 +28,7 @@ contains
         end if
 
     !---------------------------------------------------------
-        if (mpi_P .eq. mpi_nx .and. xlbc .ne. 2) then
+        if (mpi_P .eq. mpi_nx .and. xhbc .ne. 2) then
             ! Set B.C.'s at top x-boundary.
             do k = 1,nz
                 do j = 1,ny
@@ -62,7 +62,7 @@ contains
         end if
 
     !------------------------------------------------------
-        if (mpi_Q .eq. mpi_ny .and. ylbc .ne. 2) then
+        if (mpi_Q .eq. mpi_ny .and. yhbc .ne. 2) then
             ! Set B.C.'s at top y-boundary.
             do k = 1,nz
                 do i = 1,nx
@@ -99,7 +99,7 @@ contains
         end if
 
     !-----------------------------------------------------------
-        if (mpi_R .eq. mpi_nz .and. zlbc .ne. 2) then
+        if (mpi_R .eq. mpi_nz .and. zhbc .ne. 2) then
             ! Set B.C.'s at top z-boundary.
             do j = 1,ny
                 do i = 1,nx
@@ -130,7 +130,7 @@ contains
             end do
         end if
     !---------------------------------------------------------
-        if (mpi_P .eq. mpi_nx .and. xlbc .eq. 1) then ! BCs at upper x-boundary.
+        if (mpi_P .eq. mpi_nx .and. xhbc .eq. 1) then ! BCs at upper x-boundary.
             do k = 1,nz
                 do j = 1,ny
                     Qxhigh_ext(j,k,1:nface,mx) = 0.
@@ -146,7 +146,7 @@ contains
             end do
         end if
     !------------------------------------------------------
-        if (mpi_Q .eq. mpi_ny .and. ylbc .eq. 1) then ! BCs at upper y-boundary.
+        if (mpi_Q .eq. mpi_ny .and. yhbc .eq. 1) then ! BCs at upper y-boundary.
             do k = 1,nz
                 do i = 1,nx
                     Qyhigh_ext(i,k,1:nface,my) = 0.
@@ -162,7 +162,7 @@ contains
             end do
         end if
     !-----------------------------------------------------------
-        if (mpi_R .eq. mpi_nz .and. zlbc .eq. 1) then ! BCs at upper z-boundary.
+        if (mpi_R .eq. mpi_nz .and. zhbc .eq. 1) then ! BCs at upper z-boundary.
             do j = 1,ny
                 do i = 1,nx
                     Qzhigh_ext(i,j,1:nface,mz) = 0.
@@ -193,7 +193,7 @@ contains
         end if
 
     !---------------------------------------------------------
-        if (mpi_P .eq. mpi_nx .and. xlbc .ne. 2) then
+        if (mpi_P .eq. mpi_nx .and. xhbc .ne. 2) then
             ! Set B.C.'s at top x-boundary.
             do k = 1,nz
                 do j = 1,ny
@@ -219,7 +219,7 @@ contains
         end if
 
     !------------------------------------------------------
-        if (mpi_Q .eq. mpi_ny .and. ylbc .ne. 2) then
+        if (mpi_Q .eq. mpi_ny .and. yhbc .ne. 2) then
             ! Set B.C.'s at top y-boundary.
             do k = 1,nz
                 do i = 1,nx
@@ -246,7 +246,7 @@ contains
         end if
 
     !-----------------------------------------------------------
-        if (mpi_R .eq. mpi_nz .and. zlbc .ne. 2) then
+        if (mpi_R .eq. mpi_nz .and. zhbc .ne. 2) then
             ! Set B.C.'s at top z-boundary.
             do j = 1,ny
                 do i = 1,nx
