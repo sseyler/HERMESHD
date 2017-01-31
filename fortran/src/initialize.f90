@@ -90,20 +90,20 @@ contains
         call MPI_Init ( ierr )
         call MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierr)
 
-        mpi_nz=numprocs/(mpi_nx*mpi_ny)
+        mpi_nz = numprocs/(mpi_nx*mpi_ny)
 
-        dims(1)=mpi_nx
-        dims(2)=mpi_ny
-        dims(3)=mpi_nz
+        dims(1) = mpi_nx
+        dims(2) = mpi_ny
+        dims(3) = mpi_nz
 
         periods(:)=0
-        if (xhbc .eq. 2) then
+        if (xhbc == 'periodic') then
             periods(1)=1
         end if
-        if (yhbc .eq. 2) then
+        if (yhbc == 'periodic') then
             periods(2)=1
         end if
-        if (zhbc .eq. 2) then
+        if (zhbc == 'periodic') then
             periods(3)=1
         end if
         reorder = 1
@@ -111,9 +111,9 @@ contains
         call MPI_CART_CREATE(MPI_COMM_WORLD, 3, dims, periods, reorder,cartcomm, ierr)
         call MPI_COMM_RANK (cartcomm, iam, ierr )
         call MPI_CART_COORDS(cartcomm, iam, 3, coords, ierr)
-        mpi_P=coords(1)+1
-        mpi_Q=coords(2)+1
-        mpi_R=coords(3)+1
+        mpi_P = coords(1) + 1
+        mpi_Q = coords(2) + 1
+        mpi_R = coords(3) + 1
         call MPI_CART_SHIFT(cartcomm, 0, 1, nbrs(WEST), nbrs(EAST), ierr)
         call MPI_CART_SHIFT(cartcomm, 1, 1, nbrs(SOUTH), nbrs(NORTH), ierr)
         call MPI_CART_SHIFT(cartcomm, 2, 1, nbrs(DOWN), nbrs(UP), ierr)
@@ -131,19 +131,16 @@ contains
         dxi = (nx*mpi_nx)/(lxu-lxd)
         dyi = (ny*mpi_ny)/(lyu-lyd)
         dzi = (nz*mpi_nz)/(lzu-lzd)
-        dVi = dxi*dyi*dzi
-
         dx = 1./dxi
         dy = 1./dyi
         dz = 1./dzi
+        dVi = dxi*dyi*dzi
 
         ! Set the starting x,y,z coords for the domain of this MPI process
         !   Note: the center of the computational grid is the origin (0,0,0)
         loc_lxd = lxd + (mpi_P-1)*(lxu-lxd)/mpi_nx
         loc_lyd = lyd + (mpi_Q-1)*(lyu-lyd)/mpi_ny
         loc_lzd = lzd + (mpi_R-1)*(lzu-lzd)/mpi_nz
-
-        ! indices used in poynting() for computing Poynting Maxwell flux
 
         mxa(1) = mx
         mxa(2) = my
@@ -160,7 +157,6 @@ contains
         dtoriginal = dt
         nout = 0
         dtout = tf/ntout
-
 
         ! Evaluate local cell values of basis functions on cell interior and faces.
         ! This is done for 1, 2, or 3 point Gaussian quadrature.
@@ -278,5 +274,99 @@ contains
         end if
 
     end subroutine print_startup_info
+    !-----------------------------------------------------------
+
+
+    !---------------------------------------------------------------------------
+    subroutine writeQ(fprefix,irank,iddump,Qin,tnow,dtnow,noutnow,              &
+                      mpi_nxnow,mpi_nynow,mpi_nznow)
+
+        implicit none
+        real :: Qin(nx,ny,nz,nQ,nbasis),tnow,dtnow
+        integer :: irank,iddump,noutnow,mpi_nxnow,mpi_nynow,mpi_nznow,nump,numd,qq,k,j,i,ir
+        character (4) :: fprefix,pname,dname
+        character (5) :: pname1,dname1
+        character (30) :: fname2
+
+        nump = iam + 10000
+
+        write(pname1,'(i5)')nump
+        pname=pname1(2:5)
+        pname = trim(pname)
+        pname = adjustr(pname)
+
+        numd = iddump + 10000
+
+        write(dname1,'(i5)')numd
+        dname=dname1(2:5)
+        dname = trim(dname)
+        dname = adjustr(dname)
+
+        fname2 = 'data/'//fprefix//'_p'//pname//'_d'//dname//'.dat'
+        ! print *,'fname2 ',fname2
+
+        open(unit=3,file=fname2)
+
+        ! open(unit = 10, file = 'data/perseus_t'//dname//'_p'//pname//'.bin',form = 'unformatted',access = 'stream')
+
+        do ir=1,nbasis
+            do qq=1,nQ
+                do k=1,nz
+                    do j=1,ny
+                        write(3,*) (Qin(i,j,k,qq,ir),i=1,nx)
+                    enddo
+                enddo
+            enddo
+        enddo
+
+        write(3,*) tnow,dtnow,noutnow,mpi_nxnow,mpi_nynow,mpi_nznow
+        close(3)
+
+    end subroutine writeQ
+
+
+    !---------------------------------------------------------------------------
+    subroutine readQ(fprefix,irank,iddump,Qin,tnow,dtnow,noutnow,               &
+                     mpi_nxnow,mpi_nynow,mpi_nznow)
+
+        implicit none
+        real :: Qin(nx,ny,nz,nQ,nbasis),tnow,dtnow
+        integer :: irank,iddump,noutnow,mpi_nxnow,mpi_nynow,mpi_nznow,nump,numd,qq,k,j,i,ir
+        character (4) :: fprefix,pname,dname
+        character (5) :: pname1,dname1
+        character (30) :: fname2
+
+        nump = irank + 10000
+
+        write(pname1,'(i5)')nump
+        pname=pname1(2:5)
+        pname = trim(pname)
+        pname = adjustr(pname)
+
+        numd = iddump + 10000
+
+        write(dname1,'(i5)')numd
+        dname=dname1(2:5)
+        dname = trim(dname)
+        dname = adjustr(dname)
+
+        fname2 = 'data/'//fpre//'_p'//pname//'_d'//dname//'.dat'
+
+        open(unit=3,file=fname2,action='read')
+
+        do ir=1,nbasis
+        do qq=1,nQ
+            do k=1,nz
+                do j=1,ny
+                    read(3,*) (Qin(i,j,k,qq,ir),i=1,nx)
+                enddo
+            enddo
+        enddo
+        enddo
+
+        read(3,*) tnow,dtnow,noutnow,mpi_nxnow,mpi_nynow,mpi_nznow
+        close(3)
+
+    end subroutine readQ
 
 end module initialize

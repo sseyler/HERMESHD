@@ -1067,11 +1067,11 @@ contains
             call MPI_Wait(reqs(4),stats(:,4),ierr)
         endif
 
-        if (mpi_P .eq. 1 .and. xlbc .eq. 0) then
+        if (mpi_P == 1 .and. xlbc == 'outflow') then
             Qxlow_ext = Qxlow_int
         end if
 
-        if (mpi_P .eq. mpi_nx .and. xhbc .eq. 0) then
+        if (mpi_P == mpi_nx .and. xhbc == 'outflow') then
             Qxhigh_ext = Qxhigh_int
         end if
 
@@ -1103,11 +1103,11 @@ contains
             call MPI_Wait(reqs(4),stats(:,4),ierr)
         endif
 
-        if (mpi_Q .eq. 1 .and. ylbc .eq. 0) then
+        if (mpi_Q == 1 .and. ylbc == 'outflow') then
             Qylow_ext = Qylow_int
         end if
 
-        if (mpi_Q .eq. mpi_ny .and. yhbc .eq. 0) then
+        if (mpi_Q == mpi_ny .and. yhbc == 'outflow') then
             Qyhigh_ext = Qyhigh_int
         end if
 
@@ -1136,11 +1136,11 @@ contains
         endif
 
 
-        if (mpi_R .eq. 1 .and. zlbc .eq. 0) then
+        if (mpi_R == 1 .and. zlbc == 'outflow') then
             Qzlow_ext = Qzlow_int
         end if
 
-        if (mpi_R .eq. mpi_nz .and. zhbc .eq. 0) then
+        if (mpi_R == mpi_nz .and. zhbc == 'outflow') then
             Qzhigh_ext = Qzhigh_int
         end if
 

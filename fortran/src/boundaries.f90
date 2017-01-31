@@ -324,29 +324,29 @@ contains
 
 
     subroutine select_x_BC(xlbc_flag, xhbc_flag, xlbc_ptr, xhbc_ptr)
-        integer, intent(in) :: xlbc_flag, xhbc_flag
+        character(*), intent(in) :: xlbc_flag, xhbc_flag
         procedure(xbc_fcn_ptr), pointer :: xlbc_ptr, xhbc_ptr
 
         select case(xlbc_flag)
-            case(0)
+            case('outflow')
                 call mpi_print(mpi_P, 'Selected outflow BCs for lower x boundary')
                 xlbc_ptr => set_xlbc_outflow
-            case(1)
+            case('wall')
                 call mpi_print(mpi_P, 'Selected wall BCs for lower x boundary')
                 xlbc_ptr => set_xlbc_wall
-            case(2)
+            case('periodic')
                 call mpi_print(mpi_P, 'Selected periodic BCs for lower x boundary')
                 xlbc_ptr => set_xlbc_periodic
         end select
 
         select case(xhbc_flag)
-            case(0)
+            case('outflow')
                 call mpi_print(mpi_P, 'Selected outflow BCs for upper x boundary')
                 xhbc_ptr => set_xhbc_outflow
-            case(1)
+            case('wall')
                 call mpi_print(mpi_P, 'Selected wall BCs for upper x boundary')
                 xhbc_ptr => set_xhbc_wall
-            case(2)
+            case('periodic')
                 call mpi_print(mpi_P, 'Selected periodic BCs for upper x boundary')
                 xhbc_ptr => set_xhbc_periodic
         end select
@@ -355,29 +355,29 @@ contains
 
 
     subroutine select_y_BC(ylbc_flag, yhbc_flag, ylbc_ptr, yhbc_ptr)
-        integer, intent(in) :: ylbc_flag, yhbc_flag
+        character(*), intent(in) :: ylbc_flag, yhbc_flag
         procedure(ybc_fcn_ptr), pointer :: ylbc_ptr, yhbc_ptr
 
         select case(ylbc_flag)
-            case(0)
+            case('outflow')
                 call mpi_print(mpi_Q, 'Selected outflow BCs for lower y boundary')
                 ylbc_ptr => set_ylbc_outflow
-            case(1)
+            case('wall')
                 call mpi_print(mpi_Q, 'Selected wall BCs for lower y boundary')
                 ylbc_ptr => set_ylbc_wall
-            case(2)
+            case('periodic')
                 call mpi_print(mpi_Q, 'Selected periodic BCs for lower y boundary')
                 ylbc_ptr => set_ylbc_periodic
         end select
 
         select case(yhbc_flag)
-            case(0)
+            case('outflow')
                 call mpi_print(mpi_Q, 'Selected outflow BCs for upper y boundary')
                 yhbc_ptr => set_yhbc_outflow
-            case(1)
+            case('wall')
                 call mpi_print(mpi_Q, 'Selected wall BCs for upper y boundary')
                 yhbc_ptr => set_yhbc_wall
-            case(2)
+            case('periodic')
                 call mpi_print(mpi_Q, 'Selected periodic BCs for upper y boundary')
                 yhbc_ptr => set_yhbc_periodic
         end select
@@ -386,29 +386,29 @@ contains
 
 
     subroutine select_z_BC(zlbc_flag, zhbc_flag, zlbc_ptr, zhbc_ptr)
-        integer, intent(in) :: zlbc_flag, zhbc_flag
+        character(*), intent(in) :: zlbc_flag, zhbc_flag
         procedure(zbc_fcn_ptr), pointer :: zlbc_ptr, zhbc_ptr
 
         select case(zlbc_flag)
-            case(0)
+            case('outflow')
                 call mpi_print(mpi_R, 'Selected outflow BCs for lower z boundary')
                 zlbc_ptr => set_zlbc_outflow
-            case(1)
+            case('wall')
                 call mpi_print(mpi_R, 'Selected wall BCs for lower z boundary')
                 zlbc_ptr => set_zlbc_wall
-            case(2)
+            case('periodic')
                 call mpi_print(mpi_R, 'Selected periodic BCs for lower z boundary')
                 zlbc_ptr => set_zlbc_periodic
         end select
 
         select case(zhbc_flag)
-            case(0)
+            case('outflow')
                 call mpi_print(mpi_R, 'Selected outflow BCs for upper z boundary')
                 zhbc_ptr => set_zhbc_outflow
-            case(1)
+            case('wall')
                 call mpi_print(mpi_R, 'Selected wall BCs for upper z boundary')
                 zhbc_ptr => set_zhbc_wall
-            case(2)
+            case('periodic')
                 call mpi_print(mpi_R, 'Selected periodic BCs for upper z boundary')
                 zhbc_ptr => set_zhbc_periodic
         end select

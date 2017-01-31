@@ -32,9 +32,12 @@ module input
     !   * 0 for set_bc subroutine used to prescribe BCs
     !   * 1 for wall (vanishing normal velocities).
     !   * 2 for periodic (MPI does this for you).
-    integer, parameter :: xlbc = 1, xhbc = 1
-    integer, parameter :: ylbc = 2, yhbc = 2
-    integer, parameter :: zlbc = 2, zhbc = 2
+    character(*), parameter :: xlbc = 'wall'
+    character(*), parameter :: xhbc = 'wall'
+    character(*), parameter :: ylbc = 'periodic'
+    character(*), parameter :: yhbc = 'periodic'
+    character(*), parameter :: zlbc = 'periodic'
+    character(*), parameter :: zhbc = 'periodic'
 
     ! Simulation time
     real, parameter :: tf = 8.5e4
