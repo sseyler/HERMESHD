@@ -145,7 +145,6 @@ module parameters
     !---------------------------------------------------------------------------
     !   print_mpi is sets the MPI rank that will do any printing to console
     integer dims(3),coords(3),periods(3),nbrs(6),reqs(4),stats(MPI_STATUS_SIZE,4)
-    integer,parameter:: NORTH=1,SOUTH=2,EAST=3,WEST=4,UP=5,DOWN=6,MPI_TT=MPI_REAL4
     !---------------------------------------------------------------------------
 
     real cflm

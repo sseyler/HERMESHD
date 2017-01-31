@@ -49,6 +49,14 @@ integer :: numprocs  ! used in get_min_dt + init
 integer :: iam,ierr  ! used all over (wherever MPI stuff seems to be)
 integer :: reorder  ! only used in init
 integer :: cartcomm  ! used all over (wherever MPI stuff seems to be)
+
+integer, parameter :: NORTH = 1  ! used in exchange_flux + init
+integer, parameter :: SOUTH = 2  ! used in exchange_flux + init
+integer, parameter :: EAST  = 3  ! used in exchange_flux + init
+integer, parameter :: WEST  = 4  ! used in exchange_flux + init
+integer, parameter :: UP    = 5  ! used in exchange_flux + init
+integer, parameter :: DOWN  = 6  ! used in exchange_flux + init
+integer, parameter :: MPI_TT = MPI_REAL4  ! used in exchange_flux and get_min_dt + init
 !===============================================================================
 
 
