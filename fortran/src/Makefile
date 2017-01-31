@@ -35,6 +35,7 @@ MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/fortran/mkl
 # MKLINCLUDE=$(MKLPATH)/include
 MKL_TARGET_ARCH = intel64_lin
 FORTFLAGS = -O2 -xHost -mkl -L$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
+# FORTFLAGS = -O3 -xHost -mkl -L$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
 # FORTFLAGS = -O2 -xHost -CB -fpe:0 -traceback -check noarg_temp_created #-fpp
 ##################################################################
 
@@ -60,8 +61,14 @@ endif
 ifeq ($(NAME),mod2)
 	OBJS = main.f90
 	MODFILES = input.f90 parameters.f90 helpers.f90 initialize.f90 \
-			   ic_mod.f90 prepare_time_advance_mod.f90 \
-			   basis_funcs_mod.f90 io_mod.f90
+			   init_conditions.f90 \
+			   prep_time_advance.f90 basis_funcs.f90 io.f90
+endif
+ifeq ($(NAME),modbc)
+	OBJS = main.f90
+	MODFILES = input.f90 parameters.f90 helpers.f90 boundaries.f90 \
+			   initialize.f90 init_conditions.f90 \
+			   prep_time_advance.f90 basis_funcs.f90 io.f90
 endif
 ##################################################################
 
@@ -79,7 +86,7 @@ $(PROGNAME) : $(OBJS)
 	$(FORT) $(FORTFLAGS) $(LIBS) $(MODFILES) $(OBJS) -o $(PROGNAME)
 #	strip $(PROGNAME)
 #	$(PROGNAME)
-	mv $(PROGNAME) $(TESTDIR) && cd $(TESTDIR) && mpiexec -n 16 $(PROGNAME)
+	mv $(PROGNAME) $(TESTDIR) && cd $(TESTDIR) && mpiexec -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
 
 clean:
 	$(rm) $(PROGNAME) core *~

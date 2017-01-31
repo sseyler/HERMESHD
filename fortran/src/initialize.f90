@@ -3,9 +3,9 @@ module initialize
 use parameters
 use helpers
 
-use ic_mod
-use basis_funcs_mod
-use io_mod
+use init_conditions
+use basis_funcs
+use io
 
 implicit none
 
@@ -84,6 +84,7 @@ contains
         dxi = (nx*mpi_nx)/(lxu-lxd)
         dyi = (ny*mpi_ny)/(lyu-lyd)
         dzi = (nz*mpi_nz)/(lzu-lzd)
+        dVi = dxi*dyi*dzi
 
         dx = 1./dxi
         dy = 1./dyi
@@ -94,8 +95,6 @@ contains
         loc_lxd = lxd + (mpi_P-1)*(lxu-lxd)/mpi_nx
         loc_lyd = lyd + (mpi_Q-1)*(lyu-lyd)/mpi_ny
         loc_lzd = lzd + (mpi_R-1)*(lzu-lzd)/mpi_nz
-
-        rh_fluid = 1.
 
         ! indices used in poynting() for computing Poynting Maxwell flux
 
@@ -159,22 +158,22 @@ contains
         if (iread .eq. 0) then
             call set_ic(Q_r0, icid)
         else
-            call initialize_from_file()
+            call initialize_from_file(Q_r0)
         endif
 
     end subroutine perform_setup
 
 
-    subroutine initialize_from_file()
+    subroutine initialize_from_file(Q_r)
 
         implicit none
-
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         real t_p,dt_p,dtout_p
         integer nout_p,mpi_nx_p,mpi_ny_p,mpi_nz_p
         ! This applies only if the initial data are being read from an input file.
         ! - If resuming a run, keep the previous clock (i.e., t at nout) running.
         ! - If not resuming a run, treat input as initial conditions at t=0, nout=0.
-        call readQ(fpre,iam,iread,Q_r0,t_p,dt_p,nout_p,mpi_nx_p,mpi_ny_p,mpi_nz_p)
+        call readQ(fpre,iam,iread,Q_r,t_p,dt_p,nout_p,mpi_nx_p,mpi_ny_p,mpi_nz_p)
 
         if (resuming) then
             t = t_p
@@ -215,6 +214,7 @@ contains
 
 
     subroutine print_startup_info()
+
         if (iam .eq. print_mpi) then
             print *, ''
             print *, '----------------------------------------------'
@@ -229,6 +229,7 @@ contains
             print *, '----------------------------------------------'
             print *, ''
         end if
+
     end subroutine print_startup_info
 
 end module initialize

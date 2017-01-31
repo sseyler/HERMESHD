@@ -1,6 +1,6 @@
-module basis_funcs_mod
+module basis_funcs
 
-use parameters_mod
+use parameters
 
 contains
 
@@ -559,4 +559,4 @@ contains
 
     end subroutine set_weights_3D
 
-end module basis_funcs_mod
+end module basis_funcs

@@ -1,43 +1,86 @@
 program main
 
-! use input
-! use parameters
-! use helpers
+use input!, only : nx,ny,nz
+use parameters!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
+use helpers!, only : xc,yc,zc,get_clock_time
+use boundaries
 use initialize
 
-use ic_mod
-use prepare_time_advance_mod
-use io_mod
-use basis_funcs_mod
+use init_conditions
+use prep_time_advance
+use io
+use basis_funcs
 
-! implicit none
 
+abstract interface
+    subroutine update_ptr (Q_io, Q_1, Q_2)
+        use input, only : nx,ny,nz
+        use parameters, only : nQ,nbasis
+
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2
+    end subroutine update_ptr
+end interface
+
+procedure (update_ptr), pointer :: update => null ()
+
+
+!###############################################################################
+! SETUP
+!-------------------------------------------------------------------------------
+! Set up simulation
 call perform_setup()
 
+! Select integration order
+select case(iorder)
+    case(2)
+        call mpi_print(iam, 'Selected 2nd-order Runga-Kutta (Heun) integration')
+        update => RK2
+    case(3)
+        call mpi_print(iam, 'Selected 3rd-order Runga-Kutta (Shu-Osher) integration')
+        update => RK3
+end select
+
+
+! Select boundary conditions
+!-------------------------------------------------------------------------------
+call select_x_BC(xlbc, xhbc, set_xlbc, set_xhbc)
+call select_y_BC(ylbc, yhbc, set_ylbc, set_yhbc)
+call select_z_BC(zlbc, zhbc, set_zlbc, set_zhbc)
+!-------------------------------------------------------------------------------
+
+!###############################################################################
+
+!-------------------------------------------------------------------------------
+
+
+!###############################################################################
+! START TIMING
+!-------------------------------------------------------------------------------
 t1 = get_clock_time()
 call output_vtk(Q_r0,nout,iam)
+!-------------------------------------------------------------------------------
 
-do while (t<tf)
+
+!###############################################################################
+! RUN SIMULATION
+!-------------------------------------------------------------------------------
+do while( t < tf )
 
     dt = get_min_dt()
-    dti = 1./dt
-    sqrt_dVdt_i = (dVi*dti)**0.5  ! can move dVi into eta_sd to remove a multiplication
-
-    select case(iorder)
-        case(2)
-            call update_2nd_order(Q_r0, Q_r1, Q_r2)
-        case(3)
-            call update_3rd_order(Q_r0, Q_r1, Q_r2, Q_r3)
-    end select
-
+    call update(Q_r0, Q_r1, Q_r2)
     t = t + dt
 
-    if (t .gt. dtout*nout) then
+    if (t > dtout*nout) then
         call generate_output()
     end if
 
 end do
+!-------------------------------------------------------------------------------
 
+
+!###############################################################################
+! CLEANUP
 !-------------------------------------------------------------------------------
 ! RNG is completed with de-allocation of system resources:
 vsl_errcode = vsldeletestream( vsl_stream )
@@ -51,10 +94,8 @@ end if
 
 contains
 
-
-    !-------------------------------------------------------------------------------
-    subroutine update_2nd_order(Q_io, Q_1, Q_2)
-
+    !---------------------------------------------------------------------------
+    subroutine RK2(Q_io, Q_1, Q_2)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2
@@ -62,29 +103,25 @@ contains
         call euler_step(Q_io, Q_1)
         call euler_step(Q_1, Q_2)
         Q_io = 0.5 * ( Q_io + Q_2 )
+    end subroutine RK2
 
-    end subroutine update_2nd_order
 
-
-    subroutine update_3rd_order(Q_io, Q_1, Q_2, Q_3)
-
+    subroutine RK3(Q_io, Q_1, Q_2)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
-        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2, Q_3
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2
 
         call euler_step(Q_io, Q_1)
         call euler_step(Q_1, Q_2)
-        Q_3 = 0.75*Q_io + 0.25*Q_2
+        Q_1 = 0.75*Q_io + 0.25*Q_2
 
-        call euler_step(Q_3, Q_2)  ! re-use the second array
+        call euler_step(Q_1, Q_2)  ! re-use the second array
         Q_io = c1d3 * ( Q_io + 2.0*Q_2 )
+    end subroutine RK3
+    !---------------------------------------------------------------------------
 
-    end subroutine update_3rd_order
-    !-------------------------------------------------------------------------------
-
-    !-------------------------------------------------------------------------------
+    !---------------------------------------------------------------------------
     subroutine euler_step(Q_in, Q_out)
-
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_in
         real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
@@ -92,37 +129,30 @@ contains
         call prep_advance(Q_in)
         call calc_rhs(Q_in)
         call advance_time_level_gl(Q_in, Q_out)
-
     end subroutine euler_step
 
 
     subroutine prep_advance(Q_io)
-
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
 
-        if(ieos .eq. 1) call limiter(Q_io)  ! added in (from "viscosity" version)
-        if(ieos .eq. 2) call limiter(Q_io)
+        if (ieos .eq. 1 .or. ieos .eq. 2) call limiter(Q_io)
         call prepare_exchange(Q_io)
-        call set_bc2
-
+        call apply_BC
     end subroutine prep_advance
 
     subroutine calc_rhs(Q_io)
-
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
 
         call flux_cal(Q_io)
         call innerintegral(Q_io)
-        call glflux  ! glflux currently breaks after "bug fix"
+        call glflux
         call source_calc(Q_io)
-
     end subroutine calc_rhs
 
 
     subroutine advance_time_level_gl(Q_in, Q_out)
-
         implicit none
         integer i,j,k,ieq,ir
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_in
@@ -151,13 +181,11 @@ contains
         end do
         end do
         end do
-
     end subroutine advance_time_level_gl
-    !-------------------------------------------------------------------------------
+    !---------------------------------------------------------------------------
 
 
-!----------------------------------------------------------------------------------------------
-
+    !---------------------------------------------------------------------------
     real function get_min_dt()
         implicit none
 
@@ -211,13 +239,11 @@ contains
         endif
 
         get_min_dt = dt_min
-
     end function get_min_dt
+    !---------------------------------------------------------------------------
 
-!----------------------------------------------------------------------------------------------
-
+    !---------------------------------------------------------------------------
     subroutine generate_output()
-
         implicit none
         integer ioe
 
@@ -247,7 +273,7 @@ contains
             print *, ''
             t1 = t2
         end if
-
     end subroutine generate_output
+    !---------------------------------------------------------------------------
 
 end program main

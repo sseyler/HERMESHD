@@ -2,6 +2,9 @@ module helpers
 
 use parameters
 
+real loc_lxd
+real loc_lyd
+real loc_lzd
 
 contains
 
@@ -94,6 +97,26 @@ contains
         get_clock_time = 1.0 * ticks / count_rate
     end function get_clock_time
 
+    !-----------------------------------------------------------
+    ! Print a message from the MPI rank with ID mpi_id
+    subroutine mpi_print(mpi_id, message)
+        integer, intent(in) :: mpi_id
+        character(*) :: message
+        if (mpi_id .eq. print_mpi) then
+            print *,message
+            print *,''       ! print a new line after message by default
+        endif
+    end subroutine mpi_print
+
+
+    !-----------------------------------------------------------
+    ! Print a message from the MPI rank with ID mpi_id
+    subroutine whoami_print(mpi_id, message)
+        integer, intent(in) :: mpi_id
+        character(*) :: message
+        print *,'Rank',mpi_id, ':', message
+        print *,''       ! print a new line after message by default
+    end subroutine whoami_print
 
 
     !------------------------------------------

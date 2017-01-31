@@ -1,6 +1,7 @@
-module ic_mod
+module init_conditions
 
-use parameters_mod
+use parameters
+use helpers
 
 contains
 
@@ -17,21 +18,23 @@ contains
         Q_r(:,:,:,en,1) = T_floor*rh_floor/(aindex - 1.)
         MMask(:,:,:) = .false.
 
-        if ( id .eq. 0 ) then
-            call fill_fluid2(Q_r)
-        end if
-        if ( id .eq. 1 ) then
-            call hydro_jet(Q_r)
-        end if
-        if ( id .eq. 2 ) then
-            call isentropic_vortex(Q_r)
-        end if
-        if ( id .eq. 3 ) then
-            call sod_shock_tube_1d(Q_r, 0)
-        end if
-        if ( id .eq. 4 ) then
-            call sod_shock_tube_1d(Q_r, 1)
-        end if
+        select case(id)
+            case(0)
+                call mpi_print(iam, 'Setting up 2D hydrodynamic jet (old version)...')
+                call fill_fluid2(Q_r)
+            case(1)
+                call mpi_print(iam, 'Setting up 2D hydrodynamic jet...')
+                call hydro_jet(Q_r)
+            case(2)
+                call mpi_print(iam, 'Setting up 2D isentropic vortex...')
+                call isentropic_vortex(Q_r)
+            case(3)
+                call mpi_print(iam, 'Setting up 1D Sod Shock Tube v1...')
+                call sod_shock_tube_1d(Q_r, 0)
+            case(4)
+                call mpi_print(iam, 'Setting up 1D Sod Shock Tube v2...')
+                call sod_shock_tube_1d(Q_r, 1)
+        end select
 
     end subroutine set_ic
 
@@ -41,12 +44,13 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,ieq
-        real x,y,wtev,rnum,jet_strength,rand_num
+        real x,y,wtev,rnum,jet_strength,rand_num,rh_fluid
         real qquad(npg,nQ),xcc,ycc,zcc  ! bfint(npg,nbasis),qquadv(npg)
         iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
 
         wtev = T_floor
         jet_strength = 1.0
+        rh_fluid = 1.0
 
         do i = 1,nx
         do j = 1,ny
@@ -88,7 +92,7 @@ contains
         real dn,vx,vy,vz,temp
 
         beta = 5.0             ! vortex strength
-        rh_amb = rh_fluid      ! ambient density
+        rh_amb = 1.0           ! ambient density
         vx_amb = 1.0           ! ambient x-velocity
         vy_amb = 0.0           ! ambient y-velocity
         vz_amb = 0.0           ! ambient z-velocity
@@ -230,10 +234,11 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,igrid,ieq
-        real x,y,wtev,rnum,rand_num
+        real x,y,wtev,rnum,rand_num,rh_fluid
         real qquad(npg,nQ),xcc,ycc,zcc  ! bfint(npg,nbasis),qquadv(npg)
         iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
 
+        rh_fluid = 1.0
         wtev = T_floor
 
         ! test problem is an unstable flow jet in x with velocity perturbations in y
@@ -281,4 +286,4 @@ contains
     end subroutine fill_fluid2
 
 
-end module ic_mod
+end module init_conditions

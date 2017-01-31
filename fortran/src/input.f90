@@ -1,14 +1,5 @@
 module input
 
-    ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 40
-    integer, parameter :: ny = 1
-    integer, parameter :: nz = 1
-
-    ! Set number of MPI domains per spatial dimension
-    integer :: mpi_nx = 16
-    integer :: mpi_ny = 1
-
     ! Physical system dimensions
     real, parameter :: lx = 1.0e6
     real, parameter :: ly = 1.0e6
@@ -16,6 +7,15 @@ module input
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad = 2
+
+    ! Grid cell dimensions per MPI domain
+    integer, parameter :: nx = 80
+    integer, parameter :: ny = 1
+    integer, parameter :: nz = 1
+
+    ! Set number of MPI domains per spatial dimension
+    integer :: mpi_nx = 16
+    integer :: mpi_ny = 1
 
     ! Temporal integration order
     !   * 2 for
@@ -40,23 +40,28 @@ module input
     real, parameter :: tf = 8.5e4
 
     ! Riemann solver
-    integer, parameter :: ihllc = 1, iroe = 0, ieos = 1
+    ! If all of them = 0, then LLF is used for fluxes.
+    !   LLF is very diffusive for the hydro problem. Roe and HLLC are much less
+    !   diffusive than LLF and give very similar results with similar cpu overhead
+    !   Only HLLC is setup to handle water EOS (ieos = 2)
+    integer, parameter :: ihllc = .true.
 
-    ! Flow parameters
+    ! Thermodynamic and transport parameters
+    real, parameter :: ieos = 1
+    real, parameter :: mu = 2.0
+    real, parameter :: aindex = 5./3.
+    real, parameter :: aindm1 = aindex - 1.0
+    real, parameter :: cp = aindex/aindm1
+
+    ! Equation of state and constitutive parameters
     real, parameter :: vis = 0.0
     real, parameter :: epsi = 5.0
     real, parameter :: clt = 2.0
 
-    ! Thermodynamic and transport parameters
-    real, parameter :: mu = 2.0
-    real, parameter :: aindex = 5./3.
-    real, parameter :: aindm1 = aindex-1.0
-    real, parameter :: cp = aindex/aindm1
-
     ! Output frequency and directory
     integer, parameter :: ntout = 100
     character (*), parameter :: datadir="data"
-    character (*), parameter :: outname="test_mod2_0"
+    character (*), parameter :: outname="test_modbc_0"
     character (*), parameter :: outdir = trim(datadir//"/"//outname)
 
     ! Checkpointing

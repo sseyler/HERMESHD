@@ -20,7 +20,10 @@ module parameters
     !   nbasis = 10: nbasis4  + {P_2(x),P_2(y),P_2(z), yz, zx, xy}
     !   nbasis = 20: nbasis10 + {xyz,xP2(y),yP2(x),xP2(z),
     !                                zP2(x),yP2(z),zP2(y),P3(x),P3(y),P3(z)}
-    integer, parameter :: ngu=0, nbasis=8, nbastot=27
+    integer, parameter :: nbasis=8, nbastot=27
+
+    ! For VTK output
+    integer, parameter :: ngu=0
 
     ! iquad: # of Gaussian quadrature points per direction. iquad should not be:
     !   < ipoly (max Legendre polynomial order used) --> unstable
@@ -34,27 +37,6 @@ module parameters
     integer, parameter :: npge=6*nface, nslim=npg+6*nface
     !---------------------------------------------------------------------------
 
-    !===========================================================================
-    ! TODO:  CLASSIFY THESE PARAMETERS, SEAN!!!
-    !---------------------------------------------------------------------------
-
-    ! Choose Riemann solver for computing fluxes.  Set chosen solver = 1.
-    ! If all of them = 0, then LLF is used for fluxes.
-        ! LLF is very diffusive for the hydro problem.  Roe and HLLC are much less
-        ! diffusive than LLF and give very similar results with similar cpu overhead
-        ! Only HLLC is setup to handle water EOS (ieos = 2)
-
-
-    !===========================================================================
-    ! Test problems
-    !---------------------------------------------------------------------------
-
-    ! 2D pipe flow around cylinder (viscous, incompressible)
-    ! NOTE: must change to set_bc4 manually right now
-    ! real, parameter :: lx = 2.2e6, ly = 4.1e5, lz = 1.0e6/120.
-    ! real, parameter :: tf = 3.3e4  ! 3.3 s for original problem
-    ! real, parameter :: vis = 1.0e-3, epsi = 5., clt = 2. ! vis = 0.001 orig prob
-    !---------------------------------------------------------------------------
 
     !===========================================================================
     ! Constants, and physical and numerical parameters
@@ -102,12 +84,12 @@ module parameters
     real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
 
     ! Boundary conditions
-    real Qxhigh_ext(ny,nz,nface,nQ), Qxlow_int(ny,nz,nface,nQ)
-    real Qxlow_ext(ny,nz,nface,nQ), Qxhigh_int(ny,nz,nface,nQ)
-    real Qyhigh_ext(nx,nz,nface,nQ), Qylow_int(nx,nz,nface,nQ)
-    real Qylow_ext(nx,nz,nface,nQ), Qyhigh_int(nx,nz,nface,nQ)
-    real Qzhigh_ext(nx,ny,nface,nQ), Qzlow_int(nx,ny,nface,nQ)
-    real Qzlow_ext(nx,ny,nface,nQ), Qzhigh_int(nx,ny,nface,nQ)
+    ! real Qxhigh_ext(ny,nz,nface,nQ), Qxlow_int(ny,nz,nface,nQ)
+    ! real Qxlow_ext(ny,nz,nface,nQ), Qxhigh_int(ny,nz,nface,nQ)
+    ! real Qyhigh_ext(nx,nz,nface,nQ), Qylow_int(nx,nz,nface,nQ)
+    ! real Qylow_ext(nx,nz,nface,nQ), Qyhigh_int(nx,nz,nface,nQ)
+    ! real Qzhigh_ext(nx,ny,nface,nQ), Qzlow_int(nx,ny,nface,nQ)
+    ! real Qzlow_ext(nx,ny,nface,nQ), Qzhigh_int(nx,ny,nface,nQ)
     !---------------------------------------------------------------------------
 
 
@@ -149,16 +131,11 @@ module parameters
     !---------------------------------------------------------------------------
     logical MMask(nx,ny,nz),BMask(nx,ny,nz)
     real xcell(npg), ycell(npg), zcell(npg), xface(npge), yface(npge), zface(npge)
-    integer ticks, count_rate, count_max
     real t1, t2, t3, t4, elapsed_time, t_start, t_stop, dtoriginal
-        real t, dt, dti, tout, dtout, vf, sqrt_dVdt_i ! Inv sq-root of (dV*dt), dV = grid cell volume
-        real loc_lxd,loc_lyd,loc_lzd,check_Iz,sl
-        real dz, dy, dx, dxi, dyi, dzi
+        real t, dt, tout, dtout, vf, sqrt_dVdt_i ! Inv sq-root of (dV*dt), dV = grid cell volume
+        real dz, dy, dx, dxi, dyi, dzi, dVi
         real lxd,lxu,lyd,lyu,lzd,lzu
-        real pin_rad,pin_height,rh_foil,rh_fluid
-        real pin_rad_in,pin_rad_out,rim_rad
-        real disk_rad,disk_height,foil_rad,buf_rad,buf_z,dish_height,foil_height
-        real gpz_rad,rh_gpz,kappa
+        real disk_rad,kappa
 
     integer mxa(3),mya(3),mza(3),kroe(nface),niter,iseed
     !---------------------------------------------------------------------------

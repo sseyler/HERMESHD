@@ -1,6 +1,7 @@
-module io_mod
+module io
 
-use parameters_mod
+use parameters
+use helpers
 
 contains
 
@@ -494,4 +495,4 @@ contains
     end subroutine readQ
 
 
-end module io_mod
+end module io
