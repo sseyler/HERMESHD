@@ -88,12 +88,6 @@ module parameters
     real, parameter :: zeta_sd  = (zeta_base*T_base/3.)**0.5  ! stdev of fluctuations for bulk viscosity term
     real, parameter :: kappa_sd = (2.*kappa_base*T_base**2)**0.5
 
-    ! real GRM_x(nface, 1:nx+1, ny,     nz,     3,3)
-    ! real GRM_y(nface, nx,     1:ny+1, nz,     3,3)
-    ! real GRM_z(nface, nx,     ny,     1:nz+1, 3,3)
-    ! real Sflux_x(nface, 1:nx+1, ny,     nz,     3,3)
-    ! real Sflux_y(nface, nx,     1:ny+1, nz,     3,3)
-    ! real Sflux_z(nface, nx,     ny,     1:nz+1, 3,3)
     real vsl_errcode
     TYPE (VSL_STREAM_STATE) :: vsl_stream
 
@@ -105,13 +99,9 @@ module parameters
 
 
     !===========================================================================
-    ! TODO:  CLASSIFY THESE PARAMETERS, SEAN!!!
+    ! Masking parameters (for advanced or internal initial/boundary conditions)
     !---------------------------------------------------------------------------
     logical MMask(nx,ny,nz),BMask(nx,ny,nz)
-    real t1, t2, elapsed_time, t_start, t_stop, dtoriginal
-        real t, dt, tout, dtout, vf, sqrt_dVdt_i ! Inv sq-root of (dV*dt), dV = grid cell volume
-
-    integer kroe(nface),iseed
     !---------------------------------------------------------------------------
 
     !===========================================================================

@@ -10,9 +10,8 @@ use io
 implicit none
 
 
-
 !===============================================================================
-! Arrays for field variables, fluxes, inner integrals, and sources
+! Arrays for field variables, fluxes, inner integrals, sources, and time(s)
 !---------------------------------------------------------------------------
 real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r0, Q_r1, Q_r2, Q_r3
 real, dimension(nx,ny,nz,nQ,nbasis) :: glflux_r, source_r, integral_r
@@ -22,12 +21,15 @@ real flux_x(nface,1:nx+1,ny,nz,1:nQ)
 real flux_y(nface,nx,1:ny+1,nz,1:nQ)
 real flux_z(nface,nx,ny,1:nz+1,1:nQ)
 real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
+
+real t, dt, dtout, sqrt_dVdt_i ! Inv sq-root of (dV*dt), dV = grid cell volume
 !===============================================================================
 
 
 !===============================================================================
 ! Helper variables (initialized here)
 !---------------------------------------------------------------------------
+real t1,t2,elapsed_time,t_start,t_stop,dtoriginal  ! used for timing (dtoriginal optional)
 real lxd,lxu,lyd,lyu,lzd,lzu  ! used indirectly by the helper functions
 real dz, dy, dx, dxi, dyi, dzi, dVi  ! used throughout
 
@@ -35,7 +37,6 @@ integer mxa(3),mya(3),mza(3)  ! used in flux_calc_pnts_r()
 integer kroe(nface)  ! used in flux_cal()
 integer iseed  ! used for initializing random seeds
 !===============================================================================
-
 
 
 !===============================================================================
@@ -49,7 +50,6 @@ integer :: iam,ierr  ! used all over (wherever MPI stuff seems to be)
 integer :: reorder  ! only used in init
 integer :: cartcomm  ! used all over (wherever MPI stuff seems to be)
 !===============================================================================
-
 
 
 contains
