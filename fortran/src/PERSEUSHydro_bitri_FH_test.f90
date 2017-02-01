@@ -577,7 +577,7 @@ end subroutine prep_advance
 subroutine get_min_dt(dt)
 
    real dt,dt_min,dt_val(numprocs-1),tt,cfl,vmax,vmag,valf,vmag0,valf0
-   real vex,vey,vez,vem,vem0,dni,dn,vx,vy,vz,Pr,sqdni,vacc,vacc0,cs
+   real vex,vey,vez,vem,vem0,dni,dn,vx,vy,vz,sqdni,vacc,vacc0,cs
    integer :: i,j,k,main_proc=0,mpi_size=1
    integer :: loc_reqs(numprocs-1),loc_stats(MPI_STATUS_SIZE,numprocs-1)
 

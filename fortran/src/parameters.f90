@@ -8,74 +8,85 @@ module parameters
 
     include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
 
-    integer, parameter :: rh=1, mx=2, my=3, mz=4, en=5
-    integer, parameter :: pxx=6, pyy=7, pzz=8, pxy=9, pxz=10, pyz=11, nQ=11
+    integer, parameter :: rh  = 1                     ! density
+    integer, parameter :: mx  = 2, my  = 3,  mz  = 4  ! momenta
+    integer, parameter :: en  = 5                     ! scalar energy
+    integer, parameter :: pxx = 6, pyy = 7,  pzz = 8  ! isotropic stress
+    integer, parameter :: pxy = 9, pxz = 10, pyz = 11 ! deviatoric stress
+    integer, parameter :: nQ  = 11                    ! number of field variables
 
     !===========================================================================
     ! Spatial resolution -- # grid cells and DG basis order
-    !---------------------------------------------------------------------------
+    !------------------------------------------------------------
     ! The jump in accuracy b/w the linear basis (nbasis=4) and quadratic basis
     ! (nbasis=10) is much greater than jump b/w quadratic and cubic (nbasis=20).
     !   nbasis = 4:  {1,x,y,z}
     !   nbasis = 10: nbasis4  + {P_2(x),P_2(y),P_2(z), yz, zx, xy}
     !   nbasis = 20: nbasis10 + {xyz,xP2(y),yP2(x),xP2(z),
     !                                zP2(x),yP2(z),zP2(y),P3(x),P3(y),P3(z)}
-    integer, parameter :: nbasis=8, nbastot=27
+    integer, parameter :: nbasis  = 8
+    integer, parameter :: nbastot = 27  ! TODO: only used in setup + innerintegral()
 
-    ! For VTK output
-    integer, parameter :: ngu=0
+    integer, parameter :: ngu = 0  ! TODO: only used in output_vtk()
 
     ! iquad: # of Gaussian quadrature points per direction. iquad should not be:
     !   < ipoly (max Legendre polynomial order used) --> unstable
     !   > ipoly+1 --> an exact Gaussian quadrature for Legendre poly used
     ! Thus there are only two cases of iquad for a given nbasis. Both give similar
     ! results although iquad = ipoly + 1 is formally more accurate.
-    integer, parameter :: nedge=iquad
-    ! nface: number of quadrature points per cell face.
-    ! npg: number of internal points per cell.
-    integer, parameter :: nface=iquad*iquad, npg=nface*iquad, nfe=2*nface
-    integer, parameter :: npge=6*nface, nslim=npg+6*nface
+    integer, parameter :: nedge = iquad
+    integer, parameter :: nface = iquad*iquad  ! number of quadrature points per cell face
+    integer, parameter :: npg   = nface*iquad  ! number of internal points per cell
+    integer, parameter :: nfe   = 2*nface
+    integer, parameter :: npge  = 6*nface
+    integer, parameter :: nslim = npg+6*nface
     !---------------------------------------------------------------------------
 
 
     !===========================================================================
     ! Constants, and physical and numerical parameters
-    !---------------------------------------------------------------------------
+    !------------------------------------------------------------
     ! Useful constants
     real, parameter :: pi = 4.0*atan(1.0)
-    real, parameter :: sqrt2 = 2.**0.5, sqrt2i = 1./sqrt2
-    real, parameter :: c1d5 = 1./5., c1d3 = 1./3., c2d3 = 2./3., c4d3 = 4./3.
+    real, parameter :: sqrt2  = 2.**0.5
+    real, parameter :: sqrt2i = 1./sqrt2
+    real, parameter :: c1d5 = 1./5.
+    real, parameter :: c1d3 = 1./3.
+    real, parameter :: c2d3 = 2./3.
+    real, parameter :: c4d3 = 4./3.
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
-    real, parameter :: L0=1.0e-9, t0=1.0e-12, n0=3.32e28
-        ! Derived units
-        real, parameter :: v0 = L0/t0
-        real, parameter :: p0 = mu*1.67e-27*n0*v0**2
-        real, parameter :: te0=p0/n0/1.6e-19          ! NOTE: in eV (not K)!
+    real, parameter :: L0 = 1.0e-9                 ! length
+    real, parameter :: t0 = 1.0e-12                ! time
+    real, parameter :: n0 = 3.32e28                ! number density
+
+    ! Derived units
+    real, parameter :: v0  = L0/t0                 ! velocity
+    real, parameter :: p0  = mu*1.67e-27*n0*v0**2  ! pressure
+    real, parameter :: te0 = p0/n0/1.6e-19         ! temperature (eV, not K!)
 
     ! rh_min is a min density to be used for ideal gas EOS, rh_min is min density
     ! below which the pressure becomes negative for the MT water EOS.
     ! The DG-based subroutine "limiter" keeps density above rh_mult*rh_min.
     real, parameter :: rh_floor = 5.0e-6
-    real, parameter :: T_floor = 0.026/te0
-    real, parameter :: P_floor = T_floor*rh_floor
-        ! Murnaghan-Tait EOS
-        !   P = P_1*(density**7.2 - 1.) + P_base
-        ! Note: the EOS for water is likely to be a critical player in getting the
-        ! fluctuating hydrodynamics correct. There are much more sophisicated EOS's,
-        ! some of which account for ionic solutions. Would be worthwhile to
-        ! further investigate and experiment with different EOS's.
-        real, parameter :: n_tm = 7.2  ! 7.2 (or 7.15) for water
-        real, parameter :: P_1 = 2.15e9/n_tm/p0, P_base = 1.01e5/p0 ! atmo pressure
-        real, parameter :: rh_mult = 1.01, rh_min = rh_mult*(1.0-P_base/P_1)**(1./n_tm)
+    real, parameter :: T_floor  = 0.026/te0    ! 0.026 eV ~ 301.719 K |  0.02585 eV = 300 K
+    real, parameter :: P_floor  = T_floor*rh_floor
+
+    ! Murnaghan-Tait EOS
+    !   P = P_1*(density**7.2 - 1.) + P_base
+    ! Note: the EOS for water is likely to be a critical player in getting the
+    ! fluctuating hydrodynamics correct. There are much more sophisicated EOS's,
+    ! some of which account for ionic solutions. Would be worthwhile to
+    ! further investigate and experiment with different EOS's.
+    real, parameter :: n_tm = 7.2  ! 7.2 (or 7.15) for water
+    real, parameter :: P_1 = 2.15e9/n_tm/p0, P_base = 1.01e5/p0 ! atmo pressure
+    real, parameter :: rh_mult = 1.01, rh_min = rh_mult*(1.0-P_base/P_1)**(1./n_tm)
     !---------------------------------------------------------------------------
 
 
-    !===============================================================================
-    !---------------------------------------------------------------------------
-    ! NOTE: this is new stuff!
-    ! Stuff for random matrix generation
-    !---------------------------------------------------------------------------
+    !===========================================================================
+    ! Miscellaneous tuff for random matrix generation
+    !------------------------------------------------------------
     real, parameter :: nu = epsi*vis
     real, parameter :: c2d3nu=c2d3*nu, c4d3nu=c4d3*nu
 
@@ -87,7 +98,12 @@ module parameters
     real, parameter :: eta_sd   = (2.*eta_base*T_base)**0.5  ! stdev of fluctuations for shear viscosity terms
     real, parameter :: zeta_sd  = (zeta_base*T_base/3.)**0.5  ! stdev of fluctuations for bulk viscosity term
     real, parameter :: kappa_sd = (2.*kappa_base*T_base**2)**0.5
+    !===========================================================================
 
+
+    !===========================================================================
+    ! MKL VSL parameters
+    !------------------------------------------------------------
     real vsl_errcode
     TYPE (VSL_STREAM_STATE) :: vsl_stream
 
@@ -95,66 +111,93 @@ module parameters
     integer, parameter :: vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
     real, parameter :: vsl_mean  = 0.0
     real, parameter :: vsl_sigma = 1.0
-    !===============================================================================
+    !===========================================================================
 
 
     !===========================================================================
-    ! Masking parameters (for advanced or internal initial/boundary conditions)
-    !---------------------------------------------------------------------------
-    logical MMask(nx,ny,nz),BMask(nx,ny,nz)
-    !---------------------------------------------------------------------------
+    ! Parameters relating to basis functions & VTK output
+    !------------------------------------------------------------
 
-    !===========================================================================
-    ! Parameters relating to quadratures and basis functions
-    !---------------------------------------------------------------------------
-    real wgt1d(5), wgt2d(30), wgt3d(100), cbasis(nbastot)
-    ! wgt1d: quadrature weights for 1-D integration
-    ! wgt2d: quadrature weights for 2-D integration
-    ! wgt3d: quadrature weights for 3-D integration
+    ! TODO: only in set_weights_3D
+    real wgt1d(5)    ! wgt1d: quadrature weights for 1-D integration
 
+    ! TODO: only in initialize.f90 (setup), set_weights_3D, glflux
+    real wgt2d(30)   ! wgt2d: quadrature weights for 2-D integration
+
+    ! TODO: only in:
+    !   * initialize.f90 (setup), fill_fluid2 (deprec.)
+    !   * innerintegral, set_weights_3D
+    real wgt3d(100)  ! wgt3d: quadrature weights for 3-D integration
+
+    ! TODO: only in:
+    !   * initialize.f90 (setup), fill_fluid2 (deprec.)
+    !   * innerintegral, source_calc
+    real cbasis(nbastot)
+
+    ! TODO: only in
+    !   * initialize.f90 (setup)
+    !   * flux_cal, prepare_exchange, set_face_vals_3D
     real, dimension(nface,nbastot) :: bfvals_zp, bfvals_zm
     real, dimension(nface,nbastot) :: bfvals_yp, bfvals_ym
     real, dimension(nface,nbastot) :: bfvals_xp, bfvals_xm
-    real bf_faces(nslim,nbastot), bfvals_int(npg,nbastot),xquad(20)
-        real bval_int_wgt(npg,nbastot)
-        real wgtbfvals_xp(nface,nbastot),wgtbfvals_xm(nface,nbastot)  ! these are temps used to assign other vars
-        real wgtbfvals_yp(nface,nbastot),wgtbfvals_ym(nface,nbastot)  ! these are temps used to assign other vars
-        real wgtbfvals_zp(nface,nbastot),wgtbfvals_zm(nface,nbastot)  ! these are temps used to assign other vars
-        real wgtbf_xmp(nface,2,nbastot),wgtbf_ymp(nface,2,nbastot),wgtbf_zmp(nface,2,nbastot)
-        real sumx,sumy,sumz
 
-        ! Basis function flags
-        integer, parameter :: kx=2,ky=3,kz=4,kyz=5,kzx=6,kxy=7,kxyz=8
-        integer, parameter :: kxx=9,kyy=10,kzz=11
-        integer, parameter :: kyzz=12,kzxx=13,kxyy=14,kyyz=15,kzzx=16,kxxy=17
-        integer, parameter :: kyyzz=18,kzzxx=19,kxxyy=20,kyzxx=21,kzxyy=22,kxyzz=23
-        integer, parameter :: kxyyzz=24,kyzzxx=25,kzxxyy=26,kxxyyzz=27
-    !---------------------------------------------------------------------------
+    ! TODO: only in limiter, set_face_vals_3D
+    real bf_faces(nslim,nbastot)
 
-    !===========================================================================
-    ! VTK output parameters
-    !---------------------------------------------------------------------------
-    integer, parameter :: nvtk=1 ! was 2
-    integer, parameter :: nvtk2=nvtk*nvtk, nvtk3=nvtk*nvtk*nvtk
+    ! TODO: only in:
+    !   * initialize.f90 (setup), fill_fluid2 (deprec.)
+    !   * set_face_vals_3D, set_internal_vals_3D
+    !   * source_calc, innerintegral
+    real bfvals_int(npg,nbastot)
+
+    ! TODO: only in set_internal_vals_3D, set_face_vals_3D
+    real xquad(20)
+
+    ! TODO: only in initialize.f90 (setup), source_calc
+    real bval_int_wgt(npg,nbastot)
+
+    ! TODO: only in initialize.f90 (in setup as helper variables for wgtbf_xmp, etc.)
+    real wgtbfvals_xp(nface,nbastot),wgtbfvals_xm(nface,nbastot)  ! these are temps used to assign other vars
+    real wgtbfvals_yp(nface,nbastot),wgtbfvals_ym(nface,nbastot)  ! these are temps used to assign other vars
+    real wgtbfvals_zp(nface,nbastot),wgtbfvals_zm(nface,nbastot)  ! these are temps used to assign other vars
+
+    ! TODO: only in initialize.f90 (setup), glflux
+    real wgtbf_xmp(nface,2,nbastot)
+    real wgtbf_ymp(nface,2,nbastot)
+    real wgtbf_zmp(nface,2,nbastot)
+
+    ! Basis function flags
+    ! TODO: these variables are in:
+    !   * initialize.f90 (setup), fill_fluid2 (deprec.)
+    !   * innerintegral
+    !   * set_vtk_vals_3D, set_internal_vals_3D, set_face_vals_3D
+    integer, parameter :: kx     = 2, ky    = 3, kz    = 4
+    integer, parameter :: kyz    = 5, kzx   = 6, kxy   = 7
+    integer, parameter :: kxyz   = 8
+    integer, parameter :: kxx    = 9, kyy   =10, kzz   =11
+    integer, parameter :: kyzz   =12, kzxx  =13, kxyy  =14
+    integer, parameter :: kyyz   =15, kzzx  =16, kxxy  =17
+    integer, parameter :: kyyzz  =18, kzzxx =19, kxxyy =20
+    integer, parameter :: kyzxx  =21, kzxyy =22, kxyzz =23
+    integer, parameter :: kxyyzz =24, kyzzxx=25, kzxxyy=26
+    integer, parameter :: kxxyyzz=27
+
+    ! TODO: only in output & basis_funcs
+    integer, parameter :: nvtk  = 1    ! (was 2)
+    integer, parameter :: nvtk2 = nvtk*nvtk
+    integer, parameter :: nvtk3 = nvtk*nvtk*nvtk
+
+    ! TODO: only in set_vtk_vals_3D, output_vtk
     real, dimension(nvtk3,nbastot) :: bfvtk, bfvtk_dx, bfvtk_dy, bfvtk_dz
+
+    ! TODO: only in set_vtk_vals_3D, xvtk/yvtk/zvtk (parameters), output_vtk
     real dxvtk,dyvtk,dzvtk
     !---------------------------------------------------------------------------
 
+
     !===========================================================================
-    ! MPI definitions
-    !---------------------------------------------------------------------------
-    !   print_mpi is sets the MPI rank that will do any printing to console
-    integer dims(3),coords(3),periods(3),nbrs(6),reqs(4),stats(MPI_STATUS_SIZE,4)
-    !---------------------------------------------------------------------------
-
-    real cflm
-
-
-
-
-    !===============================================================================
     ! Arrays for field variables, fluxes, inner integrals, sources, and time(s)
-    !---------------------------------------------------------------------------
+    !------------------------------------------------------------
     real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r0, Q_r1, Q_r2, Q_r3
     real, dimension(nx,ny,nz,nQ,nbasis) :: glflux_r, source_r, integral_r
 
@@ -165,13 +208,22 @@ module parameters
     real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
 
     real t, dt, dtout, sqrt_dVdt_i ! Inv sq-root of (dV*dt), dV = grid cell volume
-    !===============================================================================
+    !===========================================================================
 
 
-    !===============================================================================
-    ! Helper variables (initialized here)
+    !===========================================================================
+    ! Masking parameters (for advanced or internal initial/boundary conditions)
+    !------------------------------------------------------------
+    ! real, dimension(ny,nz,nface,nQ) :: Qxlow_ext_custom
+    ! real, dimension(nx,ny,nface,nQ) :: Qcyl_ext_c, Qcyl_ext
+    ! logical QMask(nx,ny,nz), MMask(nx,ny,nz)
     !---------------------------------------------------------------------------
-    real t1,t2,elapsed_time,t_start,t_stop,dtoriginal  ! used for timing (dtoriginal optional)
+
+
+    !===========================================================================
+    ! Helper variables (initialized here)
+    !------------------------------------------------------------
+    real t1,t2,t_start,t_stop,dtoriginal  ! used for timing (dtoriginal optional)
     real lxd,lxu,lyd,lyu,lzd,lzu  ! used indirectly by the grid coord functions
     real loc_lxd,loc_lyd,loc_lzd  ! used directly by the grid coord functions
     real dz, dy, dx, dxi, dyi, dzi, dVi  ! used throughout + directly by grid coord functions
@@ -179,14 +231,14 @@ module parameters
     integer mxa(3),mya(3),mza(3)  ! used in flux_calc_pnts_r()
     integer kroe(nface)  ! used in flux_cal()
     integer iseed  ! used for initializing random seeds
-    !===============================================================================
+    !===========================================================================
 
 
-    !===============================================================================
+    !===========================================================================
     ! MPI definitions
-    !---------------------------------------------------------------------------
+    !------------------------------------------------------------
     integer, parameter :: print_mpi = 0  ! sets the MPI rank that will do printing
-    integer :: mpi_nz  ! used in apply_BC + init (set implicitly via mpi_nx/mpi_ny)
+    integer :: mpi_nz  ! used in apply_boundaries + init (set implicitly via mpi_nx/mpi_ny)
     integer :: mpi_P,mpi_Q,mpi_R  ! used in exchange_flux and apply_BC + init
     integer :: numprocs  ! used in get_min_dt + init
     integer :: iam,ierr  ! used all over (wherever MPI stuff seems to be)
@@ -200,7 +252,9 @@ module parameters
     integer, parameter :: UP    = 5  ! used in exchange_flux + init
     integer, parameter :: DOWN  = 6  ! used in exchange_flux + init
     integer, parameter :: MPI_TT = MPI_REAL4  ! used in exchange_flux and get_min_dt + init
-    !===============================================================================
+
+    integer dims(3),coords(3),periods(3),nbrs(6),reqs(4),stats(MPI_STATUS_SIZE,4)
+    !===========================================================================
 
 contains
 

@@ -1,46 +1,49 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 1.0e6
-    real, parameter :: ly = 1.0e6
-    real, parameter :: lz = 1.0e6/120.
+    real, parameter :: lx = 2.2e0
+    real, parameter :: ly = 4.1e-1
+    real, parameter :: lz = 4.1e-1/120.
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad = 2
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 70
-    integer, parameter :: ny = 1
+    integer, parameter :: nx = 40
+    integer, parameter :: ny = 40
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
-    integer :: mpi_nx = 16
-    integer :: mpi_ny = 1
+    integer :: mpi_nx = 4
+    integer :: mpi_ny = 4
 
     ! Temporal integration order
-    !   * 2 for
-    !   * 3 for 3rd-order Runga-Kutta (Shu-Osher)
+    !   * 2 or 'heun' for 2nd-order RK
+    !   * 3 or 'shu-osher' for 3rd-order RK
     integer, parameter :: iorder = 2
+    character(*), parameter :: iname = 'heun'
 
     ! Fluctuating hydrodynamics
     logical, parameter :: llns = .false.
 
     ! Initial conditions
-    integer, parameter :: icid = 3
+    integer, parameter :: icid = 5
+    ! character(*), parameter :: icname = ''
 
     ! Boundary conditions:
-    !   * 0 for set_bc subroutine used to prescribe BCs
-    !   * 1 for wall (vanishing normal velocities).
-    !   * 2 for periodic (MPI does this for you).
-    character(*), parameter :: xlbc = 'wall'
-    character(*), parameter :: xhbc = 'wall'
-    character(*), parameter :: ylbc = 'periodic'
-    character(*), parameter :: yhbc = 'periodic'
-    character(*), parameter :: zlbc = 'periodic'
-    character(*), parameter :: zhbc = 'periodic'
+    !   * 0 for periodic (MPI does this for you)
+    !   * 1 for outflow (MPI does this for you)
+    !   * 2 for wall (vanishing normal velocities)
+    !   * 3 for no-slip (vanishing normal/tangential velocities)
+    character(*), parameter :: xlobc = 'outflow'
+    character(*), parameter :: xhibc = 'outflow'
+    character(*), parameter :: ylobc = 'no-slip'
+    character(*), parameter :: yhibc = 'no-slip'
+    character(*), parameter :: zlobc = 'periodic'
+    character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 8.5e4
+    real, parameter :: tf = 1.0e0
 
     ! Riemann solver
     ! If all of them = 0, then LLF is used for fluxes.
@@ -57,19 +60,19 @@ module input
     real, parameter :: cp = aindex/aindm1
 
     ! Equation of state and constitutive parameters
-    real, parameter :: vis = 0.0
+    real, parameter :: vis = 1.0e-3
     real, parameter :: epsi = 5.0
     real, parameter :: clt = 2.0
 
     ! Output frequency and directory
     integer, parameter :: ntout = 100
     character (*), parameter :: datadir="data"
-    character (*), parameter :: outname="test_modbc_0"
+    character (*), parameter :: outname="test_modbc_pipe_0"
     character (*), parameter :: outdir = trim(datadir//"/"//outname)
 
     ! Checkpointing
     !   set iread to 1 or 2 (when using the odd/even scheme)
-    integer, parameter :: iread = 0
+    integer, parameter :: iread  = 0
     integer, parameter :: iwrite = 0
     logical, parameter :: resuming = .false.
     character (4), parameter :: fpre = 'Qout'

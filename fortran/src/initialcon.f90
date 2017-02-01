@@ -2,12 +2,15 @@ module initialcon
 
 use parameters
 use helpers
+use custom_boundary
+use boundaries
 
 contains
 
     subroutine set_ic(Q_r, id)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
+        ! character(*), intent(in) :: name
         integer i,j,k,id
         real wtev
 
@@ -16,7 +19,8 @@ contains
         Q_r(:,:,:,:,:) = 0.0
         Q_r(:,:,:,rh,1) = rh_floor
         Q_r(:,:,:,en,1) = T_floor*rh_floor/(aindex - 1.)
-        MMask(:,:,:) = .false.
+        ! QMask(:,:,:) = .false.
+        ! MMask(:,:,:) = .false.
 
         select case(id)
             case(0)
@@ -34,6 +38,12 @@ contains
             case(4)
                 call mpi_print(iam, 'Setting up 1D Sod Shock Tube v2...')
                 call sod_shock_tube_1d(Q_r, 1)
+            case(5)
+                call mpi_print(iam, 'Setting up 2D cylinder-in-pipe (laminar)...')
+                call pipe_cylinder_2d(Q_r, 0)
+            case(6)
+                call mpi_print(iam, 'Setting up 2D cylinder-in-pipe (periodic)...')
+                call pipe_cylinder_2d(Q_r, 1)
         end select
 
     end subroutine set_ic
@@ -52,9 +62,9 @@ contains
         jet_strength = 1.0
         rh_fluid = 1.0
 
-        do i = 1,nx
-        do j = 1,ny
         do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
 
             call random_number(rand_num)
             rnum = (rand_num - 0.5)
@@ -87,7 +97,7 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k
-        real rh_amb,vx_amb,vy_amb,vz_amb,p_amb,T_amb,beta
+        real rh_amb,vx_amb,vy_amb,vz_amb,pr_amb,T_amb,beta
         real xctr,yctr,zctr,xp,yp,r2,delta_vx,delta_vy,delta_T
         real dn,vx,vy,vz,temp
 
@@ -97,15 +107,15 @@ contains
         vy_amb = 0.0           ! ambient y-velocity
         vz_amb = 0.0           ! ambient z-velocity
         T_amb  = 1.0           ! ambient temperature
-        p_amb  = T_amb*rh_amb  ! ambient pressure
+        pr_amb = T_amb*rh_amb  ! ambient pressure
 
         xctr = 0               ! vortex center in x-direction
         yctr = 0               ! vortex center in y-direction
         zctr = 0               ! vortex center in z-direction
 
-        do i = 1,nx
-        do j = 1,ny
         do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
 
             xp = xc(i) - xctr   ! x-value from vortex center
             yp = yc(j) - yctr   ! y-value from vortex center
@@ -139,12 +149,12 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k,version
-        real rh_hi,rh_lo,p_hi,p_lo,xctr,yctr,xp,yp,dn,vx,vy,vz,pres
+        real rh_hi,rh_lo,pr_hi,pr_lo,xctr,yctr,xp,yp,dn,vx,vy,vz,pr
 
         rh_hi = 1.0e-4
-        p_hi  = 1.0*P_base  ! atmospheric pressure
+        pr_hi = 1.0*P_base  ! atmospheric pressure
         rh_lo = 0.125e-4
-        p_lo  = 0.1*P_base
+        pr_lo = 0.1*P_base
         vx = 0.0
         vy = 0.0
         vz = 0.0
@@ -152,9 +162,9 @@ contains
         xctr = 0
         yctr = 0  ! only needed if shock normal not aligned w/ x-direction
 
-        do i = 1,nx
-        do j = 1,ny
         do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
             xp = xc(i) - xctr
             if ( version .eq. 1 ) then
                 yp = yc(j) - yctr
@@ -164,72 +174,96 @@ contains
 
             if ( xp+yp .le. 0 ) then
                 dn = rh_hi
-                pres = p_hi
+                pr = pr_hi
             endif
             if ( xp+yp .gt. 0 ) then
                 dn = rh_lo
-                pres = p_lo
+                pr = pr_lo
             endif
 
             Q_r(i,j,k,rh,1) = dn
-            Q_r(i,j,k,mx,1) = vx
-            Q_r(i,j,k,my,1) = vy
-            Q_r(i,j,k,mz,1) = vz
-            Q_r(i,j,k,en,1) = pres/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
+            Q_r(i,j,k,mx,1) = dn*vx
+            Q_r(i,j,k,my,1) = dn*vy
+            Q_r(i,j,k,mz,1) = dn*vz
+            Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
         end do
         end do
         end do
 
     end subroutine sod_shock_tube_1d
 
-    !-------------------------------------------------------
 
+    !===========================================================================
+    ! 2D pipe flow around a cylinder
+    !   * Re ~ 20 for laminar case (version 0)
+    !   * Re ~ 100 for periodic case (version 1)
+    !   * Need outflow BCs on right wall: nu d u/d eta - p*eta = 0
+    !   * No-slip BCs everywhere else
+    ! NOTE: This subroutine sets BCs for the problem using custom_boundary
+    !------------------------------------------------------------
     subroutine pipe_cylinder_2d(Q_r, version)
-        ! Make sure:
-        !   * Re ~ 20 for laminar case (version 0)
-        !   * Re ~ 100 for periodic case (version 1)
-        ! Need outflow BCs on right wall:
-        !   nu d u/d eta - p*eta = 0
-        ! No-slip BCs everywhere else
+        use custom_boundary
 
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
-        integer i,j,k,version
-        real dn,pres,vx,vy,vz,u_amb,yp,yc0
+        logical, dimension(nx,ny,nz):: Qmask
 
-        dn   = 1.0
-        pres = 1.0 !*P_base  ! can be adjusted to get stable results
-        vy   = 0.0
-        vz   = 0.0
+        integer i,j,k,i4,version
+        real dn,pr,vx,vy,vz,ux_amb,cyl_x0,cyl_y0,cyl_rad
+
+        !-------------------------------------------------------
+        ! Definitions
+        dn = 1.0
+        pr = 1.0*P_base  ! can be adjusted to get stable results
+        vx = 0.0
+        vy = 0.0
+        vz = 0.0
+
+        cyl_x0 = 0.2
+        cyl_y0 = 0.2
+        cyl_rad = 0.05
 
         select case(version)
             case(0)
-                u_amb = 1.5
+                ux_amb = 1.5
             case(1)
-                u_amb = 0.3
+                ux_amb = 0.3
         end select
 
-        yc0 = yc(0)
-
-        do i = 1,nx
-        do j = 1,ny
+        !-------------------------------------------------------
+        ! Set initial conditions
         do k = 1,nz
-            yp = yc(j) - yc0
-            vx = 4*u_amb*yp*(ly-yp)/ly**2
-
+        do j = 1,ny
+        do i = 1,nx
             Q_r(i,j,k,rh,1) = dn
-            Q_r(i,j,k,mx,1) = vx
-            Q_r(i,j,k,my,1) = vy
-            Q_r(i,j,k,mz,1) = vz
-            Q_r(i,j,k,en,1) = pres/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
+            Q_r(i,j,k,mx,1) = dn*vx
+            Q_r(i,j,k,my,1) = dn*vy
+            Q_r(i,j,k,mz,1) = dn*vz
+            Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
         end do
         end do
         end do
+
+        !-------------------------------------------------------
+        ! Generate cylinder mask --> zero out grid quantities in mask
+        !   NOTE: might be an offset b/c mask is constructed at faces, not cells
+        Qmask(:,:,:) = cyl_in_2d_pipe_mask(cyl_x0, cyl_y0, cyl_rad)
+
+        do i4=1,nface
+            where (Qmask)
+                Q_r(:,:,:,i4,1) = 0.0
+            end where
+        end do
+
+        ! NOTE: Qxlow_ext_custom, Qcyl_ext, and QMask should already be initialized!
+        ! call add_custom_boundaries(icname)
+        call set_cyl_in_2d_pipe_boundaries(Qxlow_ext_custom, Qcyl_ext, Qmask, ux_amb)
 
     end subroutine pipe_cylinder_2d
+    !---------------------------------------------------------------------------
 
-    !-------------------------------------------------------
 
+    !---------------------------------------------------------------------------
     subroutine fill_fluid2(Q_r)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r

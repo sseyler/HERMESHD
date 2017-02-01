@@ -50,26 +50,35 @@ FORTFLAGS = -O2 -xHost -mkl -L$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
 
 ifeq ($(NAME),bitri)
 	OBJS = PERSEUSHydro_bitri_FH_test.f90
-	MODFILES =
+	MODULES =
 endif
 ifeq ($(NAME),mod)
 	OBJS = perseushd_main.f90
-	MODFILES = parameters_mod.f90 ic_mod.f90 \
+	MODULES = parameters_mod.f90 ic_mod.f90 \
 			   prepare_time_advance_mod.f90 basis_funcs_mod.f90 \
 			   io_mod.f90
 endif
 ifeq ($(NAME),mod2)
 	OBJS = main.f90
-	MODFILES = input.f90 parameters.f90 helpers.f90 initialize.f90 \
-			   init_conditions.f90 \
+	MODULES = input.f90 parameters.f90 helpers.f90 \
+			   init_conditions.f90 initialize.f90 \
 			   prep_time_advance.f90 basis_funcs.f90 io.f90
+    MODFILES = input.mod parameters.mod helpers.mod \
+			   init_conditions.mod initialize.mod \
+			   prep_time_advance.mod basis_funcs.mod io.mod
 endif
 ifeq ($(NAME),modbc)
 	OBJS = main.f90
-	MODFILES = input.f90 parameters.f90 helpers.f90 \
-			   boundaries.f90 initialcon.f90 initialize.f90 \
-			   sources.f90 prep_time_advance.f90 \
-			   basis_funcs.f90 output.f90
+	MODULES =  input.f90 parameters.f90 helpers.f90 \
+			   boundaries.f90 initialcon.f90 \
+			   basis_funcs.f90 initialize.f90 \
+			   prepare_step.f90 sources.f90 flux.f90 \
+			   integrator.f90 output.f90
+    MODFILES = input.mod parameters.mod helpers.mod \
+			   boundaries.mod initialcon.mod \
+			   basis_funcs.mod initialize.mod \
+			   prepare_step.mod sources.mod flux.mod \
+			   integrator.mod output.mod
 endif
 ##################################################################
 
@@ -84,11 +93,12 @@ endif
 all: $(PROGNAME)
 
 $(PROGNAME) : $(OBJS)
-	$(FORT) $(FORTFLAGS) $(LIBS) $(MODFILES) $(OBJS) -o $(PROGNAME)
+	$(FORT) $(FORTFLAGS) $(LIBS) $(MODULES) $(OBJS) -o $(PROGNAME)
 #	strip $(PROGNAME)
 #	$(PROGNAME)
 	mv $(PROGNAME) $(TESTDIR) && cd $(TESTDIR) && mpiexec -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
 
 clean:
-	$(rm) $(PROGNAME) core *~
+#   $(rm) $(PROGNAME) core *~
+	$(rm) $(MODFILES)
 ##################################################################

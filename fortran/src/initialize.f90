@@ -8,34 +8,36 @@ use basis_funcs
 
 implicit none
 
+real :: cflm
 integer :: nout
 
 contains
 
-    !---------------------------------------------------------------------------
-    subroutine perform_setup()
+    !===========================================================================
+    ! perform_setup : perform general setup & variable initialization
+    !------------------------------------------------------------
+    subroutine perform_setup
         implicit none
-        integer ir,ipg
-        real half_length
+        integer :: ir,ipg
 
-        if (nbasis .le. 8) cflm = 0.14
+        if (nbasis .le. 8)  cflm = 0.14
         if (nbasis .eq. 27) cflm = 0.1
         if (nbasis .eq. 64) cflm = 0.08
 
         ! Initialize grid sizes and local lengths
 
-        cbasis(1) = 1.              ! coeff for basis func {1}
-        cbasis(kx:kz) = 3.          ! coeff for basis funcs {x,y,z}
+        cbasis(1)       = 1.        ! coeff for basis func  {1}
+        cbasis(kx:kz)   = 3.        ! coeff for basis funcs {x,y,z}
         cbasis(kyz:kxy) = 9.        ! coeff for basis funcs {yz,zx,xy}
-        cbasis(kxyz) = 27.          ! coeff for basis func {xyz}
+        cbasis(kxyz)    = 27.       ! coeff for basis func  {xyz}
 
-        cbasis(kxx:kzz) = 5.        ! coeff for basis funcs {P2(x),P2(y),P2(z)}
-        cbasis(kyzz:kxyy) = 15.     ! coeff for basis funcs {yP2(z),zP2(x),xP2(y)}
-        cbasis(kyyz:kxxy) = 15.     ! coeff for basis funcs {P2(y)z,P2(z)y,P2(z)x}
-        cbasis(kyyzz:kxxyy) = 25.   ! coeff for basis funcs {P2(y)P2(z),P2(z)P2(x),P2(x)P2(y)}
-        cbasis(kyzxx:kxyzz) = 45.   ! coeff for basis funcs {yzP_2(x),zxP_2(y),xyP_2(z)}
+        cbasis(kxx:kzz)       = 5.  ! coeff for basis funcs {P2(x),P2(y),P2(z)}
+        cbasis(kyzz:kxyy)     = 15. ! coeff for basis funcs {yP2(z),zP2(x),xP2(y)}
+        cbasis(kyyz:kxxy)     = 15. ! coeff for basis funcs {P2(y)z,P2(z)y,P2(z)x}
+        cbasis(kyyzz:kxxyy)   = 25. ! coeff for basis funcs {P2(y)P2(z),P2(z)P2(x),P2(x)P2(y)}
+        cbasis(kyzxx:kxyzz)   = 45. ! coeff for basis funcs {yzP_2(x),zxP_2(y),xyP_2(z)}
         cbasis(kxyyzz:kzxxyy) = 75. ! coeff for basis funcs {xP2(y)P2(z),yP2(z)P2(x),zP2(x)P2(y)}
-        cbasis(kxxyyzz) = 125.      ! coeff for basis funcs {P2(x)P2(y)P2(z)}
+        cbasis(kxxyyzz)       = 125.! coeff for basis funcs {P2(x)P2(y)P2(z)}
 
         call MPI_Init ( ierr )
         call MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierr)
@@ -46,15 +48,15 @@ contains
         dims(2) = mpi_ny
         dims(3) = mpi_nz
 
-        periods(:)=0
-        if (xhbc == 'periodic') then
-            periods(1)=1
+        periods(:) = 0
+        if (xhibc == 'periodic') then
+            periods(1) = 1
         end if
-        if (yhbc == 'periodic') then
-            periods(2)=1
+        if (yhibc == 'periodic') then
+            periods(2) = 1
         end if
-        if (zhbc == 'periodic') then
-            periods(3)=1
+        if (zhibc == 'periodic') then
+            periods(3) = 1
         end if
         reorder = 1
 
@@ -68,15 +70,12 @@ contains
         call MPI_CART_SHIFT(cartcomm, 1, 1, nbrs(SOUTH), nbrs(NORTH), ierr)
         call MPI_CART_SHIFT(cartcomm, 2, 1, nbrs(DOWN), nbrs(UP), ierr)
 
-        half_length = lx/2.0
-        lxd = -half_length
-        lxu = half_length
-        half_length = ly/2.0
-        lyd = -half_length
-        lyu = half_length
-        half_length = lz/2.0
-        lzd = -half_length
-        lzu = half_length
+        lxd = -(lx/2.0)
+        lxu =  (lx/2.0)
+        lyd = -(ly/2.0)
+        lyu =  (ly/2.0)
+        lzd = -(lz/2.0)
+        lzu =  (lz/2.0)
 
         dxi = (nx*mpi_nx)/(lxu-lxd)
         dyi = (ny*mpi_ny)/(lyu-lyd)
@@ -146,19 +145,13 @@ contains
 
         call print_startup_info()
 
-        t_start = get_clock_time()
-
-        if (iread .eq. 0) then
-            call set_ic(Q_r0, icid)
-        else
-            call initialize_from_file(Q_r0)
-        endif
-
     end subroutine perform_setup
     !---------------------------------------------------------------------------
 
 
-    !---------------------------------------------------------------------------
+    !===========================================================================
+    ! initialize_from_file : initialize simulation from checkpoint file
+    !------------------------------------------------------------
     subroutine initialize_from_file(Q_r)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
@@ -207,7 +200,9 @@ contains
     !---------------------------------------------------------------------------
 
 
-    !---------------------------------------------------------------------------
+    !===========================================================================
+    ! print_startup_info : print initial information about simulation
+    !------------------------------------------------------------
     subroutine print_startup_info()
 
         if (iam .eq. print_mpi) then
@@ -229,7 +224,9 @@ contains
     !---------------------------------------------------------------------------
 
 
-    !---------------------------------------------------------------------------
+    !===========================================================================
+    ! writeQ : Write a checkpoint file
+    !------------------------------------------------------------
     subroutine writeQ(fprefix,irank,iddump,Qin,tnow,dtnow,noutnow,              &
                       mpi_nxnow,mpi_nynow,mpi_nznow)
 
@@ -278,10 +275,11 @@ contains
     !---------------------------------------------------------------------------
 
 
-    !---------------------------------------------------------------------------
+    !===========================================================================
+    ! Read a checkpoint file (set iread to nonzero integer)
+    !------------------------------------------------------------
     subroutine readQ(fprefix,irank,iddump,Qin,tnow,dtnow,noutnow,               &
                      mpi_nxnow,mpi_nynow,mpi_nznow)
-
         implicit none
         real :: Qin(nx,ny,nz,nQ,nbasis),tnow,dtnow
         integer :: irank,iddump,noutnow,mpi_nxnow,mpi_nynow,mpi_nznow,nump,numd,qq,k,j,i,ir
