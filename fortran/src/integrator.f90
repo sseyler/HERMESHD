@@ -126,55 +126,63 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_in
         real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
 
-        do k = 1,nz
-        do j = 1,ny
-        do i = 1,nx
-
-            do ieq = 1,nQ
-            do ir=1,nbasis
-                Q_out(i,j,k,ieq,ir) =                                           &
-                    Q_in(i,j,k,ieq,ir) - dt*( glflux_r(i,j,k,ieq,ir)            &
-                                            - source_r(i,j,k,ieq,ir) )
-            end do
-            end do
-
-            do ieq = 1,nQ
-                if ( Q_out(i,j,k,ieq,1) .ne. Q_out(i,j,k,ieq,1)) then
-                    print *,'NaN. Bailing out...'
-                    print *,'  xc  =',xc(i),'  yc  =',yc(j),'  zc  =',zc(k),'  ieq  =',ieq
-                    call exit(-1)
-                endif
-            end do
-
-        end do
-        end do
-        end do
-
-        ! do ir=1,nbasis
-        ! do ieq = 1,nQ
-        !     do k = 1,nz
-        !     do j = 1,ny
-        !     do i = 1,nx
+        ! do k = 1,nz
+        ! do j = 1,ny
+        ! do i = 1,nx
+        !     print *,Q_r0(:,:,:,rh,1)
+        !     print *,''
+        !     do ieq = 1,nQ
+        !     do ir=1,nbasis
         !         Q_out(i,j,k,ieq,ir) =                                           &
         !             Q_in(i,j,k,ieq,ir) - dt*( glflux_r(i,j,k,ieq,ir)            &
         !                                     - source_r(i,j,k,ieq,ir) )
+        !     end do
+        !     end do
+        !     do ieq = 1,nQ
         !         if ( Q_out(i,j,k,ieq,1) .ne. Q_out(i,j,k,ieq,1)) then
         !             print *,'NaN. Bailing out...'
         !             print *,'  xc  =',xc(i),'  yc  =',yc(j),'  zc  =',zc(k),'  ieq  =',ieq
         !             call exit(-1)
         !         endif
         !     end do
-        !     end do
-        !     end do
         ! end do
         ! end do
+        ! end do
+
+        do ir=1,nbasis
+        do ieq = 1,nQ
+            do k = 1,nz
+            do j = 1,ny
+            do i = 1,nx
+                Q_out(i,j,k,ieq,ir) =                                           &
+                    Q_in(i,j,k,ieq,ir) - dt*( glflux_r(i,j,k,ieq,ir)            &
+                                            - source_r(i,j,k,ieq,ir) )
+                if ( Q_out(i,j,k,ieq,1) .ne. Q_out(i,j,k,ieq,1)) then
+                    print *,'------------------------------------------------'
+                    print *,'NaN. Bailing out...'
+                    write(*,'(A7,I9,A7,I9,A7,I9)')          '   i = ',   i, '   j = ',    j, '   k = ',k
+                    write(*,'(A7,ES9.2,A7,ES9.2,A7,ES9.2)') '  xc = ',xc(i),'  yc = ',yc(j), '  zc = ', zc(k)
+                    write(*,'(A14,I2,A7,I2)') '    >>> iam = ', iam, ' ieq = ', ieq
+                    print *,''
+                    call exit(-1)
+                endif
+            end do
+            end do
+            end do
+        end do
+        end do
+
         ! do ieq = 1,nQ
         !     do k = 1,nz
         !     do j = 1,ny
         !     do i = 1,nx
         !         if ( Q_out(i,j,k,ieq,1) .ne. Q_out(i,j,k,ieq,1)) then
+        !             print *,'------------------------------------------------'
         !             print *,'NaN. Bailing out...'
-        !             print *,'  xc  =',xc(i),'  yc  =',yc(j),'  zc  =',zc(k),'  ieq  =',ieq
+        !             write(*,'(A7,I9,A7,I9,A7,I9)')          '   i = ',   i, '   j = ',    j, '   k = ',k
+        !             write(*,'(A7,ES9.2,A7,ES9.2,A7,ES9.2)') '  xc = ',xc(i),'  yc = ',yc(j), '  zc = ', zc(k)
+        !             write(*,'(A14,I2,A7,I2)') '    >>> iam = ', iam, ' ieq = ', ieq
+        !             print *,''
         !             call exit(-1)
         !         endif
         !     end do

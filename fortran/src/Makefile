@@ -75,7 +75,7 @@ ifeq ($(NAME),modbc)
 			   prepare_step.f90 sources.f90 flux.f90 \
 			   integrator.f90 output.f90
     MODFILES = input.mod parameters.mod helpers.mod \
-			   boundaries.mod initialcon.mod \
+			   custom_boundary.mod boundaries.mod initialcon.mod \
 			   basis_funcs.mod initialize.mod \
 			   prepare_step.mod sources.mod flux.mod \
 			   integrator.mod output.mod

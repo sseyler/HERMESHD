@@ -53,38 +53,39 @@ contains
     subroutine hydro_jet(Q_r)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
-        integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,ieq
-        real x,y,wtev,rnum,jet_strength,rand_num,rh_fluid
-        real qquad(npg,nQ),xcc,ycc,zcc  ! bfint(npg,nbasis),qquadv(npg)
+        integer i,j,k,iseed
+        real te,rh,pr,beta,beta2,rand_num,rnum
+        real smx,smy,smz
         iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
 
-        wtev = T_floor
-        jet_strength = 1.0
-        rh_fluid = 1.0
+        te    = T_floor
+        beta  = 1.0   ! jet strength
+        beta2 = 0.005 ! perturbation strength
+        rh    = 1.0
+        pr    = te*rh
 
         do k = 1,nz
         do j = 1,ny
         do i = 1,nx
-
             call random_number(rand_num)
             rnum = (rand_num - 0.5)
 
-            Q_r(i,j,k,rh,1) = rh_floor
-            Q_r(i,j,k,en,1) = wtev*Q_r(i,j,k,rh,1)/(aindex - 1.)
+            smx = beta*rh/cosh(20*yc(j)/lyu)
+            smy = beta2*rnum/cosh(20*yc(j)/lyu)**2
+            smz = 0
 
-            xcc = xc(i)
-            ycc = yc(j)
-            zcc = zc(k)
+            Q_r(i,j,k,rh,1) = rh
+            Q_r(i,j,k,mx,1) = smx
+            Q_r(i,j,k,my,1) = smy
+            Q_r(i,j,k,mz,1) = smz
+            Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*(smx**2 + smy**2 + smz**2)/rh
 
-            Q_r(i,j,k,rh,1) = rh_fluid
-            Q_r(i,j,k,my,1) = 0.005*rnum/cosh(20*ycc/lyu)**2
-            Q_r(i,j,k,mz,1) = 0.
-            Q_r(i,j,k,mx,1) = jet_strength*Q_r(i,j,k,rh,1)/cosh(20*ycc/lyu)/1.
-            Q_r(i,j,k,en,1) = wtev*Q_r(i,j,k,rh,1)/(aindex - 1.)                &
-                             + 0.5*( Q_r(i,j,k,mx,1)**2                         &
-                                  +  Q_r(i,j,k,my,1)**2                         &
-                                  +  Q_r(i,j,k,mz,1)**2 ) / Q_r(i,j,k,rh,1)
-
+            ! Q_r(i,j,k,pxx,1) = pr + smx**2/rh
+            ! Q_r(i,j,k,pyy,1) = pr + smy**2/rh
+            ! Q_r(i,j,k,pzz,1) = pr + smz**2/rh
+            ! Q_r(i,j,k,pxy,1) =      smx*smy/rh
+            ! Q_r(i,j,k,pxz,1) =      smx*smz/rh
+            ! Q_r(i,j,k,pyz,1) =      smy*smz/rh
         end do
         end do
         end do
@@ -97,17 +98,17 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k
-        real rh_amb,vx_amb,vy_amb,vz_amb,pr_amb,T_amb,beta
+        real rh_amb,vx_amb,vy_amb,vz_amb,pr_amb,te_amb,beta
         real xctr,yctr,zctr,xp,yp,r2,delta_vx,delta_vy,delta_T
-        real dn,vx,vy,vz,temp
+        real dn,vx,vy,vz,te
 
-        beta = 5.0             ! vortex strength
+        beta   = 5.0           ! vortex strength
         rh_amb = 1.0           ! ambient density
         vx_amb = 1.0           ! ambient x-velocity
         vy_amb = 0.0           ! ambient y-velocity
         vz_amb = 0.0           ! ambient z-velocity
-        T_amb  = 1.0           ! ambient temperature
-        pr_amb = T_amb*rh_amb  ! ambient pressure
+        te_amb = 1.0           ! ambient temperature
+        pr_amb = te_amb*rh_amb ! ambient pressure
 
         xctr = 0               ! vortex center in x-direction
         yctr = 0               ! vortex center in y-direction
@@ -116,7 +117,6 @@ contains
         do k = 1,nz
         do j = 1,ny
         do i = 1,nx
-
             xp = xc(i) - xctr   ! x-value from vortex center
             yp = yc(j) - yctr   ! y-value from vortex center
             r2 = xp**2 + yp**2  ! radial distance from vortex center
@@ -128,15 +128,14 @@ contains
             vx = vx_amb + delta_vx
             vy = vy_amb + delta_vy
             vz = vz_amb
-            temp = T_amb + delta_T
-            dn = rh_amb * temp**(1./aindm1)
+            te = te_amb + delta_T
+            dn = rh_amb * te**(1./aindm1)
 
             Q_r(i,j,k,rh,1) = dn
             Q_r(i,j,k,mx,1) = dn*vx
             Q_r(i,j,k,my,1) = dn*vy
             Q_r(i,j,k,mz,1) = dn*vz
-            Q_r(i,j,k,en,1) = temp*dn/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
-
+            Q_r(i,j,k,en,1) = te*dn/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
         end do
         end do
         end do
@@ -209,19 +208,20 @@ contains
         logical, dimension(nx,ny,nz):: Qmask
 
         integer i,j,k,i4,version
-        real dn,pr,vx,vy,vz,ux_amb,cyl_x0,cyl_y0,cyl_rad
+        real dn,pr,te,vx,vy,vz,ux_amb,cyl_x0,cyl_y0,cyl_rad
 
         !-------------------------------------------------------
         ! Definitions
         dn = 1.0
-        pr = 1.0*P_base  ! can be adjusted to get stable results
+        te = T_floor
+        pr = dn*te  ! 1.0*P_base  ! can be adjusted to get stable results
         vx = 0.0
         vy = 0.0
         vz = 0.0
 
-        cyl_x0 = 0.2
-        cyl_y0 = 0.2
-        cyl_rad = 0.05
+        cyl_x0 = 2.0e2
+        cyl_y0 = 2.0e2
+        cyl_rad = 5.0e1
 
         select case(version)
             case(0)
@@ -240,6 +240,13 @@ contains
             Q_r(i,j,k,my,1) = dn*vy
             Q_r(i,j,k,mz,1) = dn*vz
             Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
+
+            ! Q_r(i,j,k,pxx,1) = pr + dn*vx**2
+            ! Q_r(i,j,k,pyy,1) = pr + dn*vy**2
+            ! Q_r(i,j,k,pzz,1) = pr + dn*vz**2
+            ! Q_r(i,j,k,pxy,1) =      dn*vx*vy
+            ! Q_r(i,j,k,pxz,1) =      dn*vx*vz
+            ! Q_r(i,j,k,pyz,1) =      dn*vy*vz
         end do
         end do
         end do
@@ -255,9 +262,13 @@ contains
             end where
         end do
 
+        Qxlow_ext_c(:,:,:,:) = 1.0
+        Qcyl_ext_c(:,:,:,:) = 1.0
         ! NOTE: Qxlow_ext_custom, Qcyl_ext, and QMask should already be initialized!
         ! call add_custom_boundaries(icname)
-        call set_cyl_in_2d_pipe_boundaries(Qxlow_ext_custom, Qcyl_ext, Qmask, ux_amb)
+        ! print *,Qxlow_ext_c(:,:,1,rh:mx)
+        ! print *,''
+        call set_cyl_in_2d_pipe_boundaries(Qmask, ux_amb, Qxlow_ext_c, Qcyl_ext_c)
 
     end subroutine pipe_cylinder_2d
     !---------------------------------------------------------------------------
@@ -276,47 +287,40 @@ contains
         wtev = T_floor
 
         ! test problem is an unstable flow jet in x with velocity perturbations in y
-
         do i = 1,nx
-            do j = 1,ny
-                do k = 1,nz
+        do j = 1,ny
+        do k = 1,nz
+            call random_number(rand_num)
+            rnum = (rand_num - 0.5)
+            qquad(:,:) = 0.
 
-                    call random_number(rand_num)
-                    rnum = (rand_num - 0.5)
+            do igrid=1,npg
+                qquad(igrid,rh) = rh_floor
+                qquad(igrid,en) = wtev*qquad(igrid,rh)/(aindex - 1.)
 
-                    qquad(:,:) = 0.
+                xcc = xc(i) + bfvals_int(igrid,kx)*0.5/dxi
+                ycc = yc(j) + bfvals_int(igrid,ky)*0.5/dyi
+                zcc = zc(k) + bfvals_int(igrid,kz)*0.5/dzi
 
-                    do igrid=1,npg
+                qquad(igrid,rh) = rh_fluid
+                qquad(igrid,mx) = 1.0*qquad(igrid,rh)/cosh(20*ycc/lyu)/1.
+                qquad(igrid,my) = 0.001*rnum/cosh(20*yc(j)/lyu)**2 !0.001*rnum/1.
+                qquad(igrid,mz) = 0.
+                qquad(igrid,en) = wtev*qquad(igrid,rh)/(aindex - 1.)        &
+                                + 0.5*(qquad(igrid,mx)**2                   &
+                                     + qquad(igrid,my)**2                   &
+                                     + qquad(igrid,mz)**2)/qquad(igrid,rh)
+            end do
 
-                        qquad(igrid,rh) = rh_floor
-                        qquad(igrid,en) = wtev*qquad(igrid,rh)/(aindex - 1.)
-
-                        xcc = xc(i) + bfvals_int(igrid,kx)*0.5/dxi
-                        ycc = yc(j) + bfvals_int(igrid,ky)*0.5/dyi
-                        zcc = zc(k) + bfvals_int(igrid,kz)*0.5/dzi
-
-                        qquad(igrid,rh) = rh_fluid
-                        qquad(igrid,my) = 0.001*rnum/cosh(20*yc(j)/lyu)**2 !0.001*rnum/1.
-                        qquad(igrid,mz) = 0.
-                        qquad(igrid,mx) = 1.0*qquad(igrid,rh)/cosh(20*ycc/lyu)/1.
-                        qquad(igrid,en) = wtev*qquad(igrid,rh)/(aindex - 1.)        &
-                                        + 0.5*(qquad(igrid,mx)**2                   &
-                                             + qquad(igrid,my)**2                   &
-                                             + qquad(igrid,mz)**2)/qquad(igrid,rh)
-
-                    end do
-
-                    do ieq=rh,en
-                        do ir=1,nbasis
-                            Q_r(i,j,k,ieq,ir) = 0.125 * cbasis(ir) * sum(wgt3d(1:npg) &
-                                                      * bfvals_int(1:npg,ir)*qquad(1:npg,ieq))
-                        end do
-                    end do
-
+            do ieq=rh,en
+                do ir=1,nbasis
+                    Q_r(i,j,k,ieq,ir) = 0.125 * cbasis(ir) * sum(wgt3d(1:npg) &
+                                              * bfvals_int(1:npg,ir)*qquad(1:npg,ieq))
                 end do
             end do
         end do
-
+        end do
+        end do
     end subroutine fill_fluid2
 
 

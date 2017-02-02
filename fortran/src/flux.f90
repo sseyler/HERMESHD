@@ -231,7 +231,7 @@ contains
                 fpnts_r(ife,pyy) = -c2d3nu*vz
                 fpnts_r(ife,pzz) =  c4d3nu*vz
 
-                fpnts_r(ife,pxy) = 0.
+                fpnts_r(ife,pxy) = 0
                 fpnts_r(ife,pxz) = nu*vx
                 fpnts_r(ife,pyz) = nu*vy
 
@@ -382,8 +382,16 @@ contains
                         i4p = i4 + nface
                         flux_y(i4,i,j,k,ieq) = 0.5*(fface_y(i4,ieq) + fface_y(i4p,ieq)) &
                                              - 0.5*cfry(i4,ieq)*(Qface_y(i4p,ieq) - Qface_y(i4,ieq))
+
+                        ! if (k == 1 .and. j == 1 .and. i == nx .and. i4 == 1 .and. ieq == pxx) then
+                        !     write(*,'(A19,I1,A2,ES9.1,A3,ES9.1)') 'fface_y | Qface_y (',iam,'):',fface_y(i4,ieq),' | ',Qface_y(i4,ieq)
+                        ! end if
                     end do
                 end do
+
+                ! if (k == 1 .and. j == ny .and. i == nx) then
+                !     write(*,'(A8,I1,A2,2ES9.1,A3,2ES9.1)') 'flux_y (',iam,'):',flux_y(1,1,1:2,nz,pxx),' | ',flux_y(1,1,ny-1:ny,nz,pxx)
+                ! end if
 
                 kroe(1:nface) = 1
 
@@ -758,16 +766,13 @@ contains
 !----------------------------------------------------------------------------------------------
 
     subroutine glflux
-
         implicit none
         integer i,j,k,ieq,ir
 
         do ieq = 1,nQ
         do k = 1,nz
         do j = 1,ny
-
             do i = 1,nx
-
                 glflux_r(i,j,k,ieq,1) = 0.25*(dxi*(wgt2d(1)*(flux_x(1,i+1,j,k,ieq) - flux_x(1,i,j,k,ieq)))  &
                                             + dyi*(wgt2d(1)*(flux_y(1,i,j+1,k,ieq) - flux_y(1,i,j,k,ieq)))  &
                                             + dzi*(wgt2d(1)*(flux_z(1,i,j,k+1,ieq) - flux_z(1,i,j,k,ieq)))  &
@@ -784,7 +789,6 @@ contains
 
             do ir=2,nbasis
                 do i = 1,nx
-
                     glflux_r(i,j,k,ieq,ir) =                                        &
                          wgtbf_xmp(1,2,ir)*flux_x(1,i+1,j,k,ieq) + wgtbf_xmp(1,1,ir)*flux_x(1,i,j,k,ieq)  &
                        + wgtbf_ymp(1,2,ir)*flux_y(1,i,j+1,k,ieq) + wgtbf_ymp(1,1,ir)*flux_y(1,i,j,k,ieq)  &
@@ -799,14 +803,11 @@ contains
                        + wgtbf_ymp(4,2,ir)*flux_y(4,i,j+1,k,ieq) + wgtbf_ymp(4,1,ir)*flux_y(4,i,j,k,ieq)  &
                        + wgtbf_zmp(4,2,ir)*flux_z(4,i,j,k+1,ieq) + wgtbf_zmp(4,1,ir)*flux_z(4,i,j,k,ieq)  &
                        - integral_r(i,j,k,ieq,ir)
-
                 end do
             end do
-
         end do
         end do
         end do
-
     end subroutine glflux
 
 !-----------------------------------------------------------!

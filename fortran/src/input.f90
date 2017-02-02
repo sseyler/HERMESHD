@@ -1,9 +1,9 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 2.2e0
-    real, parameter :: ly = 4.1e-1
-    real, parameter :: lz = 4.1e-1/120.
+    real, parameter :: lx = 4.1e2 !4.1e2
+    real, parameter :: ly = 4.1e2 !4.1e2
+    real, parameter :: lz = 4.1e2/120. !4.1e2/120.
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad = 2
@@ -27,7 +27,7 @@ module input
     logical, parameter :: llns = .false.
 
     ! Initial conditions
-    integer, parameter :: icid = 5
+    integer, parameter :: icid = 1
     ! character(*), parameter :: icname = ''
 
     ! Boundary conditions:
@@ -35,15 +35,18 @@ module input
     !   * 1 for outflow (MPI does this for you)
     !   * 2 for wall (vanishing normal velocities)
     !   * 3 for no-slip (vanishing normal/tangential velocities)
-    character(*), parameter :: xlobc = 'outflow'
-    character(*), parameter :: xhibc = 'outflow'
-    character(*), parameter :: ylobc = 'no-slip'
-    character(*), parameter :: yhibc = 'no-slip'
+    character(*), parameter :: xlobc = 'periodic' !'periodic'
+    character(*), parameter :: xhibc = 'periodic' !'periodic'
+    character(*), parameter :: ylobc = 'periodic'  !'periodic'
+    character(*), parameter :: yhibc = 'periodic'  !'periodic'
     character(*), parameter :: zlobc = 'periodic'
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 1.0e0
+    real, parameter :: tf = 5.0e3
+
+    ! Console output frequency
+    integer, parameter :: ntout = 200
 
     ! Riemann solver
     ! If all of them = 0, then LLF is used for fluxes.
@@ -60,12 +63,11 @@ module input
     real, parameter :: cp = aindex/aindm1
 
     ! Equation of state and constitutive parameters
-    real, parameter :: vis = 1.0e-3
+    real, parameter :: vis = 1.0e-2
     real, parameter :: epsi = 5.0
     real, parameter :: clt = 2.0
 
-    ! Output frequency and directory
-    integer, parameter :: ntout = 100
+    ! Output location and naming
     character (*), parameter :: datadir="data"
     character (*), parameter :: outname="test_modbc_pipe_0"
     character (*), parameter :: outdir = trim(datadir//"/"//outname)

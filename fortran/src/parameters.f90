@@ -54,6 +54,7 @@ module parameters
     real, parameter :: c1d3 = 1./3.
     real, parameter :: c2d3 = 2./3.
     real, parameter :: c4d3 = 4./3.
+    real, parameter :: eVperK = 8.61728e-5
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
     real, parameter :: L0 = 1.0e-9                 ! length
@@ -68,7 +69,7 @@ module parameters
     ! rh_min is a min density to be used for ideal gas EOS, rh_min is min density
     ! below which the pressure becomes negative for the MT water EOS.
     ! The DG-based subroutine "limiter" keeps density above rh_mult*rh_min.
-    real, parameter :: rh_floor = 5.0e-6
+    real, parameter :: rh_floor = 1.0e-1!5.0e-6
     real, parameter :: T_floor  = 0.026/te0    ! 0.026 eV ~ 301.719 K |  0.02585 eV = 300 K
     real, parameter :: P_floor  = T_floor*rh_floor
 

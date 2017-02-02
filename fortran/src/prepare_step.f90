@@ -35,6 +35,10 @@ contains
         end do
         end do
 
+        ! write(*,'(A11,I1,A2,2ES9.1,A3,2ES9.1)') 'Qylow_int (',iam,'):',Qylow_int(1:2,1,1,pxx),' | ',Qylow_int(nx-1:nx,1,1,pxx)
+        ! write(*,'(A12,I1,A2,2ES9.1,A3,2ES9.1)') 'Qyhigh_int (',iam,'):',Qyhigh_int(1:2,1,1,pxx),' | ',Qyhigh_int(nx-1:nx,1,1,pxx)
+
+
         do ieq = 1,nQ
         do k = 1,nz
         do j = 1,ny
@@ -123,13 +127,17 @@ contains
             call MPI_Wait(reqs(4),stats(:,4),ierr)
         endif
 
-        if (mpi_Q == 1 .and. ylobc == 'outflow') then
+        if (mpi_Q == 1 .and. ylobc /= 'periodic') then
             Qylow_ext = Qylow_int
         end if
 
-        if (mpi_Q == mpi_ny .and. yhibc == 'outflow') then
+        if (mpi_Q == mpi_ny .and. yhibc /= 'periodic') then
             Qyhigh_ext = Qyhigh_int
         end if
+
+        ! write(*,'(A11,I1,A2,2ES9.1,A3,2ES9.1)') 'Qylow_ext (',iam,'):',Qylow_ext(1:2,1,1,pxx),' | ',Qylow_ext(nx-1:nx,1,1,pxx)
+        ! write(*,'(A12,I1,A2,2ES9.1,A3,2ES9.1)') 'Qyhigh_ext (',iam,'):',Qyhigh_ext(1:2,1,1,pxx),' | ',Qyhigh_ext(nx-1:nx,1,1,pxx)
+
 
         !---------------------------------------------
         mpi_size = nface*nx*ny*nQ
