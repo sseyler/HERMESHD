@@ -56,11 +56,11 @@ module input
     logical, parameter :: ihllc = .true.
 
     ! Thermodynamic and transport parameters
-    real, parameter :: ieos = 1
-    real, parameter :: mu = 2.0
-    real, parameter :: aindex = 5./3.
-    real, parameter :: aindm1 = aindex - 1.0
-    real, parameter :: cp = aindex/aindm1
+    integer, parameter :: ieos = 1
+    real, parameter    :: mu = 2.0
+    real, parameter    :: aindex = 5./3.
+    real, parameter    :: aindm1 = aindex - 1.0
+    real, parameter    :: cp = aindex/aindm1
 
     ! Equation of state and constitutive parameters
     real, parameter :: vis = 0 !1.0e-3

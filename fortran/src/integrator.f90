@@ -40,11 +40,11 @@ contains
         character(*), intent(in) :: name
         procedure(update_ptr), pointer :: integrator
 
-        select case(name)
-            case('heun')
+        select case (name)
+            case ('heun')
                 call mpi_print(iam, 'Selected 2nd-order Runga-Kutta (Heun) integration')
                 integrator => RK2
-            case('shu-osher')
+            case ('shu-osher')
                 call mpi_print(iam, 'Selected 3rd-order Runga-Kutta (Shu-Osher) integration')
                 integrator => RK3
             case default
@@ -113,7 +113,7 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
 
-        call flux_cal(Q_io)
+        call flux_calc(Q_io)
         call innerintegral(Q_io)
         call glflux
         call source_calc(Q_io)

@@ -241,26 +241,26 @@ contains
         character(*), intent(in) :: xlobc_flag, xhibc_flag
         procedure(xbc_fcn_ptr), pointer :: xlobc_ptr, xhibc_ptr
 
-        select case(xlobc_flag)
-            case('periodic')
+        select case (xlobc_flag)
+            case ('periodic')
                 xlobc_ptr => xlobc_periodic
-            case('outflow')
+            case ('outflow')
                 xlobc_ptr => xlobc_outflow
-            case('wall')
+            case ('wall')
                 xlobc_ptr => xlobc_wall
-            case('noslip')
+            case ('noslip')
                 xlobc_ptr => xlobc_noslip
             case default
                 xlobc_ptr => xlobc_periodic
         end select
-        select case(xhibc_flag)
-            case('periodic')
+        select case (xhibc_flag)
+            case ('periodic')
                 xhibc_ptr => xhibc_periodic
-            case('outflow')
+            case ('outflow')
                 xhibc_ptr => xhibc_outflow
-            case('wall')
+            case ('wall')
                 xhibc_ptr => xhibc_wall
-            case('noslip')
+            case ('noslip')
                 xhibc_ptr => xhibc_noslip
             case default
                 xhibc_ptr => xhibc_periodic
@@ -272,26 +272,26 @@ contains
         character(*), intent(in) :: ylobc_flag, yhibc_flag
         procedure(ybc_fcn_ptr), pointer :: ylobc_ptr, yhibc_ptr
 
-        select case(ylobc_flag)
-            case('periodic')
+        select case (ylobc_flag)
+            case ('periodic')
                 ylobc_ptr => ylobc_periodic
-            case('outflow')
+            case ('outflow')
                 ylobc_ptr => ylobc_outflow
-            case('wall')
+            case ('wall')
                 ylobc_ptr => ylobc_wall
-            case('noslip')
+            case ('noslip')
                 ylobc_ptr => ylobc_noslip
             case default
                 ylobc_ptr => ylobc_periodic
         end select
-        select case(yhibc_flag)
-            case('periodic')
+        select case (yhibc_flag)
+            case ('periodic')
                 yhibc_ptr => yhibc_periodic
-            case('outflow')
+            case ('outflow')
                 yhibc_ptr => yhibc_outflow
-            case('wall')
+            case ('wall')
                 yhibc_ptr => yhibc_wall
-            case('noslip')
+            case ('noslip')
                 yhibc_ptr => yhibc_noslip
             case default
                 yhibc_ptr => yhibc_periodic
@@ -303,26 +303,26 @@ contains
         character(*), intent(in) :: zlobc_flag, zhibc_flag
         procedure(zbc_fcn_ptr), pointer :: zlobc_ptr, zhibc_ptr
 
-        select case(zlobc_flag)
-            case('periodic')
+        select case (zlobc_flag)
+            case ('periodic')
                 zlobc_ptr => zlobc_periodic
-            case('outflow')
+            case ('outflow')
                 zlobc_ptr => zlobc_outflow
-            case('wall')
+            case ('wall')
                 zlobc_ptr => zlobc_wall
-            case('noslip')
+            case ('noslip')
                 zlobc_ptr => zlobc_noslip
             case default
                 zlobc_ptr => zlobc_periodic
         end select
-        select case(zhibc_flag)
-            case('periodic')
+        select case (zhibc_flag)
+            case ('periodic')
                 zhibc_ptr => zhibc_periodic
-            case('outflow')
+            case ('outflow')
                 zhibc_ptr => zhibc_outflow
-            case('wall')
+            case ('wall')
                 zhibc_ptr => zhibc_wall
-            case('noslip')
+            case ('noslip')
                 zhibc_ptr => zhibc_noslip
             case default
                 zhibc_ptr => zhibc_periodic

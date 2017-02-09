@@ -3,122 +3,9 @@ module flux
 use parameters
 use helpers
 use boundary
-
-
-! NOTE: It might make sense to use global arrays for stochastic
-!   stuff at some point, especially if in separate module
-! real GRM_x(nface, 1:nx+1, ny,     nz,     3,3)
-! real GRM_y(nface, nx,     1:ny+1, nz,     3,3)
-! real GRM_z(nface, nx,     ny,     1:nz+1, 3,3)
-! real Sflux_x(nface, 1:nx+1, ny,     nz,     3,3)
-! real Sflux_y(nface, nx,     1:ny+1, nz,     3,3)
-! real Sflux_z(nface, nx,     ny,     1:nz+1, 3,3)
-
+use random
 
 contains
-
-!----------------------------------------------------------------------------------------------
-    subroutine get_GRM(GRMpnts_r, npnts)
-
-        implicit none
-        integer ife,npnts,b,e,vsl_ndim
-        real, dimension(npnts,3,3) :: GRMpnts_r
-        real, allocatable :: grn(:)
-
-        vsl_ndim = npnts*3*3
-        allocate(grn(vsl_ndim))
-
-        vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
-
-        ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
-        do ife = 1,npnts
-            e = 9*ife
-            b = e - 8
-            GRMpnts_r(ife,1,:) = grn(b:b+2)
-            GRMpnts_r(ife,2,:) = grn(b+3:b+5)
-            GRMpnts_r(ife,3,:) = grn(b+6:e)
-        end do
-
-    end subroutine get_GRM
-!----------------------------------------------------------------------------------------------
-
-
-!----------------------------------------------------------------------------------------------
-    subroutine random_stresses_pnts_r(Spnts_r, npnts)
-
-        implicit none
-        integer ife,npnts
-        real, dimension(npnts,3,3) :: GRMpnts_r, Spnts_r
-        real Gxx,Gyy,Gzz,Gxy,Gxz,Gyz
-        real eta_d,zeta_d
-        real trG,trGd3,trG_zeta
-
-        eta_d = eta_sd * sqrt_dVdt_i
-        zeta_d = zeta_sd * sqrt_dVdt_i
-        call get_GRM(GRMpnts_r, npnts)
-
-        ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
-        do ife = 1,npnts
-            Gxx = GRMpnts_r(ife,1,1)
-            Gyy = GRMpnts_r(ife,2,2)
-            Gzz = GRMpnts_r(ife,3,3)
-
-            Gxy = sqrt2i*( GRMpnts_r(ife,1,2) + GRMpnts_r(ife,2,1) )
-            Gxz = sqrt2i*( GRMpnts_r(ife,1,3) + GRMpnts_r(ife,3,1) )
-            Gyz = sqrt2i*( GRMpnts_r(ife,2,3) + GRMpnts_r(ife,3,2) )
-
-            Spnts_r(ife,1,2) = eta_sd*Gxy
-            Spnts_r(ife,1,3) = eta_sd*Gxz
-            Spnts_r(ife,2,3) = eta_sd*Gyz
-            Spnts_r(ife,2,1) = Spnts_r(ife,1,2)
-            Spnts_r(ife,3,1) = Spnts_r(ife,1,3)
-            Spnts_r(ife,3,2) = Spnts_r(ife,2,3)
-
-            trG = (Gxx + Gyy + Gzz)
-            trGd3 = trG/3.0
-            trG_zeta = zeta_sd*trG
-
-            Spnts_r(ife,1,1) = eta_sd*(Gxx - trGd3) + trG_zeta
-            Spnts_r(ife,2,2) = eta_sd*(Gyy - trGd3) + trG_zeta
-            Spnts_r(ife,3,3) = eta_sd*(Gzz - trGd3) + trG_zeta
-        end do
-
-    end subroutine random_stresses_pnts_r
-!----------------------------------------------------------------------------------------------
-
-!----------------------------------------------------------------------------------------------
-    subroutine random_heatflux_pnts_r(Hpnts_r, npnts)
-
-        implicit none
-        integer ife,npnts,b,e,vsl_ndim
-        real, dimension(npnts,3) :: GRVpnts_r, Hpnts_r
-        real Gx,Gy,Gz,kappa_d
-        real, allocatable :: grn(:)
-
-        vsl_ndim = npnts*3
-        allocate(grn(vsl_ndim))
-
-        kappa_d = kappa_sd * sqrt_dVdt_i
-
-        vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
-
-        ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
-        do ife = 1,npnts
-            e = 3*ife
-            b = e - 2
-            GRVpnts_r(ife,1:3) = grn(b:e)
-
-            Gx = GRVpnts_r(ife,1)
-            Gy = GRVpnts_r(ife,2)
-            Gz = GRVpnts_r(ife,3)
-
-            Hpnts_r(ife,1) = kappa_sd*Gx
-            Hpnts_r(ife,2) = kappa_sd*Gy
-            Hpnts_r(ife,3) = kappa_sd*Gz
-        end do
-
-    end subroutine random_heatflux_pnts_r
-!-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
     subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
@@ -165,17 +52,17 @@ contains
             Qy = Hpnts_r(ife,2)
             Qz = Hpnts_r(ife,3)
 
-            select case(ixyz)
-            case(1)
+            select case (ixyz)
+            case (1)
                 fpnts_r(ife,rh) = Qpnts_r(ife,mx)
 
                 fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + P + Qpnts_r(ife,pxx) - Sxx
                 fpnts_r(ife,my) = Qpnts_r(ife,my)*vx     + Qpnts_r(ife,pxy) - Sxy
                 fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx     + Qpnts_r(ife,pxz) - Sxz
 
-                fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx                          &
-                                + ( (Qpnts_r(ife,pxx) - Sxx)*vx                     &
-                                +   (Qpnts_r(ife,pxy) - Sxy)*vy                     &
+                fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx                      &
+                                + ( (Qpnts_r(ife,pxx) - Sxx)*vx                 &
+                                +   (Qpnts_r(ife,pxy) - Sxy)*vy                 &
                                 +   (Qpnts_r(ife,pxz) - Sxz)*vz )
 
                 fpnts_r(ife,pxx) =  c4d3nu*vx
@@ -186,16 +73,16 @@ contains
                 fpnts_r(ife,pxz) = nu*vz
                 fpnts_r(ife,pyz) = 0
 
-            case(2)
+            case (2)
                 fpnts_r(ife,rh) = Qpnts_r(ife,mxa(ixyz))
 
                 fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy     + Qpnts_r(ife,pxy) - Sxy
                 fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + P + Qpnts_r(ife,pyy) - Syy
                 fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy     + Qpnts_r(ife,pyz) - Syz
 
-                fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy                          &
-                                + ( (Qpnts_r(ife,pyy) - Syy)*vy                     &
-                                +   (Qpnts_r(ife,pxy) - Sxy)*vx                     &
+                fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy                      &
+                                + ( (Qpnts_r(ife,pyy) - Syy)*vy                 &
+                                +   (Qpnts_r(ife,pxy) - Sxy)*vx                 &
                                 +   (Qpnts_r(ife,pyz) - Syz)*vz )
 
                 fpnts_r(ife,pxx) = -c2d3nu*vy
@@ -206,16 +93,16 @@ contains
                 fpnts_r(ife,pxz) = 0
                 fpnts_r(ife,pyz) = nu*vz
 
-            case(3)
+            case (3)
                 fpnts_r(ife,rh) = Qpnts_r(ife,mz)
 
                 fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz     + Qpnts_r(ife,pxz) - Sxz
                 fpnts_r(ife,my) = Qpnts_r(ife,my)*vz     + Qpnts_r(ife,pyz) - Syz
                 fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + P + Qpnts_r(ife,pzz) - Szz
 
-                fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz                          &
-                                + ( (Qpnts_r(ife,pzz) - Szz)*vz                     &
-                                +   (Qpnts_r(ife,pxz) - Sxz)*vx                     &
+                fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz                      &
+                                + ( (Qpnts_r(ife,pzz) - Szz)*vz                 &
+                                +   (Qpnts_r(ife,pxz) - Sxz)*vx                 &
                                 +   (Qpnts_r(ife,pyz) - Syz)*vy )
 
                 fpnts_r(ife,pxx) = -c2d3nu*vz
@@ -232,46 +119,40 @@ contains
 
 !-------------------------------------------------------------------------------
     subroutine calc_flux_x(Q_r, flux_x)
-
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx+1,ny,nz,nQ), intent(out) :: flux_x
 
-        integer i,j,k,ieq,iback,i4,i4p,ipnt
-        real Qface_x(nfe,nQ) !, Qface_y(nfe,nQ), Qface_z(nfe,nQ)
-        real fface_x(nfe,nQ) !, fface_y(nfe,nQ), fface_z(nfe,nQ)
-        real cwavex(nfe) !,cwavey(nfe),cwavez(nfe),dni
-        real fhllc_x(nface,5),qvin(nQ) !,fhllc_y(nface,5),fhllc_z(nface,5),fs(nface,nQ)
-        integer kroe(nface) ! can eliminate the global variable in parameters.f90
-
-        kroe(:) = 1
+        integer i,j,k,ieq,iback,i4,i4p,ipnt,kroe(nface)
+        real Qface_x(nfe,nQ),fface_x(nfe,nQ) !, fface_y(nfe,nQ), fface_z(nfe,nQ)
+        real cwavex(nfe),fhllc_x(nface,5),qvin(nQ) !,fhllc_y(nface,5),fhllc_z(nface,5),fs(nface,nQ)
 
         do k=1,nz
             do j=1,ny
             do i=1,nx+1
                 iback = i-1
 
-                if (i .gt. 1) then
+                if (i > 1) then
                     do ieq = 1,nQ
                         do ipnt=1,nface
                             Qface_x(ipnt,ieq) = sum(bfvals_xp(ipnt,1:nbasis)*Q_r(iback,j,k,ieq,1:nbasis))
                         end do
                     end do
                 end if
-                if (i .eq. 1) then
+                if (i == 1) then
                     do ieq = 1,nQ
                         Qface_x(1:nface,ieq) = Qxlow_ext(j,k,1:nface,ieq)
                     end do
                 end if
 
-                if (i .lt. nx+1) then
+                if (i < nx+1) then
                     do ieq = 1,nQ
                         do ipnt=1,nface
                             Qface_x(ipnt+nface,ieq) = sum(bfvals_xm(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
                         end do
                     end do
                 end if
-                if (i .eq. nx+1) then
+                if (i == nx+1) then
                     do ieq = 1,nQ
                         Qface_x(nface+1:nfe,ieq) = Qxhigh_ext(j,k,1:nface,ieq)
                     end do
@@ -322,46 +203,40 @@ contains
 
 !-------------------------------------------------------------------------------
     subroutine calc_flux_y(Q_r, flux_y)
-
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny+1,nz,nQ), intent(out) :: flux_y
 
-        integer i,j,k,ieq,jleft,i4,i4p,ipnt
-        real Qface_y(nfe,nQ)!, Qface_z(nfe,nQ)
-        real fface_y(nfe,nQ)!, fface_z(nfe,nQ)
-        real cwavey(nfe) !,cwavez(nfe)
-        real fhllc_y(nface,5),qvin(nQ) !,fhllc_z(nface,5),fs(nface,nQ)
-        integer kroe(nface) ! can eliminate the global variable in parameters.f90
-
-        kroe(:) = 1
+        integer i,j,k,ieq,jleft,i4,i4p,ipnt,kroe(nface)
+        real Qface_y(nfe,nQ),fface_y(nfe,nQ)!, fface_z(nfe,nQ)
+        real cwavey(nfe),fhllc_y(nface,5),qvin(nQ) !,fhllc_z(nface,5),fs(nface,nQ)
 
         do k=1,nz
             do j=1,ny+1
             jleft = j-1
             do i=1,nx
 
-                if (j .gt. 1) then
+                if (j > 1) then
                     do ieq = 1,nQ
                         do ipnt=1,nface
                             Qface_y(ipnt,ieq) = sum(bfvals_yp(ipnt,1:nbasis)*Q_r(i,jleft,k,ieq,1:nbasis))
                         end do
                     end do
                 end if
-                if (j .eq. 1) then
+                if (j == 1) then
                     do ieq = 1,nQ
                         Qface_y(1:nface,ieq) = Qylow_ext(i,k,1:nface,ieq)
                     end do
                 end if
 
-                if (j .lt. ny+1) then
+                if (j < ny+1) then
                     do ieq = 1,nQ
                         do ipnt=1,nface
                             Qface_y(ipnt+nface,ieq) = sum(bfvals_ym(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
                         end do
                     end do
                 end if
-                if (j .eq. ny+1) then
+                if (j == ny+1) then
                     do ieq = 1,nQ
                         Qface_y(nface+1:nfe,ieq) = Qyhigh_ext(i,k,1:nface,ieq)
                     end do
@@ -415,12 +290,9 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny,nz+1,nQ), intent(out) :: flux_z
-        integer i,j,k,ieq,kdown,i4,i4p,ipnt
+        integer i,j,k,ieq,kdown,i4,i4p,ipnt,kroe(nface)
         real Qface_z(nfe,nQ),fface_z(nfe,nQ)
         real cwavez(nfe),fhllc_z(nface,5),qvin(nQ) !fs(nface,nQ)
-        integer kroe(nface) ! can eliminate the global variable in parameters.f90
-
-        kroe(:) = 1
 
         do k=1,nz+1
             kdown = k-1
@@ -501,259 +373,17 @@ contains
 !-------------------------------------------------------------------------------
     subroutine flux_calc(Q_r)
         implicit none
-        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
 
         call calc_flux_x(Q_r, flux_x)
         call calc_flux_y(Q_r, flux_y)
         call calc_flux_z(Q_r, flux_z)
     end subroutine flux_calc
+!-------------------------------------------------------------------------------
 
 
 !-------------------------------------------------------------------------------
-    subroutine flux_cal(Q_r)
-        implicit none
-        integer i,j,k,ieq,iback,jleft,kdown,i4,i4p,ipnt
-        real Qface_x(nfe,nQ), Qface_y(nfe,nQ), Qface_z(nfe,nQ)
-        real fface_x(nfe,nQ), fface_y(nfe,nQ), fface_z(nfe,nQ)
-        real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
-        real cwavex(nfe),cwavey(nfe),cwavez(nfe),dni
-        real fhllc_x(nface,5),fhllc_y(nface,5),fhllc_z(nface,5),fs(nface,nQ),qvin(nQ)
-
-        kroe(:) = 1
-        sqrt_dVdt_i = (dVi/dt)**0.5  ! used in calculating random stresses/heat fluxes
-
-        do k=1,nz
-            do j=1,ny
-            do i=1,nx+1
-                iback = i-1
-
-                if (i .gt. 1) then
-                    do ieq = 1,nQ
-                        do ipnt=1,nface
-                            Qface_x(ipnt,ieq) = sum(bfvals_xp(ipnt,1:nbasis)*Q_r(iback,j,k,ieq,1:nbasis))
-                        end do
-                    end do
-                end if
-                if (i .eq. 1) then
-                    do ieq = 1,nQ
-                        Qface_x(1:nface,ieq) = Qxlow_ext(j,k,1:nface,ieq)
-                    end do
-                end if
-
-                if (i .lt. nx+1) then
-                    do ieq = 1,nQ
-                        do ipnt=1,nface
-                            Qface_x(ipnt+nface,ieq) = sum(bfvals_xm(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
-                        end do
-                    end do
-                end if
-
-                if (i .eq. nx+1) then
-                    do ieq = 1,nQ
-                        Qface_x(nface+1:nfe,ieq) = Qxhigh_ext(j,k,1:nface,ieq)
-                    end do
-                end if
-
-                call flux_calc_pnts_r(Qface_x,fface_x,1,nfe)
-
-                if(.not. ihllc) then
-                    do i4=1,nfe
-                        do ieq=1,nQ
-                            qvin(ieq) = Qface_x(i4,ieq)
-                        end do
-                        cwavex(i4) = cfcal(qvin,1)
-                    end do
-
-                    do i4=1,nface
-                        cfrx(i4,rh:en) = max(cwavex(i4),cwavex(i4+nface))
-                    end do
-                end if
-
-                do ieq = 1,nQ
-                    do i4=1,nface
-                        i4p = i4 + nface
-                        flux_x(i4,i,j,k,ieq) = 0.5*(fface_x(i4,ieq) + fface_x(i4p,ieq)) &
-                                             - 0.5*cfrx(i4,ieq)*(Qface_x(i4p,ieq) - Qface_x(i4,ieq))
-                    end do
-                end do
-
-                kroe(1:nface) = 1
-
-                if (ihllc) call flux_hllc(Qface_x,fface_x,fhllc_x,1)
-
-                ! Needs to be done for HLLC and Roe
-                if (ihllc) then
-                    do ieq = 1,en
-                        do i4=1,nface
-                            if (kroe(i4) .gt. 0) then
-                                flux_x(i4,i,j,k,ieq) = fhllc_x(i4,ieq)
-                            end if
-                        end do
-                    end do
-                end if
-
-            end do
-            end do
-        end do
-
-    !----------------------------------------------------
-
-        do k=1,nz
-            do j=1,ny+1
-            jleft = j-1
-            do i=1,nx
-
-                if (j .gt. 1) then
-                    do ieq = 1,nQ
-                        do ipnt=1,nface
-                            Qface_y(ipnt,ieq) = sum(bfvals_yp(ipnt,1:nbasis)*Q_r(i,jleft,k,ieq,1:nbasis))
-                        end do
-                    end do
-                end if
-                if (j .eq. 1) then
-                    do ieq = 1,nQ
-                        Qface_y(1:nface,ieq) = Qylow_ext(i,k,1:nface,ieq)
-                    end do
-                end if
-
-                if (j .lt. ny+1) then
-                    do ieq = 1,nQ
-                        do ipnt=1,nface
-                            Qface_y(ipnt+nface,ieq) = sum(bfvals_ym(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
-                        end do
-                    end do
-                end if
-                if (j .eq. ny+1) then
-                    do ieq = 1,nQ
-                        Qface_y(nface+1:nfe,ieq) = Qyhigh_ext(i,k,1:nface,ieq)
-                    end do
-                end if
-
-                call flux_calc_pnts_r(Qface_y,fface_y,2,nfe)
-
-                if (.not. ihllc) then
-                    do i4=1,nfe
-                        do ieq=1,nQ
-                            qvin(ieq) = Qface_y(i4,ieq)
-                        end do
-                        cwavey(i4) = cfcal(qvin,2)
-                    end do
-
-                    do i4=1,nface
-                        cfry(i4,rh:en) = max(cwavey(i4),cwavey(i4+nface))
-                    end do
-                end if
-
-                do ieq = 1,nQ
-                    do i4=1,nface
-                        i4p = i4 + nface
-                        flux_y(i4,i,j,k,ieq) = 0.5*(fface_y(i4,ieq) + fface_y(i4p,ieq)) &
-                                             - 0.5*cfry(i4,ieq)*(Qface_y(i4p,ieq) - Qface_y(i4,ieq))
-                    end do
-                end do
-
-                kroe(1:nface) = 1
-
-                if (ihllc) call flux_hllc(Qface_y,fface_y,fhllc_y,2)
-
-                ! Needs to be done for HLLC and Roe
-                if (ihllc) then
-                    do ieq = 1,en
-                        do i4=1,nface
-                            if (kroe(i4) .gt. 0) then
-                                flux_y(i4,i,j,k,ieq) = fhllc_y(i4,ieq)
-                            end if
-                        end do
-                    end do
-                end if
-
-            end do
-            end do
-        end do
-
-    !-------------------------------------------------------
-
-        do k=1,nz+1
-            kdown = k-1
-            do j=1,ny
-            do i=1,nx
-
-                if (k .gt. 1) then
-                    do ieq = 1,nQ
-                        do ipnt=1,nface
-                            Qface_z(ipnt,ieq) = sum( bfvals_zp(ipnt,1:nbasis)   &
-                                                    *Q_r(i,j,kdown,ieq,1:nbasis))
-                        end do
-                    end do
-                end if
-                if (k .eq. 1) then
-                    do ieq = 1,nQ
-                        Qface_z(1:nface,ieq) = Qzlow_ext(i,j,1:nface,ieq)
-                    end do
-                end if
-
-                if (k .lt. nz+1) then
-                    do ieq = 1,nQ
-                        do ipnt=1,nface
-                            Qface_z(ipnt+nface,ieq) = sum( bfvals_zm(ipnt,1:nbasis) &
-                                                          *Q_r(i,j,k,ieq,1:nbasis))
-                        end do
-                    end do
-                end if
-                if (k .eq. nz+1) then
-                    do ieq = 1,nQ
-                        Qface_z(nface+1:nfe,ieq) = Qzhigh_ext(i,j,1:nface,ieq)
-                    end do
-                end if
-
-                call flux_calc_pnts_r(Qface_z,fface_z,3,nfe)
-
-                if (.not. ihllc) then
-                    do i4=1,nfe
-                        do ieq=1,nQ
-                            qvin(ieq) = Qface_z(i4,ieq)
-                        end do
-                        cwavez(i4) = cfcal(qvin,3)
-                    end do
-
-                    do i4=1,nface
-                        cfrz(i4,rh:en) = max(cwavez(i4),cwavez(i4+nface))
-                    end do
-                end if
-
-                do ieq = 1,nQ
-                    do i4=1,nface
-                        i4p = i4 + nface
-                        flux_z(i4,i,j,k,ieq) = 0.5*(fface_z(i4,ieq) + fface_z(i4p,ieq)) &
-                                             - 0.5*cfrz(i4,ieq)*(Qface_z(i4p,ieq) - Qface_z(i4,ieq))
-                    end do
-                end do
-
-                kroe(1:nface) = 1
-
-                if (ihllc) call flux_hllc(Qface_z,fface_z,fhllc_z,3)
-
-                ! Needs to be done for HLLC and Roe
-                if (ihllc) then
-                    do ieq = 1,en
-                        do i4=1,nface
-                            if (kroe(i4) .gt. 0) then
-                                flux_z(i4,i,j,k,ieq) = fhllc_z(i4,ieq)
-                            end if
-                        end do
-                    end do
-                end if
-
-            end do
-            end do
-        end do
-
-    end subroutine flux_cal
-
-!----------------------------------------------------------------------------------------------
-
     subroutine flux_hllc(Qlr,flr,fhllc,ixyz)
-
     !    Compute ion or electron fluxes (density, momentum, energy) using
     !    nonrelativistic HD HLLC approximate Riemann solver developed by Batten, 1997,
     !    *****    "On the Choice of Wavespeeds for the HLLC Riemann Solver"
@@ -921,10 +551,9 @@ contains
         end do
 
     end subroutine flux_hllc
+!-------------------------------------------------------------------------------
 
-
-!----------------------------------------------------------------------------------------------
-
+!-------------------------------------------------------------------------------
     subroutine innerintegral(Q_r)
 
         implicit none
@@ -1020,10 +649,9 @@ contains
         end do
 
     end subroutine innerintegral
+!-------------------------------------------------------------------------------
 
-
-!----------------------------------------------------------------------------------------------
-
+!-------------------------------------------------------------------------------
     subroutine glflux
         implicit none
         integer i,j,k,ieq,ir
@@ -1032,18 +660,19 @@ contains
         do k = 1,nz
         do j = 1,ny
             do i = 1,nx
-                glflux_r(i,j,k,ieq,1) = 0.25*(dxi*(wgt2d(1)*(flux_x(1,i+1,j,k,ieq) - flux_x(1,i,j,k,ieq)))  &
-                                            + dyi*(wgt2d(1)*(flux_y(1,i,j+1,k,ieq) - flux_y(1,i,j,k,ieq)))  &
-                                            + dzi*(wgt2d(1)*(flux_z(1,i,j,k+1,ieq) - flux_z(1,i,j,k,ieq)))  &
-                                            + dxi*(wgt2d(2)*(flux_x(2,i+1,j,k,ieq) - flux_x(2,i,j,k,ieq)))  &
-                                            + dyi*(wgt2d(2)*(flux_y(2,i,j+1,k,ieq) - flux_y(2,i,j,k,ieq)))  &
-                                            + dzi*(wgt2d(2)*(flux_z(2,i,j,k+1,ieq) - flux_z(2,i,j,k,ieq)))  &
-                                            + dxi*(wgt2d(3)*(flux_x(3,i+1,j,k,ieq) - flux_x(3,i,j,k,ieq)))  &
-                                            + dyi*(wgt2d(3)*(flux_y(3,i,j+1,k,ieq) - flux_y(3,i,j,k,ieq)))  &
-                                            + dzi*(wgt2d(3)*(flux_z(3,i,j,k+1,ieq) - flux_z(3,i,j,k,ieq)))  &
-                                            + dxi*(wgt2d(4)*(flux_x(4,i+1,j,k,ieq) - flux_x(4,i,j,k,ieq)))  &
-                                            + dyi*(wgt2d(4)*(flux_y(4,i,j+1,k,ieq) - flux_y(4,i,j,k,ieq)))  &
-                                            + dzi*(wgt2d(4)*(flux_z(4,i,j,k+1,ieq) - flux_z(4,i,j,k,ieq))))
+                glflux_r(i,j,k,ieq,1) =                                         &
+                    0.25*( dxi*(wgt2d(1)*(flux_x(1,i+1,j,k,ieq) - flux_x(1,i,j,k,ieq)))  &
+                         + dyi*(wgt2d(1)*(flux_y(1,i,j+1,k,ieq) - flux_y(1,i,j,k,ieq)))  &
+                         + dzi*(wgt2d(1)*(flux_z(1,i,j,k+1,ieq) - flux_z(1,i,j,k,ieq)))  &
+                         + dxi*(wgt2d(2)*(flux_x(2,i+1,j,k,ieq) - flux_x(2,i,j,k,ieq)))  &
+                         + dyi*(wgt2d(2)*(flux_y(2,i,j+1,k,ieq) - flux_y(2,i,j,k,ieq)))  &
+                         + dzi*(wgt2d(2)*(flux_z(2,i,j,k+1,ieq) - flux_z(2,i,j,k,ieq)))  &
+                         + dxi*(wgt2d(3)*(flux_x(3,i+1,j,k,ieq) - flux_x(3,i,j,k,ieq)))  &
+                         + dyi*(wgt2d(3)*(flux_y(3,i,j+1,k,ieq) - flux_y(3,i,j,k,ieq)))  &
+                         + dzi*(wgt2d(3)*(flux_z(3,i,j,k+1,ieq) - flux_z(3,i,j,k,ieq)))  &
+                         + dxi*(wgt2d(4)*(flux_x(4,i+1,j,k,ieq) - flux_x(4,i,j,k,ieq)))  &
+                         + dyi*(wgt2d(4)*(flux_y(4,i,j+1,k,ieq) - flux_y(4,i,j,k,ieq)))  &
+                         + dzi*(wgt2d(4)*(flux_z(4,i,j,k+1,ieq) - flux_z(4,i,j,k,ieq))) )
             end do
 
             do ir=2,nbasis
@@ -1068,6 +697,8 @@ contains
         end do
         end do
     end subroutine glflux
+!-------------------------------------------------------------------------------
+
 
 !-----------------------------------------------------------!
 !*******************calculate freezing speeds***************!
@@ -1086,14 +717,13 @@ contains
         vy = Qcf(my)*dni
         vz = Qcf(mz)*dni
 
-        if (ieos .eq. 1) then
-            P = (aindex - 1.)*(Qcf(en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
-            cs = sqrt(aindex*P*dni)
-        end if
-
-        if (ieos .eq. 2) then
-            cs = sqrt(7.2*P_1*dn**6.2)
-        end if
+        select case (ieos)
+            case (1)
+                P = (aindex - 1.)*(Qcf(en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
+                cs = sqrt(aindex*P*dni)
+            case (2)
+                cs = sqrt(7.2*P_1*dn**6.2)
+        end select
 
         select case (cases)
             case (1) !freezing speed in x direction for fluid variable
@@ -1107,10 +737,10 @@ contains
         end select
 
     end function cfcal
+!-------------------------------------------------------------------------------
 
 
-!----------------------------------------------------------------------------------
-
+!-------------------------------------------------------------------------------
     subroutine limiter(Q_r)
 
         implicit none
@@ -1143,7 +773,7 @@ contains
                         theta = 1.
                     end if
 
-                    if (theta .lt. 0) then
+                    if (theta < 0) then
                         theta = 0.
                     end if
                     do ir=2,nbasis
@@ -1152,7 +782,10 @@ contains
 
                 end if
 
-                Pave = (aindex-1.)*(Q_r(i,j,k,en,1) - 0.5*(Q_r(i,j,k,mx,1)**2 + Q_r(i,j,k,my,1)**2 + Q_r(i,j,k,mz,1)**2)/Q_r(i,j,k,rh,1))
+                Pave = aindm1*(Q_r(i,j,k,en,1)                                  &
+                        - 0.5*( Q_r(i,j,k,mx,1)**2                              &
+                              + Q_r(i,j,k,my,1)**2                              &
+                              + Q_r(i,j,k,mz,1)**2 ) / Q_r(i,j,k,rh,1) )
 
                 if (Pave < epsiP) then
                     do ir=2,nbasis
@@ -1161,13 +794,16 @@ contains
                 else
                     theta = 1.
                     do ipge = 1,npge
-                        do ieq = 1,5
+                        do ieq = rh,en
                             Qedge(ipge,ieq) = sum(bf_faces(ipge,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
                         end do
 
                         dn = Qedge(ipge,rh)
                         dni = 1./dn
-                        P(ipge) = (aindex - 1.)*(Qedge(ipge,en) - 0.5*(Qedge(ipge,mx)**2+Qedge(ipge,my)**2+Qedge(ipge,mz)**2)*dni)
+                        P(ipge) = aindm1*(Qedge(ipge,en)                        &
+                                - 0.5*dni*( Qedge(ipge,mx)**2                   &
+                                          + Qedge(ipge,my)**2                   &
+                                          + Qedge(ipge,mz)**2) )
 
                         if (P(ipge) < epsiP) then
                             if (Pave .ne. P(ipge)) then
@@ -1176,11 +812,11 @@ contains
                             end if
                         end if
                     end do
-                    if (theta .gt. 1.) then
+                    if (theta > 1.) then
                         theta = 1.
                     end if
 
-                    if (theta .lt. 0.) then
+                    if (theta < 0.) then
                         theta = 0.
                     end if
                     do ir=2,nbasis
@@ -1192,8 +828,7 @@ contains
         end do
         end do
 
-
     end subroutine limiter
-
+!-------------------------------------------------------------------------------
 
 end module flux
