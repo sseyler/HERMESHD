@@ -48,6 +48,8 @@ FORTFLAGS = -O2 -xHost -mkl -L$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
 # OBJS = dg_3D_hydro_bitri_version2_SEAN.f90
 # OBJS = dg_3D_hydro_bitri_viscosity.f90
 
+OTHERFILES = mkl_vsl.mod mkl_vsl_type.mod mkl_vsl.o lib_vtk_io.mod lib_vtk_io.o
+
 ifeq ($(NAME),bitri)
 	OBJS = PERSEUSHydro_bitri_FH_test.f90
 	MODULES =
@@ -93,10 +95,11 @@ endif
 all: $(PROGNAME)
 
 $(PROGNAME) : $(OBJS)
+	cp $(OBJS) $(MODULES) $(OTHERFILES) $(TESTDIR) && cd $(TESTDIR) && \
 	$(FORT) $(FORTFLAGS) $(LIBS) $(MODULES) $(OBJS) -o $(PROGNAME)
 #	strip $(PROGNAME)
 #	$(PROGNAME)
-	mv $(PROGNAME) $(TESTDIR) && cd $(TESTDIR) && mpiexec -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
+	cd $(TESTDIR) && mpiexec -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
 
 clean:
 #   $(rm) $(PROGNAME) core *~
