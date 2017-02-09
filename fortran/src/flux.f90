@@ -240,7 +240,8 @@ contains
 
     end subroutine
 
-    subroutine flux_cal_x(Q_r)
+    !---------------------------------------------------------------------------
+    subroutine flux_cal_x(Q_r, flux_x)
 
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
@@ -251,9 +252,9 @@ contains
         real fface_x(nfe,nQ) !, fface_y(nfe,nQ), fface_z(nfe,nQ)
         real cwavex(nfe) !,cwavey(nfe),cwavez(nfe),dni
         real fhllc_x(nface,5),qvin(nQ) !,fhllc_y(nface,5),fhllc_z(nface,5),fs(nface,nQ)
+        integer kroe(nface) ! can eliminate the global variable in parameters.f90
 
         kroe(:) = 1
-        sqrt_dVdt_i = (dVi/dt)**0.5  ! used in calculating random stresses/heat fluxes
 
         do k=1,nz
             do j=1,ny
@@ -330,7 +331,193 @@ contains
         end do
 
     end subroutine flux_cal_x
-    !----------------------------------------------------
+    !---------------------------------------------------------------------------
+
+    !---------------------------------------------------------------------------
+    subroutine flux_cal_y(Q_r, flux_y)
+
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
+        real, dimension(nface,nx,ny+1,nz,nQ), intent(out) :: flux_y
+
+        integer i,j,k,ieq,jleft,i4,i4p,ipnt
+        real Qface_y(nfe,nQ)!, Qface_z(nfe,nQ)
+        real fface_y(nfe,nQ)!, fface_z(nfe,nQ)
+        real cwavey(nfe) !,cwavez(nfe)
+        real fhllc_y(nface,5),qvin(nQ) !,fhllc_z(nface,5),fs(nface,nQ)
+        integer kroe(nface) ! can eliminate the global variable in parameters.f90
+
+        kroe(:) = 1
+
+        do k=1,nz
+            do j=1,ny+1
+            jleft = j-1
+            do i=1,nx
+
+                if (j .gt. 1) then
+                    do ieq = 1,nQ
+                        do ipnt=1,nface
+                            Qface_y(ipnt,ieq) = sum(bfvals_yp(ipnt,1:nbasis)*Q_r(i,jleft,k,ieq,1:nbasis))
+                        end do
+                    end do
+                end if
+                if (j .eq. 1) then
+                    do ieq = 1,nQ
+                        Qface_y(1:nface,ieq) = Qylow_ext(i,k,1:nface,ieq)
+                    end do
+                end if
+
+                if (j .lt. ny+1) then
+                    do ieq = 1,nQ
+                        do ipnt=1,nface
+                            Qface_y(ipnt+nface,ieq) = sum(bfvals_ym(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
+                        end do
+                    end do
+                end if
+                if (j .eq. ny+1) then
+                    do ieq = 1,nQ
+                        Qface_y(nface+1:nfe,ieq) = Qyhigh_ext(i,k,1:nface,ieq)
+                    end do
+                end if
+
+                call flux_calc_pnts_r(Qface_y,fface_y,2,nfe)
+
+                if (.not. ihllc) then
+                    do i4=1,nfe
+                        do ieq=1,nQ
+                            qvin(ieq) = Qface_y(i4,ieq)
+                        end do
+                        cwavey(i4) = cfcal(qvin,2)
+                    end do
+
+                    do i4=1,nface
+                        cfry(i4,rh:en) = max(cwavey(i4),cwavey(i4+nface))
+                    end do
+                end if
+
+                do ieq = 1,nQ
+                    do i4=1,nface
+                        i4p = i4 + nface
+                        flux_y(i4,i,j,k,ieq) = 0.5*(fface_y(i4,ieq) + fface_y(i4p,ieq)) &
+                                             - 0.5*cfry(i4,ieq)*(Qface_y(i4p,ieq) - Qface_y(i4,ieq))
+                    end do
+                end do
+
+                kroe(1:nface) = 1
+
+                if (ihllc) call flux_hllc(Qface_y,fface_y,fhllc_y,2)
+
+                ! Needs to be done for HLLC and Roe
+                if (ihllc) then
+                    do ieq = 1,en
+                        do i4=1,nface
+                            if (kroe(i4) .gt. 0) then
+                                flux_y(i4,i,j,k,ieq) = fhllc_y(i4,ieq)
+                            end if
+                        end do
+                    end do
+                end if
+
+            end do
+            end do
+        end do
+
+    end subroutine flux_cal_y
+    !---------------------------------------------------------------------------
+
+    !---------------------------------------------------------------------------
+    subroutine flux_cal_z(Q_r, flux_z)
+
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
+        real, dimension(nface,nx,ny,nz+1,nQ), intent(out) :: flux_z
+
+        integer i,j,k,ieq,kdown,i4,i4p,ipnt
+        real Qface_z(nfe,nQ)
+        real fface_z(nfe,nQ)
+        real cwavez(nfe)
+        real fhllc_z(nface,5),qvin(nQ) !fs(nface,nQ)
+        integer kroe(nface) ! can eliminate the global variable in parameters.f90
+
+        kroe(:) = 1
+
+        do k=1,nz+1
+            kdown = k-1
+            do j=1,ny
+            do i=1,nx
+
+                if (k .gt. 1) then
+                    do ieq = 1,nQ
+                        do ipnt=1,nface
+                            Qface_z(ipnt,ieq) = sum( bfvals_zp(ipnt,1:nbasis)   &
+                                                    *Q_r(i,j,kdown,ieq,1:nbasis))
+                        end do
+                    end do
+                end if
+                if (k .eq. 1) then
+                    do ieq = 1,nQ
+                        Qface_z(1:nface,ieq) = Qzlow_ext(i,j,1:nface,ieq)
+                    end do
+                end if
+
+                if (k .lt. nz+1) then
+                    do ieq = 1,nQ
+                        do ipnt=1,nface
+                            Qface_z(ipnt+nface,ieq) = sum( bfvals_zm(ipnt,1:nbasis) &
+                                                          *Q_r(i,j,k,ieq,1:nbasis))
+                        end do
+                    end do
+                end if
+                if (k .eq. nz+1) then
+                    do ieq = 1,nQ
+                        Qface_z(nface+1:nfe,ieq) = Qzhigh_ext(i,j,1:nface,ieq)
+                    end do
+                end if
+
+                call flux_calc_pnts_r(Qface_z,fface_z,3,nfe)
+
+                if (.not. ihllc) then
+                    do i4=1,nfe
+                        do ieq=1,nQ
+                            qvin(ieq) = Qface_z(i4,ieq)
+                        end do
+                        cwavez(i4) = cfcal(qvin,3)
+                    end do
+
+                    do i4=1,nface
+                        cfrz(i4,rh:en) = max(cwavez(i4),cwavez(i4+nface))
+                    end do
+                end if
+
+                do ieq = 1,nQ
+                    do i4=1,nface
+                        i4p = i4 + nface
+                        flux_z(i4,i,j,k,ieq) = 0.5*(fface_z(i4,ieq) + fface_z(i4p,ieq)) &
+                                             - 0.5*cfrz(i4,ieq)*(Qface_z(i4p,ieq) - Qface_z(i4,ieq))
+                    end do
+                end do
+
+                kroe(1:nface) = 1
+
+                if (ihllc) call flux_hllc(Qface_z,fface_z,fhllc_z,3)
+
+                ! Needs to be done for HLLC and Roe
+                if (ihllc) then
+                    do ieq = 1,en
+                        do i4=1,nface
+                            if (kroe(i4) .gt. 0) then
+                                flux_z(i4,i,j,k,ieq) = fhllc_z(i4,ieq)
+                            end if
+                        end do
+                    end do
+                end if
+
+            end do
+            end do
+        end do
+
+    end subroutine flux_cal_z
+    !---------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
 
