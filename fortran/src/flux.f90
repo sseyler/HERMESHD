@@ -42,8 +42,8 @@ contains
             dni = 1./dn
             smsq = Qpnts_r(ife,mx)**2 + Qpnts_r(ife,my)**2 + Qpnts_r(ife,mz)**2
 
-            P = (aindex - 1.)*(Qpnts_r(ife,en) - 0.5*dni*smsq)
-            if (ieos .eq. 2) P = P_1*(dn**7.2 - 1.) + P_base + P
+            P = aindm1*(Qpnts_r(ife,en) - 0.5*dni*smsq)
+            if (ieos == 2) P = P_1*(dn**7.2 - 1.) + P_base + P
             if (P < P_floor) P = P_floor
 
             vx = Qpnts_r(ife,mx)*dni
@@ -438,7 +438,7 @@ contains
             vlr(k,2) = Qlr(k,iperp1)*rho_i        ! velocity in perpendicular direction 1
             vlr(k,3) = Qlr(k,iperp2)*rho_i        ! velocity in perpendicular direction 2
             qsq(k) = vlr(k,1)**2 + vlr(k,2)**2 + vlr(k,3)**2
-            plr(k) = (aindex - 1.0)*(Qlr(k,enj) - 0.5*rhov(k)*qsq(k))        ! pressure
+            plr(k) = aindm1*(Qlr(k,enj) - 0.5*rhov(k)*qsq(k))        ! pressure
             if(ieos .eq. 2) plr(k) = P_1*(rhov(k)**7.2 - 1.) + P_base + plr(k)
             rtrho(k) = sqrt(rhov(k))
         end do
@@ -466,7 +466,7 @@ contains
                 hlr(k) = (Qlr(k,enj) + plr(k))/rhov(k)
                 hlr(k2) = (Qlr(k2,enj) + plr(k2))/rhov(k2)
                 qtilde(k,4) = (rtrho(k)*hlr(k) + rtrho(k2)*hlr(k2))*rtrho_i(k)
-                ctsq(k) = (aindex - 1.0)*(qtilde(k,4) - 0.5*qsq(k))
+                ctsq(k) = aindm1*(qtilde(k,4) - 0.5*qsq(k))
             end do
             if (minval(ctsq) .ge. 0.0) then
                 ctilde = sqrt(ctsq)
@@ -567,7 +567,7 @@ contains
     subroutine innerintegral(Q_r)
 
         implicit none
-        real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         integer i,j,k,ieq,ipg,ir
         real Qinner(npg,nQ),finner_x(npg,nQ), finner_y(npg,nQ), finner_z(npg,nQ), int_r(nbastot,nQ)
 
@@ -662,10 +662,30 @@ contains
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
-    subroutine glflux
+    subroutine glflux(Q_r)
         implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k,ieq,ir
 
+        !#########################################################
+        ! Step 1: Calculate fluxes for boundaries of each cell
+        !   --> flux_x, flux_y, flux_z  (used only in flux.f90)
+        !---------------------------------------------------------
+        ! call flux_calc(Q_r)
+        call calc_flux_x(Q_r, flux_x)
+        call calc_flux_y(Q_r, flux_y)
+        call calc_flux_z(Q_r, flux_z)
+
+        !#########################################################
+        ! Step 2: Calculate inner integral for each cell
+        !   --> integral_r  (used only in flux.f90)
+        !---------------------------------------------------------
+        call innerintegral(Q_r)
+
+        !#########################################################
+        ! Step 3: Calculate (total) "Galerkin flux" for each cell
+        !   --> glflux_r  (used by advance_time_level_gl)
+        !---------------------------------------------------------
         do ieq = 1,nQ
         do k = 1,nz
         do j = 1,ny
@@ -729,7 +749,7 @@ contains
 
         select case (ieos)
             case (1)
-                P = (aindex - 1.)*(Qcf(en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
+                P = aindm1*(Qcf(en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
                 cs = sqrt(aindex*P*dni)
             case (2)
                 cs = sqrt(7.2*P_1*dn**6.2)

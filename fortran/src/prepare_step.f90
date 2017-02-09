@@ -4,21 +4,29 @@ use parameters
 use helpers
 use boundary
 
+! write(*,'(A11,I1,A2,2ES9.1,A3,2ES9.1)') 'Qylow_ext (',iam,'):',Qylow_ext(1:2,1,1,pxx),' | ',Qylow_ext(nx-1:nx,1,1,pxx)
+! write(*,'(A12,I1,A2,2ES9.1,A3,2ES9.1)') 'Qyhigh_ext (',iam,'):',Qyhigh_ext(1:2,1,1,pxx),' | ',Qyhigh_ext(nx-1:nx,1,1,pxx)
+! write(*,'(A11,I1,A2,2ES9.1,A3,2ES9.1)') 'Qylow_int (',iam,'):',Qylow_int(1:2,1,1,pxx),' | ',Qylow_int(nx-1:nx,1,1,pxx)
+! write(*,'(A12,I1,A2,2ES9.1,A3,2ES9.1)') 'Qyhigh_int (',iam,'):',Qyhigh_int(1:2,1,1,pxx),' | ',Qyhigh_int(nx-1:nx,1,1,pxx)
+
 contains
 
     !===========================================================================
-    ! prepare_exchange : set internal BCs from field variables
+    ! exchange_flux : set internal BCs from field variables
     !------------------------------------------------------------
-    subroutine prepare_exchange(Q_r)
+    subroutine exchange_flux(Q_r)
         integer ieq, i, j, k, ipnt
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
 
+        !#########################################################
+        ! Step 1: Get fluxes at the boundaries of this MPI domain
+        !---------------------------------------------------------
         do ieq = 1,nQ
+        do k = 1,nz
         do j = 1,ny
-        do i = 1,nx
             do ipnt=1,nface
-                Qzlow_int(i,j,ipnt,ieq) = sum(bfvals_zm(ipnt,1:nbasis)*Q_r(i,j,1,ieq,1:nbasis))
-                Qzhigh_int(i,j,ipnt,ieq) = sum(bfvals_zp(ipnt,1:nbasis)*Q_r(i,j,nz,ieq,1:nbasis))
+                Qxlow_int(j,k,ipnt,ieq) = sum(bfvals_xm(ipnt,1:nbasis)*Q_r(1,j,k,ieq,1:nbasis))
+                Qxhigh_int(j,k,ipnt,ieq) = sum(bfvals_xp(ipnt,1:nbasis)*Q_r(nx,j,k,ieq,1:nbasis))
             end do
         end do
         end do
@@ -34,27 +42,34 @@ contains
         end do
         end do
         end do
-        ! write(*,'(A11,I1,A2,2ES9.1,A3,2ES9.1)') 'Qylow_int (',iam,'):',Qylow_int(1:2,1,1,pxx),' | ',Qylow_int(nx-1:nx,1,1,pxx)
-        ! write(*,'(A12,I1,A2,2ES9.1,A3,2ES9.1)') 'Qyhigh_int (',iam,'):',Qyhigh_int(1:2,1,1,pxx),' | ',Qyhigh_int(nx-1:nx,1,1,pxx)
 
         do ieq = 1,nQ
-        do k = 1,nz
         do j = 1,ny
+        do i = 1,nx
             do ipnt=1,nface
-                Qxlow_int(j,k,ipnt,ieq) = sum(bfvals_xm(ipnt,1:nbasis)*Q_r(1,j,k,ieq,1:nbasis))
-                Qxhigh_int(j,k,ipnt,ieq) = sum(bfvals_xp(ipnt,1:nbasis)*Q_r(nx,j,k,ieq,1:nbasis))
+                Qzlow_int(i,j,ipnt,ieq) = sum(bfvals_zm(ipnt,1:nbasis)*Q_r(i,j,1,ieq,1:nbasis))
+                Qzhigh_int(i,j,ipnt,ieq) = sum(bfvals_zp(ipnt,1:nbasis)*Q_r(i,j,nz,ieq,1:nbasis))
             end do
         end do
         end do
         end do
-    end subroutine
+        !#########################################################
+
+
+        !#########################################################
+        ! Step 2: Exchange fluxes with (neighboring) MPI domains
+        !---------------------------------------------------------
+        call perform_flux_exchange
+        !#########################################################
+
+    end subroutine exchange_flux
     !---------------------------------------------------------------------------
 
 
     !===========================================================================
-    ! exchange_flux : exchange fluxes between MPI domains
+    ! perform_flux_exchange : exchange fluxes between MPI domains
     !------------------------------------------------------------
-    subroutine exchange_flux
+    subroutine perform_flux_exchange
         integer mpi_size
 
         call MPI_BARRIER(cartcomm,ierr)
@@ -110,8 +125,6 @@ contains
         if (nbrs(SOUTH) .ne. MPI_PROC_NULL) then
             call MPI_Wait(reqs(4),stats(:,4),ierr)
         endif
-        ! write(*,'(A11,I1,A2,2ES9.1,A3,2ES9.1)') 'Qylow_ext (',iam,'):',Qylow_ext(1:2,1,1,pxx),' | ',Qylow_ext(nx-1:nx,1,1,pxx)
-        ! write(*,'(A12,I1,A2,2ES9.1,A3,2ES9.1)') 'Qyhigh_ext (',iam,'):',Qyhigh_ext(1:2,1,1,pxx),' | ',Qyhigh_ext(nx-1:nx,1,1,pxx)
 
         !---------------------------------------------
         mpi_size = nface*nx*ny*nQ
@@ -139,7 +152,7 @@ contains
             call MPI_Wait(reqs(4),stats(:,4),ierr)
         endif
 
-    end subroutine
+    end subroutine perform_flux_exchange
     !---------------------------------------------------------------------------
 
 end module prepare_step

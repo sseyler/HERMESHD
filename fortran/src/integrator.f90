@@ -103,8 +103,7 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
 
         if (ieos .eq. 1 .or. ieos .eq. 2) call limiter(Q_io)
-        call prepare_exchange(Q_io)
-        call exchange_flux
+        call exchange_flux(Q_io)
         call apply_boundaries
     end subroutine prep_advance
 
@@ -113,9 +112,9 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
 
-        call flux_calc(Q_io)
-        call innerintegral(Q_io)
-        call glflux
+        ! call flux_calc(Q_io)
+        ! call innerintegral(Q_io)
+        call glflux(Q_io)
         call source_calc(Q_io)
     end subroutine calc_rhs
 

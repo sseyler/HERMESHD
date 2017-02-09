@@ -224,11 +224,11 @@ module parameters
     ! Helper variables (initialized here)
     !------------------------------------------------------------
     real t1,t2,t_start,t_stop,dtoriginal  ! used for timing (dtoriginal optional)
-    real lxd,lxu,lyd,lyu,lzd,lzu  ! used indirectly by the grid coord functions
+    real lxd,lxu,lyd,lyu,lzd,lzu  ! used in init + indirectly used by the grid coord functions
     real loc_lxd,loc_lyd,loc_lzd  ! used directly by the grid coord functions
     real dz, dy, dx, dxi, dyi, dzi, dVi  ! used throughout + directly by grid coord functions
 
-    integer mxa(3),mya(3),mza(3)  ! used in flux_calc_pnts_r()
+    integer mxa(3),mya(3),mza(3)  ! used in init+ flux_hllc()
     integer iseed  ! used for initializing random seeds
     !===========================================================================
 

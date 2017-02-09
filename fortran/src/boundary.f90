@@ -110,15 +110,15 @@ contains
         ! end do
         ! end do
 
-        do i4=1,nface
-            do ieq=rh,en
-                where (Qmask(:,:,:))
-                    flux_x(i4,1:nx,:,:,ieq) = 0.0
-                    flux_y(i4,:,1:ny,:,ieq) = 0.0
-                    flux_z(i4,:,:,1:nz,ieq) = 0.0
-                end where
-            end do
-        end do
+        ! do i4=1,nface
+        !     do ieq=rh,en
+        !         where (Qmask(:,:,:))
+        !             flux_x(i4,1:nx,:,:,ieq) = 0.0
+        !             flux_y(i4,:,1:ny,:,ieq) = 0.0
+        !             flux_z(i4,:,:,1:nz,ieq) = 0.0
+        !         end where
+        !     end do
+        ! end do
         where (Qmask(:,:,:))
             Q_r0(:,:,:,rh,1) = 2.0
             Q_r0(:,:,:,mx,1) = 0.0
