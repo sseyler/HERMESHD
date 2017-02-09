@@ -118,11 +118,10 @@ contains
         end do
 
     end subroutine random_heatflux_pnts_r
-!----------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
 
-!----------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
     subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
-
         ! Calculate the flux "fpnts_r" in direction "ixyz" (x, y, or z) at a set of
         ! points corresponding to conserved quantities "Qpnts_r":
         !   ixyz=1: x-direction
@@ -131,7 +130,7 @@ contains
         implicit none
         integer ife,ixyz,npnts
         real, dimension(npnts,nQ) :: Qpnts_r, fpnts_r
-        real dn,dni,vx,vy,vz,P,asqr,fac,Pre,Psol,dx2,Tem,smsq
+        real dn,dni,vx,vy,vz,P,smsq
 
         real Spnts_r(npnts,3,3), Hpnts_r(npnts,3)
         real Sxx,Syy,Szz,Sxy,Sxz,Syz
@@ -139,12 +138,9 @@ contains
 
         Spnts_r(:,:,:) = 0.0
         Hpnts_r(:,:) = 0.0
-        if (llns .eq. 1) then
-            call random_stresses_pnts_r(Spnts_r, npnts)
-        end if
+        if (llns) call random_stresses_pnts_r(Spnts_r, npnts)
 
         do ife = 1,npnts
-
             dn = Qpnts_r(ife,rh)
             dni = 1./dn
             smsq = Qpnts_r(ife,mx)**2 + Qpnts_r(ife,my)**2 + Qpnts_r(ife,mz)**2
@@ -169,8 +165,8 @@ contains
             Qy = Hpnts_r(ife,2)
             Qz = Hpnts_r(ife,3)
 
-            if(ixyz .eq. 1) then
-
+            select case(ixyz)
+            case(1)
                 fpnts_r(ife,rh) = Qpnts_r(ife,mx)
 
                 fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + P + Qpnts_r(ife,pxx) - Sxx
@@ -190,9 +186,7 @@ contains
                 fpnts_r(ife,pxz) = nu*vz
                 fpnts_r(ife,pyz) = 0
 
-            end if
-            if(ixyz .eq. 2) then
-
+            case(2)
                 fpnts_r(ife,rh) = Qpnts_r(ife,mxa(ixyz))
 
                 fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy     + Qpnts_r(ife,pxy) - Sxy
@@ -212,9 +206,7 @@ contains
                 fpnts_r(ife,pxz) = 0
                 fpnts_r(ife,pyz) = nu*vz
 
-            end if
-            if(ixyz .eq. 3) then
-
+            case(3)
                 fpnts_r(ife,rh) = Qpnts_r(ife,mz)
 
                 fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz     + Qpnts_r(ife,pxz) - Sxz
@@ -233,15 +225,13 @@ contains
                 fpnts_r(ife,pxy) = 0
                 fpnts_r(ife,pxz) = nu*vx
                 fpnts_r(ife,pyz) = nu*vy
-
-            end if
-
+            end select
         end do
-
     end subroutine
+!-------------------------------------------------------------------------------
 
-    !---------------------------------------------------------------------------
-    subroutine flux_cal_x(Q_r, flux_x)
+!-------------------------------------------------------------------------------
+    subroutine calc_flux_x(Q_r, flux_x)
 
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
@@ -281,7 +271,6 @@ contains
                         end do
                     end do
                 end if
-
                 if (i .eq. nx+1) then
                     do ieq = 1,nQ
                         Qface_x(nface+1:nfe,ieq) = Qxhigh_ext(j,k,1:nface,ieq)
@@ -314,9 +303,7 @@ contains
                 kroe(1:nface) = 1
 
                 if (ihllc) call flux_hllc(Qface_x,fface_x,fhllc_x,1)
-
-                ! Needs to be done for HLLC and Roe
-                if (ihllc) then
+                if (ihllc) then ! Needs to be done for HLLC and Roe
                     do ieq = 1,en
                         do i4=1,nface
                             if (kroe(i4) .gt. 0) then
@@ -330,11 +317,11 @@ contains
             end do
         end do
 
-    end subroutine flux_cal_x
-    !---------------------------------------------------------------------------
+    end subroutine calc_flux_x
+!-------------------------------------------------------------------------------
 
-    !---------------------------------------------------------------------------
-    subroutine flux_cal_y(Q_r, flux_y)
+!-------------------------------------------------------------------------------
+    subroutine calc_flux_y(Q_r, flux_y)
 
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
@@ -406,9 +393,7 @@ contains
                 kroe(1:nface) = 1
 
                 if (ihllc) call flux_hllc(Qface_y,fface_y,fhllc_y,2)
-
-                ! Needs to be done for HLLC and Roe
-                if (ihllc) then
+                if (ihllc) then ! Needs to be done for HLLC and Roe
                     do ieq = 1,en
                         do i4=1,nface
                             if (kroe(i4) .gt. 0) then
@@ -422,21 +407,17 @@ contains
             end do
         end do
 
-    end subroutine flux_cal_y
-    !---------------------------------------------------------------------------
+    end subroutine calc_flux_y
+!-------------------------------------------------------------------------------
 
-    !---------------------------------------------------------------------------
-    subroutine flux_cal_z(Q_r, flux_z)
-
+!-------------------------------------------------------------------------------
+    subroutine calc_flux_z(Q_r, flux_z)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny,nz+1,nQ), intent(out) :: flux_z
-
         integer i,j,k,ieq,kdown,i4,i4p,ipnt
-        real Qface_z(nfe,nQ)
-        real fface_z(nfe,nQ)
-        real cwavez(nfe)
-        real fhllc_z(nface,5),qvin(nQ) !fs(nface,nQ)
+        real Qface_z(nfe,nQ),fface_z(nfe,nQ)
+        real cwavez(nfe),fhllc_z(nface,5),qvin(nQ) !fs(nface,nQ)
         integer kroe(nface) ! can eliminate the global variable in parameters.f90
 
         kroe(:) = 1
@@ -500,8 +481,6 @@ contains
                 kroe(1:nface) = 1
 
                 if (ihllc) call flux_hllc(Qface_z,fface_z,fhllc_z,3)
-
-                ! Needs to be done for HLLC and Roe
                 if (ihllc) then
                     do ieq = 1,en
                         do i4=1,nface
@@ -516,13 +495,22 @@ contains
             end do
         end do
 
-    end subroutine flux_cal_z
-    !---------------------------------------------------------------------------
-
+    end subroutine calc_flux_z
 !-------------------------------------------------------------------------------
 
-    subroutine flux_cal(Q_r)
+!-------------------------------------------------------------------------------
+    subroutine flux_calc(Q_r)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
 
+        call calc_flux_x(Q_r, flux_x)
+        call calc_flux_y(Q_r, flux_y)
+        call calc_flux_z(Q_r, flux_z)
+    end subroutine flux_calc
+
+
+!-------------------------------------------------------------------------------
+    subroutine flux_cal(Q_r)
         implicit none
         integer i,j,k,ieq,iback,jleft,kdown,i4,i4p,ipnt
         real Qface_x(nfe,nQ), Qface_y(nfe,nQ), Qface_z(nfe,nQ)
