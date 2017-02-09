@@ -5,6 +5,16 @@ use helpers
 use boundary
 use random
 
+! Only used by flux_calc (flux_cal) and glflux
+real flux_x(nface,1:nx+1,ny,nz,1:nQ)
+real flux_y(nface,nx,1:ny+1,nz,1:nQ)
+real flux_z(nface,nx,ny,1:nz+1,1:nQ)
+
+! Only used by flux_calc (flux_cal)
+real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
+
+! integer mxa(3),mya(3),mza(3)
+
 contains
 
 !-------------------------------------------------------------------------------
@@ -74,7 +84,7 @@ contains
                 fpnts_r(ife,pyz) = 0
 
             case (2)
-                fpnts_r(ife,rh) = Qpnts_r(ife,mxa(ixyz))
+                fpnts_r(ife,rh) = Qpnts_r(ife,my)
 
                 fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy     + Qpnts_r(ife,pxy) - Sxy
                 fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + P + Qpnts_r(ife,pyy) - Syy
@@ -187,7 +197,7 @@ contains
                 if (ihllc) then ! Needs to be done for HLLC and Roe
                     do ieq = 1,en
                         do i4=1,nface
-                            if (kroe(i4) .gt. 0) then
+                            if (kroe(i4) > 0) then
                                 flux_x(i4,i,j,k,ieq) = fhllc_x(i4,ieq)
                             end if
                         end do
@@ -271,7 +281,7 @@ contains
                 if (ihllc) then ! Needs to be done for HLLC and Roe
                     do ieq = 1,en
                         do i4=1,nface
-                            if (kroe(i4) .gt. 0) then
+                            if (kroe(i4) > 0) then
                                 flux_y(i4,i,j,k,ieq) = fhllc_y(i4,ieq)
                             end if
                         end do
@@ -356,7 +366,7 @@ contains
                 if (ihllc) then
                     do ieq = 1,en
                         do i4=1,nface
-                            if (kroe(i4) .gt. 0) then
+                            if (kroe(i4) > 0) then
                                 flux_z(i4,i,j,k,ieq) = fhllc_z(i4,ieq)
                             end if
                         end do

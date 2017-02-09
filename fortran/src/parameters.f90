@@ -197,17 +197,16 @@ module parameters
 
 
     !===========================================================================
-    ! Arrays for field variables, fluxes, inner integrals, sources, and time(s)
+    ! Arrays for field variables, fluxes/inner-integrals, and sources, and time(s)
     !------------------------------------------------------------
     real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r0, Q_r1, Q_r2, Q_r3
     real, dimension(nx,ny,nz,nQ,nbasis) :: glflux_r, source_r, integral_r
+    !===========================================================================
 
-    real den0(nx,ny,nz),Ez0,Zdy(nx,ny,nz,npg) !eta(nx,ny,nz,npg)
-    real flux_x(nface,1:nx+1,ny,nz,1:nQ)
-    real flux_y(nface,nx,1:ny+1,nz,1:nQ)
-    real flux_z(nface,nx,ny,1:nz+1,1:nQ)
-    real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
 
+    !===========================================================================
+    ! Time(s)
+    !------------------------------------------------------------
     real t, dt, dtout, sqrt_dVdt_i ! Inv sq-root of (dV*dt), dV = grid cell volume
     !===========================================================================
 
@@ -230,7 +229,6 @@ module parameters
     real dz, dy, dx, dxi, dyi, dzi, dVi  ! used throughout + directly by grid coord functions
 
     integer mxa(3),mya(3),mza(3)  ! used in flux_calc_pnts_r()
-    integer kroe(nface)  ! used in flux_cal()
     integer iseed  ! used for initializing random seeds
     !===========================================================================
 
@@ -254,7 +252,10 @@ module parameters
     integer, parameter :: DOWN  = 6  ! used in exchange_flux + init
     integer, parameter :: MPI_TT = MPI_REAL4  ! used in exchange_flux and get_min_dt + init
 
-    integer dims(3),coords(3),periods(3),nbrs(6),reqs(4),stats(MPI_STATUS_SIZE,4)
+    integer dims(3),coords(3),periods(3)  ! only used in init for MPI things
+
+    integer nbrs(6)  ! only used in init + exchange_flux for MPI things
+    integer reqs(4),stats(MPI_STATUS_SIZE,4)  ! only used in get_min_dt + exchange_flux for MPI things
     !===========================================================================
 
 contains
