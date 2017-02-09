@@ -70,12 +70,12 @@ endif
 ifeq ($(NAME),modbc)
 	OBJS = main.f90
 	MODULES =  input.f90 parameters.f90 helpers.f90 \
-			   boundaries.f90 initialcon.f90 \
+			   boundary.f90 initialcon.f90 \
 			   basis_funcs.f90 initialize.f90 \
 			   prepare_step.f90 sources.f90 flux.f90 \
 			   integrator.f90 output.f90
     MODFILES = input.mod parameters.mod helpers.mod \
-			   custom_boundary.mod boundaries.mod initialcon.mod \
+			   boundary_custom.mod boundary.mod initialcon.mod \
 			   basis_funcs.mod initialize.mod \
 			   prepare_step.mod sources.mod flux.mod \
 			   integrator.mod output.mod

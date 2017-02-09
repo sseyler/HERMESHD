@@ -1,21 +1,21 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 4.1e2 !4.1e2
-    real, parameter :: ly = 4.1e2 !4.1e2
-    real, parameter :: lz = 4.1e2/120. !4.1e2/120.
+    real, parameter :: lx = 1.0e6 !8.2e3 !4.1e2
+    real, parameter :: ly = 1.0e6 !4.1e3 !4.1e2
+    real, parameter :: lz = 1.0e6/120. !4.1e3/120. !4.1e2/120.
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad = 2
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 40
-    integer, parameter :: ny = 40
+    integer, parameter :: nx = 80
+    integer, parameter :: ny = 1
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
-    integer :: mpi_nx = 4
-    integer :: mpi_ny = 4
+    integer :: mpi_nx = 16
+    integer :: mpi_ny = 1
 
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK
@@ -27,7 +27,7 @@ module input
     logical, parameter :: llns = .false.
 
     ! Initial conditions
-    integer, parameter :: icid = 1
+    integer, parameter :: icid = 3
     ! character(*), parameter :: icname = ''
 
     ! Boundary conditions:
@@ -35,18 +35,18 @@ module input
     !   * 1 for outflow (MPI does this for you)
     !   * 2 for wall (vanishing normal velocities)
     !   * 3 for no-slip (vanishing normal/tangential velocities)
-    character(*), parameter :: xlobc = 'periodic' !'periodic'
-    character(*), parameter :: xhibc = 'periodic' !'periodic'
+    character(*), parameter :: xlobc = 'wall' !'periodic'
+    character(*), parameter :: xhibc = 'wall' !'periodic'
     character(*), parameter :: ylobc = 'periodic'  !'periodic'
     character(*), parameter :: yhibc = 'periodic'  !'periodic'
     character(*), parameter :: zlobc = 'periodic'
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 5.0e3
+    real, parameter :: tf = 8.5e4 !1.0e3
 
     ! Console output frequency
-    integer, parameter :: ntout = 200
+    integer, parameter :: ntout = 100
 
     ! Riemann solver
     ! If all of them = 0, then LLF is used for fluxes.
@@ -63,7 +63,7 @@ module input
     real, parameter :: cp = aindex/aindm1
 
     ! Equation of state and constitutive parameters
-    real, parameter :: vis = 1.0e-2
+    real, parameter :: vis = 0 !1.0e-3
     real, parameter :: epsi = 5.0
     real, parameter :: clt = 2.0
 

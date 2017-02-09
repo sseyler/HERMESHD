@@ -69,7 +69,7 @@ module parameters
     ! rh_min is a min density to be used for ideal gas EOS, rh_min is min density
     ! below which the pressure becomes negative for the MT water EOS.
     ! The DG-based subroutine "limiter" keeps density above rh_mult*rh_min.
-    real, parameter :: rh_floor = 1.0e-1!5.0e-6
+    real, parameter :: rh_floor = 5.0e-6! 1.0e-1
     real, parameter :: T_floor  = 0.026/te0    ! 0.026 eV ~ 301.719 K |  0.02585 eV = 300 K
     real, parameter :: P_floor  = T_floor*rh_floor
 

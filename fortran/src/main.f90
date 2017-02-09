@@ -5,8 +5,8 @@ use parameters!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
 use helpers!, only : xc,yc,zc,get_clock_time
 
 use integrator
-use custom_boundary
-use boundaries
+use boundary_custom
+use boundary
 use initialcon
 use basis_funcs
 

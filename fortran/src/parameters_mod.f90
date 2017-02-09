@@ -18,7 +18,7 @@ module parameters_mod
     !   nbasis = 10: nbasis4  + {P_2(x),P_2(y),P_2(z), yz, zx, xy}
     !   nbasis = 20: nbasis10 + {xyz,xP2(y),yP2(x),xP2(z),
     !                                zP2(x),yP2(z),zP2(y),P3(x),P3(y),P3(z)}
-    integer, parameter :: nx=70, ny=1, nz=1, ngu=0, nbasis=8, nbastot=27
+    integer, parameter :: nx=80, ny=1, nz=1, ngu=0, nbasis=8, nbastot=27
 
     ! iquad: # of Gaussian quadrature points per direction. iquad should not be:
     !   < ipoly (max Legendre polynomial order used) --> unstable

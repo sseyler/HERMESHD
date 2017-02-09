@@ -2,8 +2,8 @@ module initialcon
 
 use parameters
 use helpers
-use custom_boundary
-use boundaries
+use boundary_custom
+use boundary
 
 contains
 
@@ -16,9 +16,9 @@ contains
 
         wtev = T_floor
 
-        Q_r(:,:,:,:,:) = 0.0
+        Q_r(:,:,:,:,:)  = 0.0
         Q_r(:,:,:,rh,1) = rh_floor
-        Q_r(:,:,:,en,1) = T_floor*rh_floor/(aindex - 1.)
+        Q_r(:,:,:,en,1) = T_floor*rh_floor/aindm1
         ! QMask(:,:,:) = .false.
         ! MMask(:,:,:) = .false.
 
@@ -53,10 +53,8 @@ contains
     subroutine hydro_jet(Q_r)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
-        integer i,j,k,iseed
-        real te,rh,pr,beta,beta2,rand_num,rnum
-        real smx,smy,smz
-        iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
+        integer i,j,k
+        real te,rh,pr,beta,beta2,smx,smy,smz,rand_num,rnum
 
         te    = T_floor
         beta  = 1.0   ! jet strength
@@ -150,7 +148,7 @@ contains
         integer i,j,k,version
         real rh_hi,rh_lo,pr_hi,pr_lo,xctr,yctr,xp,yp,dn,vx,vy,vz,pr
 
-        rh_hi = 1.0e-4
+        rh_hi = 1.0e-4  ! NOTE: density floor needs to be 5.0e-6
         pr_hi = 1.0*P_base  ! atmospheric pressure
         rh_lo = 0.125e-4
         pr_lo = 0.1*P_base
@@ -201,14 +199,13 @@ contains
     ! NOTE: This subroutine sets BCs for the problem using custom_boundary
     !------------------------------------------------------------
     subroutine pipe_cylinder_2d(Q_r, version)
-        use custom_boundary
+        use boundary_custom
 
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         logical, dimension(nx,ny,nz):: Qmask
-
-        integer i,j,k,i4,version
-        real dn,pr,te,vx,vy,vz,ux_amb,cyl_x0,cyl_y0,cyl_rad
+        integer i,j,k,ieq,version
+        real dn,pr,te,vx,vy,vz,ux_amb,xp0,yp0,cyl_x0,cyl_y0,cyl_rad
 
         !-------------------------------------------------------
         ! Definitions
@@ -219,9 +216,11 @@ contains
         vy = 0.0
         vz = 0.0
 
-        cyl_x0 = 2.0e2
-        cyl_y0 = 2.0e2
-        cyl_rad = 5.0e1
+        xp0 = lxd              ! set zero-value of x-coordinate to left of domain
+        yp0 = lyd              ! set zero-value of y-coordinate to bottom of domain
+        cyl_x0  = xp0 + ly/2.  ! center of cylinder relative to origin
+        cyl_y0  = yp0 + ly/2.
+        cyl_rad = ly/8.
 
         select case(version)
             case(0)
@@ -256,19 +255,16 @@ contains
         !   NOTE: might be an offset b/c mask is constructed at faces, not cells
         Qmask(:,:,:) = cyl_in_2d_pipe_mask(cyl_x0, cyl_y0, cyl_rad)
 
-        do i4=1,nface
-            where (Qmask)
-                Q_r(:,:,:,i4,1) = 0.0
-            end where
-        end do
+        where (Qmask(:,:,:))
+            Q_r(:,:,:,rh,1) = 2.0
+            Q_r(:,:,:,mx,1) = 0.0
+            Q_r(:,:,:,my,1) = 0.0
+            Q_r(:,:,:,mz,1) = 0.0
+        end where
 
-        Qxlow_ext_c(:,:,:,:) = 1.0
-        Qcyl_ext_c(:,:,:,:) = 1.0
         ! NOTE: Qxlow_ext_custom, Qcyl_ext, and QMask should already be initialized!
         ! call add_custom_boundaries(icname)
-        ! print *,Qxlow_ext_c(:,:,1,rh:mx)
-        ! print *,''
-        call set_cyl_in_2d_pipe_boundaries(Qmask, ux_amb, Qxlow_ext_c, Qcyl_ext_c)
+        call set_cyl_in_2d_pipe_boundaries(Qmask, ux_amb, dn, Qxlow_ext_c, Qcyl_ext_c)
 
     end subroutine pipe_cylinder_2d
     !---------------------------------------------------------------------------

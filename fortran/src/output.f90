@@ -199,21 +199,21 @@ contains
                            varname = 'Pressure',                    &
                            var     = var_xml_val_x)
 
-        ! do i=1+nb,nnx-nb
-        !     do j=1+nb,nny-nb
-        !         do k=1+nb,nnz-nb
-        !             l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
-        !             var_xml_val_x(l)=qvtk(i,j,k,pxx)
-        !             var_xml_val_y(l)=qvtk(i,j,k,pyy)
-        !             var_xml_val_z(l)=qvtk(i,j,k,pzz)
-        !         enddo
-        !     enddo
-        ! enddo
-        ! E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz,                               &
-        !                    varname = 'Isotropic stress',                        &
-        !                    varX    = var_xml_val_x,                             &
-        !                    varY    = var_xml_val_y,                             &
-        !                    varZ    = var_xml_val_z )
+        do i=1+nb,nnx-nb
+            do j=1+nb,nny-nb
+                do k=1+nb,nnz-nb
+                    l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
+                    var_xml_val_x(l)=qvtk(i,j,k,pxx)
+                    var_xml_val_y(l)=qvtk(i,j,k,pyy)
+                    var_xml_val_z(l)=qvtk(i,j,k,pzz)
+                enddo
+            enddo
+        enddo
+        E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz,                               &
+                           varname = 'Isotropic stress',                        &
+                           varX    = var_xml_val_x,                             &
+                           varY    = var_xml_val_y,                             &
+                           varZ    = var_xml_val_z )
 
         do i=1+nb,nnx-nb
             do j=1+nb,nny-nb

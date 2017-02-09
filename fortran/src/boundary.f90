@@ -223,13 +223,13 @@ contains
 
         ! NOTE: Inefficient b/c overwrites 'default' BC application above
         ! NOTE: This is NOT a general implementation for applying custom BCs
-        call apply_cyl_in_2d_pipe_boundaries(Qcyl_ext_c, Qcyl_ext)
+        ! call apply_cyl_in_2d_pipe_boundaries(Qcyl_ext_c, Qcyl_ext)
         ! print *,QMask(:,:,1)
-        if ( mpi_P .eq. 1 ) then
-            call apply_xlo_in_2d_pipe_boundaries(Qxlow_ext_c, Qxlow_ext)
+        ! if ( mpi_P .eq. 1 ) then
+        !     call apply_xlo_in_2d_pipe_boundaries(Qxlow_ext_c, Qxlow_ext)
             ! print *,Qxlow_ext_c(:,:,1,rh:mx)
             ! print *,''
-        end if
+        ! end if
     end subroutine apply_boundaries
     !---------------------------------------------------------------------------
 

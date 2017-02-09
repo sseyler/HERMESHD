@@ -2,7 +2,7 @@ module prepare_step
 
 use parameters
 use helpers
-use boundaries
+use boundary
 
 contains
 
@@ -34,10 +34,6 @@ contains
         end do
         end do
         end do
-
-        ! write(*,'(A11,I1,A2,2ES9.1,A3,2ES9.1)') 'Qylow_int (',iam,'):',Qylow_int(1:2,1,1,pxx),' | ',Qylow_int(nx-1:nx,1,1,pxx)
-        ! write(*,'(A12,I1,A2,2ES9.1,A3,2ES9.1)') 'Qyhigh_int (',iam,'):',Qyhigh_int(1:2,1,1,pxx),' | ',Qyhigh_int(nx-1:nx,1,1,pxx)
-
 
         do ieq = 1,nQ
         do k = 1,nz
@@ -90,13 +86,13 @@ contains
             call MPI_Wait(reqs(4),stats(:,4),ierr)
         endif
 
-        if (mpi_P == 1 .and. xlobc == 'outflow') then
-            Qxlow_ext = Qxlow_int
-        end if
-
-        if (mpi_P == mpi_nx .and. xhibc == 'outflow') then
-            Qxhigh_ext = Qxhigh_int
-        end if
+        ! if (mpi_P == 1 .and. xlobc /= 'periodic') then
+        !     Qxlow_ext = Qxlow_int
+        ! end if
+        !
+        ! if (mpi_P == mpi_nx .and. xhibc /= 'periodic') then
+        !     Qxhigh_ext = Qxhigh_int
+        ! end if
 
         !---------------------------------------------
         mpi_size = nface*nx*nz*nQ
@@ -127,13 +123,13 @@ contains
             call MPI_Wait(reqs(4),stats(:,4),ierr)
         endif
 
-        if (mpi_Q == 1 .and. ylobc /= 'periodic') then
-            Qylow_ext = Qylow_int
-        end if
-
-        if (mpi_Q == mpi_ny .and. yhibc /= 'periodic') then
-            Qyhigh_ext = Qyhigh_int
-        end if
+        ! if (mpi_Q == 1 .and. ylobc /= 'periodic') then
+        !     Qylow_ext = Qylow_int
+        ! end if
+        !
+        ! if (mpi_Q == mpi_ny .and. yhibc /= 'periodic') then
+        !     Qyhigh_ext = Qyhigh_int
+        ! end if
 
         ! write(*,'(A11,I1,A2,2ES9.1,A3,2ES9.1)') 'Qylow_ext (',iam,'):',Qylow_ext(1:2,1,1,pxx),' | ',Qylow_ext(nx-1:nx,1,1,pxx)
         ! write(*,'(A12,I1,A2,2ES9.1,A3,2ES9.1)') 'Qyhigh_ext (',iam,'):',Qyhigh_ext(1:2,1,1,pxx),' | ',Qyhigh_ext(nx-1:nx,1,1,pxx)
@@ -164,14 +160,13 @@ contains
             call MPI_Wait(reqs(4),stats(:,4),ierr)
         endif
 
-
-        if (mpi_R == 1 .and. zlobc == 'outflow') then
-            Qzlow_ext = Qzlow_int
-        end if
-
-        if (mpi_R == mpi_nz .and. zhibc == 'outflow') then
-            Qzhigh_ext = Qzhigh_int
-        end if
+        ! if (mpi_R == 1 .and. zlobc /= 'periodic') then
+        !     Qzlow_ext = Qzlow_int
+        ! end if
+        !
+        ! if (mpi_R == mpi_nz .and. zhibc /= 'periodic') then
+        !     Qzhigh_ext = Qzhigh_int
+        ! end if
 
     end subroutine
     !---------------------------------------------------------------------------

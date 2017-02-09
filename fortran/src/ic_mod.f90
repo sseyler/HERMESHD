@@ -168,9 +168,9 @@ contains
             endif
 
             Q_r(i,j,k,rh,1) = dn
-            Q_r(i,j,k,mx,1) = vx
-            Q_r(i,j,k,my,1) = vy
-            Q_r(i,j,k,mz,1) = vz
+            Q_r(i,j,k,mx,1) = dn*vx
+            Q_r(i,j,k,my,1) = dn*vy
+            Q_r(i,j,k,mz,1) = dn*vz
             Q_r(i,j,k,en,1) = pres/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
         end do
         end do
