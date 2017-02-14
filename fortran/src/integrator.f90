@@ -94,7 +94,7 @@ contains
 
         call prep_advance(Q_in)
         call calc_rhs(Q_in)
-        call advance_time_level_gl(Q_in, Q_out)
+        call advance_time_level(Q_in, Q_out)
     end subroutine euler_step
 
     !----------------------------------------------------
@@ -119,34 +119,11 @@ contains
     end subroutine calc_rhs
 
     !----------------------------------------------------
-    subroutine advance_time_level_gl(Q_in, Q_out)
+    subroutine advance_time_level(Q_in, Q_out)
         implicit none
         integer i,j,k,ieq,ir
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_in
         real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
-
-        ! do k = 1,nz
-        ! do j = 1,ny
-        ! do i = 1,nx
-        !     print *,Q_r0(:,:,:,rh,1)
-        !     print *,''
-        !     do ieq = 1,nQ
-        !     do ir=1,nbasis
-        !         Q_out(i,j,k,ieq,ir) =                                           &
-        !             Q_in(i,j,k,ieq,ir) - dt*( glflux_r(i,j,k,ieq,ir)            &
-        !                                     - source_r(i,j,k,ieq,ir) )
-        !     end do
-        !     end do
-        !     do ieq = 1,nQ
-        !         if ( Q_out(i,j,k,ieq,1) .ne. Q_out(i,j,k,ieq,1)) then
-        !             print *,'NaN. Bailing out...'
-        !             print *,'  xc  =',xc(i),'  yc  =',yc(j),'  zc  =',zc(k),'  ieq  =',ieq
-        !             call exit(-1)
-        !         endif
-        !     end do
-        ! end do
-        ! end do
-        ! end do
 
         do ir=1,nbasis
         do ieq = 1,nQ
@@ -156,7 +133,17 @@ contains
                 Q_out(i,j,k,ieq,ir) =                                           &
                     Q_in(i,j,k,ieq,ir) - dt*( glflux_r(i,j,k,ieq,ir)            &
                                             - source_r(i,j,k,ieq,ir) )
-                if ( Q_out(i,j,k,ieq,1) .ne. Q_out(i,j,k,ieq,1)) then
+            end do
+            end do
+            end do
+        end do
+        end do
+
+        do ieq = 1,nQ
+            do k = 1,nz
+            do j = 1,ny
+            do i = 1,nx
+                if ( Q_out(i,j,k,ieq,1) /= Q_out(i,j,k,ieq,1)) then
                     print *,'------------------------------------------------'
                     print *,'NaN. Bailing out...'
                     write(*,'(A7,I9,A7,I9,A7,I9)')          '   i = ',   i, '   j = ',    j, '   k = ',k
@@ -169,27 +156,8 @@ contains
             end do
             end do
         end do
-        end do
 
-        ! do ieq = 1,nQ
-        !     do k = 1,nz
-        !     do j = 1,ny
-        !     do i = 1,nx
-        !         if ( Q_out(i,j,k,ieq,1) .ne. Q_out(i,j,k,ieq,1)) then
-        !             print *,'------------------------------------------------'
-        !             print *,'NaN. Bailing out...'
-        !             write(*,'(A7,I9,A7,I9,A7,I9)')          '   i = ',   i, '   j = ',    j, '   k = ',k
-        !             write(*,'(A7,ES9.2,A7,ES9.2,A7,ES9.2)') '  xc = ',xc(i),'  yc = ',yc(j), '  zc = ', zc(k)
-        !             write(*,'(A14,I2,A7,I2)') '    >>> iam = ', iam, ' ieq = ', ieq
-        !             print *,''
-        !             call exit(-1)
-        !         endif
-        !     end do
-        !     end do
-        !     end do
-        ! end do
-
-    end subroutine advance_time_level_gl
+    end subroutine advance_time_level
     !---------------------------------------------------------------------------
 
 end module integrator
