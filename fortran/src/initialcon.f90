@@ -5,6 +5,11 @@ use helpers
 use boundary_custom
 use boundary
 
+
+real :: coll      ! collision frequency; value set at runtime (constant for now)
+real :: rh_fluid  ! set far-field fluid density
+
+
 contains
 
     subroutine set_ic(Q_r, id)
@@ -12,9 +17,11 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         ! character(*), intent(in) :: name
         integer i,j,k,id
-        real wtev
+        real te
 
-        wtev = T_floor
+        te = T_floor
+        rh_fluid = 1.0
+        coll = rh_fluid*te/vis
 
         Q_r(:,:,:,:,:)  = 0.0
         Q_r(:,:,:,rh,1) = rh_floor
@@ -108,7 +115,7 @@ contains
         te_amb = 1.0           ! ambient temperature
         pr_amb = te_amb*rh_amb ! ambient pressure
 
-        xctr = 0               ! vortex center in x-direction
+        xctr = 0               ! vortex center in x-directionrh_fluid*te/vis
         yctr = 0               ! vortex center in y-direction
         zctr = 0               ! vortex center in z-direction
 
@@ -240,12 +247,12 @@ contains
             Q_r(i,j,k,mz,1) = dn*vz
             Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
 
-            Q_r(i,j,k,pxx,1) = pr + dn*vx**2
-            Q_r(i,j,k,pyy,1) = pr + dn*vy**2
-            Q_r(i,j,k,pzz,1) = pr + dn*vz**2
-            Q_r(i,j,k,pxy,1) =      dn*vx*vy
-            Q_r(i,j,k,pxz,1) =      dn*vx*vz
-            Q_r(i,j,k,pyz,1) =      dn*vy*vz
+            ! Q_r(i,j,k,pxx,1) = pr + dn*vx**2
+            ! Q_r(i,j,k,pyy,1) = pr + dn*vy**2
+            ! Q_r(i,j,k,pzz,1) = pr + dn*vz**2
+            ! Q_r(i,j,k,pxy,1) =      dn*vx*vy
+            ! Q_r(i,j,k,pxz,1) =      dn*vx*vz
+            ! Q_r(i,j,k,pyz,1) =      dn*vy*vz
         end do
         end do
         end do
@@ -268,56 +275,5 @@ contains
 
     end subroutine pipe_cylinder_2d
     !---------------------------------------------------------------------------
-
-
-    !---------------------------------------------------------------------------
-    subroutine fill_fluid2(Q_r)
-        implicit none
-        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
-        integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,igrid,ieq
-        real x,y,wtev,rnum,rand_num,rh_fluid
-        real qquad(npg,nQ),xcc,ycc,zcc  ! bfint(npg,nbasis),qquadv(npg)
-        iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
-
-        rh_fluid = 1.0
-        wtev = T_floor
-
-        ! test problem is an unstable flow jet in x with velocity perturbations in y
-        do i = 1,nx
-        do j = 1,ny
-        do k = 1,nz
-            call random_number(rand_num)
-            rnum = (rand_num - 0.5)
-            qquad(:,:) = 0.
-
-            do igrid=1,npg
-                qquad(igrid,rh) = rh_floor
-                qquad(igrid,en) = wtev*qquad(igrid,rh)/(aindex - 1.)
-
-                xcc = xc(i) + bfvals_int(igrid,kx)*0.5/dxi
-                ycc = yc(j) + bfvals_int(igrid,ky)*0.5/dyi
-                zcc = zc(k) + bfvals_int(igrid,kz)*0.5/dzi
-
-                qquad(igrid,rh) = rh_fluid
-                qquad(igrid,mx) = 1.0*qquad(igrid,rh)/cosh(20*ycc/lyu)/1.
-                qquad(igrid,my) = 0.001*rnum/cosh(20*yc(j)/lyu)**2 !0.001*rnum/1.
-                qquad(igrid,mz) = 0.
-                qquad(igrid,en) = wtev*qquad(igrid,rh)/(aindex - 1.)        &
-                                + 0.5*(qquad(igrid,mx)**2                   &
-                                     + qquad(igrid,my)**2                   &
-                                     + qquad(igrid,mz)**2)/qquad(igrid,rh)
-            end do
-
-            do ieq=rh,en
-                do ir=1,nbasis
-                    Q_r(i,j,k,ieq,ir) = 0.125 * cbasis(ir) * sum(wgt3d(1:npg) &
-                                              * bfvals_int(1:npg,ir)*qquad(1:npg,ieq))
-                end do
-            end do
-        end do
-        end do
-        end do
-    end subroutine fill_fluid2
-
 
 end module initialcon
