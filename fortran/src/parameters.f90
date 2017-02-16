@@ -35,11 +35,11 @@ module parameters
     ! Thus there are only two cases of iquad for a given nbasis. Both give similar
     ! results although iquad = ipoly + 1 is formally more accurate.
     integer, parameter :: nedge = iquad
-    integer, parameter :: nface = iquad*iquad  ! number of quadrature points per cell face
-    integer, parameter :: npg   = nface*iquad  ! number of internal points per cell
-    integer, parameter :: nfe   = 2*nface
-    integer, parameter :: npge  = 6*nface
-    integer, parameter :: nslim = npg+6*nface
+    integer, parameter :: nface = iquad*iquad    ! number of quadrature points per cell face
+    integer, parameter :: npg   = nface*iquad    ! number of internal points per cell
+    integer, parameter :: nfe   = 2*nface        ! number of cell face quad points per direction
+    integer, parameter :: npge  = 6*nface        ! total number of cell face quad points
+    integer, parameter :: nslim = npg + 6*nface  ! total number of quad points per cell
     !---------------------------------------------------------------------------
 
 
@@ -51,7 +51,11 @@ module parameters
     real, parameter :: sqrt2 = 2.0**0.5, sqrt2i = 1.0/sqrt2
     real, parameter :: c1d5 = 1./5.
     real, parameter :: c1d3 = 1./3., c2d3 = 2./3., c4d3 = 4./3.
-    real, parameter :: eVperK = 8.61728e-5
+    real, parameter :: eV_per_K = 8.61728e-5
+
+    ! Useful derived parameters
+    real, parameter :: aindm1 = aindex - 1. ! gamma - 1
+    real, parameter :: cp = aindex/aindm1   ! specific heat at constant pressure
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
     real, parameter :: L0 = 1.0e0  ! 1.0e-9                 ! length
@@ -83,12 +87,13 @@ module parameters
 
 
     !===========================================================================
-    ! Miscellaneous tuff for random matrix generation
+    ! Miscellaneous stuff for random matrix generation
     !------------------------------------------------------------
+
     real, parameter :: nu = epsi*vis
     real, parameter :: c2d3nu=c2d3*nu, c4d3nu=c4d3*nu
 
-    real, parameter :: T_base     = 300.0/1.16e4/te0  ! system temperature (for isothermal assumption)
+    real, parameter :: T_base     = te*eV_per_K/te0  ! system temperature (for isothermal assumption)
     real, parameter :: eta_base   = vis    ! dynamic viscosity
     real, parameter :: zeta_base  = 0.  ! bulk viscosity---will need to adjust this!
     real, parameter :: kappa_base = 1.e-1

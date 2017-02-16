@@ -23,9 +23,20 @@ contains
         ! Create output directory
         call system('mkdir -p '//outdir)
 
-        if (nbasis .le. 8)  cflm = 0.14
-        if (nbasis .eq. 27) cflm = 0.1
-        if (nbasis .eq. 64) cflm = 0.08
+        ! if (nbasis <= 8)  cflm = 0.14  ! nbasis = 4   0.28 is unstable for hydro
+        ! if (nbasis == 27) cflm = 0.1   ! nbasis = 10  0.15 is unstable for hydro
+        ! if (nbasis == 64) cflm = 0.08  ! nbasis = 20  0.1  is unstable for hydro
+
+        if (ibitri == 0) then
+    	    if (iquad == 2) cflm = 0.2
+    	    if (iquad == 3) cflm = 0.12
+    	    if (iquad == 4) cflm = 0.08
+    	end if
+    	if (ibitri == 1) then
+    	    if (iquad == 2) cflm = 0.14
+    	    if (iquad == 3) cflm = 0.10
+    	    if (iquad == 4) cflm = 0.07
+    	end if	! coefficients for basis functions {P2(x)P2(y)P2(z)}
 
         ! Initialize grid sizes and local lengths
 

@@ -562,4 +562,101 @@ contains
 
     end subroutine set_weights_3D
 
+
+    !--------------------------------------------------------------------------
+    subroutine set_cbasis_3D
+    ! Using bi/tri elements:
+        ! iquad=2, nbasis=8:  { 1,x,y,z, yz,zx,xy, xyz }
+        ! iquad=3, nbasis=27: { 1,x,y,z, yz,zx,xy, xyz, P2(x),P2(y),P2(z),
+        !     yP2(z), zP2(x), xP2(y), P2(y)z, P2(z)x, P2(x)y,
+        !     P2(y)P2(z), P2(z)P2(x), P2(x)P2(y), yzP2(x),zxP2(y),xyP2(z),
+        !     xP2(y)P2(z),yP2(z)P2(x),zP2(x)P2(y), P2(x)P2(y)P2(z)
+        !   }
+    ! Not using bi/tri elements:
+        ! iquad=2, nbasis=4:  { 1,x,y,z }
+        ! iquad=3, nbasis=10: { 1,x,y,z, yz,zx,xy,  P2(x),P2(y),P2(z) }
+        ! iquad=4, nbasis=20: { 1,x,y,z, yz,zx,xy, P2(x),P2(y),P2(z), xyz,
+        !     yP2(z), zP2(x), xP2(y), P2(y)z, P2(z)x, P2(x)y,
+        !     P3(x), P3(y), P3(z)
+        !   }
+
+        integer klim
+
+        ibitri = 0
+        if (iquad == 2 .and. nbasis == 4 ) ibitri = 0
+        if (iquad == 3 .and. nbasis == 10) ibitri = 0
+        if (iquad == 4 .and. nbasis == 20) ibitri = 0
+        if (iquad == 2 .and. nbasis == 8 ) ibitri = 1
+        if (iquad == 3 .and. nbasis == 27) ibitri = 1
+        if (iquad == 4 .and. nbasis == 64) ibitri = 1
+
+        kx  = 2
+        ky  = 3
+        kz  = 4
+        kyz = 5
+        kzx = 6
+        kxy = 7
+        if (ibitri == 0) klim = kxy
+        if (ibitri == 1) then
+            kxyz = 8
+            klim = kxyz
+        end if
+
+        kxx = klim + 1
+        kyy = klim + 2
+        kzz = klim + 3
+
+        if (ibitri == 0) then
+            kxyz = klim + 4
+            klim = kxyz
+        end if
+        if (ibitri == 1) klim = kzz
+            kyzz = klim + 1
+            kzxx = klim + 2
+            kxyy = klim + 3
+            kyyz = klim + 4
+            kzzx = klim + 5
+            kxxy = klim + 6
+        if (ibitri == 1) klim = kxxy
+        if (ibitri == 0) then
+            kxxx = klim + 7
+            kyyy = klim + 8
+            kzzz = klim + 9
+            klim = kzzz
+        end if
+
+        ! If ibitri = 1.......
+        kyyzz   = klim + 1
+        kzzxx   = klim + 2
+        kxxyy   = klim + 3
+        kyzxx   = klim + 4
+        kzxyy   = klim + 5
+        kxyzz   = klim + 6
+        kxyyzz  = klim + 7
+        kyzzxx  = klim + 8
+        kzxxyy  = klim + 9
+        kxxyyzz = klim + 10
+        if (ibitri == 1) then
+            kxxx = klim + 11
+            kyyy = klim + 12
+            kzzz = klim + 13
+            klim = kzzz
+        end if
+
+        cbasis(1)       = 1.    ! basis func coeff   {1}
+        cbasis(kx:kz)   = 3.    ! basis funcs coeffs {x,y,z}
+        cbasis(kyz:kxy) = 9.    ! basis funcs coeffs {yz,zx,xy}
+        cbasis(kxyz)    = 27.   ! basis func coeff   {xyz}
+
+        cbasis(kxx:kzz)       = 5.   ! basis funcs coeffs {P2(x),   P2(y),  P2(z)}
+        cbasis(kyzz:kxyy)     = 15.  ! basis funcs coeffs {yP2(z), zP2(x), xP2(y)}
+        cbasis(kyyz:kxxy)     = 15.  ! basis funcs coeffs {P2(y)z, P2(z)y, P2(z)x}
+        cbasis(kyyzz:kxxyy)   = 25.  ! basis funcs coeffs {P2(y)P2(z), P2(z)P2(x), P2(x)P2(y)}
+        cbasis(kyzxx:kxyzz)   = 45.  ! basis funcs coeffs {yzP_2(x),   zxP_2(y),   xyP_2(z)}
+        cbasis(kxyyzz:kzxxyy) = 75.  ! basis funcs coeffs {xP2(y)P2(z),yP2(z)P2(x),zP2(x)P2(y)}
+        cbasis(kxxyyzz)       = 125. ! basis funcs coeffs {P2(x)P2(y)P2(z)}
+        cbasis(kxxx:kzzz)     = 7.   ! basis funcs coeffs {P3(x), P3(y), P3(z)}
+
+    end subroutine set_cbasis_3D
+
 end module basis_funcs

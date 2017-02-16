@@ -6,7 +6,8 @@ module input
     real, parameter :: lz = 4.1e0/120. !1.0e6/120. !4.1e2/120.
 
     ! Number of Gaussian quadrature points per spatial dimension
-    integer, parameter :: iquad = 2
+    integer, parameter :: iquad  = 2
+    integer, parameter :: ibitri = 2
 
     ! Grid cell dimensions per MPI domain
     integer, parameter :: nx = 50
@@ -55,22 +56,23 @@ module input
     !   Only HLLC is setup to handle water EOS (ieos = 2)
     logical, parameter :: ihllc = .true.
 
-    ! Thermodynamic and transport parameters
+    ! Equation of state:
+    !   * 1 for ideal gas
+    !   * 2 for Murnaghan-Tait for water
     integer, parameter :: ieos = 1
-    real,    parameter :: mu = 22.0
-    real,    parameter :: aindex = 5./3.
-    real,    parameter :: aindm1 = aindex - 1.0
-    real,    parameter :: cp = aindex/aindm1
 
-    ! Equation of state and constitutive parameters
-    real, parameter :: vis = 2.0e-3
-    real, parameter :: epsi = 5.0
-    real, parameter :: clt = 2.0
+    ! Thermodynamic, constitutive, and transport parameters
+    real, parameter :: te     = 300.0    ! in Kelvin
+    real, parameter :: mu     = 22.0     ! AMU per molecule
+    real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
+    real, parameter :: vis    = 2.0e-3   ! dynamic viscosity
+    real, parameter :: epsi   = 5.0      ! inverse relaxation coefficient
+    real, parameter :: clt    = 2.0      ! numerical speed of sound
 
     ! Output location and naming
-    character (*), parameter :: datadir="data"
-    character (*), parameter :: outname="test_modbc_pipe_1"
-    character (*), parameter :: outdir = trim(datadir//"/"//outname)
+    character (*), parameter :: datadir = "data"
+    character (*), parameter :: outname = "test_modbc_pipe_1"
+    character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     ! Checkpointing
     !   set iread to 1 or 2 (when using the odd/even scheme)
