@@ -650,6 +650,185 @@ contains
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
+    subroutine innerintegral2(Q_r)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
+        real, dimension(npg,nQ)     :: Qinner, finner_x,finner_y,finner_z
+        real, dimension(nbastot,nQ) :: int_r
+        real sum1,sum2,sum3,sum4,sum5,sum6,sum7,sum8,sum9
+        integer i,j,k,ieq,ipg,ir
+
+        integral_r(:,:,:,:,:) = 0.
+
+        do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
+
+            do ieq = 1,nQ
+                do ipg = 1,npg
+                    Qinner(ipg,ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
+                end do
+            end do
+
+            call flux_calc_pnts_r(Qinner,finner_x,1,npg)
+            call flux_calc_pnts_r(Qinner,finner_y,2,npg)
+            call flux_calc_pnts_r(Qinner,finner_z,3,npg)
+
+            do ieq = 1,nQ
+
+                ! int_r(kx,ieq) = 0.25*cbasis(kx)*dxi*sum(wgt3d(1:npg)*finner_x(1:npg,ieq))
+                ! int_r(ky,ieq) = 0.25*cbasis(ky)*dyi*sum(wgt3d(1:npg)*finner_y(1:npg,ieq))
+                ! int_r(kz,ieq) = 0.25*cbasis(kz)*dzi*sum(wgt3d(1:npg)*finner_z(1:npg,ieq))
+                sum1 = 0.
+                sum2 = 0.
+                sum3 = 0.
+                do ipg=1,npg
+                    sum1 = sum1 + wgt3d(ipg)*finner_x(ipg,ieq)
+                    sum2 = sum2 + wgt3d(ipg)*finner_y(ipg,ieq)
+                    sum3 = sum3 + wgt3d(ipg)*finner_z(ipg,ieq)
+                end do
+                int_r(kx,ieq) = 0.25*cbasis(kx)*dxi*sum1
+                int_r(ky,ieq) = 0.25*cbasis(ky)*dyi*sum2
+                int_r(kz,ieq) = 0.25*cbasis(kz)*dzi*sum3
+
+
+                if ( nbasis > 4 ) then
+
+                    if ( ibitri == 1 .or. iquad > 2 ) then
+                        sum1 = 0.
+                        sum2 = 0.
+                        sum3 = 0.
+                        sum4 = 0.
+                        sum5 = 0.
+                        sum6 = 0.
+                        do ipg=1,npg
+                            sum1 = sum1 + wgt3d(ipg)*bfvals_int(ipg,kz)*finner_y(ipg,ieq)
+                            sum2 = sum2 + wgt3d(ipg)*bfvals_int(ipg,ky)*finner_z(ipg,ieq)
+                            sum3 = sum3 + wgt3d(ipg)*bfvals_int(ipg,kz)*finner_x(ipg,ieq)
+                            sum4 = sum4 + wgt3d(ipg)*bfvals_int(ipg,kx)*finner_z(ipg,ieq)
+                            sum5 = sum5 + wgt3d(ipg)*bfvals_int(ipg,ky)*finner_x(ipg,ieq)
+                            sum6 = sum6 + wgt3d(ipg)*bfvals_int(ipg,kx)*finner_y(ipg,ieq)
+                        end do
+                        int_r(kyz,ieq) = 0.25*cbasis(kyz)*(dyi*sum1 + dzi*sum2)
+                        int_r(kzx,ieq) = 0.25*cbasis(kzx)*(dxi*sum3 + dzi*sum4)
+                        int_r(kxy,ieq) = 0.25*cbasis(kxy)*(dxi*sum5 + dyi*sum6)
+                    end if
+
+                    if ( iquad > 2 ) then
+                        sum1 = 0.
+                        sum2 = 0.
+                        sum3 = 0.
+                        do ipg=1,npg
+                            sum1 = sum1 + wgt3d(ipg)*3.*bfvals_int(ipg,kx)*finner_x(ipg,ieq)
+                            sum2 = sum2 + wgt3d(ipg)*3.*bfvals_int(ipg,ky)*finner_y(ipg,ieq)
+                            sum3 = sum3 + wgt3d(ipg)*3.*bfvals_int(ipg,kz)*finner_z(ipg,ieq)
+                        end do
+
+                        int_r(kxx,ieq) = 0.25*cbasis(kxx)*(dxi*sum1)
+                        int_r(kyy,ieq) = 0.25*cbasis(kyy)*(dyi*sum2)
+                        int_r(kzz,ieq) = 0.25*cbasis(kzz)*(dzi*sum3)
+                    end if
+
+                    if ( ibitri == 1 .or. iquad > 3 ) then
+                        sum7 = 0.
+                        sum8 = 0.
+                        sum9 = 0.
+                        do ipg=1,npg
+                            sum7 = sum7 + wgt3d(ipg)*bfvals_int(ipg,kyz)*finner_x(ipg,ieq)
+                            sum8 = sum8 + wgt3d(ipg)*bfvals_int(ipg,kzx)*finner_y(ipg,ieq)
+                            sum9 = sum9 + wgt3d(ipg)*bfvals_int(ipg,kxy)*finner_z(ipg,ieq)
+                        end do
+                        int_r(kxyz,ieq) = 0.25*cbasis(kxyz)*(dxi*sum7 + dyi*sum8 + dzi*sum9)
+                    end if
+
+                    if ( (ibitri == 1 .and. iquad > 2) .or. iquad > 3 ) then
+                        int_r(kyzz,ieq) =                                                                       &
+                            0.25*cbasis(kyzz)*dyi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kzz)*finner_y(1:npg,ieq))   &
+                          + 0.25*cbasis(kyzz)*dzi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kyz)*finner_z(1:npg,ieq))
+                        int_r(kzxx,ieq) =                                                                       &
+                            0.25*cbasis(kzxx)*dzi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kxx)*finner_z(1:npg,ieq))   &
+                          + 0.25*cbasis(kzxx)*dxi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kzx)*finner_x(1:npg,ieq))
+                        int_r(kxyy,ieq) =                                                                       &
+                            0.25*cbasis(kxyy)*dxi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kyy)*finner_x(1:npg,ieq))   &
+                          + 0.25*cbasis(kxyy)*dyi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kxy)*finner_y(1:npg,ieq))
+                        int_r(kyyz,ieq) =                                                                       &
+                            0.25*cbasis(kyyz)*dzi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kyy)*finner_z(1:npg,ieq))   &
+                          + 0.25*cbasis(kyyz)*dyi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kyz)*finner_y(1:npg,ieq))
+                        int_r(kzzx,ieq) =                                                                       &
+                            0.25*cbasis(kzzx)*dxi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kzz)*finner_x(1:npg,ieq))   &
+                          + 0.25*cbasis(kzzx)*dzi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kzx)*finner_z(1:npg,ieq))
+                        int_r(kxxy,ieq) =                                                                       &
+                            0.25*cbasis(kxxy)*dyi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kxx)*finner_y(1:npg,ieq))   &
+                          + 0.25*cbasis(kxxy)*dxi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kxy)*finner_x(1:npg,ieq))
+                    end if
+
+                    if ( iquad > 3 ) then
+                        int_r(kxxx,ieq) = 0.25*cbasis(kxxx)*dxi *                                       &
+                            sum( wgt3d(1:npg)*(7.5*bfvals_int(1:npg,kx)**2 - 1.5)*finner_x(1:npg,ieq) )
+                        int_r(kyyy,ieq) = 0.25*cbasis(kyyy)*dyi *                                       &
+                            sum( wgt3d(1:npg)*(7.5*bfvals_int(1:npg,ky)**2 - 1.5)*finner_y(1:npg,ieq) )
+                        int_r(kzzz,ieq) = 0.25*cbasis(kzzz)*dzi *                                       &
+                            sum( wgt3d(1:npg)*(7.5*bfvals_int(1:npg,kz)**2 - 1.5)*finner_z(1:npg,ieq) )
+                    end if
+
+                    if ( ibitri == 1 .and. iquad > 2 ) then
+                        int_r(kyyzz,ieq) =                                                                         &
+                            0.25*cbasis(kyyzz)*dyi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kyzz)*finner_y(1:npg,ieq)) &
+                          + 0.25*cbasis(kyyzz)*dzi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kyyz)*finner_z(1:npg,ieq))
+                        int_r(kzzxx,ieq) =                                                                         &
+                            0.25*cbasis(kzzxx)*dzi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kzxx)*finner_z(1:npg,ieq)) &
+                          + 0.25*cbasis(kzzxx)*dxi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kzzx)*finner_x(1:npg,ieq))
+                        int_r(kxxyy,ieq) =                                                                         &
+                            0.25*cbasis(kxxyy)*dxi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kxyy)*finner_x(1:npg,ieq)) &
+                          + 0.25*cbasis(kxxyy)*dyi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kxxy)*finner_y(1:npg,ieq))
+                        int_r(kyzxx,ieq) =                                                                         &
+                            0.25*cbasis(kyzxx)*dxi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kxyz)*finner_x(1:npg,ieq)) &
+                          + 0.25*cbasis(kyzxx)*dyi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kzxx)*finner_y(1:npg,ieq))    &
+                          + 0.25*cbasis(kyzxx)*dzi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kxxy)*finner_z(1:npg,ieq))
+                        int_r(kzxyy,ieq) =                                                                         &
+                            0.25*cbasis(kzxyy)*dyi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kxyz)*finner_y(1:npg,ieq)) &
+                          + 0.25*cbasis(kzxyy)*dzi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kxyy)*finner_z(1:npg,ieq))    &
+                          + 0.25*cbasis(kzxyy)*dxi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kyyz)*finner_x(1:npg,ieq))
+                        int_r(kxyzz,ieq) =                                                                         &
+                            0.25*cbasis(kxyzz)*dzi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kxyz)*finner_z(1:npg,ieq)) &
+                          + 0.25*cbasis(kxyzz)*dxi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kyzz)*finner_x(1:npg,ieq))    &
+                          + 0.25*cbasis(kxyzz)*dyi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kzzx)*finner_y(1:npg,ieq))
+                        int_r(kxyyzz,ieq) =                                                                          &
+                            0.25*cbasis(kxyyzz)*dxi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kyyzz)*finner_x(1:npg,ieq))    &
+                          + 0.25*cbasis(kxyyzz)*dyi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kxyzz)*finner_y(1:npg,ieq)) &
+                          + 0.25*cbasis(kxyyzz)*dzi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kzxyy)*finner_z(1:npg,ieq))
+                        int_r(kyzzxx,ieq) =                                                                          &
+                            0.25*cbasis(kyzzxx)*dyi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kzzxx)*finner_y(1:npg,ieq))    &
+                          + 0.25*cbasis(kyzzxx)*dzi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kyzxx)*finner_z(1:npg,ieq)) &
+                          + 0.25*cbasis(kyzzxx)*dxi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kxyzz)*finner_x(1:npg,ieq))
+                        int_r(kzxxyy,ieq) =                                                                          &
+                            0.25*cbasis(kzxxyy)*dzi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kxxyy)*finner_z(1:npg,ieq))    &
+                          + 0.25*cbasis(kzxxyy)*dxi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kzxyy)*finner_x(1:npg,ieq)) &
+                          + 0.25*cbasis(kzxxyy)*dyi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kyzxx)*finner_y(1:npg,ieq))
+                        int_r(kxxyyzz,ieq) =                                                                           &
+                            0.25*cbasis(kxxyyzz)*dxi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kxyyzz)*finner_x(1:npg,ieq)) &
+                          + 0.25*cbasis(kxxyyzz)*dyi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kyzzxx)*finner_y(1:npg,ieq)) &
+                          + 0.25*cbasis(kxxyyzz)*dzi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kzxxyy)*finner_z(1:npg,ieq))
+                    end if
+
+                end if
+
+            end do
+
+            do ieq = 1,nQ
+                do ir=1,nbasis
+                    integral_r(i,j,k,ieq,ir) = int_r(ir,ieq)
+                end do
+            end do
+
+        end do
+        end do
+        end do
+
+    end subroutine innerintegral2
+!-------------------------------------------------------------------------------
+
+!-------------------------------------------------------------------------------
     subroutine glflux(Q_r)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
