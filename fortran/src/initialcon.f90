@@ -224,9 +224,9 @@ contains
 
         select case(version)
             case(0)
-                ux_amb = 1.5
+                ux_amb = 1.5e-2
             case(1)
-                ux_amb = 0.3
+                ux_amb = 0.3e-2
         end select
 
         !-------------------------------------------------------
@@ -240,12 +240,12 @@ contains
             Q_r(i,j,k,mz,1) = dn*vz
             Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
 
-            ! Q_r(i,j,k,pxx,1) = pr + dn*vx**2
-            ! Q_r(i,j,k,pyy,1) = pr + dn*vy**2
-            ! Q_r(i,j,k,pzz,1) = pr + dn*vz**2
-            ! Q_r(i,j,k,pxy,1) =      dn*vx*vy
-            ! Q_r(i,j,k,pxz,1) =      dn*vx*vz
-            ! Q_r(i,j,k,pyz,1) =      dn*vy*vz
+            Q_r(i,j,k,pxx,1) = pr + dn*vx**2
+            Q_r(i,j,k,pyy,1) = pr + dn*vy**2
+            Q_r(i,j,k,pzz,1) = pr + dn*vz**2
+            Q_r(i,j,k,pxy,1) =      dn*vx*vy
+            Q_r(i,j,k,pxz,1) =      dn*vx*vz
+            Q_r(i,j,k,pyz,1) =      dn*vy*vz
         end do
         end do
         end do
@@ -255,12 +255,12 @@ contains
         !   NOTE: might be an offset b/c mask is constructed at faces, not cells
         Qmask(:,:,:) = cyl_in_2d_pipe_mask(cyl_x0, cyl_y0, cyl_rad)
 
-        where (Qmask(:,:,:))
-            Q_r(:,:,:,rh,1) = 2.0
-            Q_r(:,:,:,mx,1) = 0.0
-            Q_r(:,:,:,my,1) = 0.0
-            Q_r(:,:,:,mz,1) = 0.0
-        end where
+        ! where (Qmask(:,:,:))
+        !     Q_r(:,:,:,rh,1) = 1.25
+        !     Q_r(:,:,:,mx,1) = 0.0
+        !     Q_r(:,:,:,my,1) = 0.0
+        !     Q_r(:,:,:,mz,1) = 0.0
+        ! end where
 
         ! NOTE: Qxlow_ext_custom, Qcyl_ext, and QMask should already be initialized!
         ! call add_custom_boundaries(icname)

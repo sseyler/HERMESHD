@@ -75,56 +75,31 @@ contains
 
     subroutine apply_xlo_in_2d_pipe_boundaries(Qxlo_e_c, Qxlo_e)
         real, dimension(ny,nz,nface,nQ), intent(in) :: Qxlo_e_c
-        real, dimension(ny,nz,nface,nQ), intent(out) :: Qxlo_e
-        integer j,k,i4
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxlo_e
+        integer j,k
 
-        do i4 = 1,nface
-            do k = 1,nz
-            do j = 1,ny
-                Qxlo_e(j,k,i4,mx) = Qxlo_e_c(j,k,i4,mx)
-                Qxlo_e(j,k,i4,my:mz) = 0.0
-            end do
-            end do
+        do k = 1,nz
+        do j = 1,ny
+            Qxlo_e(j,k,1:nface,mx) = Qxlo_e_c(j,k,1:nface,mx)
+            Qxlo_e(j,k,1:nface,my:mz) = 0.0
+        end do
         end do
     end subroutine apply_xlo_in_2d_pipe_boundaries
 
 
     subroutine apply_cyl_in_2d_pipe_boundaries(Qcyl_e_c, Qcyl_e)
         real, dimension(nx,ny,nface,nQ), intent(in) :: Qcyl_e_c
-        real, dimension(nx,ny,nface,nQ), intent(out) :: Qcyl_e
-        integer j,k
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qcyl_e  ! TODO: might wanna change
 
-        ! NOTE: This loops matches construction of Qcyl_e in set_cyl_in_2d_pipe_boundaries
-        ! do j = 1,ny
-        ! do i = 1,nx
-        !     Qcyl_e(i,j,1:nface,rh:mz) = Qcyl_e_c(i,j,1:nface,rh:mz)
-        ! end do
-        ! end do
-
-        ! apply no-slip BCs for cylinder (set all momenta to 0)
-        ! do ieq = rh,mz
-        ! do i4 = 1,nface
-        !     where ( Qmask(:,:,1) )
-        !         Qcyl_e(:,:,i4,ieq) = 0.0
-        !     end where
-        ! end do
-        ! end do
-
-        ! do i4=1,nface
-        !     do ieq=rh,en
-        !         where (Qmask(:,:,:))
-        !             flux_x(i4,1:nx,:,:,ieq) = 0.0
-        !             flux_y(i4,:,1:ny,:,ieq) = 0.0
-        !             flux_z(i4,:,:,1:nz,ieq) = 0.0
-        !         end where
-        !     end do
-        ! end do
-        where (Qmask(:,:,:))
-            Q_r0(:,:,:,rh,1) = 2.0
-            Q_r0(:,:,:,mx,1) = 0.0
-            Q_r0(:,:,:,my,1) = 0.0
-            Q_r0(:,:,:,mz,1) = 0.0
-        end where
+        do ieq=1,nQ
+            where (Qmask(:,:,:))
+                Q_r0(:,:,:,rh,ieq) = 0.0
+                Q_r0(:,:,:,rh,1)   = 1.25
+                Q_r0(:,:,:,mx,ieq) = 0.0
+                Q_r0(:,:,:,my,ieq) = 0.0
+                Q_r0(:,:,:,mz,ieq) = 0.0
+            end where
+        end do
     end subroutine apply_cyl_in_2d_pipe_boundaries
 
 end module boundary_custom
@@ -202,6 +177,7 @@ contains
     subroutine apply_boundaries
         if ( mpi_P .eq. 1 ) then
             call apply_xlobc(Qxlow_int, Qxlow_ext)
+            call apply_xlo_in_2d_pipe_boundaries(Qxlow_ext_c, Qxlow_ext)
         end if
         if ( mpi_P .eq. mpi_nx ) then
             call apply_xhibc(Qxhigh_int, Qxhigh_ext)
@@ -225,7 +201,7 @@ contains
         ! NOTE: This is NOT a general implementation for applying custom BCs
         ! call apply_cyl_in_2d_pipe_boundaries(Qcyl_ext_c, Qcyl_ext)
         ! print *,QMask(:,:,1)
-        ! if ( mpi_P .eq. 1 ) then
+        ! if ( mpi_P == 1 ) then
         !     call apply_xlo_in_2d_pipe_boundaries(Qxlow_ext_c, Qxlow_ext)
             ! print *,Qxlow_ext_c(:,:,1,rh:mx)
             ! print *,''
@@ -469,7 +445,6 @@ contains
                 Qxlo_e(j,k,1:nface,mx) = 0.0
             end do
         end do
-
     end subroutine xlobc_wall
     !--------------------------------------------------------
     subroutine xhibc_wall(Qxhi_i, Qxhi_e)
@@ -482,7 +457,6 @@ contains
                 Qxhi_e(j,k,1:nface,mx) = 0.0
             end do
         end do
-
     end subroutine xhibc_wall
     !--------------------------------------------------------
     subroutine ylobc_wall(Qylo_i, Qylo_e)
@@ -495,7 +469,6 @@ contains
                 Qylo_e(i,k,1:nface,my) = 0.0
             end do
         end do
-
     end subroutine ylobc_wall
 
     subroutine yhibc_wall(Qyhi_i, Qyhi_e)
@@ -508,7 +481,6 @@ contains
                 Qyhi_e(i,k,1:nface,my) = 0.0
             end do
         end do
-
     end subroutine yhibc_wall
     !--------------------------------------------------------
     subroutine zlobc_wall(Qzlo_i, Qzlo_e)
@@ -521,7 +493,6 @@ contains
                 Qzlo_e(i,j,1:nface,mz) = 0.0
             end do
         end do
-
     end subroutine zlobc_wall
     !--------------------------------------------------------
     subroutine zhibc_wall(Qzhi_i, Qzhi_e)
@@ -534,7 +505,6 @@ contains
                 Qzhi_e(i,j,1:nface,mz) = 0.0
             end do
         end do
-
     end subroutine zhibc_wall
     !---------------------------------------------------------------------------
 
@@ -552,7 +522,6 @@ contains
                 Qxlo_e(j,k,1:nface,mx:mz) = 0.0
             end do
         end do
-
     end subroutine xlobc_noslip
     !--------------------------------------------------------
     subroutine xhibc_noslip(Qxhi_i, Qxhi_e)
@@ -565,7 +534,6 @@ contains
                 Qxhi_e(j,k,1:nface,mx:mz) = 0.0
             end do
         end do
-
     end subroutine xhibc_noslip
     !--------------------------------------------------------
     subroutine ylobc_noslip(Qylo_i, Qylo_e)
@@ -578,7 +546,6 @@ contains
                 Qylo_e(i,k,1:nface,mx:mz) = 0.0
             end do
         end do
-
     end subroutine ylobc_noslip
 
     subroutine yhibc_noslip(Qyhi_i, Qyhi_e)
@@ -591,7 +558,6 @@ contains
                 Qyhi_e(i,k,1:nface,mx:mz) = 0.0
             end do
         end do
-
     end subroutine yhibc_noslip
     !--------------------------------------------------------
     subroutine zlobc_noslip(Qzlo_i, Qzlo_e)
@@ -604,7 +570,6 @@ contains
                 Qzlo_e(i,j,1:nface,mx:mz) = 0.0
             end do
         end do
-
     end subroutine zlobc_noslip
     !--------------------------------------------------------
     subroutine zhibc_noslip(Qzhi_i, Qzhi_e)
@@ -617,7 +582,6 @@ contains
                 Qzhi_e(i,j,1:nface,mx:mz) = 0.0
             end do
         end do
-
     end subroutine zhibc_noslip
     !---------------------------------------------------------------------------
 

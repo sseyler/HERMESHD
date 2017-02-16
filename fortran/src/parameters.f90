@@ -48,18 +48,15 @@ module parameters
     !------------------------------------------------------------
     ! Useful constants
     real, parameter :: pi = 4.0*atan(1.0)
-    real, parameter :: sqrt2  = 2.**0.5
-    real, parameter :: sqrt2i = 1./sqrt2
+    real, parameter :: sqrt2 = 2.0**0.5, sqrt2i = 1.0/sqrt2
     real, parameter :: c1d5 = 1./5.
-    real, parameter :: c1d3 = 1./3.
-    real, parameter :: c2d3 = 2./3.
-    real, parameter :: c4d3 = 4./3.
+    real, parameter :: c1d3 = 1./3., c2d3 = 2./3., c4d3 = 4./3.
     real, parameter :: eVperK = 8.61728e-5
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
-    real, parameter :: L0 = 1.0e-9                 ! length
-    real, parameter :: t0 = 1.0e-12                ! time
-    real, parameter :: n0 = 3.32e28                ! number density
+    real, parameter :: L0 = 1.0e0  ! 1.0e-9                 ! length
+    real, parameter :: t0 = 1.0e0  ! 1.0e-12                ! time
+    real, parameter :: n0 = 6.0e18 ! 3.32e28                ! number density
 
     ! Derived units
     real, parameter :: v0  = L0/t0                 ! velocity

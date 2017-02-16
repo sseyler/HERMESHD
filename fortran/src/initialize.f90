@@ -20,6 +20,9 @@ contains
         implicit none
         integer :: ir,ipg
 
+        ! Create output directory
+        call system('mkdir -p '//outdir)
+
         if (nbasis .le. 8)  cflm = 0.14
         if (nbasis .eq. 27) cflm = 0.1
         if (nbasis .eq. 64) cflm = 0.08

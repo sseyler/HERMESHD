@@ -1,21 +1,21 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 1.0e6 !8.2e3 !4.1e2
-    real, parameter :: ly = 1.0e6 !4.1e3 !4.1e2
-    real, parameter :: lz = 1.0e6/120. !4.1e3/120. !4.1e2/120.
+    real, parameter :: lx = 8.2e0 !1.0e6 !4.1e2
+    real, parameter :: ly = 4.1e0 !1.0e6 !4.1e2
+    real, parameter :: lz = 4.1e0/120. !1.0e6/120. !4.1e2/120.
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad = 2
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 80
-    integer, parameter :: ny = 1
+    integer, parameter :: nx = 50
+    integer, parameter :: ny = 25
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
-    integer :: mpi_nx = 16
-    integer :: mpi_ny = 1
+    integer :: mpi_nx = 4
+    integer :: mpi_ny = 4
 
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK
@@ -27,23 +27,23 @@ module input
     logical, parameter :: llns = .false.
 
     ! Initial conditions
-    integer, parameter :: icid = 3
+    integer, parameter :: icid = 5
     ! character(*), parameter :: icname = ''
 
     ! Boundary conditions:
     !   * 0 for periodic (MPI does this for you)
     !   * 1 for outflow (MPI does this for you)
     !   * 2 for wall (vanishing normal velocities)
-    !   * 3 for no-slip (vanishing normal/tangential velocities)
-    character(*), parameter :: xlobc = 'wall' !'periodic'
-    character(*), parameter :: xhibc = 'wall' !'periodic'
-    character(*), parameter :: ylobc = 'periodic'  !'periodic'
-    character(*), parameter :: yhibc = 'periodic'  !'periodic'
+    !   * 3 for noslip (vanishing normal/tangential velocities)
+    character(*), parameter :: xlobc = 'noslip' !'periodic'
+    character(*), parameter :: xhibc = 'outflow' !'periodic'
+    character(*), parameter :: ylobc = 'noslip'  !'periodic'
+    character(*), parameter :: yhibc = 'noslip'  !'periodic'
     character(*), parameter :: zlobc = 'periodic'
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 8.5e4 !1.0e3
+    real, parameter :: tf = 2.0e-2 !8.5e4
 
     ! Console output frequency
     integer, parameter :: ntout = 100
@@ -57,19 +57,19 @@ module input
 
     ! Thermodynamic and transport parameters
     integer, parameter :: ieos = 1
-    real, parameter    :: mu = 2.0
-    real, parameter    :: aindex = 5./3.
-    real, parameter    :: aindm1 = aindex - 1.0
-    real, parameter    :: cp = aindex/aindm1
+    real,    parameter :: mu = 22.0
+    real,    parameter :: aindex = 5./3.
+    real,    parameter :: aindm1 = aindex - 1.0
+    real,    parameter :: cp = aindex/aindm1
 
     ! Equation of state and constitutive parameters
-    real, parameter :: vis = 0 !1.0e-3
+    real, parameter :: vis = 2.0e-3
     real, parameter :: epsi = 5.0
     real, parameter :: clt = 2.0
 
     ! Output location and naming
     character (*), parameter :: datadir="data"
-    character (*), parameter :: outname="test_modbc_pipe_0"
+    character (*), parameter :: outname="test_modbc_pipe_1"
     character (*), parameter :: outdir = trim(datadir//"/"//outname)
 
     ! Checkpointing
