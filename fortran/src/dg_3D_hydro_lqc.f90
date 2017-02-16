@@ -848,56 +848,56 @@
 
 	source_r(:,:,:,:,:) = 0.0
 	source(:,:) = 0.0
-        en_floor = P_floor/(aindex - 1.)
-        oth = 1./3.
+    en_floor = P_floor/(aindex - 1.)
+    oth = 1./3.
 
 	do k = 1,nz
 	do j = 1,ny
 	do i = 1,nx
 
-	do ipg = 1,npg
+        do ipg = 1,npg
 
-	do ieq = 1,nQ
-	   Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,ieq,1:nbasis))
-	end do
+            do ieq = 1,nQ
+                Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,ieq,1:nbasis))
+            end do
 
-        dn = Qin(rh)
-	dni = 1./Qin(rh)
-        vx = Qin(mx)*dni
-        vy = Qin(my)*dni
-        vz = Qin(mz)*dni
-        Pres = (aindex - 1.)*(Qin(en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
-        Tev = Pres*dni
+            dn = Qin(rh)
+            dni = 1./Qin(rh)
+            vx = Qin(mx)*dni
+            vy = Qin(my)*dni
+            vz = Qin(mz)*dni
+            Pres = (aindex - 1.)*(Qin(en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
+            Tev = Pres*dni
 
-        source(ipg,mx) = 0
-        source(ipg,my) = 0
-        source(ipg,mz) = 0
-	source(ipg,en) = 0
+            source(ipg,mx) = 0
+            source(ipg,my) = 0
+            source(ipg,mz) = 0
+            source(ipg,en) = 0
 
-        if(ivis .eq. 1)then
-           source(ipg,exx) = 0
-           source(ipg,eyy) = 0
-           source(ipg,ezz) = 0
-           source(ipg,exy) = 0
-           source(ipg,exz) = 0
-           source(ipg,eyz) = 0
-        end if
-	if (ivis .eq. 0) then
-           source(ipg,exx) = coll*dn*(2*vx**2 - vy**2 - vz**2)*oth
-           source(ipg,eyy) = coll*dn*(2*vy**2 - vz**2 - vx**2)*oth
-           source(ipg,ezz) = coll*dn*(2*vz**2 - vx**2 - vy**2)*oth
-           source(ipg,exy) = coll*dn*vx*vy
-           source(ipg,exz) = coll*dn*vx*vz
-           source(ipg,eyz) = coll*dn*vy*vz
-        end if
+            if(ivis .eq. 1)then
+                source(ipg,exx) = 0
+                source(ipg,eyy) = 0
+                source(ipg,ezz) = 0
+                source(ipg,exy) = 0
+                source(ipg,exz) = 0
+                source(ipg,eyz) = 0
+            end if
+            if (ivis .eq. 0) then
+                source(ipg,exx) = coll*dn*(2*vx**2 - vy**2 - vz**2)*oth
+                source(ipg,eyy) = coll*dn*(2*vy**2 - vz**2 - vx**2)*oth
+                source(ipg,ezz) = coll*dn*(2*vz**2 - vx**2 - vy**2)*oth
+                source(ipg,exy) = coll*dn*vx*vy
+                source(ipg,exz) = coll*dn*vx*vz
+                source(ipg,eyz) = coll*dn*vy*vz
+            end if
 
-	end do
+        end do
 
-	do ieq = 1,nQ
-	  do ir=1,nbasis
-	     source_r(i,j,k,ieq,ir) = 0.125*cbasis(ir)*sum(wgt3d(1:npg)*bfvals_int(1:npg,ir)*source(1:npg,ieq))
-	  end do
-	end do
+        do ieq = 1,nQ
+          do ir=1,nbasis
+             source_r(i,j,k,ieq,ir) = 0.125*cbasis(ir)*sum(wgt3d(1:npg)*bfvals_int(1:npg,ir)*source(1:npg,ieq))
+          end do
+        end do
 
         source_r(i,j,k,rh:en,kxx:kyy) = -1.e-1*Q_ri(i,j,k,rh:en,kxx:kyy)
 
@@ -913,11 +913,12 @@
     implicit none
     integer i,j,k,ieq,ir
     real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri, Q_rp
-    real Q_xtemp, Q_ytemp, Q_ztemp, dti,oth
+    real Q_xtemp, Q_ytemp, Q_ztemp, dti, oth, fac
     real c1d3, c1d5
 
 	oth = 1./3.
     dti = 1./dt
+    faci = 1./(1. + dt*coll)
 
 	do k = 1,nz
 	do j = 1,ny
@@ -929,39 +930,37 @@
     	  end do
     	end do
 
-        if(ivis .eq. 0)then
+        if (ivis .eq. 0) then
 
         	do ir=1,nbasis
 
-                Q_rp(i,j,k,exx,ir) = (Q_ri(i,j,k,exx,ir) - dt*glflux_r(i,j,k,exx,ir) + dt*source_r(i,j,k,exx,ir)                                 &
-                                   + coll*dt*(Q_ri(i,j,k,exx,ir) + Q_ri(i,j,k,eyy,ir) + Q_ri(i,j,k,ezz,ir))*oth                                  &
-                                   - coll*dt**2*(glflux_r(i,j,k,exx,ir) + glflux_r(i,j,k,eyy,ir) + glflux_r(i,j,k,ezz,ir))*oth                   &
-                                   + coll*dt**2*(source_r(i,j,k,exx,ir) + source_r(i,j,k,eyy,ir) + source_r(i,j,k,ezz,ir))*oth)/(1. + dt*coll)
+                first_sum  = coll*dt*   ( Q_ri(i,j,k,exx,ir)     + Q_ri(i,j,k,eyy,ir)     + Q_ri(i,j,k,ezz,ir)     )*oth
+                glflux_tot = coll*dt**2*( glflux_r(i,j,k,exx,ir) + glflux_r(i,j,k,eyy,ir) + glflux_r(i,j,k,ezz,ir) )*oth
+                source_tot = coll*dt**2*( source_r(i,j,k,exx,ir) + source_r(i,j,k,eyy,ir) + source_r(i,j,k,ezz,ir) )*oth
 
-                Q_rp(i,j,k,eyy,ir) = (Q_ri(i,j,k,eyy,ir) - dt*glflux_r(i,j,k,eyy,ir) + dt*source_r(i,j,k,eyy,ir)                                 &
-                                   + coll*dt*(Q_ri(i,j,k,exx,ir) + Q_ri(i,j,k,eyy,ir) + Q_ri(i,j,k,ezz,ir))*oth                                  &
-                                   - coll*dt**2*(glflux_r(i,j,k,exx,ir) + glflux_r(i,j,k,eyy,ir) + glflux_r(i,j,k,ezz,ir))*oth                   &
-                                   + coll*dt**2*(source_r(i,j,k,exx,ir) + source_r(i,j,k,eyy,ir) + source_r(i,j,k,ezz,ir))*oth)/(1. + dt*coll)
+                Q_rp(i,j,k,exx,ir) = ( Q_ri(i,j,k,exx,ir) - dt*glflux_r(i,j,k,exx,ir) + dt*source_r(i,j,k,exx,ir)                                 &
+                                     + first_sum - glflux_tot + source_tot ) * faci
 
-                Q_rp(i,j,k,ezz,ir) = (Q_ri(i,j,k,ezz,ir) - dt*glflux_r(i,j,k,ezz,ir) + dt*source_r(i,j,k,ezz,ir)                                 &
-                                   + coll*dt*(Q_ri(i,j,k,exx,ir) + Q_ri(i,j,k,eyy,ir) + Q_ri(i,j,k,ezz,ir))*oth                                  &
-                                   - coll*dt**2*(glflux_r(i,j,k,exx,ir) + glflux_r(i,j,k,eyy,ir) + glflux_r(i,j,k,ezz,ir))*oth                   &
-                                   + coll*dt**2*(source_r(i,j,k,exx,ir) + source_r(i,j,k,eyy,ir) + source_r(i,j,k,ezz,ir))*oth)/(1. + dt*coll)
+                Q_rp(i,j,k,eyy,ir) = ( Q_ri(i,j,k,eyy,ir) - dt*glflux_r(i,j,k,eyy,ir) + dt*source_r(i,j,k,eyy,ir)                                 &
+                                     + first_sum - glflux_tot + source_tot ) * faci
+
+                Q_rp(i,j,k,ezz,ir) = ( Q_ri(i,j,k,ezz,ir) - dt*glflux_r(i,j,k,ezz,ir) + dt*source_r(i,j,k,ezz,ir)                                 &
+                                     + first_sum - glflux_tot + source_tot ) * faci
 
             end do
 
         	do ieq = exy,nQ
         	  do ir=1,nbasis
-        	    Q_rp(i,j,k,ieq,ir) = (Q_ri(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir) + dt*source_r(i,j,k,ieq,ir))/(1. + dt*coll)
+        	    Q_rp(i,j,k,ieq,ir) = (Q_ri(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir) + dt*source_r(i,j,k,ieq,ir)) * faci
         	  end do
         	end do
 
         end if
-        if(ivis .eq.1)then
+        if (ivis .eq. 1) then
 
         	do ieq = exx,nQ
         	  do ir=1,nbasis
-        	    Q_rp(i,j,k,ieq,ir) = (Q_ri(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir) + dt*source_r(i,j,k,ieq,ir))/(1. + dt*coll)
+        	    Q_rp(i,j,k,ieq,ir) = (Q_ri(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir) + dt*source_r(i,j,k,ieq,ir)) * faci
         	  end do
         	end do
 
