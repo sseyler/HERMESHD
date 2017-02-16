@@ -160,19 +160,6 @@ module parameters
     ! TODO: only in set_internal_vals_3D, set_face_vals_3D
     real xquad(20)
 
-    ! TODO: only in initialize.f90 (setup), source_calc
-    real bval_int_wgt(npg,nbastot)
-
-    ! TODO: only in initialize.f90 (in setup as helper variables for wgtbf_xmp, etc.)
-    real wgtbfvals_xp(nface,nbastot),wgtbfvals_xm(nface,nbastot)  ! these are temps used to assign other vars
-    real wgtbfvals_yp(nface,nbastot),wgtbfvals_ym(nface,nbastot)  ! these are temps used to assign other vars
-    real wgtbfvals_zp(nface,nbastot),wgtbfvals_zm(nface,nbastot)  ! these are temps used to assign other vars
-
-    ! TODO: only in initialize.f90 (setup), glflux
-    real wgtbf_xmp(nface,2,nbastot)
-    real wgtbf_ymp(nface,2,nbastot)
-    real wgtbf_zmp(nface,2,nbastot)
-
     ! Basis function flags
     ! TODO: these variables are in:
     !   * initialize.f90 (setup)
@@ -221,24 +208,12 @@ module parameters
 
 
     !===========================================================================
-    ! Masking parameters (for advanced or internal initial/boundary conditions)
-    !------------------------------------------------------------
-    ! real, dimension(ny,nz,nface,nQ) :: Qxlow_ext_custom
-    ! real, dimension(nx,ny,nface,nQ) :: Qcyl_ext_c, Qcyl_ext
-    ! logical QMask(nx,ny,nz), MMask(nx,ny,nz)
-    !---------------------------------------------------------------------------
-
-
-    !===========================================================================
     ! Helper variables (initialized here)
     !------------------------------------------------------------
     real t1,t2,t_start,t_stop,dtoriginal  ! used for timing (dtoriginal optional)
     real lxd,lxu,lyd,lyu,lzd,lzu  ! used in init + indirectly used by the grid coord functions
     real loc_lxd,loc_lyd,loc_lzd  ! used directly by the grid coord functions
     real dz, dy, dx, dxi, dyi, dzi, dVi  ! used throughout + directly by grid coord functions
-
-    integer mxa(3),mya(3),mza(3)  ! used in init+ flux_hllc()
-    integer iseed  ! used for initializing random seeds
     !===========================================================================
 
 
@@ -250,7 +225,6 @@ module parameters
     integer :: mpi_P,mpi_Q,mpi_R  ! used in exchange_flux and apply_BC + init
     integer :: numprocs  ! used in get_min_dt + init
     integer :: iam,ierr  ! used all over (wherever MPI stuff seems to be)
-    integer :: reorder  ! only used in init
     integer :: cartcomm  ! used all over (wherever MPI stuff seems to be)
 
     integer, parameter :: NORTH = 1  ! used in exchange_flux + init

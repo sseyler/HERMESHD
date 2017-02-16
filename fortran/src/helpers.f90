@@ -73,7 +73,7 @@ contains
 
         call system_clock(count=clock)
 
-        if (iseed .eq. 0) then
+        if (iseed == 0) then
             seed =  clock*(mpi_id+1) + 37 * (/ (i - 1, i = 1, n) /)
         else
             seed =  iseed*(mpi_id+1)
@@ -82,7 +82,7 @@ contains
 
         ! print *,seed(1)
         deallocate(seed)
-    end subroutine
+    end subroutine init_random_seed
     !---------------------------------------------------------------------------
 
 end module helpers
