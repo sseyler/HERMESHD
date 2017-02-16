@@ -930,7 +930,7 @@
     	  end do
     	end do
 
-        if (ivis .eq. 0) then
+        if (ivis == 0) then
 
         	do ir=1,nbasis
 
@@ -956,7 +956,7 @@
         	end do
 
         end if
-        if (ivis .eq. 1) then
+        if (ivis == 1) then
 
         	do ieq = exx,nQ
         	  do ir=1,nbasis
@@ -1049,11 +1049,11 @@
 
 	do ife = 1,npnts
 
-	dn = Qpnts_r(ife,rh)
-	dni = 1./dn
-	vx = Qpnts_r(ife,mx)*dni
-	vy = Qpnts_r(ife,my)*dni
-	vz = Qpnts_r(ife,mz)*dni
+    	dn = Qpnts_r(ife,rh)
+    	dni = 1./dn
+    	vx = Qpnts_r(ife,mx)*dni
+    	vy = Qpnts_r(ife,my)*dni
+    	vz = Qpnts_r(ife,mz)*dni
         E_xx = Qpnts_r(ife,exx)
         E_yy = Qpnts_r(ife,eyy)
         E_zz = Qpnts_r(ife,ezz)
@@ -1061,170 +1061,145 @@
         E_xz = Qpnts_r(ife,exz)
         E_yz = Qpnts_r(ife,eyz)
 
-	P = (aindex - 1.)*(Qpnts_r(ife,en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
+    	P = (aindex - 1.)*(Qpnts_r(ife,en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
         P_10 = (E_xx + E_yy + E_zz - dn*(vx**2 + vy**2 + vz**2))/3.
-	if (P < P_floor) P = P_floor
-	if (P_10 < P_floor) P_10 = P_floor
+    	if (P < P_floor) P = P_floor
+    	if (P_10 < P_floor) P_10 = P_floor
         P_5 = P
 
-	if (ivis .lt. 0) then
-           if(ixyz .eq. 1)then
-	      fpnts_r(ife,rh) = Qpnts_r(ife,mx)
-	      fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + P
-	      fpnts_r(ife,my) = Qpnts_r(ife,my)*vx
-	      fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx
-	      fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx
-	   end if
-           if(ixyz .eq. 2)then
-	      fpnts_r(ife,rh) = Qpnts_r(ife,my)
-	      fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy
-	      fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + P
-	      fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy
-	      fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy
-	   end if
-           if(ixyz .eq. 3)then
-	      fpnts_r(ife,rh) = Qpnts_r(ife,mz)
-	      fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz
-	      fpnts_r(ife,my) = Qpnts_r(ife,my)*vz
-	      fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + P
-	      fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz
-	   end if
-	end if
+    	if (ivis < 0) then
+            if (ixyz .eq. 1) then
+    	        fpnts_r(ife,rh) = Qpnts_r(ife,mx)
+    	        fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + P
+    	        fpnts_r(ife,my) = Qpnts_r(ife,my)*vx
+    	        fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx
+    	        fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx
+    	    end if
+            if (ixyz .eq. 2) then
+    	        fpnts_r(ife,rh) = Qpnts_r(ife,my)
+    	        fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy
+    	        fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + P
+    	        fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy
+    	        fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy
+    	    end if
+            if (ixyz .eq. 3) then
+    	        fpnts_r(ife,rh) = Qpnts_r(ife,mz)
+    	        fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz
+    	        fpnts_r(ife,my) = Qpnts_r(ife,my)*vz
+    	        fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + P
+    	        fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz
+    	    end if
+    	end if
 
 
-	if (ivis .ge. 0) then
-        if(ixyz .eq. 1)then
+    	if (ivis >= 0) then
 
-	fpnts_r(ife,rh) = Qpnts_r(ife,mx)
+            !--------------------------------------------------------------
+            if (ixyz == 1) then
+    	        fpnts_r(ife,rh) = Qpnts_r(ife,mx)
 
-        if(ivis .eq. 1)then
+                if (ivis == 1) then
+                	fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + E_xx + P
+                	fpnts_r(ife,my) = Qpnts_r(ife,my)*vx + E_xy
+                	fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx + E_xz
+                else
+                	fpnts_r(ife,mx) = E_xx - P_10 + P_5
+                	fpnts_r(ife,my) = E_xy
+                	fpnts_r(ife,mz) = E_xz
+                end if
 
-	fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + E_xx + P
-	fpnts_r(ife,my) = Qpnts_r(ife,my)*vx + E_xy
-	fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx + E_xz
+    	        fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx !+ (vx*E_xx + vy*E_xy + vz*E_xz)
 
-        else
+                if (ivis == 1) then
+                	fpnts_r(ife,exx) =  c4d3*nu*vx
+                	fpnts_r(ife,eyy) = -c2d3*nu*vx
+                	fpnts_r(ife,ezz) = -c2d3*nu*vx
 
-	fpnts_r(ife,mx) = E_xx - P_10 + P_5
-	fpnts_r(ife,my) = E_xy
-	fpnts_r(ife,mz) = E_xz
+                	fpnts_r(ife,exy) = nu*vy
+                	fpnts_r(ife,exz) = nu*vz
+                	fpnts_r(ife,eyz) = 0
+                else
+                	fpnts_r(ife,exx) = vx*(3*E_xx - 2*vx*Qpnts_r(ife,mx))                                       ! term 1
+                	fpnts_r(ife,eyy) = 2*vy*(E_xy - vy*Qpnts_r(ife,mx)) + vx*E_yy                               ! term 4
+                	fpnts_r(ife,ezz) = 2*vz*(E_xz - vz*Qpnts_r(ife,mx)) + vx*E_zz                               ! term 7
 
-        end if
+                	fpnts_r(ife,exy) = 2*vx*(E_xy - vy*Qpnts_r(ife,mx)) + vy*E_xx                               ! term 10
+                	fpnts_r(ife,exz) = 2*vx*(E_xz - vz*Qpnts_r(ife,mx)) + vz*E_xx                               ! term 13
+                	fpnts_r(ife,eyz) = vx*E_yz + vy*E_xz + vz*E_xy - 2*vy*vz*Qpnts_r(ife,mx)                    ! term 16
+                end if
+            end if
 
-	fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx !+ (vx*E_xx + vy*E_xy + vz*E_xz)
+            !--------------------------------------------------------------
+            if (ixyz == 2) then
+    	        fpnts_r(ife,rh) = Qpnts_r(ife,mxa(ixyz))
 
-        if(ivis .eq. 1)then
+                if (ivis == 1) then
+                	fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy + E_xy
+                	fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + E_yy + P
+                	fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy + E_yz
+                else
+                	fpnts_r(ife,mx) = E_xy
+                	fpnts_r(ife,my) = E_yy - P_10 + P_5
+                	fpnts_r(ife,mz) = E_yz
+                end if
 
-	fpnts_r(ife,exx) =  c4d3*nu*vx
-	fpnts_r(ife,eyy) = -c2d3*nu*vx
-	fpnts_r(ife,ezz) = -c2d3*nu*vx
+    	        fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy !+ (vy*E_yy + vx*E_xy + vz*E_yz)
 
-	fpnts_r(ife,exy) = nu*vy
-	fpnts_r(ife,exz) = nu*vz
-	fpnts_r(ife,eyz) = 0
+                if (ivis == 1) then
+                	fpnts_r(ife,exx) = -c2d3*nu*vy
+                	fpnts_r(ife,eyy) =  c4d3*nu*vy
+                	fpnts_r(ife,ezz) = -c2d3*nu*vy
 
-        else
+                	fpnts_r(ife,exy) = nu*vx
+                	fpnts_r(ife,exz) = 0
+                	fpnts_r(ife,eyz) = nu*vz
+                else
+                	fpnts_r(ife,exx) = 2*vx*(E_xy - vx*Qpnts_r(ife,my)) + vy*E_xx                            ! term 2
+                	fpnts_r(ife,eyy) = vy*(3*E_yy - 2*vy*Qpnts_r(ife,my))                                    ! term 5
+                	fpnts_r(ife,ezz) = 2*vz*(E_yz - vz*Qpnts_r(ife,my)) + vy*E_zz                            ! term 8
 
-	fpnts_r(ife,exx) = vx*(3*E_xx - 2*vx*Qpnts_r(ife,mx))                                       ! term 1
-	fpnts_r(ife,eyy) = 2*vy*(E_xy - vy*Qpnts_r(ife,mx)) + vx*E_yy                               ! term 4
-	fpnts_r(ife,ezz) = 2*vz*(E_xz - vz*Qpnts_r(ife,mx)) + vx*E_zz                               ! term 7
+                	fpnts_r(ife,exy) = 2*vy*(E_xy - vx*Qpnts_r(ife,my)) + vx*E_yy                            ! term 11
+                	fpnts_r(ife,exz) = vx*E_yz + vy*E_xz + vz*E_xy - 2*vx*vz*Qpnts_r(ife,my)                 ! term 14
+                	fpnts_r(ife,eyz) = 2*vy*(E_yz - vz*Qpnts_r(ife,my)) + vz*E_yy                            ! term 17
+                end if
+            end if
 
-	fpnts_r(ife,exy) = 2*vx*(E_xy - vy*Qpnts_r(ife,mx)) + vy*E_xx                               ! term 10
-	fpnts_r(ife,exz) = 2*vx*(E_xz - vz*Qpnts_r(ife,mx)) + vz*E_xx                               ! term 13
-	fpnts_r(ife,eyz) = vx*E_yz + vy*E_xz + vz*E_xy - 2*vy*vz*Qpnts_r(ife,mx)                    ! term 16
+            !--------------------------------------------------------------
+            if (ixyz == 3) then
+            	fpnts_r(ife,rh) = Qpnts_r(ife,mz)
 
-        end if
+                if (ivis == 1) then
+                	fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz + E_xz
+                	fpnts_r(ife,my) = Qpnts_r(ife,my)*vz + E_yz
+                	fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + E_zz + P
+                else
+                	fpnts_r(ife,mx) = E_xz
+                	fpnts_r(ife,my) = E_yz
+                	fpnts_r(ife,mz) = E_zz - P_10 + P_5
+                end if
 
-        end if
+                fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz !+ (vz*E_zz + vx*E_xz + vy* E_yz)
 
-        if(ixyz .eq. 2)then
+                if (ivis == 1) then
+                	fpnts_r(ife,exx) = -c2d3*nu*vz
+                	fpnts_r(ife,eyy) = -c2d3*nu*vz
+                	fpnts_r(ife,ezz) =  c4d3*nu*vz
 
-	fpnts_r(ife,rh) = Qpnts_r(ife,mxa(ixyz))
+                	fpnts_r(ife,exy) = 0.
+                	fpnts_r(ife,exz) = nu*vx
+                	fpnts_r(ife,eyz) = nu*vy
+                else
+                	fpnts_r(ife,exx) = 2*vx*(E_xz - vx*Qpnts_r(ife,mz)) + vz*E_xx                               ! term 3
+                	fpnts_r(ife,eyy) = 2*vy*(E_yz - vy*Qpnts_r(ife,mz)) + vz*E_yy                               ! term 6
+                	fpnts_r(ife,ezz) = vz*(3*E_zz - 2*vz*Qpnts_r(ife,mz))                                       ! term 9
 
-        if(ivis .eq. 1)then
+                	fpnts_r(ife,exy) = vx*E_yz + vy*E_xz + vz*E_xy - 2*vx*vy*Qpnts_r(ife,mz)                    ! term 12
+                	fpnts_r(ife,exz) = 2*vz*(E_xz - vx*Qpnts_r(ife,mz)) + vx*E_zz                               ! term 15
+                	fpnts_r(ife,eyz) = 2*vz*(E_yz - vy*Qpnts_r(ife,mz)) + vy*E_zz                               ! term 18
+                end if
+            end if
 
-	fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy + E_xy
-	fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + E_yy + P
-	fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy + E_yz
-
-        else
-
-	fpnts_r(ife,mx) = E_xy
-	fpnts_r(ife,my) = E_yy - P_10 + P_5
-	fpnts_r(ife,mz) = E_yz
-
-        end if
-
-	fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy !+ (vy*E_yy + vx*E_xy + vz*E_yz)
-
-        if(ivis .eq. 1)then
-
-	fpnts_r(ife,exx) = -c2d3*nu*vy
-	fpnts_r(ife,eyy) =  c4d3*nu*vy
-	fpnts_r(ife,ezz) = -c2d3*nu*vy
-
-	fpnts_r(ife,exy) = nu*vx
-	fpnts_r(ife,exz) = 0
-	fpnts_r(ife,eyz) = nu*vz
-
-        else
-
-	fpnts_r(ife,exx) = 2*vx*(E_xy - vx*Qpnts_r(ife,my)) + vy*E_xx                            ! term 2
-	fpnts_r(ife,eyy) = vy*(3*E_yy - 2*vy*Qpnts_r(ife,my))                                    ! term 5
-	fpnts_r(ife,ezz) = 2*vz*(E_yz - vz*Qpnts_r(ife,my)) + vy*E_zz                            ! term 8
-
-	fpnts_r(ife,exy) = 2*vy*(E_xy - vx*Qpnts_r(ife,my)) + vx*E_yy                            ! term 11
-	fpnts_r(ife,exz) = vx*E_yz + vy*E_xz + vz*E_xy - 2*vx*vz*Qpnts_r(ife,my)                 ! term 14
-	fpnts_r(ife,eyz) = 2*vy*(E_yz - vz*Qpnts_r(ife,my)) + vz*E_yy                            ! term 17
-
-        end if
-
-        end if
-
-        if(ixyz .eq. 3)then
-
-	fpnts_r(ife,rh) = Qpnts_r(ife,mz)
-
-        if(ivis .eq. 1)then
-
-	fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz + E_xz
-	fpnts_r(ife,my) = Qpnts_r(ife,my)*vz + E_yz
-	fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + E_zz + P
-
-        else
-
-	fpnts_r(ife,mx) = E_xz
-	fpnts_r(ife,my) = E_yz
-	fpnts_r(ife,mz) = E_zz - P_10 + P_5
-
-        end if
-
-	fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz !+ (vz*E_zz + vx*E_xz + vy* E_yz)
-
-        if(ivis .eq. 1)then
-
-	fpnts_r(ife,exx) = -c2d3*nu*vz
-	fpnts_r(ife,eyy) = -c2d3*nu*vz
-	fpnts_r(ife,ezz) =  c4d3*nu*vz
-
-	fpnts_r(ife,exy) = 0.
-	fpnts_r(ife,exz) = nu*vx
-	fpnts_r(ife,eyz) = nu*vy
-
-        else
-
-	fpnts_r(ife,exx) = 2*vx*(E_xz - vx*Qpnts_r(ife,mz)) + vz*E_xx                               ! term 3
-	fpnts_r(ife,eyy) = 2*vy*(E_yz - vy*Qpnts_r(ife,mz)) + vz*E_yy                               ! term 6
-	fpnts_r(ife,ezz) = vz*(3*E_zz - 2*vz*Qpnts_r(ife,mz))                                       ! term 9
-
-	fpnts_r(ife,exy) = vx*E_yz + vy*E_xz + vz*E_xy - 2*vx*vy*Qpnts_r(ife,mz)                    ! term 12
-	fpnts_r(ife,exz) = 2*vz*(E_xz - vx*Qpnts_r(ife,mz)) + vx*E_zz                               ! term 15
-	fpnts_r(ife,eyz) = 2*vz*(E_yz - vy*Qpnts_r(ife,mz)) + vy*E_zz                               ! term 18
-
-        end if
-
-        end if
-	end if
+    	end if
 
 	end do
 
