@@ -124,7 +124,7 @@ contains
                 fpnts_r(ife,pyz) = nu*vy
             end select
         end do
-    end subroutine
+    end subroutine flux_calc_pnts_r
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -133,7 +133,7 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx+1,ny,nz,nQ), intent(out) :: flux_x
 
-        integer i,j,k,ieq,iback,i4,i4p,ipnt,kroe(nface)
+        integer i,j,k,ieq,iback,i4,i4p,ipnt
         real Qface_x(nfe,nQ),fface_x(nfe,nQ) !, fface_y(nfe,nQ), fface_z(nfe,nQ)
         real cwavex(nfe),fhllc_x(nface,5),qvin(nQ) !,fhllc_y(nface,5),fhllc_z(nface,5),fs(nface,nQ)
 
@@ -191,15 +191,11 @@ contains
                     end do
                 end do
 
-                kroe(1:nface) = 1
-
                 if (ihllc) call flux_hllc(Qface_x,fface_x,fhllc_x,1)
                 if (ihllc) then ! Needs to be done for HLLC and Roe
                     do ieq = 1,en
                         do i4=1,nface
-                            if (kroe(i4) > 0) then
-                                flux_x(i4,i,j,k,ieq) = fhllc_x(i4,ieq)
-                            end if
+                            flux_x(i4,i,j,k,ieq) = fhllc_x(i4,ieq)
                         end do
                     end do
                 end if
@@ -217,7 +213,7 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny+1,nz,nQ), intent(out) :: flux_y
 
-        integer i,j,k,ieq,jleft,i4,i4p,ipnt,kroe(nface)
+        integer i,j,k,ieq,jleft,i4,i4p,ipnt
         real Qface_y(nfe,nQ),fface_y(nfe,nQ)!, fface_z(nfe,nQ)
         real cwavey(nfe),fhllc_y(nface,5),qvin(nQ) !,fhllc_z(nface,5),fs(nface,nQ)
 
@@ -275,15 +271,11 @@ contains
                     end do
                 end do
 
-                kroe(1:nface) = 1
-
                 if (ihllc) call flux_hllc(Qface_y,fface_y,fhllc_y,2)
                 if (ihllc) then ! Needs to be done for HLLC and Roe
                     do ieq = 1,en
                         do i4=1,nface
-                            if (kroe(i4) > 0) then
-                                flux_y(i4,i,j,k,ieq) = fhllc_y(i4,ieq)
-                            end if
+                            flux_y(i4,i,j,k,ieq) = fhllc_y(i4,ieq)
                         end do
                     end do
                 end if
@@ -300,7 +292,7 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny,nz+1,nQ), intent(out) :: flux_z
-        integer i,j,k,ieq,kdown,i4,i4p,ipnt,kroe(nface)
+        integer i,j,k,ieq,kdown,i4,i4p,ipnt
         real Qface_z(nfe,nQ),fface_z(nfe,nQ)
         real cwavez(nfe),fhllc_z(nface,5),qvin(nQ) !fs(nface,nQ)
 
@@ -309,7 +301,7 @@ contains
             do j=1,ny
             do i=1,nx
 
-                if (k .gt. 1) then
+                if (k > 1) then
                     do ieq = 1,nQ
                         do ipnt=1,nface
                             Qface_z(ipnt,ieq) = sum( bfvals_zp(ipnt,1:nbasis)   &
@@ -317,13 +309,13 @@ contains
                         end do
                     end do
                 end if
-                if (k .eq. 1) then
+                if (k == 1) then
                     do ieq = 1,nQ
                         Qface_z(1:nface,ieq) = Qzlow_ext(i,j,1:nface,ieq)
                     end do
                 end if
 
-                if (k .lt. nz+1) then
+                if (k < nz+1) then
                     do ieq = 1,nQ
                         do ipnt=1,nface
                             Qface_z(ipnt+nface,ieq) = sum( bfvals_zm(ipnt,1:nbasis) &
@@ -331,7 +323,7 @@ contains
                         end do
                     end do
                 end if
-                if (k .eq. nz+1) then
+                if (k == nz+1) then
                     do ieq = 1,nQ
                         Qface_z(nface+1:nfe,ieq) = Qzhigh_ext(i,j,1:nface,ieq)
                     end do
@@ -360,15 +352,11 @@ contains
                     end do
                 end do
 
-                kroe(1:nface) = 1
-
                 if (ihllc) call flux_hllc(Qface_z,fface_z,fhllc_z,3)
                 if (ihllc) then
                     do ieq = 1,en
                         do i4=1,nface
-                            if (kroe(i4) > 0) then
-                                flux_z(i4,i,j,k,ieq) = fhllc_z(i4,ieq)
-                            end if
+                            flux_z(i4,i,j,k,ieq) = fhllc_z(i4,ieq)
                         end do
                     end do
                 end if
@@ -439,13 +427,13 @@ contains
             vlr(k,3) = Qlr(k,iperp2)*rho_i        ! velocity in perpendicular direction 2
             qsq(k) = vlr(k,1)**2 + vlr(k,2)**2 + vlr(k,3)**2
             plr(k) = aindm1*(Qlr(k,enj) - 0.5*rhov(k)*qsq(k))        ! pressure
-            if(ieos .eq. 2) plr(k) = P_1*(rhov(k)**7.2 - 1.) + P_base + plr(k)
+            if(ieos == 2) plr(k) = P_1*(rhov(k)**7.2 - 1.) + P_base + plr(k)
             rtrho(k) = sqrt(rhov(k))
         end do
 
         do k=1,nface
             k2 = k + nface
-            if(ieos .eq. 2)then
+            if(ieos == 2)then
                 cslr(k) = vlr(k,1) - sqrt(7.2*P_1*rhov(k)**6.2 + plr(k)*rho_i)       ! lambda_M(Q_l)
                 cslr(k2) = vlr(k2,1) + sqrt(7.2*P_1*rhov(k2)**6.2 + plr(k2)*rho_i)       ! lambda_P(Q_r)
             else
@@ -454,7 +442,7 @@ contains
             end if
         end do
 
-        if (ibatten .eq. 1) then  ! compute wave speeds using Roe averages following Batten, 1997
+        if (ibatten == 1) then  ! compute wave speeds using Roe averages following Batten, 1997
 
             do k=1,nface
                 k2 = k + nface
@@ -468,21 +456,21 @@ contains
                 qtilde(k,4) = (rtrho(k)*hlr(k) + rtrho(k2)*hlr(k2))*rtrho_i(k)
                 ctsq(k) = aindm1*(qtilde(k,4) - 0.5*qsq(k))
             end do
-            if (minval(ctsq) .ge. 0.0) then
+            if (minval(ctsq) >= 0.0) then
                 ctilde = sqrt(ctsq)
                 qslr(1:nface) = qtilde(1:nface,1) - ctilde(1:nface)       ! lambda_M(Q_Roe)
                 qslr(nface+1:nfe) = qtilde(nface+1:nfe,1) + ctilde(nface+1:nfe)    ! lambda_P(Q_Roe)
             end if
-            if (minval(ctsq) .lt. 0.0) then
+            if (minval(ctsq) < 0.0) then
                 ibatten = 0
             end if
 
         end if
 
-        if (ibatten .eq. 0) then
+        if (ibatten == 0) then
             do k=1,nface
                 k2 = k + nface
-                if(ieos .eq. 2)then
+                if(ieos == 2)then
                     qslr(k) = vlr(k2,1) - sqrt(7.2*P_1*rhov(k2)**6.2 + plr(k2)*rho_i)       ! lambda_M(Q_r)
                     qslr(k2) = vlr(k,1) + sqrt(7.2*P_1*rhov(k)**6.2 + plr(k)*rho_i)       ! lambda_P(Q_l)
                 else
@@ -501,7 +489,7 @@ contains
             sm_num(k) = sm_num(k) + plr(k) - plr(k2)
             sm_den(k) = rhov(k2)*(s_lr(k2) - vlr(k2,1)) - rhov(k)*(s_lr(k) - vlr(k,1))
         end do
-        where (sm_den .eq. 0.0) sm_den = rh_floor
+        where (sm_den == 0.0) sm_den = rh_floor
 
         ! Calculate the wavespeed S_M of the contact discontinuity.
 
@@ -513,11 +501,11 @@ contains
 
         ! Now, calculate Q_l* and Q_r* in order to calculate F_l* and F_r*.
         do k=1,nfe
-            if (k .le. nface) i4 = k
-            if (k .gt. nface) i4 = k - nface
+            if (k <= nface) i4 = k
+            if (k > nface) i4 = k - nface
             sm_den(1) = s_lr(k) - s_m(i4)        ! S_{L,R} - S_M
 
-            if (sm_den(1) .eq. 0.0) then
+            if (sm_den(1) == 0.0) then
                 sm_den(1) = rh_floor
             end if
 
@@ -537,22 +525,22 @@ contains
 
         ! Finally, calculate the HLLC fluxes from F_l, F_l*, F_r*, and F_r...
         do i4 = 1,nface                        ! Use Eq. (26) of Batten ,1997
-            if (s_lr(i4) .gt. 0.0) then                               ! if S_L > 0
+            if (s_lr(i4) > 0.0) then                               ! if S_L > 0
                 do ieq=1,nhll
                     fhllc(i4,ivar(ieq)) = flr(i4,ivar(ieq))        ! F_HLLC = F_l
                 end do
             end if
-            if (s_lr(i4) .le. 0.0 .and. 0.0 .lt. s_m(i4)) then        ! if S_L <= 0 < S_M
+            if (s_lr(i4) <= 0.0 .and. 0.0 < s_m(i4)) then        ! if S_L <= 0 < S_M
                 do ieq=1,nhll
                     fhllc(i4,ivar(ieq)) = fstar(i4,ieq)            ! F_HLLC = F_l*
                 end do
             end if
-            if (s_m(i4) .le. 0.0 .and. 0.0 .le. s_lr(i4+nface)) then  ! if S_M <= 0 <= S_R
+            if (s_m(i4) <= 0.0 .and. 0.0 <= s_lr(i4+nface)) then  ! if S_M <= 0 <= S_R
                 do ieq=1,nhll
                     fhllc(i4,ivar(ieq)) = fstar(i4+nface,ieq)      ! F_HLLC = F_r*
                 end do
             end if
-            if (s_lr(i4+nface) .lt. 0.0) then                         ! if S_R < 0
+            if (s_lr(i4+nface) < 0.0) then                         ! if S_R < 0
                 do ieq=1,nhll
                     fhllc(i4,ivar(ieq)) = flr(i4+nface,ivar(ieq))  ! F_HLLC = F_r
                 end do
@@ -593,7 +581,7 @@ contains
                 int_r(ky,ieq) = 0.25*cbasis(ky)*dyi*sum(wgt3d(1:npg)*finner_y(1:npg,ieq))
                 int_r(kz,ieq) = 0.25*cbasis(kz)*dzi*sum(wgt3d(1:npg)*finner_z(1:npg,ieq))
 
-                if (nbasis .gt. 4) then
+                if (nbasis > 4) then
                     int_r(kyz,ieq)  = 0.25*cbasis(kyz)*dyi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kz)*finner_y(1:npg,ieq)) &
                           + 0.25*cbasis(kyz)*dzi*sum(wgt3d(1:npg)*bfvals_int(1:npg,ky)*finner_z(1:npg,ieq))
                     int_r(kzx,ieq)  = 0.25*cbasis(kzx)*dxi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kz)*finner_x(1:npg,ieq)) &
@@ -605,7 +593,7 @@ contains
                       + 0.25*cbasis(kxyz)*dzi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kxy)*finner_z(1:npg,ieq))
                 end if
 
-                if (nbasis .gt. 8) then
+                if (nbasis > 8) then
                     int_r(kyzz,ieq) = 0.25*cbasis(kyzz)*dyi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kzz)*finner_y(1:npg,ieq)) &
                       + 0.25*cbasis(kyzz)*dzi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kyz)*finner_z(1:npg,ieq))
                     int_r(kzxx,ieq) = 0.25*cbasis(kzxx)*dzi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kxx)*finner_z(1:npg,ieq)) &
@@ -677,34 +665,36 @@ contains
         call calc_flux_z(Q_r, flux_z)
 
         !#########################################################
-        ! Step 2: Calculate inner integral for each cell
+        ! Step 2: Calc inner integral for each cell
         !   --> integral_r  (used only in flux.f90)
         !---------------------------------------------------------
         call innerintegral(Q_r)
 
         !#########################################################
-        ! Step 3: Calculate (total) "Galerkin flux" for each cell
+        ! Step 3: Calc (total) "Gauss-Legendre flux" for each cell
         !   --> glflux_r  (used by advance_time_level_gl)
+        !   --
         !---------------------------------------------------------
         do ieq = 1,nQ
         do k = 1,nz
         do j = 1,ny
-            do i = 1,nx
-                glflux_r(i,j,k,ieq,1) =                                         &
-                    0.25*( dxi*(wgt2d(1)*(flux_x(1,i+1,j,k,ieq) - flux_x(1,i,j,k,ieq)))  &
-                         + dyi*(wgt2d(1)*(flux_y(1,i,j+1,k,ieq) - flux_y(1,i,j,k,ieq)))  &
-                         + dzi*(wgt2d(1)*(flux_z(1,i,j,k+1,ieq) - flux_z(1,i,j,k,ieq)))  &
-                         + dxi*(wgt2d(2)*(flux_x(2,i+1,j,k,ieq) - flux_x(2,i,j,k,ieq)))  &
-                         + dyi*(wgt2d(2)*(flux_y(2,i,j+1,k,ieq) - flux_y(2,i,j,k,ieq)))  &
-                         + dzi*(wgt2d(2)*(flux_z(2,i,j,k+1,ieq) - flux_z(2,i,j,k,ieq)))  &
-                         + dxi*(wgt2d(3)*(flux_x(3,i+1,j,k,ieq) - flux_x(3,i,j,k,ieq)))  &
-                         + dyi*(wgt2d(3)*(flux_y(3,i,j+1,k,ieq) - flux_y(3,i,j,k,ieq)))  &
-                         + dzi*(wgt2d(3)*(flux_z(3,i,j,k+1,ieq) - flux_z(3,i,j,k,ieq)))  &
-                         + dxi*(wgt2d(4)*(flux_x(4,i+1,j,k,ieq) - flux_x(4,i,j,k,ieq)))  &
-                         + dyi*(wgt2d(4)*(flux_y(4,i,j+1,k,ieq) - flux_y(4,i,j,k,ieq)))  &
-                         + dzi*(wgt2d(4)*(flux_z(4,i,j,k+1,ieq) - flux_z(4,i,j,k,ieq))) )
-            end do
-
+          ! do ir=1,1
+                do i = 1,nx
+                    glflux_r(i,j,k,ieq,1) =                                         &
+                        0.25*( dxi*(wgt2d(1)*(flux_x(1,i+1,j,k,ieq) - flux_x(1,i,j,k,ieq)))  &
+                             + dyi*(wgt2d(1)*(flux_y(1,i,j+1,k,ieq) - flux_y(1,i,j,k,ieq)))  &
+                             + dzi*(wgt2d(1)*(flux_z(1,i,j,k+1,ieq) - flux_z(1,i,j,k,ieq)))  &
+                             + dxi*(wgt2d(2)*(flux_x(2,i+1,j,k,ieq) - flux_x(2,i,j,k,ieq)))  &
+                             + dyi*(wgt2d(2)*(flux_y(2,i,j+1,k,ieq) - flux_y(2,i,j,k,ieq)))  &
+                             + dzi*(wgt2d(2)*(flux_z(2,i,j,k+1,ieq) - flux_z(2,i,j,k,ieq)))  &
+                             + dxi*(wgt2d(3)*(flux_x(3,i+1,j,k,ieq) - flux_x(3,i,j,k,ieq)))  &
+                             + dyi*(wgt2d(3)*(flux_y(3,i,j+1,k,ieq) - flux_y(3,i,j,k,ieq)))  &
+                             + dzi*(wgt2d(3)*(flux_z(3,i,j,k+1,ieq) - flux_z(3,i,j,k,ieq)))  &
+                             + dxi*(wgt2d(4)*(flux_x(4,i+1,j,k,ieq) - flux_x(4,i,j,k,ieq)))  &
+                             + dyi*(wgt2d(4)*(flux_y(4,i,j+1,k,ieq) - flux_y(4,i,j,k,ieq)))  &
+                             + dzi*(wgt2d(4)*(flux_z(4,i,j,k+1,ieq) - flux_z(4,i,j,k,ieq))) )
+                end do
+          ! end do ir=1
             do ir=2,nbasis
                 do i = 1,nx
                     glflux_r(i,j,k,ieq,ir) =                                        &
@@ -799,7 +789,7 @@ contains
                 Qrhmin = minval(Qedge(:,rh))
                 if (Qrhmin < epsi) then
                     theta = (epsi-Q_r(i,j,k,rh,1))/(Qrhmin-Q_r(i,j,k,rh,1))
-                    if (theta .gt. 1.) then
+                    if (theta > 1.) then
                         theta = 1.
                     end if
 
