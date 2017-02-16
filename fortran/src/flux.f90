@@ -13,9 +13,17 @@ real flux_z(nface,nx,ny,1:nz+1,1:nQ)
 ! Only used by flux_calc (flux_cal)
 real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
 
-! integer mxa(3),mya(3),mza(3)
+integer, dimension(3) :: mxa ,mya ,mza
 
 contains
+
+    subroutine set_mxa_mya_mza(mxa, mya, mza)
+        implicit none
+        integer, dimension(3), intent(out) :: mxa, mya, mza
+        mxa = (/ mx, my, mz /)
+        mya = (/ my, mz, mx /)
+        mza = (/ mz, mx, my /)
+    end subroutine set_mxa_mya_mza
 
 !-------------------------------------------------------------------------------
     subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)

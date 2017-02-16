@@ -7,7 +7,6 @@ module input
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad  = 2
-    integer, parameter :: ibitri = 2
 
     ! Grid cell dimensions per MPI domain
     integer, parameter :: nx = 50

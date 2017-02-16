@@ -128,14 +128,18 @@ module parameters
     real wgt2d(30)   ! wgt2d: quadrature weights for 2-D integration
 
     ! TODO: only in:
-    !   * initialize.f90 (setup), fill_fluid2 (deprec.)
+    !   * initialize.f90 (setup)
     !   * innerintegral, set_weights_3D
     real wgt3d(100)  ! wgt3d: quadrature weights for 3-D integration
 
     ! TODO: only in:
-    !   * initialize.f90 (setup), fill_fluid2 (deprec.)
+    !   * initialize.f90 (setup)
     !   * innerintegral, source_calc
     real cbasis(nbastot)
+
+    ! TODO: only in:
+    !   * initialize.f90 (setup & set_cbasis_3D), innerintegral
+    integer ibitri  ! set by set_cbasis_3D using chosen value of iquad
 
     ! TODO: only in
     !   * initialize.f90 (setup)
@@ -148,7 +152,7 @@ module parameters
     real bf_faces(nslim,nbastot)
 
     ! TODO: only in:
-    !   * initialize.f90 (setup), fill_fluid2 (deprec.)
+    !   * initialize.f90 (setup)
     !   * set_face_vals_3D, set_internal_vals_3D
     !   * source_calc, innerintegral
     real bfvals_int(npg,nbastot)
@@ -171,19 +175,22 @@ module parameters
 
     ! Basis function flags
     ! TODO: these variables are in:
-    !   * initialize.f90 (setup), fill_fluid2 (deprec.)
+    !   * initialize.f90 (setup)
     !   * innerintegral
     !   * set_vtk_vals_3D, set_internal_vals_3D, set_face_vals_3D
-    integer, parameter :: kx     = 2, ky    = 3, kz    = 4
-    integer, parameter :: kyz    = 5, kzx   = 6, kxy   = 7
-    integer, parameter :: kxyz   = 8
-    integer, parameter :: kxx    = 9, kyy   =10, kzz   =11
-    integer, parameter :: kyzz   =12, kzxx  =13, kxyy  =14
-    integer, parameter :: kyyz   =15, kzzx  =16, kxxy  =17
-    integer, parameter :: kyyzz  =18, kzzxx =19, kxxyy =20
-    integer, parameter :: kyzxx  =21, kzxyy =22, kxyzz =23
-    integer, parameter :: kxyyzz =24, kyzzxx=25, kzxxyy=26
-    integer, parameter :: kxxyyzz=27
+    ! integer, parameter :: kx     = 2, ky    = 3, kz    = 4
+    ! integer, parameter :: kyz    = 5, kzx   = 6, kxy   = 7
+    ! integer, parameter :: kxyz   = 8
+    ! integer, parameter :: kxx    = 9, kyy   =10, kzz   =11
+    ! integer, parameter :: kyzz   =12, kzxx  =13, kxyy  =14
+    ! integer, parameter :: kyyz   =15, kzzx  =16, kxxy  =17
+    ! integer, parameter :: kyyzz  =18, kzzxx =19, kxxyy =20
+    ! integer, parameter :: kyzxx  =21, kzxyy =22, kxyzz =23
+    ! integer, parameter :: kxyyzz =24, kyzzxx=25, kzxxyy=26
+    ! integer, parameter :: kxxyyzz=27
+    integer kx,ky,kz, kyz,kzx,kxy, kxyz, kxx,kyy,kzz, kyzz,kzxx,kxyy
+    integer kyyz,kzzx,kxxy, kyyzz,kzzxx,kxxyy, kyzxx,kzxyy,kxyzz
+    integer kxyyzz,kyzzxx,kzxxyy, kxxyyzz, kxxx,kyyy,kzzz
 
     ! TODO: only in output & basis_funcs
     integer, parameter :: nvtk  = 1    ! (was 2)
@@ -253,8 +260,6 @@ module parameters
     integer, parameter :: UP    = 5  ! used in exchange_flux + init
     integer, parameter :: DOWN  = 6  ! used in exchange_flux + init
     integer, parameter :: MPI_TT = MPI_REAL4  ! used in exchange_flux and get_min_dt + init
-
-    integer dims(3),coords(3),periods(3)  ! only used in init for MPI things
 
     integer nbrs(6)  ! only used in init + exchange_flux for MPI things
     integer reqs(4),stats(MPI_STATUS_SIZE,4)  ! only used in get_min_dt + exchange_flux for MPI things
