@@ -39,9 +39,9 @@ contains
     end function cyl_in_2d_pipe_mask
 
 
-    subroutine set_cyl_in_2d_pipe_boundaries(Qmask_i, ux_amb, den, Qxlo_e_c, Qcyl_e_c)
+    subroutine set_cyl_in_2d_pipe_boundaries(Qmask_i, ux_amb, den, pres, Qxlo_e_c, Qcyl_e_c)
         logical, dimension(nx,ny,nz), intent(in) :: Qmask_i
-        real, intent(in) :: ux_amb, den
+        real, intent(in) :: ux_amb, den, pres
         real, dimension(ny,nz,nface,nQ), intent(out) :: Qxlo_e_c
         real, dimension(nx,ny,nface,nQ), intent(out) :: Qcyl_e_c
 
@@ -51,39 +51,79 @@ contains
         yp0 = lyd  ! set zero-value of y-coordinate to domain bottom
 
         ! apply no-slip BCs for cylinder (set all momenta to 0)
+        Qcyl_e_c(:,:,:,:) = 0.0
         do ieq = rh,en
-        do i4 = 1,nface
-            Qcyl_e_c(:,:,i4,ieq) = Q_r0(:,:,1,i4,ieq)  ! Initialize to grid values
-            where ( Qmask_i(:,:,1) )
-                Qcyl_e_c(:,:,i4,ieq) = 0.0             ! Set density/momenta to zero
-            end where
-        end do
+            do i4 = 1,nface
+                Qcyl_e_c(:,:,i4,ieq) = Q_r0(:,:,1,i4,ieq)  ! Init to grid values
+                where ( Qmask_i(:,:,1) )
+                    Qcyl_e_c(:,:,i4,ieq) = 0.0             ! Set dens/momenta to 0
+                end where
+            end do
         end do
 
         ! apply parabolic inflow BCs on lower x wall
+        Qxlo_e_c(:,:,:,:) = 0.0
         do i4 = 1,nface
             do k = 1,nz
             do j = 1,ny
                 yp = yc(j) - yp0
                 vx = 4*ux_amb*yp*(ly-yp)/ly**2
+
+                Qxlo_e_c(j,k,i4,rh) = den
                 Qxlo_e_c(j,k,i4,mx) = den*vx
+                Qxlo_e_c(j,k,i4,my) = 0
+                Qxlo_e_c(j,k,i4,mz) = 0
+                Qxlo_e_c(j,k,i4,en) = pres/aindm1 + 0.5*den*vx**2
+
+                ! Qxlo_e_c(j,k,i4,pxx) = pres/vis ! den*vx**2 + pres/vis
+                ! Qxlo_e_c(j,k,i4,pyy) = pres/vis ! den*vy**2 + pres/vis
+                ! Qxlo_e_c(j,k,i4,pzz) = pres/vis ! den*vz**2 + pres/vis
+                ! Qxlo_e_c(j,k,i4,pxy) =  ! den*vx*vy
+                ! Qxlo_e_c(j,k,i4,pxz) =  ! den*vx*vz
+                ! Qxlo_e_c(j,k,i4,pyz) =  ! den*vy*vz
             end do
             end do
         end do
+
+        if (mpi_P == 1) print *,Qxlo_e_c(23,1,1,mx)/den
     end subroutine set_cyl_in_2d_pipe_boundaries
 
 
-    subroutine apply_xlo_in_2d_pipe_boundaries(Qxlo_e_c, Qxlo_e)
+    subroutine apply_xlo_in_2d_pipe_boundaries(Qxlo_i, Qxlo_e_c, Qxlo_e)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxlo_i
         real, dimension(ny,nz,nface,nQ), intent(in) :: Qxlo_e_c
         real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxlo_e
         integer j,k
 
         do k = 1,nz
         do j = 1,ny
+            Qxlo_e(j,k,1:nface,:) = Qxlo_i(j,k,1:nface,:)
+
+            Qxlo_e(j,k,1:nface,rh) = Qxlo_e_c(j,k,1:nface,rh)
             Qxlo_e(j,k,1:nface,mx) = Qxlo_e_c(j,k,1:nface,mx)
             Qxlo_e(j,k,1:nface,my:mz) = 0.0
+            Qxlo_e(j,k,1:nface,en) = Qxlo_e_c(j,k,1:nface,en)
+            ! Qxlo_e(j,k,1:nface,pxx:pzz) = Qxlo_e_c(j,k,1:nface,pxx:pzz)
         end do
         end do
+
+        ! if (mpi_P == 1) then
+        !     print *,'density:'
+        !     print *,Qxlo_e(:,1,1,rh)
+        !     print *,''
+        !
+        !     print *,'x momentum:'
+        !     print *,Qxlo_e(:,1,1,mx)
+        !     print *,''
+        !
+        !     print *,'y momentum:'
+        !     print *,Qxlo_e(:,1,1,my)
+        !     print *,''
+        !
+        !     print *,'energy:'
+        !     print *,Qxlo_e(:,1,1,en)
+        !     print *,''
+        ! endif
     end subroutine apply_xlo_in_2d_pipe_boundaries
 
 
@@ -175,25 +215,25 @@ contains
     ! Apply boundary conditions (specified by user at runtime)
     !------------------------------------------------------------
     subroutine apply_boundaries
-        if ( mpi_P .eq. 1 ) then
-            call apply_xlobc(Qxlow_int, Qxlow_ext)
-            call apply_xlo_in_2d_pipe_boundaries(Qxlow_ext_c, Qxlow_ext)
+        if ( mpi_P == 1 ) then
+            ! call apply_xlobc(Qxlow_int, Qxlow_ext)
+            call apply_xlo_in_2d_pipe_boundaries(Qxlow_int, Qxlow_ext_c, Qxlow_ext)
         end if
-        if ( mpi_P .eq. mpi_nx ) then
+        if ( mpi_P == mpi_nx ) then
             call apply_xhibc(Qxhigh_int, Qxhigh_ext)
         end if
         !----------------------------------------------------
-        if ( mpi_Q .eq. 1 ) then
+        if ( mpi_Q == 1 ) then
             call apply_ylobc(Qylow_int, Qylow_ext)
         end if
-        if ( mpi_Q .eq. mpi_ny ) then
+        if ( mpi_Q == mpi_ny ) then
             call apply_yhibc(Qyhigh_int, Qyhigh_ext)
         end if
         !--------------------------------------------------------
-        if ( mpi_R .eq. 1 ) then
+        if ( mpi_R == 1 ) then
             call apply_zlobc(Qzlow_int, Qzlow_ext)
         end if
-        if ( mpi_R .eq. mpi_nz ) then
+        if ( mpi_R == mpi_nz ) then
             call apply_zhibc(Qzhigh_int, Qzhigh_ext)
         end if
 

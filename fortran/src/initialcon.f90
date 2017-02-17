@@ -233,9 +233,9 @@ contains
 
         select case(version)
             case(0)
-                ux_amb = 1.5e-3
+                ux_amb = 0.3
             case(1)
-                ux_amb = 0.3e-3
+                ux_amb = 1.5
         end select
 
         !-------------------------------------------------------
@@ -273,7 +273,7 @@ contains
 
         ! NOTE: Qxlow_ext_custom, Qcyl_ext, and QMask should already be initialized!
         ! call add_custom_boundaries(icname)
-        call set_cyl_in_2d_pipe_boundaries(Qmask, ux_amb, dn, Qxlow_ext_c, Qcyl_ext_c)
+        call set_cyl_in_2d_pipe_boundaries(Qmask, ux_amb, dn, pr, Qxlow_ext_c, Qcyl_ext_c)
 
     end subroutine pipe_cylinder_2d
     !---------------------------------------------------------------------------

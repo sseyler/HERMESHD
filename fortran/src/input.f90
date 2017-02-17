@@ -1,21 +1,21 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 8.2e0 !1.0e6 !4.1e2
-    real, parameter :: ly = 4.1e0 !1.0e6 !4.1e2
-    real, parameter :: lz = 4.1e0/120. !1.0e6/120. !4.1e2/120.
+    real, parameter :: lx = 2.2e0 !1.0e6 !4.1e2
+    real, parameter :: ly = 8.2e-1 !1.0e6 !4.1e2
+    real, parameter :: lz = ly/120. !1.0e6/120. !4.1e2/120.
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad  = 2
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 40
-    integer, parameter :: ny = 20
+    integer, parameter :: nx = 20
+    integer, parameter :: ny = 30
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
-    integer :: mpi_nx = 4
-    integer :: mpi_ny = 4
+    integer :: mpi_nx = 8
+    integer :: mpi_ny = 2
 
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK
@@ -35,7 +35,7 @@ module input
     !   * 1 for outflow (MPI does this for you)
     !   * 2 for wall (vanishing normal velocities)
     !   * 3 for noslip (vanishing normal/tangential velocities)
-    character(*), parameter :: xlobc = 'wall' !'periodic'
+    character(*), parameter :: xlobc = 'noslip' !'periodic'
     character(*), parameter :: xhibc = 'outflow' !'periodic'
     character(*), parameter :: ylobc = 'noslip'  !'periodic'
     character(*), parameter :: yhibc = 'noslip'  !'periodic'
@@ -43,10 +43,10 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 5.0e-3 !8.5e4
+    real, parameter :: tf = 1.0e1 !8.5e4
 
     ! Console output frequency
-    integer, parameter :: ntout = 100
+    integer, parameter :: ntout = 1000
 
     ! Riemann solver
     ! If all of them = 0, then LLF is used for fluxes.
@@ -62,9 +62,9 @@ module input
 
     ! Thermodynamic, constitutive, and transport parameters
     ! real, parameter :: te     = 300.0    ! in Kelvin
-    real, parameter :: mu     = 22.0     ! AMU per molecule
+    real, parameter :: mu     = 18.0     ! AMU per molecule
     real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
-    real, parameter :: vis    = 1.0e-2   ! dynamic viscosity
+    real, parameter :: vis    = 1.0e-3   ! dynamic viscosity
     real, parameter :: epsi   = 5.0      ! inverse relaxation coefficient
     real, parameter :: clt    = 2.0      ! numerical speed of sound
 

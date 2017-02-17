@@ -41,18 +41,6 @@ contains
         nout = 0
         !-----------------------------------------
 
-        ! cbasis(1)             = 1.   ! basis func coeff   {1}
-        ! cbasis(kx:kz)         = 3.   ! basis funcs coeffs {x,y,z}
-        ! cbasis(kyz:kxy)       = 9.   ! basis funcs coeffs {yz,zx,xy}
-        ! cbasis(kxyz)          = 27.  ! basis func coeff   {xyz}
-        ! cbasis(kxx:kzz)       = 5.   ! basis funcs coeffs {P2(x),   P2(y),  P2(z)}
-        ! cbasis(kyzz:kxyy)     = 15.  ! basis funcs coeffs {yP2(z), zP2(x), xP2(y)}
-        ! cbasis(kyyz:kxxy)     = 15.  ! basis funcs coeffs {P2(y)z, P2(z)y, P2(z)x}
-        ! cbasis(kyyzz:kxxyy)   = 25.  ! basis funcs coeffs {P2(y)P2(z), P2(z)P2(x), P2(x)P2(y)}
-        ! cbasis(kyzxx:kxyzz)   = 45.  ! basis funcs coeffs {yzP_2(x),   zxP_2(y),   xyP_2(z)}
-        ! cbasis(kxyyzz:kzxxyy) = 75.  ! basis funcs coeffs {xP2(y)P2(z),yP2(z)P2(x),zP2(x)P2(y)}
-        ! cbasis(kxxyyzz)       = 125. ! basis funcs coeffs {P2(x)P2(y)P2(z)}
-
         !-----------------------------------------
         ! Evaluate local cell values of basis functions on cell interior and faces
         call set_bfvals_3D  ! This is done for 1, 2, or 3 point Gaussian quadrature
