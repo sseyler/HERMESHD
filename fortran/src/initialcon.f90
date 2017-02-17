@@ -8,7 +8,7 @@ use boundary_custom
 use boundary
 
 
-real :: coll      ! collision frequency; value set at runtime (constant for now)
+! real :: coll      ! collision frequency; value set at runtime (constant for now)
 real :: rh_fluid  ! set far-field fluid density
 
 
