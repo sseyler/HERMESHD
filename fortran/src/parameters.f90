@@ -87,10 +87,15 @@ module parameters
 
 
     !===========================================================================
-    ! Miscellaneous stuff for random matrix generation and more
+    ! Miscellaneous stuff for viscosity, heat transport, GRM generation + more
     !------------------------------------------------------------
-    real, parameter :: coll = rh_floor*T_floor/vis  ! collision frequency
+    ! NOTE: New way of handling relaxation system:
+    !   coll -- plays same role as epsi (from old approach)
+    !   colvis = coll*vis = density*temp  (vis is dynamic viscosity, e.g. eta)
+    real :: coll, colvis    ! values set in set_ic
+    real :: c2d3cv, c4d3cv  ! probably want to set in set_ic (not currently used)
 
+    ! NOTE: Old way of handling relaxation system
     real, parameter :: nu = epsi*vis
     real, parameter :: c2d3nu=c2d3*nu, c4d3nu=c4d3*nu
 

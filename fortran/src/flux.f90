@@ -33,6 +33,9 @@ contains
         real Sxx,Syy,Szz,Sxy,Sxz,Syz
         real Qx,Qy,Qz
 
+        c2d3cv = c2d3*colvis  ! global vars declared in parameters.f90
+        c4d3cv = c4d3*colvis  ! global vars declared in parameters.f90
+
         Spnts_r(:,:,:) = 0.0
         Hpnts_r(:,:) = 0.0
         if (llns) call random_stresses_pnts_r(Spnts_r, npnts)
@@ -75,12 +78,12 @@ contains
                                 +   (Qpnts_r(ife,pxy) - Sxy)*vy                 &
                                 +   (Qpnts_r(ife,pxz) - Sxz)*vz )
 
-                fpnts_r(ife,pxx) =  c4d3nu*vx
-                fpnts_r(ife,pyy) = -c2d3nu*vx
-                fpnts_r(ife,pzz) = -c2d3nu*vx
+                fpnts_r(ife,pxx) =  c4d3cv*vx
+                fpnts_r(ife,pyy) = -c2d3cv*vx
+                fpnts_r(ife,pzz) = -c2d3cv*vx
 
-                fpnts_r(ife,pxy) = nu*vy
-                fpnts_r(ife,pxz) = nu*vz
+                fpnts_r(ife,pxy) = colvis*vy
+                fpnts_r(ife,pxz) = colvis*vz
                 fpnts_r(ife,pyz) = 0
 
             case (2)
@@ -95,13 +98,13 @@ contains
                                 +   (Qpnts_r(ife,pxy) - Sxy)*vx                 &
                                 +   (Qpnts_r(ife,pyz) - Syz)*vz )
 
-                fpnts_r(ife,pxx) = -c2d3nu*vy
-                fpnts_r(ife,pyy) =  c4d3nu*vy
-                fpnts_r(ife,pzz) = -c2d3nu*vy
+                fpnts_r(ife,pxx) = -c2d3cv*vy
+                fpnts_r(ife,pyy) =  c4d3cv*vy
+                fpnts_r(ife,pzz) = -c2d3cv*vy
 
-                fpnts_r(ife,pxy) = nu*vx
+                fpnts_r(ife,pxy) = colvis*vx
                 fpnts_r(ife,pxz) = 0
-                fpnts_r(ife,pyz) = nu*vz
+                fpnts_r(ife,pyz) = colvis*vz
 
             case (3)
                 fpnts_r(ife,rh) = Qpnts_r(ife,mz)
@@ -115,13 +118,13 @@ contains
                                 +   (Qpnts_r(ife,pxz) - Sxz)*vx                 &
                                 +   (Qpnts_r(ife,pyz) - Syz)*vy )
 
-                fpnts_r(ife,pxx) = -c2d3nu*vz
-                fpnts_r(ife,pyy) = -c2d3nu*vz
-                fpnts_r(ife,pzz) =  c4d3nu*vz
+                fpnts_r(ife,pxx) = -c2d3cv*vz
+                fpnts_r(ife,pyy) = -c2d3cv*vz
+                fpnts_r(ife,pzz) =  c4d3cv*vz
 
                 fpnts_r(ife,pxy) = 0
-                fpnts_r(ife,pxz) = nu*vx
-                fpnts_r(ife,pyz) = nu*vy
+                fpnts_r(ife,pxz) = colvis*vx
+                fpnts_r(ife,pyz) = colvis*vy
             end select
         end do
     end subroutine flux_calc_pnts_r

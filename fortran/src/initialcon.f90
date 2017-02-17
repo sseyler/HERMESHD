@@ -8,9 +8,7 @@ use boundary_custom
 use boundary
 
 
-! real :: coll      ! collision frequency; value set at runtime (constant for now)
 real :: rh_fluid  ! set far-field fluid density
-
 
 contains
 
@@ -23,7 +21,8 @@ contains
 
         ! te_fluid = T_floor
         ! rh_fluid = 1.0
-        ! coll = rh_fluid*te/vis
+        ! coll = rh_fluid*te_fluid/vis
+        ! colvis = coll*vis  ! or, dn*te
 
         Q_r(:,:,:,:,:)  = 0.0
         Q_r(:,:,:,rh,1) = rh_floor
@@ -55,6 +54,10 @@ contains
                 call pipe_cylinder_2d(Q_r, 1)
         end select
 
+
+        ! Temporary hack: set coll to epsi to get old behavior:
+        ! coll = epsi
+
     end subroutine set_ic
 
 !-------------------------------------------------------
@@ -63,13 +66,17 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k
-        real te,rh,pr,beta,beta2,smx,smy,smz,rand_num,rnum
+        real te,dn,pr,beta,beta2,smx,smy,smz,rand_num,rnum
 
-        te    = T_floor
+        dn = 1.0
+        te = T_floor
+        pr = te*dn
+
+        coll   = dn*te/vis  ! global
+        colvis = coll*vis   ! or, dn*te  (also global)
+
         beta  = 1.0   ! jet strength
         beta2 = 0.005 ! perturbation strength
-        rh    = 1.0
-        pr    = te*rh
 
         do k = 1,nz
         do j = 1,ny
@@ -77,22 +84,15 @@ contains
             call random_number(rand_num)
             rnum = (rand_num - 0.5)
 
-            smx = beta*rh/cosh(20*yc(j)/lyu)
+            smx = beta*dn/cosh(20*yc(j)/lyu)
             smy = beta2*rnum/cosh(20*yc(j)/lyu)**2
             smz = 0
 
-            Q_r(i,j,k,rh,1) = rh
+            Q_r(i,j,k,rh,1) = dn
             Q_r(i,j,k,mx,1) = smx
             Q_r(i,j,k,my,1) = smy
             Q_r(i,j,k,mz,1) = smz
-            Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*(smx**2 + smy**2 + smz**2)/rh
-
-            ! Q_r(i,j,k,pxx,1) = pr + smx**2/rh
-            ! Q_r(i,j,k,pyy,1) = pr + smy**2/rh
-            ! Q_r(i,j,k,pzz,1) = pr + smz**2/rh
-            ! Q_r(i,j,k,pxy,1) =      smx*smy/rh
-            ! Q_r(i,j,k,pxz,1) =      smx*smz/rh
-            ! Q_r(i,j,k,pyz,1) =      smy*smz/rh
+            Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*(smx**2 + smy**2 + smz**2)/dn
         end do
         end do
         end do
@@ -172,17 +172,17 @@ contains
         do j = 1,ny
         do i = 1,nx
             xp = xc(i) - xctr
-            if ( version .eq. 1 ) then
+            if ( version == 1 ) then
                 yp = yc(j) - yctr
             else
                 yp = 0
             endif
 
-            if ( xp+yp .le. 0 ) then
+            if ( xp+yp <= 0 ) then
                 dn = rh_hi
                 pr = pr_hi
             endif
-            if ( xp+yp .gt. 0 ) then
+            if ( xp+yp > 0 ) then
                 dn = rh_lo
                 pr = pr_lo
             endif
@@ -221,6 +221,10 @@ contains
         dn = 1.0
         te = T_floor
         pr = dn*te  ! 1.0*P_base  ! can be adjusted to get stable results
+
+        coll   = dn*te/vis  ! global
+        colvis = coll*vis   ! or, dn*te  (also global)
+
         vx = 0.0
         vy = 0.0
         vz = 0.0
@@ -248,13 +252,6 @@ contains
             Q_r(i,j,k,my,1) = dn*vy
             Q_r(i,j,k,mz,1) = dn*vz
             Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
-
-            ! Q_r(i,j,k,pxx,1) = pr + dn*vx**2
-            ! Q_r(i,j,k,pyy,1) = pr + dn*vy**2
-            ! Q_r(i,j,k,pzz,1) = pr + dn*vz**2
-            ! Q_r(i,j,k,pxy,1) =      dn*vx*vy
-            ! Q_r(i,j,k,pxz,1) =      dn*vx*vz
-            ! Q_r(i,j,k,pyz,1) =      dn*vy*vz
         end do
         end do
         end do

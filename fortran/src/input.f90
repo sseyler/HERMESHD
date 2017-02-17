@@ -64,9 +64,12 @@ module input
     real, parameter :: te     = 300.0    ! in Kelvin
     real, parameter :: mu     = 18.0     ! AMU per molecule
     real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
-    real, parameter :: vis    = 1.0e-2   ! dynamic viscosity
-    real, parameter :: epsi   = 5.0      ! inverse relaxation coefficient
     real, parameter :: clt    = 2.0      ! numerical speed of sound
+
+    ! Viscosity control
+    integer, parameter :: ivis = 0       ! 0 for explicit, 1 for semi-implicit
+    real, parameter    :: vis  = 1.0e-2  ! dynamic viscosity
+    real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
 
     ! Output location and naming
     character (*), parameter :: datadir = "data"

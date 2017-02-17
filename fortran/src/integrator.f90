@@ -126,53 +126,79 @@ contains
         real faci
         integer i,j,k,ieq,ir
 
-        ! faci = 1./(1. + dt*coll)  ! need to ensure a value is given to coll!
+        faci = 1./(1. + dt*coll)  ! need to ensure a value is given to coll!
 
-        do ir=1,nbasis
-        do ieq = 1,nQ
-            do k = 1,nz
-            do j = 1,ny
-            do i = 1,nx
-                Q_out(i,j,k,ieq,ir) = Q_in(i,j,k,ieq,ir)                        &
-                                    - dt*( glflux_r(i,j,k,ieq,ir)               &
-                                         - source_r(i,j,k,ieq,ir) )
-            end do
-            end do
-            end do
-        end do
-        end do
-
-        ! Implicit solve of stress variables?
-        ! do k = 1,nz
-        ! do j = 1,ny
-        ! do i = 1,nx
-        !     do ir=1,nbasis
-        !     do ieq = pxx,nQ
-        !         Q_out(i,j,k,ieq,ir) = ( Q_in(i,j,k,ieq,ir)                      &
-        !                              - dt*glflux_r(i,j,k,ieq,ir)                &
-        !                              + dt*source_r(i,j,k,ieq,ir) ) * faci
+        ! do ir=1,nbasis
+        ! do ieq = 1,nQ
+        !     do k = 1,nz
+        !     do j = 1,ny
+        !     do i = 1,nx
+        !         Q_out(i,j,k,ieq,ir) = Q_in(i,j,k,ieq,ir)                        &
+        !                             - dt*( glflux_r(i,j,k,ieq,ir)               &
+        !                                  - source_r(i,j,k,ieq,ir) )
+        !     end do
         !     end do
         !     end do
         ! end do
         ! end do
-        ! end do
 
-        do ieq = 1,nQ
+        select case (ivis)
+
+          ! Fully explicit integration: forward-Euler for all fields
+          case (0)
             do k = 1,nz
             do j = 1,ny
             do i = 1,nx
-                if ( Q_out(i,j,k,ieq,1) /= Q_out(i,j,k,ieq,1)) then
-                    print *,'------------------------------------------------'
-                    print *,'NaN. Bailing out...'
-                    write(*,'(A7,I9,A7,I9,A7,I9)')          '   i = ',   i, '   j = ',    j, '   k = ',k
-                    write(*,'(A7,ES9.2,A7,ES9.2,A7,ES9.2)') '  xc = ',xc(i),'  yc = ',yc(j), '  zc = ', zc(k)
-                    write(*,'(A14,I2,A7,I2)') '    >>> iam = ', iam, ' ieq = ', ieq
-                    print *,''
-                    call exit(-1)
-                endif
+              Q_out(i,j,k,1:nQ,1:nbasis) =                                        &
+                  Q_in(i,j,k,1:nQ,1:nbasis) - dt*( glflux_r(i,j,k,1:nQ,1:nbasis)  &
+                                                 - source_r(i,j,k,1:nQ,1:nbasis) )
             end do
             end do
             end do
+
+          ! Semi-implicit integration: backward-Euler for stress fields
+          case (1)
+            do ir=1,nbasis
+            do k = 1,nz
+            do j = 1,ny
+            do i = 1,nx
+                !--- Separate ----------
+                Q_out(i,j,k,rh:en,ir) =     Q_in(i,j,k,rh:en,ir)                &
+                                    - ( glflux_r(i,j,k,rh:en,ir)                &
+                                      - source_r(i,j,k,rh:en,ir) ) * dt
+                Q_out(i,j,k,pxx:pyz,ir) = ( Q_in(i,j,k,pxx:pyz,ir)              &
+                                   - dt*glflux_r(i,j,k,pxx:pyz,ir)              &
+                                   + dt*source_r(i,j,k,pxx:pyz,ir) ) * faci
+
+                !--- Combo -------------
+                ! Q_out(i,j,k,1:nQ,ir) =                                          &
+                !     Q_in(i,j,k,1:nQ,ir) - dt*( glflux_r(i,j,k,1:nQ,ir)          &
+                !                              - source_r(i,j,k,1:nQ,ir) )
+                ! Q_out(i,j,k,pxx:pyz,ir) = faci * Q_out(i,j,k,pxx:pyz,ir)
+            end do
+            end do
+            end do
+            end do
+
+        end select
+
+        ! Check for NaNs; bail out with info.
+        do ieq = 1,nQ
+        do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
+          if ( Q_out(i,j,k,ieq,1) /= Q_out(i,j,k,ieq,1) ) then
+            print *,'------------------------------------------------'
+            print *,'NaN. Bailing out...'
+            write(*,'(A7,I9,A7,I9,A7,I9)')          '   i = ',   i, '   j = ',    j, '   k = ',k
+            write(*,'(A7,ES9.2,A7,ES9.2,A7,ES9.2)') '  xc = ',xc(i),'  yc = ',yc(j), '  zc = ', zc(k)
+            write(*,'(A14,I2,A7,I2)') '    >>> iam = ', iam, ' ieq = ', ieq
+            print *,''
+            call exit(-1)
+          endif
+        end do
+        end do
+        end do
         end do
 
     end subroutine advance_time_level
