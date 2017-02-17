@@ -2,6 +2,8 @@ module flux
 
 use parameters
 use helpers
+use basis_funcs
+
 use boundary
 use random
 
@@ -13,17 +15,7 @@ real flux_z(nface,nx,ny,1:nz+1,1:nQ)
 ! Only used by flux_calc (flux_cal)
 real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
 
-integer, dimension(3) :: mxa ,mya ,mza
-
 contains
-
-    subroutine set_mxa_mya_mza(mxa, mya, mza)
-        implicit none
-        integer, dimension(3), intent(out) :: mxa, mya, mza
-        mxa = (/ mx, my, mz /)
-        mya = (/ my, mz, mx /)
-        mza = (/ mz, mx, my /)
-    end subroutine set_mxa_mya_mza
 
 !-------------------------------------------------------------------------------
     subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
@@ -855,7 +847,8 @@ contains
         ! Step 2: Calc inner integral for each cell
         !   --> integral_r  (used only in flux.f90)
         !---------------------------------------------------------
-        call innerintegral(Q_r)
+        ! call innerintegral(Q_r)
+        call innerintegral2(Q_r)
 
         !#########################################################
         ! Step 3: Calc (total) "Gauss-Legendre flux" for each cell

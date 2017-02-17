@@ -2,6 +2,8 @@ module prepare_step
 
 use parameters
 use helpers
+use basis_funcs
+
 use boundary
 
 ! write(*,'(A11,I1,A2,2ES9.1,A3,2ES9.1)') 'Qylow_ext (',iam,'):',Qylow_ext(1:2,1,1,pxx),' | ',Qylow_ext(nx-1:nx,1,1,pxx)

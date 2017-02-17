@@ -2,6 +2,7 @@ module sources
 
 use parameters
 use helpers
+use basis_funcs
 
 contains
 

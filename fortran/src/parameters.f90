@@ -93,7 +93,7 @@ module parameters
     real, parameter :: nu = epsi*vis
     real, parameter :: c2d3nu=c2d3*nu, c4d3nu=c4d3*nu
 
-    real, parameter :: T_base     = te*eV_per_K/te0  ! system temperature (for isothermal assumption)
+    real, parameter :: T_base     = 300.0**eV_per_K/te0 ! te*eV_per_K/te0  ! temp (isothermal)
     real, parameter :: eta_base   = vis    ! dynamic viscosity
     real, parameter :: zeta_base  = 0.  ! bulk viscosity---will need to adjust this!
     real, parameter :: kappa_base = 1.e-1
@@ -120,45 +120,7 @@ module parameters
     !===========================================================================
     ! Parameters relating to basis functions & VTK output
     !------------------------------------------------------------
-
-    ! TODO: only in set_weights_3D
-    real wgt1d(5)    ! wgt1d: quadrature weights for 1-D integration
-
-    ! TODO: only in initialize.f90 (setup), set_weights_3D, glflux
-    real wgt2d(30)   ! wgt2d: quadrature weights for 2-D integration
-
-    ! TODO: only in:
-    !   * initialize.f90 (setup)
-    !   * innerintegral, set_weights_3D
-    real wgt3d(100)  ! wgt3d: quadrature weights for 3-D integration
-
-    ! TODO: only in:
-    !   * initialize.f90 (setup)
-    !   * innerintegral, source_calc
-    real cbasis(nbastot)
-
-    ! TODO: only in:
-    !   * initialize.f90 (setup & set_cbasis_3D), innerintegral
-    integer ibitri  ! set by set_cbasis_3D using chosen value of iquad
-
-    ! TODO: only in
-    !   * initialize.f90 (setup)
-    !   * flux_cal, prepare_exchange, set_face_vals_3D
-    real, dimension(nface,nbastot) :: bfvals_zp, bfvals_zm
-    real, dimension(nface,nbastot) :: bfvals_yp, bfvals_ym
-    real, dimension(nface,nbastot) :: bfvals_xp, bfvals_xm
-
-    ! TODO: only in limiter, set_face_vals_3D
-    real bf_faces(nslim,nbastot)
-
-    ! TODO: only in:
-    !   * initialize.f90 (setup)
-    !   * set_face_vals_3D, set_internal_vals_3D
-    !   * source_calc, innerintegral
-    real bfvals_int(npg,nbastot)
-
-    ! TODO: only in set_internal_vals_3D, set_face_vals_3D
-    real xquad(20)
+    integer, dimension(3) :: mxa ,mya ,mza  ! TODO: currently only used in flux_hllc
 
     ! Basis function flags
     ! TODO: these variables are in:

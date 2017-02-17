@@ -9,8 +9,8 @@ module input
     integer, parameter :: iquad  = 2
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 50
-    integer, parameter :: ny = 25
+    integer, parameter :: nx = 40
+    integer, parameter :: ny = 20
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
@@ -35,7 +35,7 @@ module input
     !   * 1 for outflow (MPI does this for you)
     !   * 2 for wall (vanishing normal velocities)
     !   * 3 for noslip (vanishing normal/tangential velocities)
-    character(*), parameter :: xlobc = 'noslip' !'periodic'
+    character(*), parameter :: xlobc = 'wall' !'periodic'
     character(*), parameter :: xhibc = 'outflow' !'periodic'
     character(*), parameter :: ylobc = 'noslip'  !'periodic'
     character(*), parameter :: yhibc = 'noslip'  !'periodic'
@@ -43,7 +43,7 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 2.0e-2 !8.5e4
+    real, parameter :: tf = 5.0e-3 !8.5e4
 
     ! Console output frequency
     integer, parameter :: ntout = 100
@@ -61,10 +61,10 @@ module input
     integer, parameter :: ieos = 1
 
     ! Thermodynamic, constitutive, and transport parameters
-    real, parameter :: te     = 300.0    ! in Kelvin
+    ! real, parameter :: te     = 300.0    ! in Kelvin
     real, parameter :: mu     = 22.0     ! AMU per molecule
     real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
-    real, parameter :: vis    = 2.0e-3   ! dynamic viscosity
+    real, parameter :: vis    = 1.0e-2   ! dynamic viscosity
     real, parameter :: epsi   = 5.0      ! inverse relaxation coefficient
     real, parameter :: clt    = 2.0      ! numerical speed of sound
 

@@ -1,19 +1,15 @@
 module initialize
 
+use input
 use parameters
 use helpers
-
-use flux, only : mxa,mya,mza, set_mxa_mya_mza
+use basis_funcs!, only: wgt1d, wgt2d, wgt3d, ibitri, cbasis, set_bfvals_3D
 
 use initialcon
-use basis_funcs
 
 implicit none
 
 integer, parameter :: iseed = 123456789  ! 1317345*mpi_P + 5438432*mpi_Q + 38472613*mpi_R
-
-real, dimension(npg,nbastot) :: bval_int_wgt  ! used in source_calc
-real, dimension(nface,2,nbastot) :: wgtbf_xmp, wgtbf_ymp, wgtbf_zmp  ! used in glflux
 
 real :: cflm
 integer :: nout
@@ -25,7 +21,6 @@ contains
     !------------------------------------------------------------
     subroutine perform_setup
         implicit none
-        integer :: ir,ipg
 
         !-------------------------
         ! Create output directory
@@ -35,17 +30,28 @@ contains
         ! Initialize grid sizes and local lengths
         ibitri = set_ibitri(iquad, nbasis)
         cbasis = set_cbasis_3D(ibitri)
-
         cflm = set_cflm(iquad, ibitri)
 
         !-----------------------------------------
         ! Initialize various parameters
         call setup_MPI(mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
-        call init_spatial_params(dx,dy,dz, dxi,dyi,dzi, loc_lxd,loc_lxu,loc_lyd)
+        call init_spatial_params(dx,dy,dz, dxi,dyi,dzi, loc_lxd,loc_lyd,loc_lzd)
         call set_mxa_mya_mza(mxa, mya, mza)
         call init_temporal_params(t, dt, dtout)
         nout = 0
         !-----------------------------------------
+
+        ! cbasis(1)             = 1.   ! basis func coeff   {1}
+        ! cbasis(kx:kz)         = 3.   ! basis funcs coeffs {x,y,z}
+        ! cbasis(kyz:kxy)       = 9.   ! basis funcs coeffs {yz,zx,xy}
+        ! cbasis(kxyz)          = 27.  ! basis func coeff   {xyz}
+        ! cbasis(kxx:kzz)       = 5.   ! basis funcs coeffs {P2(x),   P2(y),  P2(z)}
+        ! cbasis(kyzz:kxyy)     = 15.  ! basis funcs coeffs {yP2(z), zP2(x), xP2(y)}
+        ! cbasis(kyyz:kxxy)     = 15.  ! basis funcs coeffs {P2(y)z, P2(z)y, P2(z)x}
+        ! cbasis(kyyzz:kxxyy)   = 25.  ! basis funcs coeffs {P2(y)P2(z), P2(z)P2(x), P2(x)P2(y)}
+        ! cbasis(kyzxx:kxyzz)   = 45.  ! basis funcs coeffs {yzP_2(x),   zxP_2(y),   xyP_2(z)}
+        ! cbasis(kxyyzz:kzxxyy) = 75.  ! basis funcs coeffs {xP2(y)P2(z),yP2(z)P2(x),zP2(x)P2(y)}
+        ! cbasis(kxxyyzz)       = 125. ! basis funcs coeffs {P2(x)P2(y)P2(z)}
 
         !-----------------------------------------
         ! Evaluate local cell values of basis functions on cell interior and faces
@@ -81,7 +87,7 @@ contains
 
 
     !===========================================================================
-    integer function set_cflm(iquad, ibitri)
+    real function set_cflm(iquad, ibitri)
         implicit none
         integer, intent(in) :: iquad, ibitri
 
@@ -179,7 +185,8 @@ contains
     function set_cbasis_3D(ibitri)
         implicit none
         integer, intent(in) :: ibitri
-        real, intent(out) :: cbasis(nbastot)
+        real, dimension(nbastot) :: set_cbasis_3D
+        real, dimension(nbastot) :: cbasis
 
         call set_basis_function_flags(ibitri)
         cbasis(1)             = 1.   ! basis func coeff   {1}
@@ -194,6 +201,7 @@ contains
         cbasis(kxyyzz:kzxxyy) = 75.  ! basis funcs coeffs {xP2(y)P2(z),yP2(z)P2(x),zP2(x)P2(y)}
         cbasis(kxxyyzz)       = 125. ! basis funcs coeffs {P2(x)P2(y)P2(z)}
         cbasis(kxxx:kzzz)     = 7.   ! basis funcs coeffs {P3(x), P3(y), P3(z)}
+        set_cbasis_3D(:) = cbasis(:)
         return
     end function set_cbasis_3D
     !---------------------------------------------------------------------------
@@ -204,7 +212,7 @@ contains
         implicit none
         integer, intent(inout) :: mpi_nx, mpi_ny
         integer, intent(out)   :: mpi_nz
-        integer, intent(out)   :: mpi_nz, mpi_P, mpi_Q, mpi_R
+        integer, intent(out)   :: mpi_P, mpi_Q, mpi_R
 
         integer, dimension(3) :: dims, coords, periods ! only used in init for MPI things
         integer reorder
@@ -255,11 +263,26 @@ contains
 
 
     !===========================================================================
+    ! Currently only needed for HLLC in flux.f90
+    !------------------------------------------------------------
+    subroutine set_mxa_mya_mza(mxa, mya, mza)
+        implicit none
+        integer, dimension(3), intent(out) :: mxa, mya, mza
+        mxa = (/ mx, my, mz /)
+        mya = (/ my, mz, mx /)
+        mza = (/ mz, mx, my /)
+    end subroutine set_mxa_mya_mza
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
     !   loc_l[]d: Set the starting x,y,z coords for domain of this MPI process
     !   NOTE: the center of the computational grid is the origin (0,0,0)
     !------------------------------------------------------------
-    subroutine init_spatial_params(dx,dy,dz, dxi,dyi,dzi, loc_lxd,loc_lxu,loc_lyd)
+    subroutine init_spatial_params(dx,dy,dz, dxi,dyi,dzi, loc_lxd,loc_lyd,loc_lzd)
         implicit none
+        real, intent(out) :: dx,dy,dz, dxi,dyi,dzi
+        real, intent(out) :: loc_lxd, loc_lyd, loc_lzd
 
         ! NOTE: USES the following global parameters
         !   * lx, ly, lz (set by user)
@@ -310,14 +333,17 @@ contains
     !===========================================================================
     subroutine init_bf_weights(bval_int_wgt, wgtbf_xmp, wgtbf_ymp, wgtbf_zmp)
         implicit none
-        real, intent(out) :: bval_int_wgt
-        real, intent(out) :: wgtbf_xmp, wgtbf_ymp, wgtbf_zmp
+        real, dimension(npg,nbastot), intent(out) :: bval_int_wgt
+        real, dimension(nface,2,nbastot), intent(out) :: wgtbf_xmp, wgtbf_ymp, wgtbf_zmp
 
-        real wgtbfvals_xp(nface,nbastot),wgtbfvals_xm(nface,nbastot)  ! these are temps used to assign other vars
-        real wgtbfvals_yp(nface,nbastot),wgtbfvals_ym(nface,nbastot)  ! these are temps used to assign other vars
-        real wgtbfvals_zp(nface,nbastot),wgtbfvals_zm(nface,nbastot)  ! these are temps used to assign other vars
+        real, dimension(nface,nbastot) :: wgtbfvals_xp, wgtbfvals_xm
+        real, dimension(nface,nbastot) :: wgtbfvals_yp, wgtbfvals_ym
+        real, dimension(nface,nbastot) :: wgtbfvals_zp, wgtbfvals_zm
+        integer ir,ipg
 
         ! NOTE: USES the following global parameters
+        !   * dxi, dyi, dzi (set by init_spatial_params)
+        !   * wgt2d, wgt3d (set by set_weights_3D)
         !   * nbasis, npg, nface (set implicitly by user)
         !   * cbasis (set by set_cbasis_3D)
 

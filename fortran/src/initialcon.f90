@@ -2,6 +2,8 @@ module initialcon
 
 use parameters
 use helpers
+use basis_funcs
+
 use boundary_custom
 use boundary
 
@@ -30,9 +32,9 @@ contains
         ! MMask(:,:,:) = .false.
 
         select case(id)
-            case(0)
-                call mpi_print(iam, 'Setting up 2D hydrodynamic jet (old version)...')
-                call fill_fluid2(Q_r)
+            ! case(0)
+            !     call mpi_print(iam, 'Setting up 2D hydrodynamic jet (old version)...')
+            !     call fill_fluid2(Q_r)
             case(1)
                 call mpi_print(iam, 'Setting up 2D hydrodynamic jet...')
                 call hydro_jet(Q_r)
@@ -231,9 +233,9 @@ contains
 
         select case(version)
             case(0)
-                ux_amb = 1.5e-2
+                ux_amb = 1.5e-3
             case(1)
-                ux_amb = 0.3e-2
+                ux_amb = 0.3e-3
         end select
 
         !-------------------------------------------------------

@@ -2,23 +2,55 @@ module basis_funcs
 
 use parameters
 
+! TODO: only in init, innerintegral, source_calc
+real, dimension(nbastot) :: cbasis
+
+! TODO: only in init + innerintegral
+integer ibitri  ! set by set_cbasis_3D using chosen value of iquad
+
+! TODO: only in set_weights_3D
+real wgt1d(5)    ! wgt1d: quadrature weights for 1-D integration
+
+! TODO: only in init, set_weights_3D, glflux
+real wgt2d(30)   ! wgt2d: quadrature weights for 2-D integration
+
+! TODO: only in init, set_weights_3D, innerintegral
+real wgt3d(100)  ! wgt3d: quadrature weights for 3-D integration
+
+! TODO: only in limiter, set_face_vals_3D
+real, dimension(nslim,nbastot) :: bf_faces
+
+! TODO: only in:
+!   * initialize.f90 (setup)
+!   * set_face_vals_3D, set_internal_vals_3D
+!   * source_calc, innerintegral
+real, dimension(npg,nbastot) :: bfvals_int
+
+! TODO: only in set_internal_vals_3D, set_face_vals_3D
+real xquad(20)
+
+real, dimension(npg,nbastot) :: bval_int_wgt  ! used in source_calc
+real, dimension(nface,2,nbastot) :: wgtbf_xmp, wgtbf_ymp, wgtbf_zmp  ! used in glflux
+
+! TODO: only in init, flux_cal, prepare_exchange, set_face_vals_3D
+real, dimension(nface,nbastot) :: bfvals_zp, bfvals_zm
+real, dimension(nface,nbastot) :: bfvals_yp, bfvals_ym
+real, dimension(nface,nbastot) :: bfvals_xp, bfvals_xm
+
 integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
 real :: xgrid(20) ! used in set_vtk_vals_3D
 
 contains
 
-
     subroutine set_bfvals_3D
         ! Defines local basis function values and weights for 1, 2, or 3-point Gaussian quadrature.
         ! Basis functions are evaluated in cell interior and on cell faces.
-
         implicit none
 
         call set_vtk_vals_3D()    ! Define basis function values on a 3D grid INTERNAL to the cell.
         call set_internal_vals_3D()     ! Define basis function values at quadrature points INTERNAL to cell.
         call set_face_vals_3D()   ! Define local basis function values at quadrature points on a cell face.
         call set_weights_3D()     ! Define weights for integral approximation using Gaussian quadrature.
-
     end subroutine set_bfvals_3D
 
 !----------------------------------------------------------
