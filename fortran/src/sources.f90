@@ -7,11 +7,13 @@ use basis_funcs
 contains
 
     subroutine source_calc(Q_ri)
-
         implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_ri
+
+        real, dimension(npg,nQ) :: source
+        real, dimension(nQ) :: Qin
+        real dn,dni,vx,vy,vz,en_floor
         integer i,j,k,ieq,ipg,ir
-        real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri
-        real source(npg,nQ),Qin(nQ),dn,dni,vx,vy,vz,en_floor
 
         source_r(:,:,:,:,:) = 0.0
         source(:,:) = 0.0
@@ -22,14 +24,17 @@ contains
         do i = 1,nx
 
             do ipg = 1,npg
-                do ieq = pxx,nQ
-                    Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,ieq,1:nbasis))
-                end do
 
-                source(ipg,rh:en) = 0.0
+                ! NOTE: Needs to be done for each var/eqn with nonzero sources,
+                ! i.e., when Qin() is used for something
+                ! do ieq = 1,nQ
+                !     Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,ieq,1:nbasis))
+                ! end do
+                source(ipg,rh:en) = 0
 
                 select case (ivis)
                     case (0)
+                        Qin(pxx:nQ) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,pxx:nQ,1:nbasis))
                         source(ipg,pxx) = -coll*Qin(pxx)
                         source(ipg,pyy) = -coll*Qin(pyy)
                         source(ipg,pzz) = -coll*Qin(pzz)
@@ -44,6 +49,7 @@ contains
                         source(ipg,pxz) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
                         source(ipg,pyz) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
                 end select
+
             end do
 
             do ir=1,nbasis
