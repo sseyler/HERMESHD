@@ -99,7 +99,7 @@ $(PROGNAME) : $(OBJS)
 	$(FORT) $(FORTFLAGS) $(LIBS) $(MODULES) $(OBJS) -o $(PROGNAME)
 #	strip $(PROGNAME)
 #	$(PROGNAME)
-	cd $(TESTDIR) && mpirun -n 20 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
+	cd $(TESTDIR) && mpirun -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
 
 clean:
 #   $(rm) $(PROGNAME) core *~

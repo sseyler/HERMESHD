@@ -74,18 +74,11 @@ contains
                 Qxlo_e_c(j,k,i4,my) = 0
                 Qxlo_e_c(j,k,i4,mz) = 0
                 Qxlo_e_c(j,k,i4,en) = pres/aindm1 + 0.5*den*vx**2
-
-                ! Qxlo_e_c(j,k,i4,pxx) = pres/vis ! den*vx**2 + pres/vis
-                ! Qxlo_e_c(j,k,i4,pyy) = pres/vis ! den*vy**2 + pres/vis
-                ! Qxlo_e_c(j,k,i4,pzz) = pres/vis ! den*vz**2 + pres/vis
-                ! Qxlo_e_c(j,k,i4,pxy) =  ! den*vx*vy
-                ! Qxlo_e_c(j,k,i4,pxz) =  ! den*vx*vz
-                ! Qxlo_e_c(j,k,i4,pyz) =  ! den*vy*vz
             end do
             end do
         end do
 
-        if (mpi_P == 1) print *,Qxlo_e_c(23,1,1,mx)/den
+        ! if (mpi_P == 1) print *,Qxlo_e_c(23,1,1,mx)/den
     end subroutine set_cyl_in_2d_pipe_boundaries
 
 
@@ -103,7 +96,6 @@ contains
             Qxlo_e(j,k,1:nface,mx) = Qxlo_e_c(j,k,1:nface,mx)
             Qxlo_e(j,k,1:nface,my:mz) = 0.0
             Qxlo_e(j,k,1:nface,en) = Qxlo_e_c(j,k,1:nface,en)
-            ! Qxlo_e(j,k,1:nface,pxx:pzz) = Qxlo_e_c(j,k,1:nface,pxx:pzz)
         end do
         end do
 
@@ -201,12 +193,12 @@ module boundary
     !===========================================================================
     ! Initialize arrays to store boundary conditions
     !------------------------------------------------------------
-    real Qxhigh_ext(ny,nz,nface,nQ), Qxhigh_int(ny,nz,nface,nQ)
-    real Qxlow_ext(ny,nz,nface,nQ),   Qxlow_int(ny,nz,nface,nQ)
-    real Qyhigh_ext(nx,nz,nface,nQ), Qyhigh_int(nx,nz,nface,nQ)
-    real Qylow_ext(nx,nz,nface,nQ),   Qylow_int(nx,nz,nface,nQ)
-    real Qzhigh_ext(nx,ny,nface,nQ), Qzhigh_int(nx,ny,nface,nQ)
-    real Qzlow_ext(nx,ny,nface,nQ),   Qzlow_int(nx,ny,nface,nQ)
+    real, dimension(ny,nz,nface,nQ) :: Qxlow_ext, Qxhigh_ext
+    real, dimension(ny,nz,nface,nQ) :: Qxlow_int, Qxhigh_int
+    real, dimension(nx,nz,nface,nQ) :: Qylow_ext, Qyhigh_ext
+    real, dimension(nx,nz,nface,nQ) :: Qylow_int, Qyhigh_int
+    real, dimension(nx,ny,nface,nQ) :: Qzlow_ext, Qzhigh_ext
+    real, dimension(nx,ny,nface,nQ) :: Qzlow_int, Qzhigh_int
     !---------------------------------------------------------------------------
 
 contains
@@ -241,11 +233,6 @@ contains
         ! NOTE: This is NOT a general implementation for applying custom BCs
         ! call apply_cyl_in_2d_pipe_boundaries(Qcyl_ext_c, Qcyl_ext)
         ! print *,QMask(:,:,1)
-        ! if ( mpi_P == 1 ) then
-        !     call apply_xlo_in_2d_pipe_boundaries(Qxlow_ext_c, Qxlow_ext)
-            ! print *,Qxlow_ext_c(:,:,1,rh:mx)
-            ! print *,''
-        ! end if
     end subroutine apply_boundaries
     !---------------------------------------------------------------------------
 
