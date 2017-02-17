@@ -21,9 +21,9 @@ contains
         integer i,j,k,id
         real te
 
-        te = T_floor
-        rh_fluid = 1.0
-        coll = rh_fluid*te/vis
+        ! te_fluid = T_floor
+        ! rh_fluid = 1.0
+        ! coll = rh_fluid*te/vis
 
         Q_r(:,:,:,:,:)  = 0.0
         Q_r(:,:,:,rh,1) = rh_floor
