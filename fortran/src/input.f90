@@ -61,16 +61,16 @@ module input
     integer, parameter :: ieos = 1
 
     ! Thermodynamic, constitutive, and transport parameters
-    ! real, parameter :: te     = 300.0    ! in Kelvin
+    real, parameter :: te     = 300.0    ! in Kelvin
     real, parameter :: mu     = 18.0     ! AMU per molecule
     real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
-    real, parameter :: vis    = 1.0e-3   ! dynamic viscosity
+    real, parameter :: vis    = 1.0e-2   ! dynamic viscosity
     real, parameter :: epsi   = 5.0      ! inverse relaxation coefficient
     real, parameter :: clt    = 2.0      ! numerical speed of sound
 
     ! Output location and naming
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_modbc_pipe_1"
+    character (*), parameter :: outname = "test_modbc_pipe_2"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     ! Checkpointing

@@ -913,7 +913,7 @@
     implicit none
     integer i,j,k,ieq,ir
     real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri, Q_rp
-    real Q_xtemp, Q_ytemp, Q_ztemp, dti, oth, fac
+    real Q_xtemp, Q_ytemp, Q_ztemp, dti, oth, faci
     real c1d3, c1d5
 
     oth = 1./3.

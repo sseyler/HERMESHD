@@ -121,23 +121,41 @@ contains
     !----------------------------------------------------
     subroutine advance_time_level(Q_in, Q_out)
         implicit none
-        integer i,j,k,ieq,ir
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_in
         real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
+        real faci
+        integer i,j,k,ieq,ir
+
+        ! faci = 1./(1. + dt*coll)  ! need to ensure a value is given to coll!
 
         do ir=1,nbasis
         do ieq = 1,nQ
             do k = 1,nz
             do j = 1,ny
             do i = 1,nx
-                Q_out(i,j,k,ieq,ir) =                                           &
-                    Q_in(i,j,k,ieq,ir) - dt*( glflux_r(i,j,k,ieq,ir)            &
-                                            - source_r(i,j,k,ieq,ir) )
+                Q_out(i,j,k,ieq,ir) = Q_in(i,j,k,ieq,ir)                        &
+                                    - dt*( glflux_r(i,j,k,ieq,ir)               &
+                                         - source_r(i,j,k,ieq,ir) )
             end do
             end do
             end do
         end do
         end do
+
+        ! Implicit solve of stress variables?
+        ! do k = 1,nz
+        ! do j = 1,ny
+        ! do i = 1,nx
+        !     do ir=1,nbasis
+        !     do ieq = pxx,nQ
+        !         Q_out(i,j,k,ieq,ir) = ( Q_in(i,j,k,ieq,ir)                      &
+        !                              - dt*glflux_r(i,j,k,ieq,ir)                &
+        !                              + dt*source_r(i,j,k,ieq,ir) ) * faci
+        !     end do
+        !     end do
+        ! end do
+        ! end do
+        ! end do
 
         do ieq = 1,nQ
             do k = 1,nz
