@@ -75,6 +75,15 @@ module input
     character (*), parameter :: outname = "test_modbc_pipe_2"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
+    logical, parameter :: o_density     = .true.
+    logical, parameter :: o_logdensity  = .false.
+    logical, parameter :: o_temperature = .true.
+    logical, parameter :: o_entropy     = .false.
+    logical, parameter :: o_pressure    = .true.
+    logical, parameter :: o_stress      = .false.
+    logical, parameter :: o_velocity    = .true.
+    logical, parameter :: o_vorticity   = .false.
+
     ! Checkpointing
     !   set iread to 1 or 2 (when using the odd/even scheme)
     integer, parameter :: iread  = 0

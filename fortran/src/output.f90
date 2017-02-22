@@ -116,134 +116,158 @@ contains
             end do
         end do
 
-        do i=1+nb,nnx-nb
-            do j=1+nb,nny-nb
-                do k=1+nb,nnz-nb
-                    l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
-                    var_xml_val_x(l)=log(qvtk(i,j,k,rh)*n0)/log(10.)
+        if (o_density) then
+            do i=1+nb,nnx-nb
+                do j=1+nb,nny-nb
+                    do k=1+nb,nnz-nb
+                        l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
+                        var_xml_val_x(l)=qvtk(i,j,k,rh)*n0
+                    enddo
                 enddo
             enddo
-        enddo
-        E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
-                           varname = 'Log Density',                    &
-                           var     = var_xml_val_x)
+            E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
+                               varname = 'Density',                    &
+                               var     = var_xml_val_x)
+        end if
 
-        do i=1+nb,nnx-nb
-            do j=1+nb,nny-nb
-                do k=1+nb,nnz-nb
-                    l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
-                    var_xml_val_x(l)=qvtk(i,j,k,rh)*n0
+        !------------------------------------------------------------
+        if (o_logdensity) then
+            do i=1+nb,nnx-nb
+                do j=1+nb,nny-nb
+                    do k=1+nb,nnz-nb
+                        l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
+                        var_xml_val_x(l)=log(qvtk(i,j,k,rh)*n0)/log(10.)
+                    enddo
                 enddo
             enddo
-        enddo
-        E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
-                           varname = 'Density',                    &
-                           var     = var_xml_val_x)
+            E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
+                               varname = 'Log Density',                    &
+                               var     = var_xml_val_x)
 
+        end if
 
-        do i=1+nb,nnx-nb
-            do j=1+nb,nny-nb
-                do k=1+nb,nnz-nb
-                    l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
-                    dni = 1./qvtk(i,j,k,rh)
-                    vx = qvtk(i,j,k,mx)*dni
-                    vy = qvtk(i,j,k,my)*dni
-                    vz = qvtk(i,j,k,mz)*dni
-                    P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
-                    var_xml_val_x(l)=P*te0*dni
+        !------------------------------------------------------------
+        if (o_temperature) then
+            do i=1+nb,nnx-nb
+                do j=1+nb,nny-nb
+                    do k=1+nb,nnz-nb
+                        l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
+                        dni = 1./qvtk(i,j,k,rh)
+                        vx = qvtk(i,j,k,mx)*dni
+                        vy = qvtk(i,j,k,my)*dni
+                        vz = qvtk(i,j,k,mz)*dni
+                        P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
+                        var_xml_val_x(l)=P*te0*dni
+                    enddo
                 enddo
             enddo
-        enddo
-        E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
-                           varname = 'Temperature',                    &
-                           var     = var_xml_val_x)
+            E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
+                               varname = 'Temperature',                    &
+                               var     = var_xml_val_x)
+        end if
 
-       do i=1+nb,nnx-nb
-           do j=1+nb,nny-nb
-               do k=1+nb,nnz-nb
-                   l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
-                   dni = 1./qvtk(i,j,k,rh)
-                   vx = qvtk(i,j,k,mx)*dni
-                   vy = qvtk(i,j,k,my)*dni
-                   vz = qvtk(i,j,k,mz)*dni
-                   U = qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2)
-                   P = (aindex - 1.)*U
-                   var_xml_val_x(l)=P*(dni**aindm1)  ! Polytropic gas
-                   ! var_xml_val_x(l)=(1./aindm1)*log(P/dni**aindm1)  ! I Do Like CFD
-               enddo
-           enddo
-       enddo
-       E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
-                          varname = 'Entropy density',                    &
-                          var     = var_xml_val_x)
-
-        do i=1+nb,nnx-nb
-            do j=1+nb,nny-nb
-                do k=1+nb,nnz-nb
-                    l = (i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
-                    dni = 1./qvtk(i,j,k,rh)
-                    vx = qvtk(i,j,k,mx)*dni
-                    vy = qvtk(i,j,k,my)*dni
-                    vz = qvtk(i,j,k,mz)*dni
-                    ! from "viscosity" version
-                    P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
-                    var_xml_val_x(l)=P
-                    ! if(ieos .eq. 1) P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
-                    ! if(ieos .eq. 2)then
-                    !     P = P_1*(qvtk(i,j,k,rh)**7.2 - 1.) + P_base
-                    !     if(P < P_floor) P= P_floor
-                    ! end if
-                    ! var_xml_val_x(l) = P*P0
+        !------------------------------------------------------------
+        if (o_entropy) then
+            do i=1+nb,nnx-nb
+                do j=1+nb,nny-nb
+                    do k=1+nb,nnz-nb
+                        l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
+                        dni = 1./qvtk(i,j,k,rh)
+                        vx = qvtk(i,j,k,mx)*dni
+                        vy = qvtk(i,j,k,my)*dni
+                        vz = qvtk(i,j,k,mz)*dni
+                        U = qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2)
+                        P = (aindex - 1.)*U
+                        var_xml_val_x(l)=P*(dni**aindm1)  ! Polytropic gas
+                        ! var_xml_val_x(l)=(1./aindm1)*log(P/dni**aindm1)  ! I Do Like CFD
+                    enddo
                 enddo
             enddo
-        enddo
-        E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
-                           varname = 'Pressure',                    &
-                           var     = var_xml_val_x)
+            E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
+                               varname = 'Entropy density',                    &
+                               var     = var_xml_val_x)
+        end if
 
-        do i=1+nb,nnx-nb
-            do j=1+nb,nny-nb
-                do k=1+nb,nnz-nb
-                    l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
-                    var_xml_val_x(l)=qvtk(i,j,k,pxx)
-                    var_xml_val_y(l)=qvtk(i,j,k,pyy)
-                    var_xml_val_z(l)=qvtk(i,j,k,pzz)
+        !------------------------------------------------------------
+        if (o_pressure) then
+            do i=1+nb,nnx-nb
+                do j=1+nb,nny-nb
+                    do k=1+nb,nnz-nb
+                        l = (i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
+                        dni = 1./qvtk(i,j,k,rh)
+                        vx = qvtk(i,j,k,mx)*dni
+                        vy = qvtk(i,j,k,my)*dni
+                        vz = qvtk(i,j,k,mz)*dni
+                        ! from "viscosity" version
+                        P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
+                        var_xml_val_x(l)=P
+                        ! if(ieos .eq. 1) P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
+                        ! if(ieos .eq. 2)then
+                        !     P = P_1*(qvtk(i,j,k,rh)**7.2 - 1.) + P_base
+                        !     if(P < P_floor) P= P_floor
+                        ! end if
+                        ! var_xml_val_x(l) = P*P0
+                    enddo
                 enddo
             enddo
-        enddo
-        E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz,                               &
-                           varname = 'Isotropic stress',                        &
-                           varX    = var_xml_val_x,                             &
-                           varY    = var_xml_val_y,                             &
-                           varZ    = var_xml_val_z )
+            E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
+                               varname = 'Pressure',                    &
+                               var     = var_xml_val_x)
 
-        do i=1+nb,nnx-nb
-            do j=1+nb,nny-nb
-                do k=1+nb,nnz-nb
-                    l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
-                    var_xml_val_x(l)=v0*qvtk(i,j,k,mx)/qvtk(i,j,k,rh)
-                    var_xml_val_y(l)=v0*qvtk(i,j,k,my)/qvtk(i,j,k,rh)
-                    var_xml_val_z(l)=v0*qvtk(i,j,k,mz)/qvtk(i,j,k,rh)
+        end if
+
+        !------------------------------------------------------------
+        if (o_stress) then
+            do i=1+nb,nnx-nb
+                do j=1+nb,nny-nb
+                    do k=1+nb,nnz-nb
+                        l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
+                        var_xml_val_x(l)=qvtk(i,j,k,pxx)
+                        var_xml_val_y(l)=qvtk(i,j,k,pyy)
+                        var_xml_val_z(l)=qvtk(i,j,k,pzz)
+                    enddo
                 enddo
             enddo
-        enddo
-        E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz,                               &
-                           varname = 'Velocity',                                &
-                           varX    = var_xml_val_x,                             &
-                           varY    = var_xml_val_y,                             &
-                           varZ    = var_xml_val_z )
+            E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz,                               &
+                               varname = 'Isotropic stress',                        &
+                               varX    = var_xml_val_x,                             &
+                               varY    = var_xml_val_y,                             &
+                               varZ    = var_xml_val_z )
+        end if
 
-        do i=1+nb,nnx-nb
-            do j=1+nb,nny-nb
-                do k=1+nb,nnz-nb
-                    l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
-                        var_xml_val_x(l)= -2.*(qvtk_dxvy(i,j,k)-qvtk_dyvx(i,j,k))*dxi/t0
+        !------------------------------------------------------------
+        if (o_velocity) then
+            do i=1+nb,nnx-nb
+                do j=1+nb,nny-nb
+                    do k=1+nb,nnz-nb
+                        l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
+                        var_xml_val_x(l)=v0*qvtk(i,j,k,mx)/qvtk(i,j,k,rh)
+                        var_xml_val_y(l)=v0*qvtk(i,j,k,my)/qvtk(i,j,k,rh)
+                        var_xml_val_z(l)=v0*qvtk(i,j,k,mz)/qvtk(i,j,k,rh)
+                    enddo
                 enddo
             enddo
-        enddo
-        E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
-                           varname = 'Vorticity',                    &
-                           var     = var_xml_val_x)
+            E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz,                               &
+                               varname = 'Velocity',                                &
+                               varX    = var_xml_val_x,                             &
+                               varY    = var_xml_val_y,                             &
+                               varZ    = var_xml_val_z )
+        end if
+
+        !------------------------------------------------------------
+        if (o_vorticity) then
+            do i=1+nb,nnx-nb
+                do j=1+nb,nny-nb
+                    do k=1+nb,nnz-nb
+                        l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
+                            var_xml_val_x(l)= -2.*(qvtk_dxvy(i,j,k)-qvtk_dyvx(i,j,k))*dxi/t0
+                    enddo
+                enddo
+            enddo
+            E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
+                               varname = 'Vorticity',                    &
+                               var     = var_xml_val_x)
+        end if
 
         E_IO = VTK_DAT_XML(var_location     = 'cell', &
                            var_block_action = 'Close')
