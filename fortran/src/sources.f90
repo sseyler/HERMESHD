@@ -34,7 +34,7 @@ contains
                 source(ipg,rh:en) = 0
 
                 select case (ivis)
-                    case (0)
+                case (0)  ! NOTE: THIS DOESN'T MAKE ANY SENSE IF THERE'S NO VISCOSITY
                         do ieq = pxx,pyz
                             Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,ieq,1:nbasis))
                         end do

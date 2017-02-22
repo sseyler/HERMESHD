@@ -41,6 +41,12 @@ real, dimension(nface,nbastot) :: bfvals_xp, bfvals_xm
 integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
 real :: xgrid(20) ! used in set_vtk_vals_3D
 
+! These are used in test_basis_3D
+real, dimension(nbastot,nbastot) :: cell_int,xp_int,xm_int,yp_int,ym_int,zp_int,zm_int
+real, dimension(nbastot,nbastot) :: cell_int0,xp_int0,xm_int0,yp_int0,ym_int0,zp_int0,zm_int0
+real, dimension(nbastot) :: cbas_xp,cbas_xm,cbas_yp,cbas_ym,cbas_zp,cbas_zm
+integer, dimension(nbastot) :: ibas_x, ibas_y, ibas_z
+
 contains
 
     subroutine set_bfvals_3D
@@ -53,10 +59,10 @@ contains
         call set_face_vals_3D()   ! Define local basis function values at quadrature points on a cell face.
         call set_weights_3D()     ! Define weights for integral approximation using Gaussian quadrature.
 
-        if (iam == print_mpi) then
-    	   print *,'testing basis...'
+        if (test_basis .and. iam == print_mpi) then
+    	   print *,'Testing basis...'
     	   call test_basis_3D()
-    	   print *,'done testing basis...'
+    	   print *,'Done testing basis...'
     	end if
 
     end subroutine set_bfvals_3D

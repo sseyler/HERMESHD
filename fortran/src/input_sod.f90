@@ -1,10 +1,10 @@
-!****** INPUT.F90 ************************************************************************
+!****** SOD_INPUT.F90 ************************************************************************
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 2.0e0 !1.0e6 !4.1e2
-    real, parameter :: ly = 5.0e-1 !1.0e6 !4.1e2
-    real, parameter :: lz = ly/120. !1.0e6/120. !4.1e2/120.
+    real, parameter :: lx = 1.0e6 !1.0e6 !4.1e2
+    real, parameter :: ly = lx     !1.0e6 !4.1e2
+    real, parameter :: lz = lx/120. !1.0e6/120. !4.1e2/120.
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad = 2
@@ -12,8 +12,8 @@ module input
     integer, parameter :: nbastot = 27 !30  ! TODO: only used in setup + innerintegral()
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 6  ! 55 (mpi_nx = 8)
-    integer, parameter :: ny = 24   ! 41 (mpi_ny = 2)
+    integer, parameter :: nx = 50
+    integer, parameter :: ny = 1
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
@@ -31,21 +31,21 @@ module input
 
     ! Initial conditions
     ! character(*), parameter :: icname = ''
-    integer, parameter :: icid = 5
+    integer, parameter :: icid = 3
 
     ! Boundary conditions
-    character(*), parameter :: xlobc = 'noslip' !'periodic'
-    character(*), parameter :: xhibc = 'outflow' !'periodic'
-    character(*), parameter :: ylobc = 'noslip'  !'periodic'
-    character(*), parameter :: yhibc = 'noslip'  !'periodic'
+    character(*), parameter :: xlobc = 'wall'
+    character(*), parameter :: xhibc = 'wall'
+    character(*), parameter :: ylobc = 'periodic'
+    character(*), parameter :: yhibc = 'periodic'
     character(*), parameter :: zlobc = 'periodic'
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 1.0e0 !8.5e4
+    real, parameter :: tf = 8.5e4 !8.5e4
 
     ! Console output frequency
-    integer, parameter :: ntout = 200
+    integer, parameter :: ntout = 100
 
     ! Riemann solver
     ! If all of them = 0, then LLF is used for fluxes.
@@ -66,13 +66,13 @@ module input
     real, parameter :: clt    = 2.0      ! numerical speed of sound
 
     ! Viscosity control
-    integer, parameter :: ivis = 1       ! 0 for explicit, 1 for semi-implicit
-    real, parameter    :: vis  = 1.0e-2  ! dynamic viscosity
+    integer, parameter :: ivis = 0       ! 0 for explicit, 1 for semi-implicit
+    real, parameter    :: vis  = 1.0e-3  ! dynamic viscosity
     real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
 
     ! Output location and naming
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_modbc_pipe_2"
+    character (*), parameter :: outname = "test_modbc_sod_1"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     ! Checkpointing

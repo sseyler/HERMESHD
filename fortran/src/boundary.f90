@@ -534,7 +534,7 @@ module boundary_custom
     !===========================================================================
     ! Masking parameters (for advanced or internal initial/boundary conditions)
     !------------------------------------------------------------
-    real, dimension(ny,nz,nface,nQ) :: Qxlo_ext_c
+    real, dimension(ny,nz,nface,nQ) :: Qxlo_ext_c, Qxlo_ext_scale
     real, dimension(nx,ny,nface,nQ) :: Qcyl_ext_c, Qcyl_ext
     logical QMask(nx,ny,nz), MMask(nx,ny,nz)
     !---------------------------------------------------------------------------
@@ -716,9 +716,16 @@ contains
     ! Apply boundary conditions (specified by user at runtime)
     !------------------------------------------------------------
     subroutine apply_boundaries
+        real ux_scale
         if ( mpi_P == 1 ) then
-            ! call apply_xlobc(Qxlow_int, Qxlow_ext)
-            call x_bc_inflow(Qxlo_int, Qxlo_ext_c, Qxlo_ext)
+            call apply_xlobc(Qxlo_int, Qxlo_ext)
+            ! if ( t < 0.1*tf ) then
+            !     ux_scale = 10.0*t/tf + 0.001
+            ! else
+            !     ux_scale = 1.0 + 0.001
+            ! end if
+            ! Qxlo_ext_scale(:,:,:,:) = ux_scale*Qxlo_ext_c(:,:,:,:)
+            ! call x_bc_inflow(Qxlo_int, Qxlo_ext_scale, Qxlo_ext)
         end if
         if ( mpi_P == mpi_nx ) then
             call apply_xhibc(Qxhi_int, Qxhi_ext)
@@ -738,22 +745,9 @@ contains
             call apply_zhibc(Qzhi_int, Qzhi_ext)
         end if
 
-        ! if (mpi_P == 1) print *,'Density:'
-        ! if (mpi_P == 1) print *,Qxlo_ext(:,1,1,rh)
-        ! if (mpi_P == 1) print *,''
         ! if (mpi_P == 1) print *,'X velocity:'
         ! if (mpi_P == 1) print *,Qxlo_ext(:,1,1,mx)/Qxlo_ext(:,1,1,rh)
         ! if (mpi_P == 1) print *,''
-        ! if (mpi_P == 1) print *,'PXX:'
-        ! if (mpi_P == 1) print *,Qxlo_ext(:,1,1,pxx)
-        ! if (mpi_P == 1) print *,''
-        ! if (mpi_P == 1) print *,'Energy:'
-        ! if (mpi_P == 1) print *,Qxlo_ext(:,1,1,en)
-        ! if (mpi_P == 1) print *,''
-        ! NOTE: Inefficient b/c overwrites 'default' BC application above
-        ! NOTE: This is NOT a general implementation for applying custom BCs
-        ! call apply_cyl_in_2d_pipe_boundaries(Qcyl_ext_c, Qcyl_ext)
-        ! print *,QMask(:,:,1)
     end subroutine apply_boundaries
     !---------------------------------------------------------------------------
 

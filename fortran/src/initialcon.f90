@@ -29,6 +29,11 @@ contains
         ! coll = rh_fluid*te_fluid/vis
         ! colvis = coll*vis  ! or, dn*te
 
+        if (ivis == 0) then
+            coll = 0
+            colvis = 0
+        end if
+
         Q_r(:,:,:,:,:)  = 0.0
         Q_r(:,:,:,rh,1) = rh_floor
         Q_r(:,:,:,en,1) = T_floor*rh_floor/aindm1
@@ -233,7 +238,7 @@ contains
         te = T_floor
         pr = dn*te  ! 1.0*P_base  ! can be adjusted to get stable results
 
-        coll   = dn*te/vis  ! global
+        coll   = dn*te/vis  ! global (CES' nu = rh_fluid*T_floor)
         colvis = coll*vis   ! or, dn*te  (also global)
 
         vx = 0.0
@@ -241,7 +246,7 @@ contains
         vz = 0.0
 
         yp0 = lyd  ! set zero-value of y-coordinate to domain bottom
-        ux_amb = 1.0e-1
+        ux_amb = 3.0e-1
 
         !-------------------------------------------------------
         ! Set initial conditions

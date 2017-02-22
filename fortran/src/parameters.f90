@@ -69,7 +69,7 @@ module parameters
     !------------------------------------------------------------
     ! Useful constants
     real, parameter :: pi = 4.0*atan(1.0)
-    real, parameter :: sqrt2 = 2.0**0.5, sqrt2i = 1.0/sqrt2
+    real, parameter :: sqrt2 = 2**0.5, sqrt2i = 1.0/sqrt2
     real, parameter :: c1d5 = 1./5.
     real, parameter :: c1d3 = 1./3., c2d3 = 2./3., c4d3 = 4./3.
     real, parameter :: eV_per_K = 8.61728e-5
@@ -79,9 +79,9 @@ module parameters
     real, parameter :: cp = aindex/aindm1   ! specific heat at constant pressure
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
-    real, parameter :: L0 = 1.0e0  ! 1.0e-9                 ! length
-    real, parameter :: t0 = 1.0e0  ! 1.0e-12                ! time
-    real, parameter :: n0 = 1.0e18 ! 3.32e28                ! number density
+    real, parameter :: L0 = 1.0e-9  ! 1.0e-9                 ! length
+    real, parameter :: t0 = 1.0e-12  ! 1.0e-12                ! time
+    real, parameter :: n0 = 3.32e28 ! 2.5e25 for ideal gas   ! number density
 
     ! Derived units
     real, parameter :: v0  = L0/t0                 ! velocity
@@ -91,7 +91,7 @@ module parameters
     ! rh_min is a min density to be used for ideal gas EOS, rh_min is min density
     ! below which the pressure becomes negative for the MT water EOS.
     ! The DG-based subroutine "limiter" keeps density above rh_mult*rh_min.
-    real, parameter :: rh_floor = 1.0e-5     ! 1.0e-1 was old value
+    real, parameter :: rh_floor = 5.0e-6     ! 1.0e-1 was old value
     real, parameter :: T_floor  = (te*eV_per_K)/te0  ! 0.02585 eV ~ 300 K
     real, parameter :: P_floor  = T_floor*rh_floor
 
@@ -128,19 +128,6 @@ module parameters
     real, parameter :: eta_sd   = (2.*eta_base*T_base)**0.5  ! stdev of flucs for shear visc terms
     real, parameter :: zeta_sd  = (zeta_base*T_base/3.)**0.5  ! stdev of flucs for bulk visc term
     real, parameter :: kappa_sd = (2.*kappa_base*T_base**2)**0.5
-    !===========================================================================
-
-
-    !===========================================================================
-    ! MKL VSL parameters
-    !------------------------------------------------------------
-    ! real vsl_errcode
-    ! TYPE (VSL_STREAM_STATE) :: vsl_stream
-    !
-    ! integer, parameter :: vsl_brng   = VSL_BRNG_MCG31
-    ! integer, parameter :: vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
-    ! real, parameter :: vsl_mean  = 0.0
-    ! real, parameter :: vsl_sigma = 1.0
     !===========================================================================
 
 
