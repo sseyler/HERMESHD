@@ -175,9 +175,9 @@ contains
         integer i,j,k,version
         real rh_hi,rh_lo,pr_hi,pr_lo,xctr,yctr,xp,yp,dn,vx,vy,vz,pr
 
-        rh_hi = 1.0e-4  ! NOTE: density floor needs to be 5.0e-6
+        rh_hi = 1.0 !e-4  ! NOTE: density floor needs to be 5.0e-6 (e-4 for original)
         pr_hi = 1.0*P_base  ! atmospheric pressure
-        rh_lo = 0.125e-4
+        rh_lo = 0.125 !e-4
         pr_lo = 0.1*P_base
         vx = 0.0
         vy = 0.0

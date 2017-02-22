@@ -70,18 +70,18 @@ module input
     real, parameter    :: vis  = 1.0e-2  ! dynamic viscosity
     real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
 
-    ! Output location and naming
+    ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
     character (*), parameter :: outname = "test_modbc_pipe_2"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     logical, parameter :: o_density     = .true.
     logical, parameter :: o_logdensity  = .false.
+    logical, parameter :: o_velocity    = .true.
     logical, parameter :: o_temperature = .true.
     logical, parameter :: o_entropy     = .false.
     logical, parameter :: o_pressure    = .true.
     logical, parameter :: o_stress      = .false.
-    logical, parameter :: o_velocity    = .true.
     logical, parameter :: o_vorticity   = .false.
 
     ! Checkpointing

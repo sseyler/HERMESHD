@@ -79,9 +79,9 @@ module parameters
     real, parameter :: cp = aindex/aindm1   ! specific heat at constant pressure
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
-    real, parameter :: L0 = 1.0e-9  ! 1.0e-9                 ! length
-    real, parameter :: t0 = 1.0e-12  ! 1.0e-12                ! time
-    real, parameter :: n0 = 3.32e28 ! 2.5e25 for ideal gas   ! number density
+    real, parameter :: L0 = 1.0e0  ! 1.0e-9                 ! length
+    real, parameter :: t0 = 1.0e0  ! 1.0e-12                ! time
+    real, parameter :: n0 = 3.32e25 ! 2.5e25 for ideal gas   ! number density
 
     ! Derived units
     real, parameter :: v0  = L0/t0                 ! velocity

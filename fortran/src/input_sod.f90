@@ -2,8 +2,8 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 1.0e6 !1.0e6 !4.1e2
-    real, parameter :: ly = lx     !1.0e6 !4.1e2
+    real, parameter :: lx = 1.0e1 !1.0e6 !4.1e2
+    real, parameter :: ly = lx/12. !1.0e6 !4.1e2
     real, parameter :: lz = lx/120. !1.0e6/120. !4.1e2/120.
 
     ! Number of Gaussian quadrature points per spatial dimension
@@ -42,16 +42,12 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 8.5e4 !8.5e4
+    real, parameter :: tf = 8.5e-3 !8.5e4
 
     ! Console output frequency
     integer, parameter :: ntout = 100
 
     ! Riemann solver
-    ! If all of them = 0, then LLF is used for fluxes.
-    !   LLF is very diffusive for the hydro problem. Roe and HLLC are much less
-    !   diffusive than LLF and give very similar results with similar cpu overhead
-    !   Only HLLC is setup to handle water EOS (ieos = 2)
     logical, parameter :: ihllc = .true.
 
     ! Equation of state:
@@ -70,10 +66,19 @@ module input
     real, parameter    :: vis  = 1.0e-3  ! dynamic viscosity
     real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
 
-    ! Output location and naming
+    ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
     character (*), parameter :: outname = "test_modbc_sod_1"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
+
+    logical, parameter :: o_density     = .true.
+    logical, parameter :: o_logdensity  = .false.
+    logical, parameter :: o_velocity    = .true.
+    logical, parameter :: o_temperature = .true.
+    logical, parameter :: o_entropy     = .false.
+    logical, parameter :: o_pressure    = .true.
+    logical, parameter :: o_stress      = .false.
+    logical, parameter :: o_vorticity   = .false.
 
     ! Checkpointing
     !   set iread to 1 or 2 (when using the odd/even scheme)

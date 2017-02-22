@@ -141,9 +141,28 @@ contains
                 enddo
             enddo
             E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
-                               varname = 'Log Density',                    &
+                               varname = 'Log density',                    &
                                var     = var_xml_val_x)
 
+        end if
+
+        !------------------------------------------------------------
+        if (o_velocity) then
+            do i=1+nb,nnx-nb
+                do j=1+nb,nny-nb
+                    do k=1+nb,nnz-nb
+                        l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
+                        var_xml_val_x(l)=v0*qvtk(i,j,k,mx)/qvtk(i,j,k,rh)
+                        var_xml_val_y(l)=v0*qvtk(i,j,k,my)/qvtk(i,j,k,rh)
+                        var_xml_val_z(l)=v0*qvtk(i,j,k,mz)/qvtk(i,j,k,rh)
+                    enddo
+                enddo
+            enddo
+            E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz,                               &
+                               varname = 'Velocity',                                &
+                               varX    = var_xml_val_x,                             &
+                               varY    = var_xml_val_y,                             &
+                               varZ    = var_xml_val_z )
         end if
 
         !------------------------------------------------------------
@@ -200,11 +219,11 @@ contains
                         vz = qvtk(i,j,k,mz)*dni
                         ! from "viscosity" version
                         P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
-                        var_xml_val_x(l)=P
-                        ! if(ieos .eq. 1) P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
-                        ! if(ieos .eq. 2)then
+                        var_xml_val_x(l) = P
+                        ! if (ieos .eq. 1) P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
+                        ! if (ieos .eq. 2) then
                         !     P = P_1*(qvtk(i,j,k,rh)**7.2 - 1.) + P_base
-                        !     if(P < P_floor) P= P_floor
+                        !     if(P < P_floor) P = P_floor
                         ! end if
                         ! var_xml_val_x(l) = P*P0
                     enddo
@@ -236,25 +255,6 @@ contains
         end if
 
         !------------------------------------------------------------
-        if (o_velocity) then
-            do i=1+nb,nnx-nb
-                do j=1+nb,nny-nb
-                    do k=1+nb,nnz-nb
-                        l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
-                        var_xml_val_x(l)=v0*qvtk(i,j,k,mx)/qvtk(i,j,k,rh)
-                        var_xml_val_y(l)=v0*qvtk(i,j,k,my)/qvtk(i,j,k,rh)
-                        var_xml_val_z(l)=v0*qvtk(i,j,k,mz)/qvtk(i,j,k,rh)
-                    enddo
-                enddo
-            enddo
-            E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz,                               &
-                               varname = 'Velocity',                                &
-                               varX    = var_xml_val_x,                             &
-                               varY    = var_xml_val_y,                             &
-                               varZ    = var_xml_val_z )
-        end if
-
-        !------------------------------------------------------------
         if (o_vorticity) then
             do i=1+nb,nnx-nb
                 do j=1+nb,nny-nb
@@ -268,6 +268,7 @@ contains
                                varname = 'Vorticity',                    &
                                var     = var_xml_val_x)
         end if
+
 
         E_IO = VTK_DAT_XML(var_location     = 'cell', &
                            var_block_action = 'Close')
