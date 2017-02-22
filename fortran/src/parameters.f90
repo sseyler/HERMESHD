@@ -8,24 +8,12 @@ module parameters
 
     include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
 
-    integer, parameter :: rh  = 1                     ! density
-    integer, parameter :: mx  = 2, my  = 3,  mz  = 4  ! momenta
-    integer, parameter :: en  = 5                     ! scalar energy
+    integer, parameter :: rh = 1                      ! density
+    integer, parameter :: mx = 2, my = 3, mz = 4      ! vector momentum
+    integer, parameter :: en = 5                      ! scalar energy
     integer, parameter :: pxx = 6, pyy = 7,  pzz = 8  ! isotropic stress
     integer, parameter :: pxy = 9, pxz = 10, pyz = 11 ! deviatoric stress
     integer, parameter :: nQ  = 11                    ! number of field variables
-
-    !===========================================================================
-    ! Spatial resolution -- # grid cells and DG basis order
-    !------------------------------------------------------------
-    ! The jump in accuracy b/w the linear basis (nbasis=4) and quadratic basis
-    ! (nbasis=10) is much greater than jump b/w quadratic and cubic (nbasis=20).
-    !   nbasis = 4:  {1,x,y,z}
-    !   nbasis = 10: nbasis4  + {P_2(x),P_2(y),P_2(z), yz, zx, xy}
-    !   nbasis = 20: nbasis10 + {xyz,xP2(y),yP2(x),xP2(z),
-    !                                zP2(x),yP2(z),zP2(y),P3(x),P3(y),P3(z)}
-    integer, parameter :: nbasis  = 8
-    integer, parameter :: nbastot = 27  ! TODO: only used in setup + innerintegral()
 
     integer, parameter :: ngu = 0  ! TODO: only used in output_vtk()
 
@@ -35,11 +23,11 @@ module parameters
     ! Thus there are only two cases of iquad for a given nbasis. Both give similar
     ! results although iquad = ipoly + 1 is formally more accurate.
     integer, parameter :: nedge = iquad
-    integer, parameter :: nface = iquad*iquad    ! number of quadrature points per cell face
-    integer, parameter :: npg   = nface*iquad    ! number of internal points per cell
-    integer, parameter :: nfe   = 2*nface        ! number of cell face quad points per direction
-    integer, parameter :: npge  = 6*nface        ! total number of cell face quad points
-    integer, parameter :: nslim = npg + 6*nface  ! total number of quad points per cell
+    integer, parameter :: nface = iquad*iquad    ! # of quadrature points per cell face
+    integer, parameter :: npg   = nface*iquad    ! # of internal points per cell
+    integer, parameter :: nfe   = 2*nface        ! # of cell face quad points per direction
+    integer, parameter :: npge  = 6*nface        ! total # of cell face quad points
+    integer, parameter :: nslim = npg + 6*nface  ! total # of quad points per cell
     !---------------------------------------------------------------------------
 
 
@@ -99,13 +87,13 @@ module parameters
     real, parameter :: nu = epsi*vis
     real, parameter :: c2d3nu=c2d3*nu, c4d3nu=c4d3*nu
 
-    real, parameter :: T_base     = 300.0**eV_per_K/te0 ! te*eV_per_K/te0  ! temp (isothermal)
+    real, parameter :: T_base     = 300.0*eV_per_K/te0 ! te*eV_per_K/te0  ! temp (isothermal)
     real, parameter :: eta_base   = vis    ! dynamic viscosity
     real, parameter :: zeta_base  = 0.  ! bulk viscosity---will need to adjust this!
     real, parameter :: kappa_base = 1.e-1
 
-    real, parameter :: eta_sd   = (2.*eta_base*T_base)**0.5  ! stdev of fluctuations for shear viscosity terms
-    real, parameter :: zeta_sd  = (zeta_base*T_base/3.)**0.5  ! stdev of fluctuations for bulk viscosity term
+    real, parameter :: eta_sd   = (2.*eta_base*T_base)**0.5  ! stdev of flucs for shear visc terms
+    real, parameter :: zeta_sd  = (zeta_base*T_base/3.)**0.5  ! stdev of flucs for bulk visc term
     real, parameter :: kappa_sd = (2.*kappa_base*T_base**2)**0.5
     !===========================================================================
 
@@ -113,21 +101,19 @@ module parameters
     !===========================================================================
     ! MKL VSL parameters
     !------------------------------------------------------------
-    real vsl_errcode
-    TYPE (VSL_STREAM_STATE) :: vsl_stream
-
-    integer, parameter :: vsl_brng   = VSL_BRNG_MCG31
-    integer, parameter :: vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
-    real, parameter :: vsl_mean  = 0.0
-    real, parameter :: vsl_sigma = 1.0
+    ! real vsl_errcode
+    ! TYPE (VSL_STREAM_STATE) :: vsl_stream
+    !
+    ! integer, parameter :: vsl_brng   = VSL_BRNG_MCG31
+    ! integer, parameter :: vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
+    ! real, parameter :: vsl_mean  = 0.0
+    ! real, parameter :: vsl_sigma = 1.0
     !===========================================================================
 
 
     !===========================================================================
     ! Parameters relating to basis functions & VTK output
     !------------------------------------------------------------
-    integer, dimension(3) :: mxa ,mya ,mza  ! TODO: currently only used in flux_hllc
-
     ! Basis function flags
     ! TODO: these variables are in:
     !   * initialize.f90 (setup)

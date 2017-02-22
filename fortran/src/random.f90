@@ -4,6 +4,19 @@ use parameters
 use helpers
 use boundary
 
+!===========================================================================
+! MKL VSL parameters
+!------------------------------------------------------------
+real :: vsl_errcode
+TYPE (VSL_STREAM_STATE) :: vsl_stream
+
+integer, parameter :: vsl_brng   = VSL_BRNG_MCG31
+integer, parameter :: vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
+real, parameter :: vsl_mean  = 0.0
+real, parameter :: vsl_sigma = 1.0
+!===========================================================================
+
+
 ! NOTE: It might make sense to use global arrays for stochastic
 !   stuff at some point, especially if in separate module
 ! real GRM_x(nface, 1:nx+1, ny,     nz,     3,3)
@@ -39,6 +52,7 @@ contains
 
     end subroutine get_GRM
 !-------------------------------------------------------------------------------
+
 
 !-------------------------------------------------------------------------------
     subroutine get_GRM_symmetric(GRMpnts_r, npnts)

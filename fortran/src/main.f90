@@ -14,6 +14,7 @@ use initialize
 
 use prepare_step
 use sources
+use random
 use flux
 use output
 
@@ -118,48 +119,47 @@ contains
         vmag = 0.
 
         do k=1,nz
-            do j=1,ny
-                do i=1,nx
+        do j=1,ny
+        do i=1,nx
+            dn = Q_r(i,j,k,rh,1)
+            dni = 1./dn
+            vx = Q_r(i,j,k,mx,1)*dni
+            vy = Q_r(i,j,k,my,1)*dni
+            vz = Q_r(i,j,k,mz,1)*dni
+            if(ieos == 1) cs = sqrt(aindex*(Q_r(i,j,k,en,1)*dni - 0.5*(vx**2 + vy**2 + vz**2)))
+            if(ieos == 2) cs = sqrt(7.2*P_1*dn**6.2 + T_floor)
 
-                    dn = Q_r(i,j,k,rh,1)
-                    dni = 1./dn
-                    vx = Q_r(i,j,k,mx,1)*dni
-                    vy = Q_r(i,j,k,my,1)*dni
-                    vz = Q_r(i,j,k,mz,1)*dni
-                    if(ieos .eq. 1) cs = sqrt(aindex*(Q_r(i,j,k,en,1)*dni - 0.5*(vx**2 + vy**2 + vz**2)))
-                    if(ieos .eq. 2) cs = sqrt(7.2*P_1*dn**6.2 + T_floor)
-
-                    vmag0 = max(abs(vx)+cs, abs(vy)+cs, abs(vz)+cs)
-                    if(vmag0 > vmag) vmag = vmag0
-
-                end do
-            end do
+            vmag0 = max( abs(vx)+cs, abs(vy)+cs, abs(vz)+cs )
+            if(vmag0 > vmag .and. dn > rh_mult*rh_floor) vmag = vmag0  ! NOTE: from newCES (excluded dn thing)
+        end do
+        end do
         end do
 
-        vmax = vmag*dxi
-        dt_min = 1*cflm/vmax  ! time step determined by maximum flow + sound speed in the domain
+        vmax = (vmag + cs)*dxi  ! NOTE: from newCES  (was vmag*dxi)
+        dt_min = cflm/vmax  ! time step determined by maximum flow + sound speed in the domain
 
         call MPI_BARRIER(cartcomm,ierr)
         if (iam.eq.main_proc) then
-        do i=1,numprocs-1
-            call MPI_IRecv(dt_val(i),mpi_size,MPI_TT,i,0,cartcomm,loc_reqs(i),ierr)
-        enddo
-        call MPI_WaitAll(numprocs-1,loc_reqs,loc_stats,ierr)
-        do i=1,numprocs-1
-            dt_min=min(dt_min,dt_val(i))
-        enddo
-        do i=1,numprocs-1
-            call MPI_ISend(dt_min,mpi_size,MPI_TT,i,0,cartcomm,loc_reqs(i),ierr)
-        enddo
-        call MPI_WaitAll(numprocs-1,loc_reqs,loc_stats,ierr)
-        else
-            call MPI_ISend(dt_min,mpi_size,MPI_TT,main_proc,0,cartcomm,reqs(1),ierr)
-        call MPI_Wait(reqs(1),stats(:,1),ierr)
-            call MPI_IRecv(dt_min,mpi_size,MPI_TT,main_proc,0,cartcomm,reqs(1),ierr)
-        call MPI_Wait(reqs(1),stats(:,1),ierr)
+            do i=1,numprocs-1
+                call MPI_IRecv(dt_val(i),mpi_size,MPI_TT,i,0,cartcomm,loc_reqs(i),ierr)
+            enddo
+            call MPI_WaitAll(numprocs-1,loc_reqs,loc_stats,ierr)
+            do i=1,numprocs-1
+                dt_min=min(dt_min,dt_val(i))
+            enddo
+            do i=1,numprocs-1
+                call MPI_ISend(dt_min,mpi_size,MPI_TT,i,0,cartcomm,loc_reqs(i),ierr)
+            enddo
+            call MPI_WaitAll(numprocs-1,loc_reqs,loc_stats,ierr)
+            else
+                call MPI_ISend(dt_min,mpi_size,MPI_TT,main_proc,0,cartcomm,reqs(1),ierr)
+            call MPI_Wait(reqs(1),stats(:,1),ierr)
+                call MPI_IRecv(dt_min,mpi_size,MPI_TT,main_proc,0,cartcomm,reqs(1),ierr)
+            call MPI_Wait(reqs(1),stats(:,1),ierr)
         endif
 
         get_min_dt = dt_min
+        return
     end function get_min_dt
     !---------------------------------------------------------------------------
 

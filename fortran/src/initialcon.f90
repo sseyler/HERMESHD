@@ -12,6 +12,10 @@ real :: rh_fluid  ! set far-field fluid density
 
 contains
 
+    !===========================================================================
+    ! set_ic
+    !    Select and set the initial conditions
+    !------------------------------------------------------------
     subroutine set_ic(Q_r, id)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
@@ -47,21 +51,24 @@ contains
                 call mpi_print(iam, 'Setting up 1D Sod Shock Tube v2...')
                 call sod_shock_tube_1d(Q_r, 1)
             case(5)
+                call mpi_print(iam, 'Setting up Poiseuille flow problem...')
+                call poiseuille_flow(Q_r)
+            case(6)
                 call mpi_print(iam, 'Setting up 2D cylinder-in-pipe (laminar)...')
                 call pipe_cylinder_2d(Q_r, 0)
-            case(6)
+            case(7)
                 call mpi_print(iam, 'Setting up 2D cylinder-in-pipe (periodic)...')
                 call pipe_cylinder_2d(Q_r, 1)
         end select
 
-
-        ! Temporary hack: set coll to epsi to get old behavior:
-        ! coll = epsi
-
+        ! coll = epsi  ! temporary hack: set coll to epsi to get old behavior
     end subroutine set_ic
+    !---------------------------------------------------------------------------
 
-!-------------------------------------------------------
 
+    !===========================================================================
+    ! 2D unstable hydrodynamic jet
+    !------------------------------------------------------------
     subroutine hydro_jet(Q_r)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
@@ -98,9 +105,12 @@ contains
         end do
 
     end subroutine hydro_jet
+    !---------------------------------------------------------------------------
 
-    !-------------------------------------------------------
 
+    !===========================================================================
+    ! 2D isentropic vortex
+    !------------------------------------------------------------
     subroutine isentropic_vortex(Q_r)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
@@ -148,9 +158,12 @@ contains
         end do
 
     end subroutine isentropic_vortex
+    !---------------------------------------------------------------------------
 
-    !-------------------------------------------------------
 
+    !===========================================================================
+    ! SOD Shock Tube
+    !------------------------------------------------------------
     subroutine sod_shock_tube_1d(Q_r, version)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
@@ -197,6 +210,64 @@ contains
         end do
 
     end subroutine sod_shock_tube_1d
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
+    ! 2D pipe (Poiseuille) flow
+    !   * Re ~ 20 for laminar case (version 0)
+    !   * Re ~ 100 for periodic case (version 1)
+    !   * Need outflow BCs on right wall: nu d u/d eta - p*eta = 0
+    ! NOTE: This subroutine sets BCs for the problem using custom_boundary
+    !------------------------------------------------------------
+    subroutine poiseuille_flow(Q_r)
+        use boundary_custom
+
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
+        integer i,j,k,ieq
+        real dn,pr,te,vx,vy,vz,ux_amb,yp,yp0
+
+        !-------------------------------------------------------
+        ! Definitions
+        pr = P_base
+        te = T_floor
+        dn = pr/te
+        ! dn = 1.0
+        ! te = T_floor
+        ! pr = dn*te  ! 1.0*P_base  ! can be adjusted to get stable results
+
+        coll   = dn*te/vis  ! global
+        colvis = coll*vis   ! or, dn*te  (also global)
+
+        vx = 0.0
+        vy = 0.0
+        vz = 0.0
+
+        yp0 = lyd  ! set zero-value of y-coordinate to domain bottom
+        ux_amb = 0.3e-2
+
+        !-------------------------------------------------------
+        ! Set initial conditions
+        do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
+            ! yp = yc(j) - yp0
+            ! vx = 4*ux_amb*yp*(ly-yp)/ly**2
+
+            Q_r(i,j,k,rh,1) = dn
+            Q_r(i,j,k,mx,1) = dn*vx
+            Q_r(i,j,k,my,1) = dn*vy
+            Q_r(i,j,k,mz,1) = dn*vz
+            Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
+        end do
+        end do
+        end do
+
+        call set_xlobc_inflow(ux_amb, dn, pr, Qxlo_ext_c)
+
+    end subroutine poiseuille_flow
+    !---------------------------------------------------------------------------
 
 
     !===========================================================================
@@ -270,7 +341,7 @@ contains
 
         ! NOTE: Qxlow_ext_custom, Qcyl_ext, and QMask should already be initialized!
         ! call add_custom_boundaries(icname)
-        call set_cyl_in_2d_pipe_boundaries(Qmask, ux_amb, dn, pr, Qxlow_ext_c, Qcyl_ext_c)
+        call set_cyl_in_2d_pipe_boundaries(Qmask, ux_amb, dn, pr, Qxlo_ext_c, Qcyl_ext_c)
 
     end subroutine pipe_cylinder_2d
     !---------------------------------------------------------------------------

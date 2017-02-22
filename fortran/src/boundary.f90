@@ -1,3 +1,529 @@
+!##### boundary_defs ###########################################################
+module boundary_defs
+
+use parameters
+
+    !===========================================================================
+    ! ABSTRACT INTERFACE to subroutines for setting BCs
+    !------------------------------------------------------------
+    abstract interface
+        subroutine xbc_fcn_ptr(Qxbc_i, Qxbc_e)
+            use input, only : ny,nz
+            use parameters, only : mx,my,mz,nface,nQ
+            real, dimension(ny,nz,nface,nQ), intent(in) :: Qxbc_i
+            real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxbc_e
+        end subroutine xbc_fcn_ptr
+
+        subroutine ybc_fcn_ptr(Qybc_i, Qybc_e)
+            use input, only : nx,nz
+            use parameters, only : mx,my,mz,nface,nQ
+            real, dimension(nx,nz,nface,nQ), intent(in) :: Qybc_i
+            real, dimension(nx,nz,nface,nQ), intent(inout) :: Qybc_e
+        end subroutine ybc_fcn_ptr
+
+        subroutine zbc_fcn_ptr(Qzbc_i, Qzbc_e)
+            use input, only : nx,ny
+            use parameters, only : mx,my,mz,nface,nQ
+            real, dimension(nx,ny,nface,nQ), intent(in) :: Qzbc_i
+            real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzbc_e
+        end subroutine zbc_fcn_ptr
+    end interface
+    !---------------------------------------------------------------------------
+
+contains
+
+    !===========================================================================
+    ! PERIODIC BC subroutines
+    !------------------------------------------------------------
+    subroutine xlobc_periodic(Qxlo_i, Qxlo_e)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxlo_i
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxlo_e
+    end subroutine xlobc_periodic
+
+    subroutine xhibc_periodic(Qxhi_i, Qxhi_e)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxhi_i
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxhi_e
+    end subroutine xhibc_periodic
+    !--------------------------------------------------------
+    subroutine ylobc_periodic(Qylo_i, Qylo_e)
+        real, dimension(nx,nz,nface,nQ), intent(in) :: Qylo_i
+        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qylo_e
+    end subroutine ylobc_periodic
+
+    subroutine yhibc_periodic(Qyhi_i, Qyhi_e)
+        real, dimension(nx,nz,nface,nQ), intent(in) :: Qyhi_i
+        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qyhi_e
+    end subroutine yhibc_periodic
+    !--------------------------------------------------------
+    subroutine zlobc_periodic(Qzlo_i, Qzlo_e)
+        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzlo_i
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzlo_e
+    end subroutine zlobc_periodic
+
+    subroutine zhibc_periodic(Qzhi_i, Qzhi_e)
+        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzhi_i
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzhi_e
+    end subroutine zhibc_periodic
+    !--------------------------------------------------------
+
+
+
+    !===========================================================================
+    ! NO-SLIP BC subroutine
+    !------------------------------------------------------------
+    subroutine xlobc_noslip(Qxlo_i, Qxlo_e)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxlo_i
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxlo_e
+        integer j,k
+        do k = 1,nz
+        do j = 1,ny
+            Qxlo_e(j,k,1:nface,:) = Qxlo_i(j,k,1:nface,:)
+            Qxlo_e(j,k,1:nface,mx:mz) = 0.0
+        end do
+        end do
+    end subroutine xlobc_noslip
+    !--------------------------------------------------------
+    subroutine xhibc_noslip(Qxhi_i, Qxhi_e)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxhi_i
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxhi_e
+        integer j,k
+        do k = 1,nz
+        do j = 1,ny
+            Qxhi_e(j,k,1:nface,:) = Qxhi_i(j,k,1:nface,:)
+            Qxhi_e(j,k,1:nface,mx:mz) = 0.0
+        end do
+        end do
+    end subroutine xhibc_noslip
+    !--------------------------------------------------------
+    subroutine ylobc_noslip(Qylo_i, Qylo_e)
+        real, dimension(nx,nz,nface,nQ), intent(in) :: Qylo_i
+        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qylo_e
+        integer i,k
+        do k = 1,nz
+        do i = 1,nx
+            Qylo_e(i,k,1:nface,:) = Qylo_i(i,k,1:nface,:)
+            Qylo_e(i,k,1:nface,mx:mz) = 0.0
+        end do
+        end do
+    end subroutine ylobc_noslip
+
+    subroutine yhibc_noslip(Qyhi_i, Qyhi_e)
+        real, dimension(nx,nz,nface,nQ), intent(in) :: Qyhi_i
+        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qyhi_e
+        integer i,k
+        do k = 1,nz
+        do i = 1,nx
+            Qyhi_e(i,k,1:nface,:) = Qyhi_i(i,k,1:nface,:)
+            Qyhi_e(i,k,1:nface,mx:mz) = 0.0
+        end do
+        end do
+    end subroutine yhibc_noslip
+    !--------------------------------------------------------
+    subroutine zlobc_noslip(Qzlo_i, Qzlo_e)
+        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzlo_i
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzlo_e
+        integer i,j
+        do j = 1,ny
+        do i = 1,nx
+            Qzlo_e(i,j,1:nface,:) = Qzlo_i(i,j,1:nface,:)
+            Qzlo_e(i,j,1:nface,mx:mz) = 0.0
+        end do
+        end do
+    end subroutine zlobc_noslip
+    !--------------------------------------------------------
+    subroutine zhibc_noslip(Qzhi_i, Qzhi_e)
+        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzhi_i
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzhi_e
+        integer i,j
+        do j = 1,ny
+        do i = 1,nx
+            Qzhi_e(i,j,1:nface,:) = Qzhi_i(i,j,1:nface,:)
+            Qzhi_e(i,j,1:nface,mx:mz) = 0.0
+        end do
+        end do
+    end subroutine zhibc_noslip
+    !---------------------------------------------------------------------------
+
+
+
+    !===========================================================================
+    ! WALL BC subroutine
+    !------------------------------------------------------------
+    subroutine xlobc_wall(Qxlo_i, Qxlo_e)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxlo_i
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxlo_e
+        integer j,k
+        do k = 1,nz
+        do j = 1,ny
+            Qxlo_e(j,k,1:nface,:) = Qxlo_i(j,k,1:nface,:)
+            Qxlo_e(j,k,1:nface,mx) = 0.0
+        end do
+        end do
+    end subroutine xlobc_wall
+    !--------------------------------------------------------
+    subroutine xhibc_wall(Qxhi_i, Qxhi_e)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxhi_i
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxhi_e
+        integer j,k
+        do k = 1,nz
+        do j = 1,ny
+            Qxhi_e(j,k,1:nface,:) = Qxhi_i(j,k,1:nface,:)
+            Qxhi_e(j,k,1:nface,mx) = 0.0
+        end do
+        end do
+    end subroutine xhibc_wall
+    !--------------------------------------------------------
+    subroutine ylobc_wall(Qylo_i, Qylo_e)
+        real, dimension(nx,nz,nface,nQ), intent(in) :: Qylo_i
+        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qylo_e
+        integer i,k
+        do k = 1,nz
+        do i = 1,nx
+            Qylo_e(i,k,1:nface,:) = Qylo_i(i,k,1:nface,:)
+            Qylo_e(i,k,1:nface,my) = 0.0
+        end do
+        end do
+    end subroutine ylobc_wall
+
+    subroutine yhibc_wall(Qyhi_i, Qyhi_e)
+        real, dimension(nx,nz,nface,nQ), intent(in) :: Qyhi_i
+        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qyhi_e
+        integer i,k
+        do k = 1,nz
+        do i = 1,nx
+            Qyhi_e(i,k,1:nface,:) = Qyhi_i(i,k,1:nface,:)
+            Qyhi_e(i,k,1:nface,my) = 0.0
+        end do
+        end do
+    end subroutine yhibc_wall
+    !--------------------------------------------------------
+    subroutine zlobc_wall(Qzlo_i, Qzlo_e)
+        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzlo_i
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzlo_e
+        integer i,j
+        do j = 1,ny
+        do i = 1,nx
+            Qzlo_e(i,j,1:nface,:) = Qzlo_i(i,j,1:nface,:)
+            Qzlo_e(i,j,1:nface,mz) = 0.0
+        end do
+        end do
+    end subroutine zlobc_wall
+    !--------------------------------------------------------
+    subroutine zhibc_wall(Qzhi_i, Qzhi_e)
+        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzhi_i
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzhi_e
+        integer i,j
+        do j = 1,ny
+        do i = 1,nx
+            Qzhi_e(i,j,1:nface,:) = Qzhi_i(i,j,1:nface,:)
+            Qzhi_e(i,j,1:nface,mz) = 0.0
+        end do
+        end do
+    end subroutine zhibc_wall
+    !---------------------------------------------------------------------------
+
+
+
+    !===========================================================================
+    ! OUTFLOW BC subroutine
+    !------------------------------------------------------------
+    subroutine xlobc_outflow(Qxlo_i, Qxlo_e)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxlo_i
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxlo_e
+        integer j,k
+        do k = 1,nz
+        do j = 1,ny
+            Qxlo_e(j,k,1:nface,:) = Qxlo_i(j,k,1:nface,:)
+            if (maxval(Qxlo_e(j,k,1:nface,mx)) > 0.0) then
+                Qxlo_e(j,k,1:nface,mx) = 0.0
+            end if
+        enddo
+        enddo
+    end subroutine xlobc_outflow
+    !--------------------------------------------------------
+    subroutine xhibc_outflow(Qxhi_i, Qxhi_e)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxhi_i
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxhi_e
+        integer j,k
+        do k = 1,nz
+        do j = 1,ny
+            Qxhi_e(j,k,1:nface,:) = Qxhi_i(j,k,1:nface,:)
+            if (minval(Qxhi_e(j,k,1:nface,mx)) < 0.0 ) then
+                Qxhi_e(j,k,1:nface,mx) = 0.0
+            end if
+        enddo
+        enddo
+    end subroutine xhibc_outflow
+    !--------------------------------------------------------
+    subroutine ylobc_outflow(Qylo_i, Qylo_e)
+        real, dimension(nx,nz,nface,nQ), intent(in) :: Qylo_i
+        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qylo_e
+        integer i,k
+        do k = 1,nz
+        do i = 1,nx
+            Qylo_e(i,k,1:nface,:) = Qylo_i(i,k,1:nface,:)
+            if (maxval(Qylo_e(i,k,1:nface,my)) > 0.0) then
+                Qylo_e(i,k,1:nface,my) = 0.0
+            end if
+        enddo
+        enddo
+    end subroutine ylobc_outflow
+    !--------------------------------------------------------
+    subroutine yhibc_outflow(Qyhi_i, Qyhi_e)
+        real, dimension(nx,nz,nface,nQ), intent(in) :: Qyhi_i
+        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qyhi_e
+        integer i,k
+        do k = 1,nz
+        do i = 1,nx
+            Qyhi_e(i,k,1:nface,:) = Qyhi_i(i,k,1:nface,:)
+            if (minval(Qyhi_e(i,k,1:nface,my)) < 0.0) then
+                Qyhi_e(i,k,1:nface,my) = 0.0
+            end if
+        enddo
+        enddo
+    end subroutine yhibc_outflow
+    !--------------------------------------------------------
+    subroutine zlobc_outflow(Qzlo_i, Qzlo_e)
+        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzlo_i
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzlo_e
+        integer i,j
+        do j = 1,ny
+        do i = 1,nx
+            Qzlo_e(i,j,1:nface,:) = Qzlo_i(i,j,1:nface,:)
+            if (maxval(Qzlo_e(i,j,1:nface,mz)) > 0.0) then
+                Qzlo_e(i,j,1:nface,mz) = 0.0
+            end if
+        enddo
+        enddo
+    end subroutine zlobc_outflow
+    !--------------------------------------------------------
+    subroutine zhibc_outflow(Qzhi_i, Qzhi_e)
+        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzhi_i
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzhi_e
+        integer i,j
+        do j = 1,ny
+        do i = 1,nx
+            Qzhi_e(i,j,1:nface,:) = Qzhi_i(i,j,1:nface,:)
+            if (minval(Qzhi_e(i,j,1:nface,mz)) < 0.0) then
+                Qzhi_e(i,j,1:nface,mz) = 0.0
+            end if
+        enddo
+        enddo
+    end subroutine zhibc_outflow
+    !---------------------------------------------------------------------------
+
+end module boundary_defs
+
+
+!##### boundary_defs2 ##########################################################
+! NOTE: This module is currently for testing purposes only. The boundary_defs
+!       module should be used to ensure correctness.
+! The purpose of this module is to reduce the amount of code needed to specify
+! boundary conditions by re-using procedures when setting boundary conditions
+! for a given direction. For instance, if we specify no-slip boundary conditions
+! for both the high and low y-boundary, then the subroutine to set the no-slip
+! BC should be the same for the high and low y-boundary. Ideally, we would think
+! only a single subroutine is needed for a particular BC in a given direction,
+! so only THREE subroutines would be needed in total for each type of BC for the
+! x, y, and z boundaries, rather than SIX (two for high/low in each direction).
+!
+! However, this doesn't seems to work in practice since the code crashes (after
+! a short number of time steps): since the BC subroutines are selected at
+! runtime using procedure pointers, there is probably some kind of interference
+! between the BC subroutine calls since they are really pointers to the
+! underlying selected BC procedure, and/OR the problem could be that MPI doesn't
+! play nicely with this approach.
+!
+! For the time being, there must be a separate BC subroutine for a given BC type
+! for each direction (i.e., for, say, no-slip, SIX subroutines are needed to)
+! cover high/low BCs for each direction [x,y,z], rather than THREE).
+!
+module boundary_defs2
+
+use parameters
+
+    !===========================================================================
+    ! ABSTRACT INTERFACE to subroutines for setting BCs
+    !------------------------------------------------------------
+    abstract interface
+        subroutine xbc_fcn_ptr(Qxbc_int, Qxbc_ext)
+            use input, only : ny,nz
+            use parameters
+            real, dimension(ny,nz,nface,nQ), intent(in) :: Qxbc_int
+            real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxbc_ext
+        end subroutine xbc_fcn_ptr
+
+        subroutine ybc_fcn_ptr(Qybc_int, Qybc_ext)
+            use input, only : nx,nz
+            use parameters
+            real, dimension(nx,nz,nface,nQ), intent(in) :: Qybc_int
+            real, dimension(nx,nz,nface,nQ), intent(inout) :: Qybc_ext
+        end subroutine ybc_fcn_ptr
+
+        subroutine zbc_fcn_ptr(Qzbc_int, Qzbc_ext)
+            use input, only : nx,ny
+            use parameters
+            real, dimension(nx,ny,nface,nQ), intent(in) :: Qzbc_int
+            real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzbc_ext
+        end subroutine zbc_fcn_ptr
+    end interface
+    !---------------------------------------------------------------------------
+
+contains
+
+    !===========================================================================
+    ! PERIODIC BC subroutines
+    !------------------------------------------------------------
+    subroutine x_bc_periodic(Qxbc_int, Qxbc_ext)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxbc_int
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxbc_ext
+    end subroutine x_bc_periodic
+    !--------------------------------------------------------
+    subroutine y_bc_periodic(Qybc_int, Qybc_ext)
+        real, dimension(nx,nz,nface,nQ), intent(in) :: Qybc_int
+        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qybc_ext
+    end subroutine y_bc_periodic
+    !--------------------------------------------------------
+    subroutine z_bc_periodic(Qzbc_int, Qzbc_ext)
+        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzbc_int
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzbc_ext
+    end subroutine z_bc_periodic
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
+    ! NO-SLIP BC subroutine
+    !------------------------------------------------------------
+    subroutine x_bc_noslip(Qxbc_int, Qxbc_ext)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxbc_int
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxbc_ext
+        integer j,k
+        do k = 1,nz
+        do j = 1,ny
+            Qxbc_ext(j,k,1:nface,:) = Qxbc_int(j,k,1:nface,:)
+            Qxbc_ext(j,k,1:nface,mx:mz) = 0.0
+        end do
+        end do
+    end subroutine x_bc_noslip
+    !--------------------------------------------------------
+    subroutine y_bc_noslip(Qybc_int, Qybc_ext)
+        real, dimension(nx,nz,nface,nQ), intent(in) :: Qybc_int
+        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qybc_ext
+        integer i,k
+        do k = 1,nz
+        do i = 1,nx
+            Qybc_ext(i,k,1:nface,:) = Qybc_int(i,k,1:nface,:)
+            Qybc_ext(i,k,1:nface,mx:mz) = 0.0
+        end do
+        end do
+    end subroutine y_bc_noslip
+    !--------------------------------------------------------
+    subroutine z_bc_noslip(Qzbc_int, Qzbc_ext)
+        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzbc_int
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzbc_ext
+        integer i,j
+        do j = 1,ny
+        do i = 1,nx
+            Qzbc_ext(i,j,1:nface,:) = Qzbc_int(i,j,1:nface,:)
+            Qzbc_ext(i,j,1:nface,mx:mz) = 0.0
+        end do
+        end do
+    end subroutine z_bc_noslip
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
+    ! WALL BC subroutine
+    !------------------------------------------------------------
+    subroutine x_bc_wall(Qxbc_int, Qxbc_ext)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxbc_int
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxbc_ext
+        integer j,k
+        do k = 1,nz
+        do j = 1,ny
+            Qxbc_ext(j,k,1:nface,:) = Qxbc_int(j,k,1:nface,:)
+            Qxbc_ext(j,k,1:nface,mx) = 0.0
+        end do
+        end do
+    end subroutine x_bc_wall
+    !--------------------------------------------------------
+    subroutine y_bc_wall(Qybc_int, Qybc_ext)
+        real, dimension(nx,nz,nface,nQ), intent(in) :: Qybc_int
+        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qybc_ext
+        integer i,k
+        do k = 1,nz
+        do i = 1,nx
+            Qybc_ext(i,k,1:nface,:) = Qybc_int(i,k,1:nface,:)
+            Qybc_ext(i,k,1:nface,my) = 0.0
+        end do
+        end do
+    end subroutine y_bc_wall
+    !--------------------------------------------------------
+    subroutine z_bc_wall(Qzbc_int, Qzbc_ext)
+        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzbc_int
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzbc_ext
+        integer i,j
+        do j = 1,ny
+        do i = 1,nx
+            Qzbc_ext(i,j,1:nface,:) = Qzbc_int(i,j,1:nface,:)
+            Qzbc_ext(i,j,1:nface,mz) = 0.0
+        end do
+        end do
+    end subroutine z_bc_wall
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
+    ! OUTFLOW BC subroutine
+    !------------------------------------------------------------
+    subroutine x_bc_outflow(Qxbc_int, Qxbc_ext)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxbc_int
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxbc_ext
+        integer j,k
+        do k = 1,nz
+        do j = 1,ny
+            Qxbc_ext(j,k,1:nface,:) = Qxbc_int(j,k,1:nface,:)
+            if (maxval(Qxbc_ext(j,k,1:nface,mx)) > 0.0) then
+                Qxbc_ext(j,k,1:nface,mx) = 0.0
+            end if
+        enddo
+        enddo
+    end subroutine x_bc_outflow
+    !--------------------------------------------------------
+    subroutine y_bc_outflow(Qybc_int, Qybc_ext)
+        real, dimension(nx,nz,nface,nQ), intent(in) :: Qybc_int
+        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qybc_ext
+        integer i,k
+        do k = 1,nz
+        do i = 1,nx
+            Qybc_ext(i,k,1:nface,:) = Qybc_int(i,k,1:nface,:)
+            if (maxval(Qybc_ext(i,k,1:nface,my)) > 0.0) then
+                Qybc_ext(i,k,1:nface,my) = 0.0
+            end if
+        enddo
+        enddo
+    end subroutine y_bc_outflow
+    !--------------------------------------------------------
+    subroutine z_bc_outflow(Qzbc_int, Qzbc_ext)
+        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzbc_int
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzbc_ext
+        integer i,j
+        do j = 1,ny
+        do i = 1,nx
+            Qzbc_ext(i,j,1:nface,:) = Qzbc_int(i,j,1:nface,:)
+            if (maxval(Qzbc_ext(i,j,1:nface,mz)) > 0.0) then
+                Qzbc_ext(i,j,1:nface,mz) = 0.0
+            end if
+        enddo
+        enddo
+    end subroutine z_bc_outflow
+    !---------------------------------------------------------------------------
+
+end module boundary_defs2
+
+
+
+!##### boundary_custom #########################################################
 module boundary_custom
 
     use parameters
@@ -6,12 +532,62 @@ module boundary_custom
     !===========================================================================
     ! Masking parameters (for advanced or internal initial/boundary conditions)
     !------------------------------------------------------------
-    real, dimension(ny,nz,nface,nQ) :: Qxlow_ext_c
+    real, dimension(ny,nz,nface,nQ) :: Qxlo_ext_c
     real, dimension(nx,ny,nface,nQ) :: Qcyl_ext_c, Qcyl_ext
     logical QMask(nx,ny,nz), MMask(nx,ny,nz)
     !---------------------------------------------------------------------------
 
 contains
+
+    subroutine x_bc_inflow(Qxbc_int, Qxbc_def, Qxbc_ext)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxbc_int, Qxbc_def
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxbc_ext
+        integer j,k,i4
+
+        do i4=1,nface
+            do k = 1,nz
+            do j = 1,ny
+                ! Initially, set all values to internal face values
+                Qxbc_ext(j,k,i4,:)     = Qxbc_int(j,k,i4,:)
+
+                ! Set external face values to those specified by Qxbc_def
+                Qxbc_ext(j,k,i4,rh)    = Qxbc_def(j,k,i4,rh)
+                Qxbc_ext(j,k,i4,mx)    = Qxbc_def(j,k,i4,mx)
+                Qxbc_ext(j,k,i4,my:mz) = 0.0
+                Qxbc_ext(j,k,i4,en)    = Qxbc_def(j,k,i4,en)
+            end do
+            end do
+        end do
+    end subroutine x_bc_inflow
+
+
+    subroutine set_xlobc_inflow(ux_amb, den, pres, Qxlo_e_c)
+        real, intent(in) :: ux_amb, den, pres
+        real, dimension(ny,nz,nface,nQ), intent(out) :: Qxlo_e_c
+
+        real yp,yp0,vx
+        integer j,k,i4
+
+        yp0 = lyd  ! set zero-value of y-coordinate to domain bottom
+
+        ! apply parabolic inflow BCs on lower x wall
+        Qxlo_e_c(:,:,:,:) = 0.0
+        do i4 = 1,nface
+            do k = 1,nz
+            do j = 1,ny
+                yp = yc(j) - yp0
+                vx = 4*ux_amb*yp*(ly-yp)/ly**2
+
+                Qxlo_e_c(j,k,i4,rh) = den
+                Qxlo_e_c(j,k,i4,mx) = den*vx
+                Qxlo_e_c(j,k,i4,my) = 0
+                Qxlo_e_c(j,k,i4,mz) = 0
+                Qxlo_e_c(j,k,i4,en) = pres/aindm1 + 0.5*den*vx**2
+            end do
+            end do
+        end do
+    end subroutine set_xlobc_inflow
+
 
     function cyl_in_2d_pipe_mask(xctr, yctr, rad)
         real, intent(in) :: xctr, yctr, rad
@@ -77,46 +653,7 @@ contains
             end do
             end do
         end do
-
-        ! if (mpi_P == 1) print *,Qxlo_e_c(23,1,1,mx)/den
     end subroutine set_cyl_in_2d_pipe_boundaries
-
-
-    subroutine apply_xlo_in_2d_pipe_boundaries(Qxlo_i, Qxlo_e_c, Qxlo_e)
-        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxlo_i
-        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxlo_e_c
-        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxlo_e
-        integer j,k
-
-        do k = 1,nz
-        do j = 1,ny
-            Qxlo_e(j,k,1:nface,:) = Qxlo_i(j,k,1:nface,:)
-
-            Qxlo_e(j,k,1:nface,rh) = Qxlo_e_c(j,k,1:nface,rh)
-            Qxlo_e(j,k,1:nface,mx) = Qxlo_e_c(j,k,1:nface,mx)
-            Qxlo_e(j,k,1:nface,my:mz) = 0.0
-            Qxlo_e(j,k,1:nface,en) = Qxlo_e_c(j,k,1:nface,en)
-        end do
-        end do
-
-        ! if (mpi_P == 1) then
-        !     print *,'density:'
-        !     print *,Qxlo_e(:,1,1,rh)
-        !     print *,''
-        !
-        !     print *,'x momentum:'
-        !     print *,Qxlo_e(:,1,1,mx)
-        !     print *,''
-        !
-        !     print *,'y momentum:'
-        !     print *,Qxlo_e(:,1,1,my)
-        !     print *,''
-        !
-        !     print *,'energy:'
-        !     print *,Qxlo_e(:,1,1,en)
-        !     print *,''
-        ! endif
-    end subroutine apply_xlo_in_2d_pipe_boundaries
 
 
     subroutine apply_cyl_in_2d_pipe_boundaries(Qcyl_e_c, Qcyl_e)
@@ -137,46 +674,16 @@ contains
 end module boundary_custom
 
 
+
+
+!##### boundary ################################################################
 module boundary
 
     use parameters
     use helpers, only : mpi_print
+    use boundary_defs
+    ! use boundary_defs2
     use boundary_custom
-
-    !===========================================================================
-    ! ABSTRACT INTERFACE to subroutines for setting BCs
-    !------------------------------------------------------------
-    abstract interface
-        ! subroutine bc_fcn_ptr(nc1, nc2, Qbc_i, Qbc_e)
-        !     use parameters, only : mx,my,mz,nface,nQ
-        !     integer, intent(in) :: nc1, nc2
-        !     real, dimension(nc1,nc2,nface,nQ), intent(in) :: Qxbc_i
-        !     real, dimension(nc1,nc2,nface,nQ), intent(inout) :: Qxbc_e
-        ! end subroutine bc_fcn_ptr
-
-        subroutine xbc_fcn_ptr(Qxbc_i, Qxbc_e)
-            use input, only : ny,nz
-            use parameters, only : mx,my,mz,nface,nQ
-            real, dimension(ny,nz,nface,nQ), intent(in) :: Qxbc_i
-            real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxbc_e
-        end subroutine xbc_fcn_ptr
-
-        subroutine ybc_fcn_ptr(Qybc_i, Qybc_e)
-            use input, only : nx,nz
-            use parameters, only : mx,my,mz,nface,nQ
-            real, dimension(nx,nz,nface,nQ), intent(in) :: Qybc_i
-            real, dimension(nx,nz,nface,nQ), intent(inout) :: Qybc_e
-        end subroutine ybc_fcn_ptr
-
-        subroutine zbc_fcn_ptr(Qzbc_i, Qzbc_e)
-            use input, only : nx,ny
-            use parameters, only : mx,my,mz,nface,nQ
-            real, dimension(nx,ny,nface,nQ), intent(in) :: Qzbc_i
-            real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzbc_e
-        end subroutine zbc_fcn_ptr
-    end interface
-    !---------------------------------------------------------------------------
-
 
     !===========================================================================
     ! Initialize pointers to subroutines for setting BCs
@@ -193,12 +700,12 @@ module boundary
     !===========================================================================
     ! Initialize arrays to store boundary conditions
     !------------------------------------------------------------
-    real, dimension(ny,nz,nface,nQ) :: Qxlow_ext, Qxhigh_ext
-    real, dimension(ny,nz,nface,nQ) :: Qxlow_int, Qxhigh_int
-    real, dimension(nx,nz,nface,nQ) :: Qylow_ext, Qyhigh_ext
-    real, dimension(nx,nz,nface,nQ) :: Qylow_int, Qyhigh_int
-    real, dimension(nx,ny,nface,nQ) :: Qzlow_ext, Qzhigh_ext
-    real, dimension(nx,ny,nface,nQ) :: Qzlow_int, Qzhigh_int
+    real, dimension(ny,nz,nface,nQ) :: Qxlo_ext, Qxhi_ext
+    real, dimension(ny,nz,nface,nQ) :: Qxlo_int, Qxhi_int
+    real, dimension(nx,nz,nface,nQ) :: Qylo_ext, Qyhi_ext
+    real, dimension(nx,nz,nface,nQ) :: Qylo_int, Qyhi_int
+    real, dimension(nx,ny,nface,nQ) :: Qzlo_ext, Qzhi_ext
+    real, dimension(nx,ny,nface,nQ) :: Qzlo_int, Qzhi_int
     !---------------------------------------------------------------------------
 
 contains
@@ -209,26 +716,38 @@ contains
     subroutine apply_boundaries
         if ( mpi_P == 1 ) then
             ! call apply_xlobc(Qxlow_int, Qxlow_ext)
-            call apply_xlo_in_2d_pipe_boundaries(Qxlow_int, Qxlow_ext_c, Qxlow_ext)
+            call x_bc_inflow(Qxlo_int, Qxlo_ext_c, Qxlo_ext)
         end if
         if ( mpi_P == mpi_nx ) then
-            call apply_xhibc(Qxhigh_int, Qxhigh_ext)
+            call apply_xhibc(Qxhi_int, Qxhi_ext)
         end if
         !----------------------------------------------------
         if ( mpi_Q == 1 ) then
-            call apply_ylobc(Qylow_int, Qylow_ext)
+            call apply_ylobc(Qylo_int, Qylo_ext)
         end if
         if ( mpi_Q == mpi_ny ) then
-            call apply_yhibc(Qyhigh_int, Qyhigh_ext)
+            call apply_yhibc(Qyhi_int, Qyhi_ext)
         end if
         !--------------------------------------------------------
         if ( mpi_R == 1 ) then
-            call apply_zlobc(Qzlow_int, Qzlow_ext)
+            call apply_zlobc(Qzlo_int, Qzlo_ext)
         end if
         if ( mpi_R == mpi_nz ) then
-            call apply_zhibc(Qzhigh_int, Qzhigh_ext)
+            call apply_zhibc(Qzhi_int, Qzhi_ext)
         end if
 
+        ! if (mpi_P == 1) print *,'Density:'
+        ! if (mpi_P == 1) print *,Qxlo_ext(:,1,1,rh)
+        ! if (mpi_P == 1) print *,''
+        ! if (mpi_P == 1) print *,'X velocity:'
+        ! if (mpi_P == 1) print *,Qxlo_ext(:,1,1,mx)/Qxlo_ext(:,1,1,rh)
+        ! if (mpi_P == 1) print *,''
+        ! if (mpi_P == 1) print *,'PXX:'
+        ! if (mpi_P == 1) print *,Qxlo_ext(:,1,1,pxx)
+        ! if (mpi_P == 1) print *,''
+        ! if (mpi_P == 1) print *,'Energy:'
+        ! if (mpi_P == 1) print *,Qxlo_ext(:,1,1,en)
+        ! if (mpi_P == 1) print *,''
         ! NOTE: Inefficient b/c overwrites 'default' BC application above
         ! NOTE: This is NOT a general implementation for applying custom BCs
         ! call apply_cyl_in_2d_pipe_boundaries(Qcyl_ext_c, Qcyl_ext)
@@ -333,284 +852,5 @@ contains
 
     end subroutine select_z_boundaries
     !---------------------------------------------------------------------------
-
-
-    !===========================================================================
-    ! PERIODIC BC subroutines
-    !------------------------------------------------------------
-    subroutine xlobc_periodic(Qxlo_i, Qxlo_e)
-        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxlo_i
-        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxlo_e
-    end subroutine xlobc_periodic
-
-    subroutine xhibc_periodic(Qxhi_i, Qxhi_e)
-        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxhi_i
-        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxhi_e
-    end subroutine xhibc_periodic
-    !--------------------------------------------------------
-    subroutine ylobc_periodic(Qylo_i, Qylo_e)
-        real, dimension(nx,nz,nface,nQ), intent(in) :: Qylo_i
-        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qylo_e
-    end subroutine ylobc_periodic
-
-    subroutine yhibc_periodic(Qyhi_i, Qyhi_e)
-        real, dimension(nx,nz,nface,nQ), intent(in) :: Qyhi_i
-        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qyhi_e
-    end subroutine yhibc_periodic
-    !--------------------------------------------------------
-    subroutine zlobc_periodic(Qzlo_i, Qzlo_e)
-        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzlo_i
-        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzlo_e
-    end subroutine zlobc_periodic
-
-    subroutine zhibc_periodic(Qzhi_i, Qzhi_e)
-        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzhi_i
-        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzhi_e
-    end subroutine zhibc_periodic
-    !--------------------------------------------------------
-
-
-    !===========================================================================
-    ! OUTFLOW BC subroutine
-    !------------------------------------------------------------
-    subroutine xlobc_outflow(Qxlo_i, Qxlo_e)
-        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxlo_i
-        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxlo_e
-        integer j,k
-        do k = 1,nz
-            do j = 1,ny
-                Qxlo_e(j,k,1:nface,:) = Qxlo_i(j,k,1:nface,:)
-                if (maxval(Qxlo_e(j,k,1:nface,mx)) > 0.) then
-                    Qxlo_e(j,k,1:nface,mx) = 0.0
-                end if
-            enddo
-        enddo
-    end subroutine xlobc_outflow
-    !--------------------------------------------------------
-    subroutine xhibc_outflow(Qxhi_i, Qxhi_e)
-        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxhi_i
-        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxhi_e
-        integer j,k
-        do k = 1,nz
-            do j = 1,ny
-                Qxhi_e(j,k,1:nface,:) = Qxhi_i(j,k,1:nface,:)
-                if (minval(Qxhi_e(j,k,1:nface,mx)) < 0.) then
-                    Qxhi_e(j,k,1:nface,mx) = 0.0
-                end if
-            enddo
-        enddo
-    end subroutine xhibc_outflow
-    !--------------------------------------------------------
-    subroutine ylobc_outflow(Qylo_i, Qylo_e)
-        real, dimension(nx,nz,nface,nQ), intent(in) :: Qylo_i
-        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qylo_e
-        integer i,k
-        do k = 1,nz
-            do i = 1,nx
-                Qylo_e(i,k,1:nface,:) = Qylo_i(i,k,1:nface,:)
-                if (maxval(Qylo_e(i,k,1:nface,my)) > 0.) then
-                    Qylo_e(i,k,1:nface,my) = 0.0
-                end if
-            enddo
-        enddo
-    end subroutine ylobc_outflow
-    !--------------------------------------------------------
-    subroutine yhibc_outflow(Qyhi_i, Qyhi_e)
-        real, dimension(nx,nz,nface,nQ), intent(in) :: Qyhi_i
-        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qyhi_e
-        integer i,k
-        do k = 1,nz
-            do i = 1,nx
-                Qyhi_e(i,k,1:nface,:) = Qyhi_i(i,k,1:nface,:)
-                if (minval(Qyhi_e(i,k,1:nface,my)) < 0.) then
-                    Qyhi_e(i,k,1:nface,my) = 0.0
-                end if
-            enddo
-        enddo
-    end subroutine yhibc_outflow
-    !--------------------------------------------------------
-    subroutine zlobc_outflow(Qzlo_i, Qzlo_e)
-        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzlo_i
-        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzlo_e
-        integer i,j
-        do j = 1,ny
-            do i = 1,nx
-                Qzlo_e(i,j,1:nface,:) = Qzlo_i(i,j,1:nface,:)
-                if (maxval(Qzlo_e(i,j,1:nface,mz)) > 0.) then
-                    Qzlo_e(i,j,1:nface,mz) = 0.0
-                end if
-            enddo
-        enddo
-    end subroutine zlobc_outflow
-    !--------------------------------------------------------
-    subroutine zhibc_outflow(Qzhi_i, Qzhi_e)
-        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzhi_i
-        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzhi_e
-        integer i,j
-        do j = 1,ny
-            do i = 1,nx
-                Qzhi_e(i,j,1:nface,:) = Qzhi_i(i,j,1:nface,:)
-                if (minval(Qzhi_e(i,j,1:nface,mz)) < 0.) then
-                    Qzhi_e(i,j,1:nface,mz) = 0.0
-                end if
-            enddo
-        enddo
-    end subroutine zhibc_outflow
-    !---------------------------------------------------------------------------
-
-
-    !===========================================================================
-    ! WALL BC subroutine
-    !------------------------------------------------------------
-    subroutine xlobc_wall(Qxlo_i, Qxlo_e)
-        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxlo_i
-        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxlo_e
-        integer j,k
-        do k = 1,nz
-            do j = 1,ny
-                Qxlo_e(j,k,1:nface,:) = Qxlo_i(j,k,1:nface,:)
-                Qxlo_e(j,k,1:nface,mx) = 0.0
-            end do
-        end do
-    end subroutine xlobc_wall
-    !--------------------------------------------------------
-    subroutine xhibc_wall(Qxhi_i, Qxhi_e)
-        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxhi_i
-        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxhi_e
-        integer j,k
-        do k = 1,nz
-            do j = 1,ny
-                Qxhi_e(j,k,1:nface,:) = Qxhi_i(j,k,1:nface,:)
-                Qxhi_e(j,k,1:nface,mx) = 0.0
-            end do
-        end do
-    end subroutine xhibc_wall
-    !--------------------------------------------------------
-    subroutine ylobc_wall(Qylo_i, Qylo_e)
-        real, dimension(nx,nz,nface,nQ), intent(in) :: Qylo_i
-        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qylo_e
-        integer i,k
-        do k = 1,nz
-            do i = 1,nx
-                Qylo_e(i,k,1:nface,:) = Qylo_i(i,k,1:nface,:)
-                Qylo_e(i,k,1:nface,my) = 0.0
-            end do
-        end do
-    end subroutine ylobc_wall
-
-    subroutine yhibc_wall(Qyhi_i, Qyhi_e)
-        real, dimension(nx,nz,nface,nQ), intent(in) :: Qyhi_i
-        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qyhi_e
-        integer i,k
-        do k = 1,nz
-            do i = 1,nx
-                Qyhi_e(i,k,1:nface,:) = Qyhi_i(i,k,1:nface,:)
-                Qyhi_e(i,k,1:nface,my) = 0.0
-            end do
-        end do
-    end subroutine yhibc_wall
-    !--------------------------------------------------------
-    subroutine zlobc_wall(Qzlo_i, Qzlo_e)
-        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzlo_i
-        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzlo_e
-        integer i,j
-        do j = 1,ny
-            do i = 1,nx
-                Qzlo_e(i,j,1:nface,:) = Qzlo_i(i,j,1:nface,:)
-                Qzlo_e(i,j,1:nface,mz) = 0.0
-            end do
-        end do
-    end subroutine zlobc_wall
-    !--------------------------------------------------------
-    subroutine zhibc_wall(Qzhi_i, Qzhi_e)
-        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzhi_i
-        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzhi_e
-        integer i,j
-        do j = 1,ny
-            do i = 1,nx
-                Qzhi_e(i,j,1:nface,:) = Qzhi_i(i,j,1:nface,:)
-                Qzhi_e(i,j,1:nface,mz) = 0.0
-            end do
-        end do
-    end subroutine zhibc_wall
-    !---------------------------------------------------------------------------
-
-
-    !===========================================================================
-    ! NO-SLIP BC subroutine
-    !------------------------------------------------------------
-    subroutine xlobc_noslip(Qxlo_i, Qxlo_e)
-        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxlo_i
-        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxlo_e
-        integer j,k
-        do k = 1,nz
-            do j = 1,ny
-                Qxlo_e(j,k,1:nface,:) = Qxlo_i(j,k,1:nface,:)
-                Qxlo_e(j,k,1:nface,mx:mz) = 0.0
-            end do
-        end do
-    end subroutine xlobc_noslip
-    !--------------------------------------------------------
-    subroutine xhibc_noslip(Qxhi_i, Qxhi_e)
-        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxhi_i
-        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxhi_e
-        integer j,k
-        do k = 1,nz
-            do j = 1,ny
-                Qxhi_e(j,k,1:nface,:) = Qxhi_i(j,k,1:nface,:)
-                Qxhi_e(j,k,1:nface,mx:mz) = 0.0
-            end do
-        end do
-    end subroutine xhibc_noslip
-    !--------------------------------------------------------
-    subroutine ylobc_noslip(Qylo_i, Qylo_e)
-        real, dimension(nx,nz,nface,nQ), intent(in) :: Qylo_i
-        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qylo_e
-        integer i,k
-        do k = 1,nz
-            do i = 1,nx
-                Qylo_e(i,k,1:nface,:) = Qylo_i(i,k,1:nface,:)
-                Qylo_e(i,k,1:nface,mx:mz) = 0.0
-            end do
-        end do
-    end subroutine ylobc_noslip
-
-    subroutine yhibc_noslip(Qyhi_i, Qyhi_e)
-        real, dimension(nx,nz,nface,nQ), intent(in) :: Qyhi_i
-        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qyhi_e
-        integer i,k
-        do k = 1,nz
-            do i = 1,nx
-                Qyhi_e(i,k,1:nface,:) = Qyhi_i(i,k,1:nface,:)
-                Qyhi_e(i,k,1:nface,mx:mz) = 0.0
-            end do
-        end do
-    end subroutine yhibc_noslip
-    !--------------------------------------------------------
-    subroutine zlobc_noslip(Qzlo_i, Qzlo_e)
-        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzlo_i
-        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzlo_e
-        integer i,j
-        do j = 1,ny
-            do i = 1,nx
-                Qzlo_e(i,j,1:nface,:) = Qzlo_i(i,j,1:nface,:)
-                Qzlo_e(i,j,1:nface,mx:mz) = 0.0
-            end do
-        end do
-    end subroutine zlobc_noslip
-    !--------------------------------------------------------
-    subroutine zhibc_noslip(Qzhi_i, Qzhi_e)
-        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzhi_i
-        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzhi_e
-        integer i,j
-        do j = 1,ny
-            do i = 1,nx
-                Qzhi_e(i,j,1:nface,:) = Qzhi_i(i,j,1:nface,:)
-                Qzhi_e(i,j,1:nface,mx:mz) = 0.0
-            end do
-        end do
-    end subroutine zhibc_noslip
-    !---------------------------------------------------------------------------
-
 
 end module boundary

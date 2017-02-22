@@ -34,7 +34,9 @@ contains
 
                 select case (ivis)
                     case (0)
-                        Qin(pxx:nQ) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,pxx:nQ,1:nbasis))
+                        do ieq = pxx,pyz
+                            Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,ieq,1:nbasis))
+                        end do
                         source(ipg,pxx) = -coll*Qin(pxx)
                         source(ipg,pyy) = -coll*Qin(pyy)
                         source(ipg,pzz) = -coll*Qin(pzz)

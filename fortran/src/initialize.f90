@@ -6,6 +6,7 @@ use helpers
 use basis_funcs!, only: wgt1d, wgt2d, wgt3d, ibitri, cbasis, set_bfvals_3D
 
 use initialcon
+use random
 
 implicit none
 
@@ -36,7 +37,7 @@ contains
         ! Initialize various parameters
         call setup_MPI(mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
         call init_spatial_params(dx,dy,dz, dxi,dyi,dzi, loc_lxd,loc_lyd,loc_lzd)
-        call set_mxa_mya_mza(mxa, mya, mza)
+        ! call set_mxa_mya_mza(mxa, mya, mza)  ! not needed anymore probably
         call init_temporal_params(t, dt, dtout)
         nout = 0
         !-----------------------------------------

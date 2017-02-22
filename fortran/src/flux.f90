@@ -8,12 +8,14 @@ use boundary
 use random
 
 ! Only used by flux_calc (flux_cal) and glflux
-real flux_x(nface,1:nx+1,ny,nz,1:nQ)
-real flux_y(nface,nx,1:ny+1,nz,1:nQ)
-real flux_z(nface,nx,ny,1:nz+1,1:nQ)
+real :: flux_x(nface,1:nx+1,ny,nz,1:nQ)
+real :: flux_y(nface,nx,1:ny+1,nz,1:nQ)
+real :: flux_z(nface,nx,ny,1:nz+1,1:nQ)
 
 ! Only used by flux_calc (flux_cal)
-real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
+real :: cfrx(nface,nQ)
+real :: cfry(nface,nQ)
+real :: cfrz(nface,nQ)
 
 contains
 
@@ -21,17 +23,14 @@ contains
     subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
         ! Calculate the flux "fpnts_r" in direction "ixyz" (x, y, or z) at a set of
         ! points corresponding to conserved quantities "Qpnts_r":
-        !   ixyz=1: x-direction
-        !   ixyz=2: y-direction
-        !   ixyz=3: z-direction
+        !   ixyz = <1,2,3>: <x,y,z>-direction
         implicit none
         integer ife,ixyz,npnts
         real, dimension(npnts,nQ) :: Qpnts_r, fpnts_r
-        real dn,dni,vx,vy,vz,P,smsq
+        real dn,M_x,M_y,M_z,Ener, P_xx,P_yy,P_zz,P_xy,P_xz,P_yz, dni,vx,vy,vz,P
 
         real Spnts_r(npnts,3,3), Hpnts_r(npnts,3)
-        real Sxx,Syy,Szz,Sxy,Sxz,Syz
-        real Qx,Qy,Qz
+        real Sxx,Syy,Szz,Sxy,Sxz,Syz, Qx,Qy,Qz
 
         c2d3cv = c2d3*colvis  ! global vars declared in parameters.f90
         c4d3cv = c4d3*colvis  ! global vars declared in parameters.f90
@@ -41,19 +40,29 @@ contains
         if (llns) call random_stresses_pnts_r(Spnts_r, npnts)
 
         do ife = 1,npnts
-            dn = Qpnts_r(ife,rh)
-            dni = 1./dn
-            smsq = Qpnts_r(ife,mx)**2 + Qpnts_r(ife,my)**2 + Qpnts_r(ife,mz)**2
+            dn   = Qpnts_r(ife,rh)
+            M_x  = Qpnts_r(ife,mx)
+            M_y  = Qpnts_r(ife,my)
+            M_z  = Qpnts_r(ife,mz)
+            Ener = Qpnts_r(ife,en)
+            P_xx  = Qpnts_r(ife,pxx)
+            P_yy  = Qpnts_r(ife,pyy)
+            P_zz  = Qpnts_r(ife,pzz)
+            P_xy  = Qpnts_r(ife,pxy)
+            P_xz  = Qpnts_r(ife,pxz)
+            P_yz  = Qpnts_r(ife,pyz)
 
-            P = aindm1*(Qpnts_r(ife,en) - 0.5*dni*smsq)
+            dni = 1./dn
+            vx = M_x*dni
+            vy = M_y*dni
+            vz = M_z*dni
+
+            P = aindm1*( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
             if (ieos == 2) P = P_1*(dn**7.2 - 1.) + P_base + P
             if (P < P_floor) P = P_floor
 
-            vx = Qpnts_r(ife,mx)*dni
-            vy = Qpnts_r(ife,my)*dni
-            vz = Qpnts_r(ife,mz)*dni
-
             ! NOTE: may not need all values since ixyz choose flux direction
+            ! TODO: can use pxx thru pyz flags to specify the random stresses!
             Sxx = Spnts_r(ife,1,1)
             Syy = Spnts_r(ife,2,2)
             Szz = Spnts_r(ife,3,3)
@@ -67,16 +76,14 @@ contains
 
             select case (ixyz)
             case (1)
-                fpnts_r(ife,rh) = Qpnts_r(ife,mx)
+                fpnts_r(ife,rh) = M_x
 
-                fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + P + Qpnts_r(ife,pxx) - Sxx
-                fpnts_r(ife,my) = Qpnts_r(ife,my)*vx     + Qpnts_r(ife,pxy) - Sxy
-                fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx     + Qpnts_r(ife,pxz) - Sxz
+                fpnts_r(ife,mx) = M_x*vx + P + P_xx - Sxx
+                fpnts_r(ife,my) = M_y*vx     + P_xy - Sxy
+                fpnts_r(ife,mz) = M_z*vx     + P_xz - Sxz
 
-                fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx                      &
-                                + ( (Qpnts_r(ife,pxx) - Sxx)*vx                 &
-                                +   (Qpnts_r(ife,pxy) - Sxy)*vy                 &
-                                +   (Qpnts_r(ife,pxz) - Sxz)*vz )
+                fpnts_r(ife,en) = (Ener + P)*vx                                    &
+                                + (P_xx - Sxx)*vx + (P_xy - Sxy)*vy + (P_xz - Sxz)*vz
 
                 fpnts_r(ife,pxx) =  c4d3cv*vx
                 fpnts_r(ife,pyy) = -c2d3cv*vx
@@ -87,16 +94,14 @@ contains
                 fpnts_r(ife,pyz) = 0
 
             case (2)
-                fpnts_r(ife,rh) = Qpnts_r(ife,my)
+                fpnts_r(ife,rh) = M_y
 
-                fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy     + Qpnts_r(ife,pxy) - Sxy
-                fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + P + Qpnts_r(ife,pyy) - Syy
-                fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy     + Qpnts_r(ife,pyz) - Syz
+                fpnts_r(ife,mx) = M_x*vy     + P_xy - Sxy
+                fpnts_r(ife,my) = M_y*vy + P + P_yy - Syy
+                fpnts_r(ife,mz) = M_z*vy     + P_yz - Syz
 
-                fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy                      &
-                                + ( (Qpnts_r(ife,pyy) - Syy)*vy                 &
-                                +   (Qpnts_r(ife,pxy) - Sxy)*vx                 &
-                                +   (Qpnts_r(ife,pyz) - Syz)*vz )
+                fpnts_r(ife,en) = (Ener + P)*vy                                    &
+                                + (P_yy - Syy)*vy + (P_xy - Sxy)*vx + (P_yz - Syz)*vz
 
                 fpnts_r(ife,pxx) = -c2d3cv*vy
                 fpnts_r(ife,pyy) =  c4d3cv*vy
@@ -107,16 +112,14 @@ contains
                 fpnts_r(ife,pyz) = colvis*vz
 
             case (3)
-                fpnts_r(ife,rh) = Qpnts_r(ife,mz)
+                fpnts_r(ife,rh) = M_z
 
-                fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz     + Qpnts_r(ife,pxz) - Sxz
-                fpnts_r(ife,my) = Qpnts_r(ife,my)*vz     + Qpnts_r(ife,pyz) - Syz
-                fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + P + Qpnts_r(ife,pzz) - Szz
+                fpnts_r(ife,mx) = M_x*vz     + P_xz - Sxz
+                fpnts_r(ife,my) = M_y*vz     + P_yz - Syz
+                fpnts_r(ife,mz) = M_z*vz + P + P_zz - Szz
 
-                fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz                      &
-                                + ( (Qpnts_r(ife,pzz) - Szz)*vz                 &
-                                +   (Qpnts_r(ife,pxz) - Sxz)*vx                 &
-                                +   (Qpnts_r(ife,pyz) - Syz)*vy )
+                fpnts_r(ife,en) = (Ener + P)*vz                                    &
+                                + (P_zz - Szz)*vz + (P_xz - Sxz)*vx + (P_yz - Syz)*vy
 
                 fpnts_r(ife,pxx) = -c2d3cv*vz
                 fpnts_r(ife,pyy) = -c2d3cv*vz
@@ -154,7 +157,7 @@ contains
                 end if
                 if (i == 1) then
                     do ieq = 1,nQ
-                        Qface_x(1:nface,ieq) = Qxlow_ext(j,k,1:nface,ieq)
+                        Qface_x(1:nface,ieq) = Qxlo_ext(j,k,1:nface,ieq)
                     end do
                 end if
 
@@ -167,7 +170,7 @@ contains
                 end if
                 if (i == nx+1) then
                     do ieq = 1,nQ
-                        Qface_x(nface+1:nfe,ieq) = Qxhigh_ext(j,k,1:nface,ieq)
+                        Qface_x(nface+1:nfe,ieq) = Qxhi_ext(j,k,1:nface,ieq)
                     end do
                 end if
 
@@ -234,7 +237,7 @@ contains
                 end if
                 if (j == 1) then
                     do ieq = 1,nQ
-                        Qface_y(1:nface,ieq) = Qylow_ext(i,k,1:nface,ieq)
+                        Qface_y(1:nface,ieq) = Qylo_ext(i,k,1:nface,ieq)
                     end do
                 end if
 
@@ -247,7 +250,7 @@ contains
                 end if
                 if (j == ny+1) then
                     do ieq = 1,nQ
-                        Qface_y(nface+1:nfe,ieq) = Qyhigh_ext(i,k,1:nface,ieq)
+                        Qface_y(nface+1:nfe,ieq) = Qyhi_ext(i,k,1:nface,ieq)
                     end do
                 end if
 
@@ -314,7 +317,7 @@ contains
                 end if
                 if (k == 1) then
                     do ieq = 1,nQ
-                        Qface_z(1:nface,ieq) = Qzlow_ext(i,j,1:nface,ieq)
+                        Qface_z(1:nface,ieq) = Qzlo_ext(i,j,1:nface,ieq)
                     end do
                 end if
 
@@ -328,7 +331,7 @@ contains
                 end if
                 if (k == nz+1) then
                     do ieq = 1,nQ
-                        Qface_z(nface+1:nfe,ieq) = Qzhigh_ext(i,j,1:nface,ieq)
+                        Qface_z(nface+1:nfe,ieq) = Qzhi_ext(i,j,1:nface,ieq)
                     end do
                 end if
 
@@ -409,9 +412,23 @@ contains
         mzj = mz
         enj = en
 
-        iparr  = mxa(ixyz)
-        iperp1 = mya(ixyz)
-        iperp2 = mza(ixyz)
+        ! iparr  = mxa(ixyz)
+        ! iperp1 = mya(ixyz)
+        ! iperp2 = mza(ixyz)
+        select case (ixyz)
+        case (1)
+            iparr  = mx
+            iperp1 = my
+            iperp2 = mz
+        case (2)
+            iparr  = my
+            iperp1 = mz
+            iperp2 = mx
+        case (3)
+            iparr  = mz
+            iperp1 = mx
+            iperp2 = my
+        end select
 
         ivar(1) = rhj
         ivar(2) = iparr
@@ -861,44 +878,65 @@ contains
         do ieq = 1,nQ
         do k = 1,nz
         do j = 1,ny
-          ! do ir=1,1
-                do i = 1,nx
-                    glflux_r(i,j,k,ieq,1) =                                         &
-                        0.25*( dxi*(wgt2d(1)*(flux_x(1,i+1,j,k,ieq) - flux_x(1,i,j,k,ieq)))  &
-                             + dyi*(wgt2d(1)*(flux_y(1,i,j+1,k,ieq) - flux_y(1,i,j,k,ieq)))  &
-                             + dzi*(wgt2d(1)*(flux_z(1,i,j,k+1,ieq) - flux_z(1,i,j,k,ieq)))  &
-                             + dxi*(wgt2d(2)*(flux_x(2,i+1,j,k,ieq) - flux_x(2,i,j,k,ieq)))  &
-                             + dyi*(wgt2d(2)*(flux_y(2,i,j+1,k,ieq) - flux_y(2,i,j,k,ieq)))  &
-                             + dzi*(wgt2d(2)*(flux_z(2,i,j,k+1,ieq) - flux_z(2,i,j,k,ieq)))  &
-                             + dxi*(wgt2d(3)*(flux_x(3,i+1,j,k,ieq) - flux_x(3,i,j,k,ieq)))  &
-                             + dyi*(wgt2d(3)*(flux_y(3,i,j+1,k,ieq) - flux_y(3,i,j,k,ieq)))  &
-                             + dzi*(wgt2d(3)*(flux_z(3,i,j,k+1,ieq) - flux_z(3,i,j,k,ieq)))  &
-                             + dxi*(wgt2d(4)*(flux_x(4,i+1,j,k,ieq) - flux_x(4,i,j,k,ieq)))  &
-                             + dyi*(wgt2d(4)*(flux_y(4,i,j+1,k,ieq) - flux_y(4,i,j,k,ieq)))  &
-                             + dzi*(wgt2d(4)*(flux_z(4,i,j,k+1,ieq) - flux_z(4,i,j,k,ieq))) )
-                end do
-          ! end do ir=1
+        do i = 1,nx
+           glflux_r(i,j,k,ieq,1) = 0.25*(dxi*sum(wgt2d(1:nface)*(flux_x(1:nface,i+1,j,k,ieq) - flux_x(1:nface,i,j,k,ieq))) &
+                                       + dyi*sum(wgt2d(1:nface)*(flux_y(1:nface,i,j+1,k,ieq) - flux_y(1:nface,i,j,k,ieq))) &
+                                       + dzi*sum(wgt2d(1:nface)*(flux_z(1:nface,i,j,k+1,ieq) - flux_z(1:nface,i,j,k,ieq))))
             do ir=2,nbasis
-                do i = 1,nx
-                    glflux_r(i,j,k,ieq,ir) =                                        &
-                         wgtbf_xmp(1,2,ir)*flux_x(1,i+1,j,k,ieq) + wgtbf_xmp(1,1,ir)*flux_x(1,i,j,k,ieq)  &
-                       + wgtbf_ymp(1,2,ir)*flux_y(1,i,j+1,k,ieq) + wgtbf_ymp(1,1,ir)*flux_y(1,i,j,k,ieq)  &
-                       + wgtbf_zmp(1,2,ir)*flux_z(1,i,j,k+1,ieq) + wgtbf_zmp(1,1,ir)*flux_z(1,i,j,k,ieq)  &
-                       + wgtbf_xmp(2,2,ir)*flux_x(2,i+1,j,k,ieq) + wgtbf_xmp(2,1,ir)*flux_x(2,i,j,k,ieq)  &
-                       + wgtbf_ymp(2,2,ir)*flux_y(2,i,j+1,k,ieq) + wgtbf_ymp(2,1,ir)*flux_y(2,i,j,k,ieq)  &
-                       + wgtbf_zmp(2,2,ir)*flux_z(2,i,j,k+1,ieq) + wgtbf_zmp(2,1,ir)*flux_z(2,i,j,k,ieq)  &
-                       + wgtbf_xmp(3,2,ir)*flux_x(3,i+1,j,k,ieq) + wgtbf_xmp(3,1,ir)*flux_x(3,i,j,k,ieq)  &
-                       + wgtbf_ymp(3,2,ir)*flux_y(3,i,j+1,k,ieq) + wgtbf_ymp(3,1,ir)*flux_y(3,i,j,k,ieq)  &
-                       + wgtbf_zmp(3,2,ir)*flux_z(3,i,j,k+1,ieq) + wgtbf_zmp(3,1,ir)*flux_z(3,i,j,k,ieq)  &
-                       + wgtbf_xmp(4,2,ir)*flux_x(4,i+1,j,k,ieq) + wgtbf_xmp(4,1,ir)*flux_x(4,i,j,k,ieq)  &
-                       + wgtbf_ymp(4,2,ir)*flux_y(4,i,j+1,k,ieq) + wgtbf_ymp(4,1,ir)*flux_y(4,i,j,k,ieq)  &
-                       + wgtbf_zmp(4,2,ir)*flux_z(4,i,j,k+1,ieq) + wgtbf_zmp(4,1,ir)*flux_z(4,i,j,k,ieq)  &
-                       - integral_r(i,j,k,ieq,ir)
-                end do
+                glflux_r(i,j,k,ieq,ir) = 0.25*cbasis(ir)*(  &
+                    dxi*sum(wgt2d(1:nface)*(bfvals_xp(1:nface,ir)*flux_x(1:nface,i+1,j,k,ieq) - bfvals_xm(1:nface,ir)*flux_x(1:nface,i,j,k,ieq))) &
+                  + dyi*sum(wgt2d(1:nface)*(bfvals_yp(1:nface,ir)*flux_y(1:nface,i,j+1,k,ieq) - bfvals_ym(1:nface,ir)*flux_y(1:nface,i,j,k,ieq))) &
+                  + dzi*sum(wgt2d(1:nface)*(bfvals_zp(1:nface,ir)*flux_z(1:nface,i,j,k+1,ieq) - bfvals_zm(1:nface,ir)*flux_z(1:nface,i,j,k,ieq))) &
+                  ) - integral_r(i,j,k,ieq,ir)
             end do
+
         end do
         end do
         end do
+        end do
+
+        ! NOTE: This was the original code before newCES
+        ! do ieq = 1,nQ
+        ! do k = 1,nz
+        ! do j = 1,ny
+        !   ! do ir=1,1
+        !         do i = 1,nx
+        !             glflux_r(i,j,k,ieq,1) =                                         &
+        !                 0.25*( dxi*(wgt2d(1)*(flux_x(1,i+1,j,k,ieq) - flux_x(1,i,j,k,ieq)))  &
+        !                      + dyi*(wgt2d(1)*(flux_y(1,i,j+1,k,ieq) - flux_y(1,i,j,k,ieq)))  &
+        !                      + dzi*(wgt2d(1)*(flux_z(1,i,j,k+1,ieq) - flux_z(1,i,j,k,ieq)))  &
+        !                      + dxi*(wgt2d(2)*(flux_x(2,i+1,j,k,ieq) - flux_x(2,i,j,k,ieq)))  &
+        !                      + dyi*(wgt2d(2)*(flux_y(2,i,j+1,k,ieq) - flux_y(2,i,j,k,ieq)))  &
+        !                      + dzi*(wgt2d(2)*(flux_z(2,i,j,k+1,ieq) - flux_z(2,i,j,k,ieq)))  &
+        !                      + dxi*(wgt2d(3)*(flux_x(3,i+1,j,k,ieq) - flux_x(3,i,j,k,ieq)))  &
+        !                      + dyi*(wgt2d(3)*(flux_y(3,i,j+1,k,ieq) - flux_y(3,i,j,k,ieq)))  &
+        !                      + dzi*(wgt2d(3)*(flux_z(3,i,j,k+1,ieq) - flux_z(3,i,j,k,ieq)))  &
+        !                      + dxi*(wgt2d(4)*(flux_x(4,i+1,j,k,ieq) - flux_x(4,i,j,k,ieq)))  &
+        !                      + dyi*(wgt2d(4)*(flux_y(4,i,j+1,k,ieq) - flux_y(4,i,j,k,ieq)))  &
+        !                      + dzi*(wgt2d(4)*(flux_z(4,i,j,k+1,ieq) - flux_z(4,i,j,k,ieq))) )
+        !         end do
+        !   ! end do ir=1
+        !     do ir=2,nbasis
+        !         do i = 1,nx
+        !             glflux_r(i,j,k,ieq,ir) =                                        &
+        !                  wgtbf_xmp(1,2,ir)*flux_x(1,i+1,j,k,ieq) + wgtbf_xmp(1,1,ir)*flux_x(1,i,j,k,ieq)  &
+        !                + wgtbf_ymp(1,2,ir)*flux_y(1,i,j+1,k,ieq) + wgtbf_ymp(1,1,ir)*flux_y(1,i,j,k,ieq)  &
+        !                + wgtbf_zmp(1,2,ir)*flux_z(1,i,j,k+1,ieq) + wgtbf_zmp(1,1,ir)*flux_z(1,i,j,k,ieq)  &
+        !                + wgtbf_xmp(2,2,ir)*flux_x(2,i+1,j,k,ieq) + wgtbf_xmp(2,1,ir)*flux_x(2,i,j,k,ieq)  &
+        !                + wgtbf_ymp(2,2,ir)*flux_y(2,i,j+1,k,ieq) + wgtbf_ymp(2,1,ir)*flux_y(2,i,j,k,ieq)  &
+        !                + wgtbf_zmp(2,2,ir)*flux_z(2,i,j,k+1,ieq) + wgtbf_zmp(2,1,ir)*flux_z(2,i,j,k,ieq)  &
+        !                + wgtbf_xmp(3,2,ir)*flux_x(3,i+1,j,k,ieq) + wgtbf_xmp(3,1,ir)*flux_x(3,i,j,k,ieq)  &
+        !                + wgtbf_ymp(3,2,ir)*flux_y(3,i,j+1,k,ieq) + wgtbf_ymp(3,1,ir)*flux_y(3,i,j,k,ieq)  &
+        !                + wgtbf_zmp(3,2,ir)*flux_z(3,i,j,k+1,ieq) + wgtbf_zmp(3,1,ir)*flux_z(3,i,j,k,ieq)  &
+        !                + wgtbf_xmp(4,2,ir)*flux_x(4,i+1,j,k,ieq) + wgtbf_xmp(4,1,ir)*flux_x(4,i,j,k,ieq)  &
+        !                + wgtbf_ymp(4,2,ir)*flux_y(4,i,j+1,k,ieq) + wgtbf_ymp(4,1,ir)*flux_y(4,i,j,k,ieq)  &
+        !                + wgtbf_zmp(4,2,ir)*flux_z(4,i,j,k+1,ieq) + wgtbf_zmp(4,1,ir)*flux_z(4,i,j,k,ieq)  &
+        !                - integral_r(i,j,k,ieq,ir)
+        !         end do
+        !     end do
+        ! end do
+        ! end do
+        ! end do
     end subroutine glflux
 !-------------------------------------------------------------------------------
 

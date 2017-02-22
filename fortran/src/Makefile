@@ -34,7 +34,9 @@ MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/fortran/mkl
 # MKLBIN=$(MKLPATH)/bin
 # MKLINCLUDE=$(MKLPATH)/include
 MKL_TARGET_ARCH = intel64_lin
-FORTFLAGS = -O2 -xHost -mkl -L$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
+MISCFLAGS = -diag-disable 13003 # disable the warning for message verification
+
+FORTFLAGS = -O2 -xHost -mkl -L$(MKLROOT)/lib/$(MKL_TARGET_ARCH) $(MISCFLAGS)
 # FORTFLAGS = -O3 -xHost -mkl -L$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
 # FORTFLAGS = -O2 -xHost -CB -fpe:0 -traceback -check noarg_temp_created #-fpp
 ##################################################################
@@ -73,13 +75,13 @@ ifeq ($(NAME),modbc)
 	OBJS = main.f90
 	MODULES =  input.f90 parameters.f90 basis_funcs.f90 helpers.f90 \
 			   boundary.f90 \
-			   initialcon.f90 initialize.f90 \
-			   prepare_step.f90 sources.f90 random.f90 flux.f90 \
+			   random.f90 initialcon.f90 initialize.f90 \
+			   prepare_step.f90 sources.f90 flux.f90 \
 			   integrator.f90 output.f90
     MODFILES = input.mod parameters.mod basis_funcs.mod helpers.mod \
-			   boundary_custom.mod boundary.mod \
-			   initialcon.mod initialize.mod \
-			   prepare_step.mod sources.mod random.mod flux.mod \
+			   boundary_defs.mod boundary_custom.mod boundary.mod \
+			   random.mod initialcon.mod initialize.mod \
+			   prepare_step.mod sources.mod flux.mod \
 			   integrator.mod output.mod
 endif
 ##################################################################
