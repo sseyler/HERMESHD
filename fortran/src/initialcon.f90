@@ -28,7 +28,6 @@ contains
         ! rh_fluid = 1.0
         ! coll = rh_fluid*te_fluid/vis
         ! colvis = coll*vis  ! or, dn*te
-
         if (ivis == 0) then
             coll = 0
             colvis = 0

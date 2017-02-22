@@ -56,14 +56,15 @@ contains
                            mesh_topology = 'RectilinearGrid',     &
                            nx1=1,nx2=nnx+1,ny1=1,ny2=nny+1,nz1=1,nz2=nnz+1)
 
+        ! NOTE: SLS removed the 1e-3 to get the units right
         do i=1+nb,nnx-nb+1
-            x_xml_rect(i-nb)=(xvtk(i) - 0.5*dxvtk)*1e-3
+            x_xml_rect(i-nb)=(xvtk(i) - 0.5*dxvtk) !*1e-3
         enddo
         do j=1+nb,nny-nb+1
-            y_xml_rect(j-nb)=(yvtk(j) - 0.5*dyvtk)*1e-3
+            y_xml_rect(j-nb)=(yvtk(j) - 0.5*dyvtk) !*1e-3
         enddo
         do k=1+nb,nnz-nb+1
-            z_xml_rect(k-nb)=(zvtk(k) - 0.5*dzvtk)*1e-3
+            z_xml_rect(k-nb)=(zvtk(k) - 0.5*dzvtk) !*1e-3
         enddo
 
 
@@ -298,14 +299,15 @@ contains
                            mesh_topology = 'RectilinearGrid',     &
                            nx1=1,nx2=nnx+1,ny1=1,ny2=nny+1,nz1=1,nz2=nnz+1)
 
+        ! NOTE: SLS removed the 1e-3 to get the units right
         do i=1+nb,nx-nb+1
-            x_xml_rect(i)=(xc(i) - 0.5/dxi)*1e-3
+            x_xml_rect(i)=(xc(i) - 0.5/dxi) !*1e-3
         enddo
         do i=1+nb,ny-nb+1
-            y_xml_rect(i)=(yc(i) - 0.5/dyi)*1e-3
+            y_xml_rect(i)=(yc(i) - 0.5/dyi) !*1e-3
         enddo
         do i=1+nb,nz-nb+1
-            z_xml_rect(i)=(zc(i) - 0.5/dzi)*1e-3
+            z_xml_rect(i)=(zc(i) - 0.5/dzi) !*1e-3
         enddo
 
         E_IO = VTK_GEO_XML(nx1=1,nx2=nnx+1,ny1=1,ny2=nny+1,nz1=1,nz2=nnz+1, &
