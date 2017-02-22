@@ -52,6 +52,13 @@ contains
         call set_internal_vals_3D()     ! Define basis function values at quadrature points INTERNAL to cell.
         call set_face_vals_3D()   ! Define local basis function values at quadrature points on a cell face.
         call set_weights_3D()     ! Define weights for integral approximation using Gaussian quadrature.
+
+        if (iam == print_mpi) then
+    	   print *,'testing basis...'
+    	   call test_basis_3D()
+    	   print *,'done testing basis...'
+    	end if
+
     end subroutine set_bfvals_3D
 
 !----------------------------------------------------------
@@ -594,5 +601,371 @@ contains
         end if
 
     end subroutine set_weights_3D
+
+
+    !===========================================================================
+    ! This routine tests whether the basis functions are orthonormal over the
+    ! cell volume and over each cell face.
+    !---------------------------------------------------------------------------
+    subroutine test_basis_3D
+        implicit none
+        integer ir,jr,ix1,iy1,iz1,ipass
+        real sq3,sq5,sq7,epsm
+
+        sq3 = sqrt(3.)
+        sq5 = sqrt(5.)
+        sq7 = sqrt(7.)
+
+        ! Indices of basis elements projected onto the x-faces (yz-plane):
+        ibas_x(1) = 1
+        ibas_x(kx) = 1
+        ibas_x(ky) = ky
+        ibas_x(kz) = kz
+        ibas_x(kxy) = ky
+        ibas_x(kyz) = kyz
+        ibas_x(kzx) = kz
+        ibas_x(kxx) = 1
+        ibas_x(kzz) = kzz
+        ibas_x(kyy) = kyy
+        ibas_x(kxxy) = ky
+        ibas_x(kyyz) = kyyz
+        ibas_x(kzzx) = kzz
+        ibas_x(kxyy) = kyy
+        ibas_x(kyzz) = kyzz
+        ibas_x(kzxx) = kz
+        ibas_x(kxyz) = kyz
+        ibas_x(kxxyy) = kyy
+        ibas_x(kyyzz) = kyyzz
+        ibas_x(kzzxx) = kzz
+        ibas_x(kxyzz) = kyzz
+        ibas_x(kyzxx) = kyz
+        ibas_x(kzxyy) = kyyz
+        ibas_x(kxyyzz) = kyyzz
+        ibas_x(kyzzxx) = kyzz
+        ibas_x(kzxxyy) = kyyz
+        ibas_x(kxxyyzz) = kyyzz
+
+        ! Indices of basis elements projected onto the y-faces (zx-plane):
+        ibas_y(1) = 1
+        ibas_y(kx) = kx
+        ibas_y(ky) = 1
+        ibas_y(kz) = kz
+        ibas_y(kxy) = kx
+        ibas_y(kyz) = kz
+        ibas_y(kzx) = kzx
+        ibas_y(kxx) = kxx
+        ibas_y(kzz) = kzz
+        ibas_y(kyy) = 1
+        ibas_y(kxxy) = kxx
+        ibas_y(kyyz) = kz
+        ibas_y(kzzx) = kzzx
+        ibas_y(kxyy) = kx
+        ibas_y(kyzz) = kzz
+        ibas_y(kzxx) = kzxx
+        ibas_y(kxyz) = kzx
+        ibas_y(kxxyy) = kxx
+        ibas_y(kyyzz) = kzz
+        ibas_y(kzzxx) = kzzxx
+        ibas_y(kxyzz) = kzzx
+        ibas_y(kyzxx) = kzxx
+        ibas_y(kzxyy) = kzx
+        ibas_y(kxyyzz) = kzzx
+        ibas_y(kyzzxx) = kzzxx
+        ibas_y(kzxxyy) = kzxx
+        ibas_y(kxxyyzz) = kzzxx
+
+        ! Indices of basis elements projected onto the z-faces (xy-plane):
+        ibas_z(1) = 1
+        ibas_z(kx) = kx
+        ibas_z(ky) = ky
+        ibas_z(kz) = 1
+        ibas_z(kxy) = kxy
+        ibas_z(kyz) = ky
+        ibas_z(kzx) = kx
+        ibas_z(kxx) = kxx
+        ibas_z(kzz) = 1
+        ibas_z(kyy) = kyy
+        ibas_z(kxxy) = kxxy
+        ibas_z(kyyz) = kyy
+        ibas_z(kzzx) = kx
+        ibas_z(kxyy) = kxyy
+        ibas_z(kyzz) = ky
+        ibas_z(kzxx) = kxx
+        ibas_z(kxyz) = kxy
+        ibas_z(kxxyy) = kxxyy
+        ibas_z(kyyzz) = kyy
+        ibas_z(kzzxx) = kxx
+        ibas_z(kxyzz) = kxy
+        ibas_z(kyzxx) = kxxy
+        ibas_z(kzxyy) = kxyy
+        ibas_z(kxyyzz) = kxyy
+        ibas_z(kyzzxx) = kxxy
+        ibas_z(kzxxyy) = kxxyy
+        ibas_z(kxxyyzz) = kxxyy
+
+        ! Normalization of basis elements over the  positive x-face of a cell:
+        cbas_xp(1) = 1.
+        cbas_xp(kx) = 1.
+        cbas_xp(ky) = sq3
+        cbas_xp(kz) = sq3
+        cbas_xp(kxy) = sq3
+        cbas_xp(kyz) = 3.
+        cbas_xp(kzx) = sq3
+        cbas_xp(kxx) = 1.
+        cbas_xp(kzz) = sq5
+        cbas_xp(kyy) = sq5
+        cbas_xp(kxxy) = sq3
+        cbas_xp(kyyz) = sq5*sq3
+        cbas_xp(kzzx) = sq5
+        cbas_xp(kxyy) = sq5
+        cbas_xp(kyzz) = sq3*sq5
+        cbas_xp(kzxx) = sq3
+        cbas_xp(kxyz) = sq3*sq3
+        cbas_xp(kxxyy) = sq5
+        cbas_xp(kyyzz) = sq5*sq5
+        cbas_xp(kzzxx) = sq5
+        cbas_xp(kxyzz) = sq3*sq5
+        cbas_xp(kyzxx) = sq3*sq3
+        cbas_xp(kzxyy) = sq3*sq5
+        cbas_xp(kxyyzz) = sq5*sq5
+        cbas_xp(kyzzxx) = sq3*sq5
+        cbas_xp(kzxxyy) = sq3*sq5
+        cbas_xp(kxxyyzz) = sq5*sq5
+
+        ! Normalization of basis elements over the  positive y-face of a cell:
+        cbas_yp(1) = 1.
+        cbas_yp(kx) = sq3
+        cbas_yp(ky) = 1.
+        cbas_yp(kz) = sq3
+        cbas_yp(kxy) = sq3
+        cbas_yp(kyz) = sq3
+        cbas_yp(kzx) = 3.
+        cbas_yp(kxx) = sq5
+        cbas_yp(kzz) = sq5
+        cbas_yp(kyy) = 1.
+        cbas_yp(kxxy) = sq5
+        cbas_yp(kyyz) = sq3
+        cbas_yp(kzzx) = sq5*sq3
+        cbas_yp(kxyy) = sq3
+        cbas_yp(kyzz) = sq5
+        cbas_yp(kzxx) = sq3*sq5
+        cbas_yp(kxyz) = sq3*sq3
+        cbas_yp(kxxyy) = sq5
+        cbas_yp(kyyzz) = sq5
+        cbas_yp(kzzxx) = sq5*sq5
+        cbas_yp(kxyzz) = sq3*sq5
+        cbas_yp(kyzxx) = sq3*sq5
+        cbas_yp(kzxyy) = sq3*sq3
+        cbas_yp(kxyyzz) = sq3*sq5
+        cbas_yp(kyzzxx) = sq5*sq5
+        cbas_yp(kzxxyy) = sq3*sq5
+        cbas_yp(kxxyyzz) = sq5*sq5
+
+        ! Normalization of basis elements over the  positive z-face of a cell:
+        cbas_zp(1) = 1.
+        cbas_zp(kx) = sq3
+        cbas_zp(ky) = sq3
+        cbas_zp(kz) = 1.
+        cbas_zp(kxy) = 3.
+        cbas_zp(kyz) = sq3
+        cbas_zp(kzx) = sq3
+        cbas_zp(kxx) = sq5
+        cbas_zp(kzz) = 1.
+        cbas_zp(kyy) = sq5
+        cbas_zp(kxxy) = sq5*sq3
+        cbas_zp(kyyz) = sq5
+        cbas_zp(kzzx) = sq3
+        cbas_zp(kxyy) = sq3*sq5
+        cbas_zp(kyzz) = sq3
+        cbas_zp(kzxx) = sq5
+        cbas_zp(kxyz) = sq3*sq3
+        cbas_zp(kxxyy) = sq5*sq5
+        cbas_zp(kyyzz) = sq5
+        cbas_zp(kzzxx) = sq5
+        cbas_zp(kxyzz) = sq3*sq3
+        cbas_zp(kyzxx) = sq3*sq5
+        cbas_zp(kzxyy) = sq3*sq5
+        cbas_zp(kxyyzz) = sq3*sq5
+        cbas_zp(kyzzxx) = sq3*sq5
+        cbas_zp(kzxxyy) = sq5*sq5
+        cbas_zp(kxxyyzz) = sq5*sq5
+
+        ! Normalization of basis elements over the  negative x-face of a cell:
+        cbas_xm = cbas_xp
+        cbas_xm(kx) = -1.
+        cbas_xm(kxy) = -sq3
+        cbas_xm(kzx) = -sq3
+        cbas_xm(kxyy) = -sq5
+        cbas_xm(kzzx) = -sq5
+        cbas_xm(kxyz) = -sq3*sq3
+        cbas_xm(kxyzz) = -sq3*sq5
+        cbas_xm(kzxyy) = -sq3*sq5
+        cbas_xm(kxyyzz) = -sq5*sq5
+
+        ! Normalization of basis elements over the  negative y-face of a cell:
+        cbas_ym = cbas_yp
+        cbas_ym(ky) = -1.
+        cbas_ym(kxy) = -sq3
+        cbas_ym(kyz) = -sq3
+        cbas_ym(kyzz) = -sq5
+        cbas_ym(kxxy) = -sq5
+        cbas_ym(kxyz) = -sq3*sq3
+        cbas_ym(kxyzz) = -sq3*sq5
+        cbas_ym(kyzxx) = -sq3*sq5
+        cbas_ym(kyzzxx) = -sq5*sq5
+
+        ! Normalization of basis elements over the  negative z-face of a cell:
+        cbas_zm = cbas_zp
+        cbas_zm(kz) = -1.
+        cbas_zm(kyz) = -sq3
+        cbas_zm(kzx) = -sq3
+        cbas_zm(kzxx) = -sq5
+        cbas_zm(kyyz) = -sq5
+        cbas_zm(kxyz) = -sq3*sq3
+        cbas_zm(kyzxx) = -sq3*sq5
+        cbas_zm(kzxyy) = -sq3*sq5
+        cbas_zm(kzxxyy) = -sq5*sq5
+
+
+        ! Below, we specify what the scalar product of any two basis elements should
+        ! evaluate to.
+
+        ! cell_int0: scalar product over cell volume
+        ! xp_int0: scalar product over positive x-face
+        ! xm_int0: scalar product over negative x-face
+        ! yp_int0: scalar product over positive y-face
+        ! ym_int0: scalar product over negative y-face
+        ! zp_int0: scalar product over positive z-face
+        ! zm_int0: scalar product over negative z-face
+
+        xp_int0 = 0.
+        xm_int0 = 0.
+        yp_int0 = 0.
+        ym_int0 = 0.
+        zp_int0 = 0.
+        zm_int0 = 0.
+
+        do jr=1,nbasis
+            do ir=1,nbasis
+                if (ir .ne. jr) cell_int0(ir,jr) = 0.
+                if (ir .eq. jr) cell_int0(ir,jr) = 1.
+                ix1 = 0
+                iy1 = 0
+                iz1 = 0
+
+                if (ibas_x(ir) .eq. 1 .and. ibas_x(jr) .eq. 1) ix1 = 1
+                if (ibas_x(ir) .eq. ky .and. ibas_x(jr) .eq. ky) ix1 = 1
+                if (ibas_x(ir) .eq. kyy .and. ibas_x(jr) .eq. kyy) ix1 = 1
+                if (ibas_x(ir) .eq. kz .and. ibas_x(jr) .eq. kz) ix1 = 1
+                if (ibas_x(ir) .eq. kzz .and. ibas_x(jr) .eq. kzz) ix1 = 1
+                if (ibas_x(ir) .eq. kyz .and. ibas_x(jr) .eq. kyz) ix1 = 1
+                if (ibas_x(ir) .eq. kyyz .and. ibas_x(jr) .eq. kyyz) ix1 = 1
+                if (ibas_x(ir) .eq. kyzz .and. ibas_x(jr) .eq. kyzz) ix1 = 1
+                if (ibas_x(ir) .eq. kyyzz .and. ibas_x(jr) .eq. kyyzz) ix1 = 1
+
+                if (ibas_y(ir) .eq. 1 .and. ibas_y(jr) .eq. 1) iy1 = 1
+                if (ibas_y(ir) .eq. kx .and. ibas_y(jr) .eq. kx) iy1 = 1
+                if (ibas_y(ir) .eq. kxx .and. ibas_y(jr) .eq. kxx) iy1 = 1
+                if (ibas_y(ir) .eq. kz .and. ibas_y(jr) .eq. kz) iy1 = 1
+                if (ibas_y(ir) .eq. kzz .and. ibas_y(jr) .eq. kzz) iy1 = 1
+                if (ibas_y(ir) .eq. kzx .and. ibas_y(jr) .eq. kzx) iy1 = 1
+                if (ibas_y(ir) .eq. kzxx .and. ibas_y(jr) .eq. kzxx) iy1 = 1
+                if (ibas_y(ir) .eq. kzzx .and. ibas_y(jr) .eq. kzzx) iy1 = 1
+                if (ibas_y(ir) .eq. kzzxx .and. ibas_y(jr) .eq. kzzxx) iy1 = 1
+
+                if (ibas_z(ir) .eq. 1 .and. ibas_z(jr) .eq. 1) iz1 = 1
+                if (ibas_z(ir) .eq. kx .and. ibas_z(jr) .eq. kx) iz1 = 1
+                if (ibas_z(ir) .eq. kxx .and. ibas_z(jr) .eq. kxx) iz1 = 1
+                if (ibas_z(ir) .eq. ky .and. ibas_z(jr) .eq. ky) iz1 = 1
+                if (ibas_z(ir) .eq. kyy .and. ibas_z(jr) .eq. kyy) iz1 = 1
+                if (ibas_z(ir) .eq. kxy .and. ibas_z(jr) .eq. kxy) iz1 = 1
+                if (ibas_z(ir) .eq. kxxy .and. ibas_z(jr) .eq. kxxy) iz1 = 1
+                if (ibas_z(ir) .eq. kxyy .and. ibas_z(jr) .eq. kxyy) iz1 = 1
+                if (ibas_z(ir) .eq. kxxyy .and. ibas_z(jr) .eq. kxxyy) iz1 = 1
+
+                if (ix1 .eq. 1) then
+                    xp_int0(ir,jr) = 1.  !0.5*3.
+                    xm_int0(ir,jr) = 1.  !0.5*3.
+                end if
+                if (iy1 .eq. 1) then
+                    yp_int0(ir,jr) = 1.  !0.5*3.
+                    ym_int0(ir,jr) = 1.  !0.5*3.
+                end if
+                if (iz1 .eq. 1) then
+                    zp_int0(ir,jr) = 1.  !0.5*3.
+                    zm_int0(ir,jr) = 1.  !0.5*3.
+                end if
+           end do
+        end do
+
+
+        ! Below, we evaluate the scalar product of all pairs of basis elements and
+        ! test whether it's equal to the expected value computed above.
+
+        ! cell_int: scalar product over cell volume
+        ! xp_int: scalar product over positive x-face
+        ! xm_int: scalar product over negative x-face
+        ! yp_int: scalar product over positive y-face
+        ! ym_int: scalar product over negative y-face
+        ! zp_int: scalar product over positive z-face
+        ! zm_int: scalar product over negative z-face
+
+        ipass = 1
+
+        do jr=1,nbasis
+            do ir=1,nbasis
+                cell_int(ir,jr) = 0.125*cbasis(ir)*sum(wgt3d(1:npg)*bfvals_int(1:npg,ir)*bfvals_int(1:npg,jr))
+                xp_int(ir,jr) = 0.25*cbas_xp(ir)*cbas_xp(jr)*sum(wgt2d(1:nface)*bfvals_xp(1:nface,ir)*bfvals_xp(1:nface,jr))
+                xm_int(ir,jr) = 0.25*cbas_xm(ir)*cbas_xm(jr)*sum(wgt2d(1:nface)*bfvals_xm(1:nface,ir)*bfvals_xm(1:nface,jr))
+                yp_int(ir,jr) = 0.25*cbas_yp(ir)*cbas_yp(jr)*sum(wgt2d(1:nface)*bfvals_yp(1:nface,ir)*bfvals_yp(1:nface,jr))
+                ym_int(ir,jr) = 0.25*cbas_ym(ir)*cbas_ym(jr)*sum(wgt2d(1:nface)*bfvals_ym(1:nface,ir)*bfvals_ym(1:nface,jr))
+                zp_int(ir,jr) = 0.25*cbas_zp(ir)*cbas_zp(jr)*sum(wgt2d(1:nface)*bfvals_zp(1:nface,ir)*bfvals_zp(1:nface,jr))
+                zm_int(ir,jr) = 0.25*cbas_zm(ir)*cbas_zm(jr)*sum(wgt2d(1:nface)*bfvals_zm(1:nface,ir)*bfvals_zm(1:nface,jr))
+
+                epsm = 1.e-5
+
+         !     if (iam .eq. print_mpi) then
+            if (abs(cell_int(ir,jr) - cell_int0(ir,jr)) .gt. epsm) then
+                print *,'incorrect cell integral: bases',ir,jr
+                print *,'computed value: ',cell_int(ir,jr),'  expected value: ',cell_int0(ir,jr)
+                ipass = 0
+            end if
+                if (abs(xp_int(ir,jr) - xp_int0(ir,jr)) .gt. epsm) then
+                print *,'incorrect +x-face integral: bases',ir,jr
+                print *,'computed value: ',xp_int(ir,jr),'  expected value: ',xp_int0(ir,jr)
+                ipass = 0
+            end if
+                if (abs(xm_int(ir,jr) - xm_int0(ir,jr)) .gt. epsm) then
+                print *,'incorrect -x-face integral: bases',ir,jr
+                print *,'computed value: ',xm_int(ir,jr),'  expected value: ',xm_int0(ir,jr)
+                ipass = 0
+            end if
+                if (abs(yp_int(ir,jr) - yp_int0(ir,jr)) .gt. epsm) then
+                print *,'incorrect +y-face integral: bases',ir,jr
+                print *,'computed value: ',yp_int(ir,jr),'  expected value: ',yp_int0(ir,jr)
+                ipass = 0
+            end if
+                if (abs(ym_int(ir,jr) - ym_int0(ir,jr)) .gt. epsm) then
+                print *,'incorrect -y-face integral: bases',ir,jr
+                print *,'computed value: ',ym_int(ir,jr),'  expected value: ',ym_int0(ir,jr)
+                ipass = 0
+            end if
+                if (abs(zp_int(ir,jr) - zp_int0(ir,jr)) .gt. epsm) then
+                print *,'incorrect +z-face integral: bases',ir,jr
+                print *,'computed value: ',zp_int(ir,jr),'  expected value: ',zp_int0(ir,jr)
+                ipass = 0
+            end if
+                if (abs(zm_int(ir,jr) - zm_int0(ir,jr)) .gt. epsm) then
+                print *,'incorrect -z-face integral: bases',ir,jr
+                print *,'computed value: ',zm_int(ir,jr),'  expected value: ',zm_int0(ir,jr)
+                ipass = 0
+            end if
+          !    end if
+           end do
+        end do
+
+        ! if (ipass .eq. 0) call exit(-1)
+    end subroutine test_basis_3D
+    !---------------------------------------------------------------------------
 
 end module basis_funcs
