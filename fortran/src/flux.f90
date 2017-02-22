@@ -1,3 +1,4 @@
+!***** FLUX.F90 **************************************************************************
 module flux
 
 use parameters
@@ -8,14 +9,14 @@ use boundary
 use random
 
 ! Only used by flux_calc (flux_cal) and glflux
-real :: flux_x(nface,1:nx+1,ny,nz,1:nQ)
-real :: flux_y(nface,nx,1:ny+1,nz,1:nQ)
-real :: flux_z(nface,nx,ny,1:nz+1,1:nQ)
+real, dimension(nface,1:nx+1,ny,nz,1:nQ) :: flux_x
+real, dimension(nface,nx,1:ny+1,nz,1:nQ) :: flux_y
+real, dimension(nface,nx,ny,1:nz+1,1:nQ) :: flux_z
 
-! Only used by flux_calc (flux_cal)
-real :: cfrx(nface,nQ)
-real :: cfry(nface,nQ)
-real :: cfrz(nface,nQ)
+! Only used by flux_calc (flux_cal) -- may be better to leave local to subrout
+real, dimension(nface,nQ) :: cfrx,cfry,cfrz
+real, dimension(nfe,nQ) :: Qface_x,Qface_y,Qface_z
+real, dimension(nfe,nQ) :: fface_x,fface_y,fface_z
 
 contains
 
@@ -45,12 +46,12 @@ contains
             M_y  = Qpnts_r(ife,my)
             M_z  = Qpnts_r(ife,mz)
             Ener = Qpnts_r(ife,en)
-            P_xx  = Qpnts_r(ife,pxx)
-            P_yy  = Qpnts_r(ife,pyy)
-            P_zz  = Qpnts_r(ife,pzz)
-            P_xy  = Qpnts_r(ife,pxy)
-            P_xz  = Qpnts_r(ife,pxz)
-            P_yz  = Qpnts_r(ife,pyz)
+            P_xx = Qpnts_r(ife,pxx)
+            P_yy = Qpnts_r(ife,pyy)
+            P_zz = Qpnts_r(ife,pzz)
+            P_xy = Qpnts_r(ife,pxy)
+            P_xz = Qpnts_r(ife,pxz)
+            P_yz = Qpnts_r(ife,pyz)
 
             dni = 1./dn
             vx = M_x*dni
@@ -140,7 +141,6 @@ contains
         real, dimension(nface,nx+1,ny,nz,nQ), intent(out) :: flux_x
 
         integer i,j,k,ieq,iback,i4,i4p,ipnt
-        real Qface_x(nfe,nQ),fface_x(nfe,nQ) !, fface_y(nfe,nQ), fface_z(nfe,nQ)
         real cwavex(nfe),fhllc_x(nface,5),qvin(nQ) !,fhllc_y(nface,5),fhllc_z(nface,5),fs(nface,nQ)
 
         do k=1,nz
@@ -220,7 +220,6 @@ contains
         real, dimension(nface,nx,ny+1,nz,nQ), intent(out) :: flux_y
 
         integer i,j,k,ieq,jleft,i4,i4p,ipnt
-        real Qface_y(nfe,nQ),fface_y(nfe,nQ)!, fface_z(nfe,nQ)
         real cwavey(nfe),fhllc_y(nface,5),qvin(nQ) !,fhllc_z(nface,5),fs(nface,nQ)
 
         do k=1,nz
@@ -299,7 +298,6 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny,nz+1,nQ), intent(out) :: flux_z
         integer i,j,k,ieq,kdown,i4,i4p,ipnt
-        real Qface_z(nfe,nQ),fface_z(nfe,nQ)
         real cwavez(nfe),fhllc_z(nface,5),qvin(nQ) !fs(nface,nQ)
 
         do k=1,nz+1

@@ -1,3 +1,4 @@
+!***** INITIALCON.F90 ********************************************************************
 module initialcon
 
 use parameters
@@ -215,8 +216,6 @@ contains
 
     !===========================================================================
     ! 2D pipe (Poiseuille) flow
-    !   * Re ~ 20 for laminar case (version 0)
-    !   * Re ~ 100 for periodic case (version 1)
     !   * Need outflow BCs on right wall: nu d u/d eta - p*eta = 0
     ! NOTE: This subroutine sets BCs for the problem using custom_boundary
     !------------------------------------------------------------
@@ -230,12 +229,9 @@ contains
 
         !-------------------------------------------------------
         ! Definitions
-        pr = P_base
+        dn = 1.0
         te = T_floor
-        dn = pr/te
-        ! dn = 1.0
-        ! te = T_floor
-        ! pr = dn*te  ! 1.0*P_base  ! can be adjusted to get stable results
+        pr = dn*te  ! 1.0*P_base  ! can be adjusted to get stable results
 
         coll   = dn*te/vis  ! global
         colvis = coll*vis   ! or, dn*te  (also global)
@@ -245,16 +241,13 @@ contains
         vz = 0.0
 
         yp0 = lyd  ! set zero-value of y-coordinate to domain bottom
-        ux_amb = 0.3e-2
+        ux_amb = 1.0e-1
 
         !-------------------------------------------------------
         ! Set initial conditions
         do k = 1,nz
         do j = 1,ny
         do i = 1,nx
-            ! yp = yc(j) - yp0
-            ! vx = 4*ux_amb*yp*(ly-yp)/ly**2
-
             Q_r(i,j,k,rh,1) = dn
             Q_r(i,j,k,mx,1) = dn*vx
             Q_r(i,j,k,my,1) = dn*vy

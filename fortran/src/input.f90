@@ -1,19 +1,10 @@
+!****** INPUT.F90 ************************************************************************
 module input
 
     ! Physical system dimensions
     real, parameter :: lx = 2.0e0 !1.0e6 !4.1e2
     real, parameter :: ly = 5.0e-1 !1.0e6 !4.1e2
     real, parameter :: lz = ly/120. !1.0e6/120. !4.1e2/120.
-
-    !===========================================================================
-    ! Spatial resolution -- # grid cells and DG basis order
-    !------------------------------------------------------------
-    ! The jump in accuracy b/w the linear basis (nbasis=4) and quadratic basis
-    ! (nbasis=10) is much greater than jump b/w quadratic and cubic (nbasis=20).
-    !   nbasis = 4:  {1,x,y,z}
-    !   nbasis = 10: nbasis4  + {P_2(x),P_2(y),P_2(z), yz, zx, xy}
-    !   nbasis = 20: nbasis10 + {xyz,xP2(y),yP2(x),xP2(z),
-    !                                zP2(x),yP2(z),zP2(y),P3(x),P3(y),P3(z)}
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad = 2
@@ -51,7 +42,7 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 1.0e-1 !8.5e4
+    real, parameter :: tf = 1.0e0 !8.5e4
 
     ! Console output frequency
     integer, parameter :: ntout = 200
@@ -81,7 +72,7 @@ module input
 
     ! Output location and naming
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_modbc_pipe_2"
+    character (*), parameter :: outname = "test_modbc_pipe_1"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     ! Checkpointing

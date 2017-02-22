@@ -1,6 +1,8 @@
-! Any functions in this module should NOT have any dependence on global
-! variables specific to a hydro problem. This prevents the helpers module from
-! depending on other modules.
+!****** HELPERS.F90 **********************************************************************
+!   Any functions in this module should NOT have any dependence on global
+!   variables specific to a hydro problem. This prevents the helpers module from
+!   depending on other modules.
+!*******************************************************************************
 module helpers
 
 

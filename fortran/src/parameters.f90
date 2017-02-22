@@ -1,3 +1,36 @@
+!****** PARAMETERS.F90 *******************************************************************
+
+! TEST RESULTS SUMMARY USING VARIOUS #s OF BASIS FUNCTIONS & QUADRATURE POINTS
+!
+!   The nbasis = 8 and iquad = 2 case gives extremely close results to nbasis = 10
+!   and iquad = 3. The (8,2) case takes 21 seconds per iteration and (10,3) takes 35
+!   seconds. Close examination of the output indicates that the (10,3) case has
+!   slightly better resolution/sharpness/definition as seen in the transitions from
+!   high to low or low to high vorticity.  The (27,3) case has sightly better
+!   resolution/sharpness/definition than the (10,3) case in about the same
+!   proportion as the (10,3) case does compared to the (8,2) case.  However, the
+!   time for an iteration is about 190 sec, which is about 4x higher than the (10,3)
+!   case.  It would appear for this test there is no significant advantage of using
+!   27 elements over the 10 elements. There of ourse could be applications in which
+!   the 27 elements does provide significant improvement of accuracy. Finally in
+!   comparing the cases (3,27) to (4,20) there does not appear to be any real
+!   differences, only that the (4,20) case was about 15% faster.
+!
+! Use iquad = 2
+!   nbasis = 4:  {1, x, y, z}
+!   nbasis = 8:  {1, x, y, z, yz, zx, xy, xyz}
+!
+! Use iquad = 3
+!   nbasis = 10: {1, x, y, z, yz, zx, xy, P_2(x), P_2(y), P_2(z)}
+!   nbasis = 27: {1, x, y, z, yz, zx, xy, xyz, P2(x), P2(y), P2(z),
+!                 yP2(z), zP2(x), xP2(y), P2(y)z, P2(z)x, P2(x)y,
+!                 P2(y)P2(z), P2(z)P2(x), P2(x)P2(y), yzP2(x), zxP2(y), xyP2(z),
+!                 xP2(y)P2(z), yP2(z)P2(x), zP2(x)P2(y), P2(x)P2(y)P2(z)}
+!
+! Use iquad = 4
+!   nbasis = 20: nbasis10 + {xyz, xP2(y), yP2(x), xP2(z),
+!                                 zP2(x), yP2(z), zP2(y), P3(x), P3(y), P3(z)}
+!*******************************************************************************
 module parameters
 
     use input

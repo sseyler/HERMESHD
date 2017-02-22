@@ -1,3 +1,4 @@
+!***** INTEGRATOR.F90 ********************************************************************
 module integrator
 
     use input!, only : nx,ny,nz
