@@ -122,7 +122,10 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_in
         real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
-        real faci
+        real P_xx,P_yy,P_zz,P_xy,P_xz,P_yz
+        real glf_pxx,glf_pyy,glf_pzz,glf_pxy,glf_pxz,glf_pyz
+        real src_pxx,src_pyy,src_pzz,src_pxy,src_pxz,src_pyz
+        real Q_sum,glf_sum,src_sum,faci
         integer i,j,k,ieq,ir
 
         faci = 1./(1. + dt*coll)  ! need to ensure a value is given to coll!
@@ -163,6 +166,56 @@ contains
                     !     Q_in(i,j,k,1:nQ,ir) - dt*( glflux_r(i,j,k,1:nQ,ir)      &
                     !                              - source_r(i,j,k,1:nQ,ir) )
                     ! Q_out(i,j,k,pxx:pyz,ir) = faci * Q_out(i,j,k,pxx:pyz,ir)
+                end do
+                end do
+                end do
+            end do
+
+        !-----------------------------------------------------------------------
+        case (2) ! Semi-implicit integration: backward-Euler for stress fields
+            do ir=1,nbasis
+                do k = 1,nz
+                do j = 1,ny
+                do i = 1,nx
+                    P_xx = Q_in(i,j,k,pxx,ir)
+                    P_yy = Q_in(i,j,k,pyy,ir)
+                    P_zz = Q_in(i,j,k,pzz,ir)
+                    P_xy = Q_in(i,j,k,pxy,ir)
+                    P_xz = Q_in(i,j,k,pxz,ir)
+                    P_yz = Q_in(i,j,k,pyz,ir)
+
+                    glf_pxx = glflux_r(i,j,k,pxx,ir)
+                    glf_pyy = glflux_r(i,j,k,pyy,ir)
+                    glf_pzz = glflux_r(i,j,k,pzz,ir)
+                    glf_pxy = glflux_r(i,j,k,pxy,ir)
+                    glf_pxz = glflux_r(i,j,k,pxz,ir)
+                    glf_pyz = glflux_r(i,j,k,pyz,ir)
+
+                    src_pxx = source_r(i,j,k,pxx,ir)
+                    src_pyy = source_r(i,j,k,pyy,ir)
+                    src_pzz = source_r(i,j,k,pzz,ir)
+                    src_pxy = source_r(i,j,k,pxy,ir)
+                    src_pxz = source_r(i,j,k,pxz,ir)
+                    src_pyz = source_r(i,j,k,pyz,ir)
+
+                    Q_sum   = coll*dt*   ( P_xx    + P_yy    + P_zz    )*c1d3
+                    glf_sum = coll*dt**2*( glf_pxx + glf_pyy + glf_pzz )*c1d3
+                    src_sum = coll*dt**2*( src_pxx + src_pyy + src_pzz )*c1d3
+
+                    Q_out(i,j,k,pxx,ir) = faci * ( P_xx - dt*glf_pxx + dt*src_pxx &
+                                                 + Q_sum -   glf_sum +    src_sum )
+
+                    Q_out(i,j,k,pyy,ir) = faci * ( P_yy - dt*glf_pyy + dt*src_pyy &
+                                                 + Q_sum -   glf_sum +    src_sum )
+
+                    Q_out(i,j,k,pzz,ir) = faci * ( P_zz - dt*glf_pzz + dt*src_pzz &
+                                                 + Q_sum -   glf_sum +    src_sum )
+
+                    do ieq = pxy,nQ
+                        Q_out(i,j,k,ieq,ir) = ( Q_in(i,j,k,ieq,ir)              &
+                                           - dt*glflux_r(i,j,k,ieq,ir)          &
+                                           + dt*source_r(i,j,k,ieq,ir) ) * faci
+                    end do
                 end do
                 end do
                 end do

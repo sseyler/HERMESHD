@@ -28,7 +28,7 @@ contains
         do k = 1,nz
         do j = 1,ny
             do ipnt=1,nface
-                Qxlo_int(j,k,ipnt,ieq)  = sum( bfvals_xm(ipnt,1:nbasis)*Q_r(1,j,k,ieq,1:nbasis)  )
+                Qxlo_int(j,k,ipnt,ieq) = sum( bfvals_xm(ipnt,1:nbasis)*Q_r(1,j,k,ieq,1:nbasis)  )
                 Qxhi_int(j,k,ipnt,ieq) = sum( bfvals_xp(ipnt,1:nbasis)*Q_r(nx,j,k,ieq,1:nbasis) )
             end do
         end do
@@ -39,7 +39,7 @@ contains
         do k = 1,nz
         do i = 1,nx
             do ipnt=1,nface
-                Qylo_int(i,k,ipnt,ieq)  = sum( bfvals_ym(ipnt,1:nbasis)*Q_r(i,1,k,ieq,1:nbasis)  )
+                Qylo_int(i,k,ipnt,ieq) = sum( bfvals_ym(ipnt,1:nbasis)*Q_r(i,1,k,ieq,1:nbasis)  )
                 Qyhi_int(i,k,ipnt,ieq) = sum( bfvals_yp(ipnt,1:nbasis)*Q_r(i,ny,k,ieq,1:nbasis) )
             end do
         end do
@@ -50,7 +50,7 @@ contains
         do j = 1,ny
         do i = 1,nx
             do ipnt=1,nface
-                Qzlo_int(i,j,ipnt,ieq)  = sum( bfvals_zm(ipnt,1:nbasis)*Q_r(i,j,1,ieq,1:nbasis)  )
+                Qzlo_int(i,j,ipnt,ieq) = sum( bfvals_zm(ipnt,1:nbasis)*Q_r(i,j,1,ieq,1:nbasis)  )
                 Qzhi_int(i,j,ipnt,ieq) = sum( bfvals_zp(ipnt,1:nbasis)*Q_r(i,j,nz,ieq,1:nbasis) )
             end do
         end do

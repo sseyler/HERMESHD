@@ -245,7 +245,7 @@ contains
         vz = 0.0
 
         yp0 = lyd  ! set zero-value of y-coordinate to domain bottom
-        ux_amb = 3.0e-1
+        ux_amb = 3.0e0
 
         !-------------------------------------------------------
         ! Set initial conditions
@@ -261,8 +261,8 @@ contains
         end do
         end do
 
-        call set_xlobc_inflow(ux_amb, dn, pr, Qxlo_ext_c)
-
+        Qxlo_ext_def(:,:,:,:) = 0.0
+        call set_xlobc_inflow(ux_amb, dn, pr, Qxlo_ext_def)
     end subroutine poiseuille_flow
     !---------------------------------------------------------------------------
 
@@ -338,7 +338,7 @@ contains
 
         ! NOTE: Qxlow_ext_custom, Qcyl_ext, and QMask should already be initialized!
         ! call add_custom_boundaries(icname)
-        call set_cyl_in_2d_pipe_boundaries(Qmask, ux_amb, dn, pr, Qxlo_ext_c, Qcyl_ext_c)
+        call set_cyl_in_2d_pipe_boundaries(Qmask, ux_amb, dn, pr, Qxlo_ext_def, Qcyl_ext_c)
 
     end subroutine pipe_cylinder_2d
     !---------------------------------------------------------------------------

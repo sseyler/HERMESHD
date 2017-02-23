@@ -68,7 +68,7 @@ module input
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_modbc_sod_1"
+    character (*), parameter :: outname = "test_sod_0"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     logical, parameter :: o_density     = .true.
