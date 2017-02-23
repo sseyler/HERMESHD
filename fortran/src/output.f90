@@ -22,7 +22,7 @@ contains
         real(R4P), dimension(nnx*nny*nnz) :: var_xml_val_z
         real(R4P), dimension(nnx,nny,nnz,nQ) :: qvtk
         real(R4P), dimension(nnx,nny,nnz) :: qvtk_dxvy,qvtk_dyvx
-        real U, P, vx, vy, vz, dni, dxrh,dyrh,dxmy,dymx
+        real dn,dni, vx,vy,vz, U,P, dxrh,dyrh,dxmy,dymx
         integer(I4P):: E_IO,i,j,k,l,num,iam,igrid,ir,jr,kr,ib,jb,kb,ieq
         character (50) :: out_name
         character (4) :: tname
@@ -116,7 +116,7 @@ contains
             end do
         end do
 
-        if (o_density) then
+        if (nstdout /= 0) then
             do i=1+nb,nnx-nb
                 do j=1+nb,nny-nb
                     do k=1+nb,nnz-nb
@@ -131,7 +131,7 @@ contains
         end if
 
         !------------------------------------------------------------
-        if (o_logdensity) then
+        if (nstldout /= 0) then
             do i=1+nb,nnx-nb
                 do j=1+nb,nny-nb
                     do k=1+nb,nnz-nb
@@ -147,7 +147,7 @@ contains
         end if
 
         !------------------------------------------------------------
-        if (o_velocity) then
+        if (nstvout /= 0) then
             do i=1+nb,nnx-nb
                 do j=1+nb,nny-nb
                     do k=1+nb,nnz-nb
@@ -166,7 +166,7 @@ contains
         end if
 
         !------------------------------------------------------------
-        if (o_temperature) then
+        if (nsttout /= 0) then
             do i=1+nb,nnx-nb
                 do j=1+nb,nny-nb
                     do k=1+nb,nnz-nb
@@ -186,7 +186,42 @@ contains
         end if
 
         !------------------------------------------------------------
-        if (o_entropy) then
+        if (nsteiout /= 0) then
+            do i=1+nb,nnx-nb
+                do j=1+nb,nny-nb
+                    do k=1+nb,nnz-nb
+                        l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
+                        dn  = qvtk(i,j,k,rh)
+                        dni = 1./dn
+                        vx  = qvtk(i,j,k,mx)*dni
+                        vy  = qvtk(i,j,k,my)*dni
+                        vz  = qvtk(i,j,k,mz)*dni
+                        U   = qvtk(i,j,k,en) - 0.5*dn*(vx**2 + vy**2 + vz**2)
+                    enddo
+                enddo
+            enddo
+            E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
+                               varname = 'Internal energy density',                    &
+                               var     = var_xml_val_x)
+        end if
+
+        !------------------------------------------------------------
+        if (nstenout /= 0) then
+            do i=1+nb,nnx-nb
+                do j=1+nb,nny-nb
+                    do k=1+nb,nnz-nb
+                        l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
+                        var_xml_val_x(l) = qvtk(i,j,k,en)
+                    enddo
+                enddo
+            enddo
+            E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
+                               varname = 'Total energy density',                    &
+                               var     = var_xml_val_x)
+        end if
+
+        !------------------------------------------------------------
+        if (nstesout /= 0) then
             do i=1+nb,nnx-nb
                 do j=1+nb,nny-nb
                     do k=1+nb,nnz-nb
@@ -208,7 +243,7 @@ contains
         end if
 
         !------------------------------------------------------------
-        if (o_pressure) then
+        if (nstpout /= 0) then
             do i=1+nb,nnx-nb
                 do j=1+nb,nny-nb
                     do k=1+nb,nnz-nb
@@ -220,8 +255,8 @@ contains
                         ! from "viscosity" version
                         P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
                         var_xml_val_x(l) = P
-                        ! if (ieos .eq. 1) P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
-                        ! if (ieos .eq. 2) then
+                        ! if (ieos == 1) P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
+                        ! if (ieos == 2) then
                         !     P = P_1*(qvtk(i,j,k,rh)**7.2 - 1.) + P_base
                         !     if(P < P_floor) P = P_floor
                         ! end if
@@ -236,7 +271,7 @@ contains
         end if
 
         !------------------------------------------------------------
-        if (o_stress) then
+        if (nststout /= 0) then
             do i=1+nb,nnx-nb
                 do j=1+nb,nny-nb
                     do k=1+nb,nnz-nb
@@ -255,7 +290,7 @@ contains
         end if
 
         !------------------------------------------------------------
-        if (o_vorticity) then
+        if (nstvrout /= 0) then
             do i=1+nb,nnx-nb
                 do j=1+nb,nny-nb
                     do k=1+nb,nnz-nb

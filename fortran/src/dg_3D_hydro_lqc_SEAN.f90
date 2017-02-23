@@ -899,8 +899,6 @@
           end do
         end do
 
-        source_r(i,j,k,rh:en,kxx:kyy) = -1.e-1*Q_ri(i,j,k,rh:en,kxx:kyy)
-
 	end do
 	end do
 	end do

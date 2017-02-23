@@ -72,9 +72,6 @@ contains
                 end do
             end do
 
-            ! Copied from 10-moment code... not sure what it's for, yet.
-            ! source_r(i,j,k,rh:en,kxx:kyy) = -1.e-1*Q_ri(i,j,k,rh:en,kxx:kyy)
-
         end do
         end do
         end do

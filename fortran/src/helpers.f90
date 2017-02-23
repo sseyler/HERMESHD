@@ -1,10 +1,9 @@
 !****** HELPERS.F90 **********************************************************************
 !   Any functions in this module should NOT have any dependence on global
 !   variables specific to a hydro problem. This prevents the helpers module from
-!   depending on other modules.
+!   depending on other modules (except for mpi_print, which depends on print_mpi)
 !*******************************************************************************
 module helpers
-
 
 contains
 
@@ -25,7 +24,7 @@ contains
     subroutine mpi_print(mpi_id, message)
         integer, intent(in) :: mpi_id
         character(*) :: message
-        if (mpi_id .eq. print_mpi) then
+        if (mpi_id == print_mpi) then
             print *,message
             print *,''       ! print a new line after message by default
         endif

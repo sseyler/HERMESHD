@@ -21,8 +21,10 @@ contains
     !===========================================================================
     ! perform_setup : perform general setup & variable initialization
     !------------------------------------------------------------
-    subroutine perform_setup
+    subroutine perform_setup(t, dt, nout)
         implicit none
+        real, intent(out) :: t, dt
+        integer, intent(out) :: nout
 
         !-------------------------
         ! Create output directory
@@ -39,8 +41,7 @@ contains
         call setup_MPI(mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
         call init_spatial_params(dx,dy,dz, dxi,dyi,dzi, loc_lxd,loc_lyd,loc_lzd)
         ! call set_mxa_mya_mza(mxa, mya, mza)  ! not needed anymore probably
-        call init_temporal_params(t, dt, dtout)
-        nout = 0
+        call init_temporal_params(t, dt, nout)
         !-----------------------------------------
 
         !-----------------------------------------
@@ -57,6 +58,28 @@ contains
         call print_startup_info
 
     end subroutine perform_setup
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
+    ! integer function setup_output(iquad, nbasis)
+    !     implicit none
+    !     integer, intent(in) :: iquad, nbasis
+    !
+    !     nstdout
+    !     nstldout
+    !     nstvout
+    !     nsttout
+    !     nsteiout
+    !     nstenout
+    !     nstesout
+    !     nstpout
+    !     nststout
+    !     nstvrout
+    !
+    !     setup_output
+    !     return
+    ! end function setup_output
     !---------------------------------------------------------------------------
 
 
@@ -303,19 +326,19 @@ contains
 
 
     !===========================================================================
-    subroutine init_temporal_params(t, dt, dtout)
+    subroutine init_temporal_params(t, dt, nout)
         implicit none
-        real, intent(out) :: t, dt, dtout
+        real, intent(out) :: t, dt
+        integer, intent(out) :: nout
         ! NOTE: USES the following global parameters
         !   * dx (set by init_spatial_params)
         !   * cflm (set by set_cflm)
-        !   * clt, tf, ntout (set by user)
+        !   * clt, ntout (set by user)
         ! NOTE: SETS the following global parameters
-        !   * t, dt, dtout
-
-        t = 0.
+        !   * t, dt, nout
+        t = 0.0
         dt = cflm*dx/clt
-        dtout = tf/ntout
+        nout = 0
     end subroutine init_temporal_params
     !---------------------------------------------------------------------------
 
@@ -367,9 +390,12 @@ contains
     !===========================================================================
     ! initialize_from_file : initialize simulation from checkpoint file
     !------------------------------------------------------------
-    subroutine initialize_from_file(Q_r)
+    subroutine initialize_from_file(Q_r, t, dt, nout)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
+        real, intent(out) :: t, dt
+        integer, intent(out) :: nout
+
         real t_p,dt_p,dtout_p
         integer nout_p,mpi_nx_p,mpi_ny_p,mpi_nz_p
         ! This applies only if the initial data are being read from an input file.
@@ -383,12 +409,12 @@ contains
             nout = nout_p
         end if
         ! Note, nout=1 corresponds to t=dt, but nout=2 corresponds to t~dtout, etc.
-        if (nout .gt. 1) then
+        if (nout > 1) then
             dtout_p = t_p/(nout_p-1)
         else  ! Automatically pass consistency check
             dtout_p = dtout
         end if
-        if (iam .eq. print_mpi) then
+        if (iam == print_mpi) then
             print *, 'resuming = ', resuming
             print *, 't = ', t
             print *, 'dt = ', dt
@@ -400,15 +426,11 @@ contains
         end if
             ! Quit if dtout is incompatible with input t/(nout-1)
         if (abs(dtout_p-dtout)/dt_p > 1.01) then
-            if (iam .eq. print_mpi) then
-                print *, 'Bad restart, non-matching dtout'
-            end if
+            call mpi_print(iam, 'Bad restart, non-matching dtout')
             call exit(-1)
         end if
-        if ((mpi_nx_p .ne. mpi_nx) .or. (mpi_ny_p .ne. mpi_ny) .or. (mpi_nz_p .ne. mpi_nz)) then
-            if (iam .eq. print_mpi) then
-                print *, 'Bad restart, non-matching mpi_nx, mpi_ny, or mpi_nz'
-            end if
+        if ((mpi_nx_p /= mpi_nx) .or. (mpi_ny_p /= mpi_ny) .or. (mpi_nz_p /= mpi_nz)) then
+            call mpi_print(iam, 'Bad restart, non-matching mpi_nx, mpi_ny, or mpi_nz')
             call exit(-1)
         end if
     end subroutine initialize_from_file
@@ -420,7 +442,7 @@ contains
     !------------------------------------------------------------
     subroutine print_startup_info()
 
-        if (iam .eq. print_mpi) then
+        if (iam == print_mpi) then
             print *, ''
             print *, '---------------------------------------------------------'
             print *, 'Starting simulation...'

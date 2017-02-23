@@ -62,7 +62,10 @@ module input
     real, parameter :: clt    = 2.0      ! numerical speed of sound
 
     ! Viscosity control
-    integer, parameter :: ivis = 0       ! 0 for explicit, 1 for semi-implicit
+    !   * 0 for explicit integration
+    !   * 1 for semi-implicit integration of stress terms
+    !   * 2 for full 10-moment formulation (NOTE: not finished!)
+    integer, parameter :: ivis = 1
     real, parameter    :: vis  = 1.0e-3  ! dynamic viscosity
     real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
 
