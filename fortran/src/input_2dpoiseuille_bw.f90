@@ -60,7 +60,7 @@ module input
     integer, parameter :: ieos = 1
 
     ! Thermodynamic, constitutive, and transport parameters
-    real, parameter :: te     = 300.0    ! in Kelvin
+    real, parameter :: TK     = 300.0    ! in Kelvin
     real, parameter :: mu     = 18.0     ! AMU per molecule
     real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
     real, parameter :: clt    = 2.0      ! numerical speed of sound

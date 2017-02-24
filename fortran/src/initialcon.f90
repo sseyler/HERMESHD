@@ -22,7 +22,6 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         ! character(*), intent(in) :: name
         integer i,j,k,id
-        real te
 
         ! te_fluid = T_floor
         ! rh_fluid = 1.0
@@ -280,7 +279,7 @@ contains
 
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
-        logical, dimension(nx,ny,nz):: Qmask
+        ! logical, dimension(nx,ny,nz) :: Qmask
         integer i,j,k,ieq,version
         real dn,pr,te,vx,vy,vz,ux_amb,xp0,yp0,cyl_x0,cyl_y0,cyl_rad
 
@@ -327,7 +326,7 @@ contains
         !-------------------------------------------------------
         ! Generate cylinder mask --> zero out grid quantities in mask
         !   NOTE: might be an offset b/c mask is constructed at faces, not cells
-        Qmask(:,:,:) = cyl_in_2d_pipe_mask(cyl_x0, cyl_y0, cyl_rad)
+        ! Qmask(:,:,:) = cyl_in_2d_pipe_mask(cyl_x0, cyl_y0, cyl_rad)
 
         ! where (Qmask(:,:,:))
         !     Q_r(:,:,:,rh,1) = 1.25

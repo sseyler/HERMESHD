@@ -92,7 +92,7 @@ module parameters
     ! below which the pressure becomes negative for the MT water EOS.
     ! The DG-based subroutine "limiter" keeps density above rh_mult*rh_min.
     real, parameter :: rh_floor = 5.0e-6     ! 1.0e-1 was old value
-    real, parameter :: T_floor  = (te*eV_per_K)/te0  ! 0.02585 eV ~ 300 K
+    real, parameter :: T_floor  = (TK*eV_per_K)/te0  ! 0.02585 eV ~ 300 K
     real, parameter :: P_floor  = T_floor*rh_floor
 
     ! Murnaghan-Tait EOS
@@ -120,7 +120,7 @@ module parameters
     real, parameter :: nu = epsi*vis
     real, parameter :: c2d3nu=c2d3*nu, c4d3nu=c4d3*nu
 
-    real, parameter :: T_base     = 300.0*eV_per_K/te0 ! te*eV_per_K/te0  ! temp (isothermal)
+    real, parameter :: T_base     = TK*eV_per_K/te0 ! te*eV_per_K/te0  ! temp (isothermal)
     real, parameter :: eta_base   = vis    ! dynamic viscosity
     real, parameter :: zeta_base  = 0.  ! bulk viscosity---will need to adjust this!
     real, parameter :: kappa_base = 1.e-1
