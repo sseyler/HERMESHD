@@ -13,12 +13,11 @@ contains
 
         real, dimension(npg,nQ) :: source
         real, dimension(nQ) :: Qin
-        real dn,dni,vx,vy,vz,pr,te,en_floor
+        real dn,dni, vx,vy,vz,vx2,vy2,vz2, pr,te, colldn
         integer i,j,k,ieq,ipg,ir
 
         source_r(:,:,:,:,:) = 0.0
         source(:,:) = 0.0
-        en_floor = P_floor/(aindex - 1.)
 
         do k = 1,nz
         do j = 1,ny
@@ -53,15 +52,19 @@ contains
                         vx = Qin(mx)*dni
                         vy = Qin(my)*dni
                         vz = Qin(mz)*dni
+                        vx2 = vx**2
+                        vy2 = vy**2
+                        vz2 = vz**2
                         ! pr = (aindex - 1.)*(Qin(en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
                         ! te = Pres*dni
+                        colldn = coll*dn
 
-                        source(ipg,pxx) = -coll*dn*(2*vx**2 - vy**2 - vz**2)*c1d3
-                        source(ipg,pyy) = -coll*dn*(2*vy**2 - vz**2 - vx**2)*c1d3
-                        source(ipg,pzz) = -coll*dn*(2*vz**2 - vx**2 - vy**2)*c1d3
-                        source(ipg,pxy) = -coll*dn*vx*vy
-                        source(ipg,pxz) = -coll*dn*vx*vz
-                        source(ipg,pyz) = -coll*dn*vy*vz
+                        source(ipg,pxx) = -colldn*(2*vx2 - vy2 - vz2)*c1d3
+                        source(ipg,pyy) = -colldn*(2*vy2 - vz2 - vx2)*c1d3
+                        source(ipg,pzz) = -colldn*(2*vz2 - vx2 - vy2)*c1d3
+                        source(ipg,pxy) = -colldn*vx*vy
+                        source(ipg,pxz) = -colldn*vx*vz
+                        source(ipg,pyz) = -colldn*vy*vz
                 end select
 
             end do

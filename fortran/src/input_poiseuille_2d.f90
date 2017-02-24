@@ -2,8 +2,8 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 9.0e0 !1.0e6 !4.1e2
-    real, parameter :: ly = 3.0e0 !1.0e6 !4.1e2
+    real, parameter :: lx = 2.2e0 !1.0e6 !4.1e2
+    real, parameter :: ly = 4.1e-1 !1.0e6 !4.1e2
     real, parameter :: lz = ly/120. !1.0e6/120. !4.1e2/120.
 
     ! Number of Gaussian quadrature points per spatial dimension
@@ -12,13 +12,13 @@ module input
     integer, parameter :: nbastot = 27 !30  ! TODO: only used in setup + innerintegral()
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 12  ! 55 (mpi_nx = 8)
-    integer, parameter :: ny = 64  ! 41 (mpi_ny = 2)
+    integer, parameter :: nx = 24  ! 55 (mpi_nx = 8)
+    integer, parameter :: ny = 18  ! 41 (mpi_ny = 2)
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
-    integer :: mpi_nx = 16
-    integer :: mpi_ny = 1
+    integer :: mpi_nx = 8
+    integer :: mpi_ny = 2
 
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK
@@ -42,10 +42,10 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 2.0e-3 !8.5e4
+    real, parameter :: tf = 1.0e0 !8.5e4
 
     ! Console output frequency
-    integer, parameter :: ntout = 200
+    integer, parameter :: ntout = 1000
 
     ! Riemann solver
     ! If all of them = 0, then LLF is used for fluxes.
@@ -70,12 +70,12 @@ module input
     !   * 1 for semi-implicit integration of stress terms
     !   * 2 for full 10-moment formulation (NOTE: not finished!)
     integer, parameter :: ivis = 1
-    real, parameter    :: vis  = 1.79e-6  ! dynamic viscosity (air @ 15 C)
+    real, parameter    :: vis  = 1.0e-3  !1.79e-6  ! dynamic viscosity (air @ 15 C)
     real, parameter    :: epsi = 5.0      ! inverse relaxation coefficient
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_poi2d_3"
+    character (*), parameter :: outname = "test_poi2d_temp_long"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density

@@ -245,7 +245,7 @@ contains
         vz = 0.0
 
         yp0 = lyd  ! set zero-value of y-coordinate to domain bottom
-        ux_amb = 9.0e0
+        ux_amb = 3.0e-1
 
         !-------------------------------------------------------
         ! Set initial conditions

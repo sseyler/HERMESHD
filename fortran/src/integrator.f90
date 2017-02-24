@@ -153,19 +153,19 @@ contains
                 do k = 1,nz
                 do j = 1,ny
                 do i = 1,nx
-                !--- Separate ----------
-                    Q_out(i,j,k,rh:en,ir) =     Q_in(i,j,k,rh:en,ir)            &
-                                        - ( glflux_r(i,j,k,rh:en,ir)            &
-                                          - source_r(i,j,k,rh:en,ir) ) * dt
-                    Q_out(i,j,k,pxx:pyz,ir) = ( Q_in(i,j,k,pxx:pyz,ir)          &
-                                       - dt*glflux_r(i,j,k,pxx:pyz,ir)          &
-                                       + dt*source_r(i,j,k,pxx:pyz,ir) ) * faci
+                    !--- Separate ----------
+                    ! Q_out(i,j,k,rh:en,ir) =     Q_in(i,j,k,rh:en,ir)            &
+                    !                     - ( glflux_r(i,j,k,rh:en,ir)            &
+                    !                       - source_r(i,j,k,rh:en,ir) ) * dt
+                    ! Q_out(i,j,k,pxx:pyz,ir) = ( Q_in(i,j,k,pxx:pyz,ir)          &
+                    !                    - dt*glflux_r(i,j,k,pxx:pyz,ir)          &
+                    !                    + dt*source_r(i,j,k,pxx:pyz,ir) ) * faci
 
                     !--- Combo -------------
-                    ! Q_out(i,j,k,1:nQ,ir) =                                      &
-                    !     Q_in(i,j,k,1:nQ,ir) - dt*( glflux_r(i,j,k,1:nQ,ir)      &
-                    !                              - source_r(i,j,k,1:nQ,ir) )
-                    ! Q_out(i,j,k,pxx:pyz,ir) = faci * Q_out(i,j,k,pxx:pyz,ir)
+                    Q_out(i,j,k,1:nQ,ir) =                                      &
+                        Q_in(i,j,k,1:nQ,ir) - dt*( glflux_r(i,j,k,1:nQ,ir)      &
+                                                 - source_r(i,j,k,1:nQ,ir) )
+                    Q_out(i,j,k,pxx:pyz,ir) = faci * Q_out(i,j,k,pxx:pyz,ir)
                 end do
                 end do
                 end do

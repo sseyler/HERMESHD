@@ -222,6 +222,8 @@ contains
                 t1 = t2
             end if
 
+            ! if (mpi_P == 1) print *,Qxlo_ext_def(:,1,1,mx)
+
         end if
     end subroutine generate_output
     !---------------------------------------------------------------------------
