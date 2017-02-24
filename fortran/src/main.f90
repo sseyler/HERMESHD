@@ -208,7 +208,7 @@ contains
             call output_vtk(Q_r,nout,iam)
 
             ! write checkpoint files; assign an odd/even id to ensure last two sets are kept
-            if (iwrite) then
+            if (iwrite == 1) then
                 ioe = 2 - mod(nout,2)
                 call writeQ(fpre,iam,ioe,Q_r,t,dt,nout,mpi_nx,mpi_ny,mpi_nz)
             end if

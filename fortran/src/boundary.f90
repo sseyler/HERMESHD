@@ -542,24 +542,34 @@ module boundary_custom
 contains
 
     subroutine x_bc_inflow(Qxbc_int, Qxbc_def, Qxbc_ext)
-        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxbc_int, Qxbc_def
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxbc_def
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxbc_int
         real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxbc_ext
         integer j,k,i4
 
-        do i4=1,nface
+        ! do i4=1,nface
             do k = 1,nz
             do j = 1,ny
                 ! Initially, set all values to internal face values
-                Qxbc_ext(j,k,i4,:)     = Qxbc_int(j,k,i4,:)
+                Qxbc_ext(j,k,1:nface,:)     = Qxbc_int(j,k,1:nface,:)
 
                 ! Set external face values to those specified by Qxbc_def
-                Qxbc_ext(j,k,i4,rh)    = Qxbc_def(j,k,i4,rh)
-                Qxbc_ext(j,k,i4,mx)    = Qxbc_def(j,k,i4,mx)
-                Qxbc_ext(j,k,i4,my:mz) = 0.0
-                Qxbc_ext(j,k,i4,en)    = Qxbc_def(j,k,i4,en)
+                Qxbc_ext(j,k,1:nface,rh)    = Qxbc_def(j,k,1:nface,rh)
+
+                ! if (minval(Qxbc_ext(j,k,1:nface,mx)) < 0.0) then
+                !     Qxbc_ext(j,k,1:nface,mx) = Qxbc_def(j,k,1:nface,mx) - Qxbc_ext(j,k,1:nface,mx)
+                ! else
+                !     Qxbc_ext(j,k,1:nface,mx) = Qxbc_def(j,k,1:nface,mx)
+                ! end if
+                Qxbc_ext(j,k,1:nface,mx) = Qxbc_def(j,k,1:nface,mx)
+                Qxbc_ext(j,k,1:nface,my:mz) = 0.0
+                Qxbc_ext(j,k,1:nface,en)    = Qxbc_def(j,k,1:nface,en)
+
+                ! Force internal cells to take external values
+                Qxbc_int(j,k,1:nface,rh:en) = Qxbc_ext(j,k,1:nface,rh:en)
             end do
             end do
-        end do
+        ! end do
     end subroutine x_bc_inflow
 
 

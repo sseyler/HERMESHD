@@ -222,11 +222,19 @@ contains
                 end if
 
                 if (i < nx+1) then
-                    do ieq = 1,nQ
-                        do ipnt=1,nface
-                            Qface_x(ipnt+nface,ieq) = sum(bfvals_xm(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
+                    if (i == 1) then
+                        do ieq = 1,nQ
+                            do ipnt=1,nface
+                                Qface_x(ipnt+nface,ieq) = Qxlo_ext(j,k,ipnt,ieq)
+                            end do
                         end do
-                    end do
+                    else
+                        do ieq = 1,nQ
+                            do ipnt=1,nface
+                                Qface_x(ipnt+nface,ieq) = sum(bfvals_xm(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
+                            end do
+                        end do
+                    end if
                 end if
                 if (i == nx+1) then
                     do ieq = 1,nQ
@@ -236,7 +244,7 @@ contains
 
                 call flux_calc_pnts_r(Qface_x,fface_x,1,nfe)
 
-                if (.not. ihllc) then
+                ! if (.not. ihllc) then
                     do i4=1,nfe
                         do ieq=1,nQ
                             qvin(ieq) = Qface_x(i4,ieq)
@@ -247,7 +255,7 @@ contains
                     do i4=1,nface
                         cfrx(i4,rh:en) = max(cwavex(i4),cwavex(i4+nface))
                     end do
-                end if
+                ! end if
 
                 do ieq = 1,nQ
                     do i4=1,nface
@@ -315,7 +323,7 @@ contains
 
                 call flux_calc_pnts_r(Qface_y,fface_y,2,nfe)
 
-                if (.not. ihllc) then
+                ! if (.not. ihllc) then
                     do i4=1,nfe
                         do ieq=1,nQ
                             qvin(ieq) = Qface_y(i4,ieq)
@@ -326,7 +334,7 @@ contains
                     do i4=1,nface
                         cfry(i4,rh:en) = max(cwavey(i4),cwavey(i4+nface))
                     end do
-                end if
+                ! end if
 
                 do ieq = 1,nQ
                     do i4=1,nface
@@ -395,7 +403,7 @@ contains
 
                 call flux_calc_pnts_r(Qface_z,fface_z,3,nfe)
 
-                if (.not. ihllc) then
+                ! if (.not. ihllc) then
                     do i4=1,nfe
                         do ieq=1,nQ
                             qvin(ieq) = Qface_z(i4,ieq)
@@ -406,7 +414,7 @@ contains
                     do i4=1,nface
                         cfrz(i4,rh:en) = max(cwavez(i4),cwavez(i4+nface))
                     end do
-                end if
+                ! end if
 
                 do ieq = 1,nQ
                     do i4=1,nface
