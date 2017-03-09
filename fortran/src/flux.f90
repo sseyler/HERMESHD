@@ -80,8 +80,8 @@ contains
             Qy = Hpnts_r(ife,2)
             Qz = Hpnts_r(ife,3)
 
-            select case (ixyz)
-            case (1)
+            select case(ixyz)
+            case(1)
                 fpnts_r(ife,rh) = M_x
 
                 if (ivis == 1) then
@@ -117,7 +117,7 @@ contains
                     fpnts_r(ife,pyz) = vx*P_yz + vy*P_xz + vz*P_xy - 2*vy*vz*M_x
                 end if
 
-            case (2)
+            case(2)
                 fpnts_r(ife,rh) = M_y
 
                 if (ivis == 1) then
@@ -153,7 +153,7 @@ contains
                     fpnts_r(ife,pyz) = 2*vy*(P_yz - vz*M_y) + vz*P_yy
                 end if
 
-            case (3)
+            case(3)
                 fpnts_r(ife,rh) = M_z
 
                 if (ivis == 1) then
@@ -222,19 +222,11 @@ contains
                 end if
 
                 if (i < nx+1) then
-                    if (i == 1) then
-                        do ieq = 1,nQ
-                            do ipnt=1,nface
-                                Qface_x(ipnt+nface,ieq) = Qxlo_ext(j,k,ipnt,ieq)
-                            end do
+                    do ieq = 1,nQ
+                        do ipnt=1,nface
+                            Qface_x(ipnt+nface,ieq) = sum(bfvals_xm(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
                         end do
-                    else
-                        do ieq = 1,nQ
-                            do ipnt=1,nface
-                                Qface_x(ipnt+nface,ieq) = sum(bfvals_xm(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
-                            end do
-                        end do
-                    end if
+                    end do
                 end if
                 if (i == nx+1) then
                     do ieq = 1,nQ
@@ -244,7 +236,7 @@ contains
 
                 call flux_calc_pnts_r(Qface_x,fface_x,1,nfe)
 
-                ! if (.not. ihllc) then
+                if (.not. ihllc) then
                     do i4=1,nfe
                         do ieq=1,nQ
                             qvin(ieq) = Qface_x(i4,ieq)
@@ -255,7 +247,7 @@ contains
                     do i4=1,nface
                         cfrx(i4,rh:en) = max(cwavex(i4),cwavex(i4+nface))
                     end do
-                ! end if
+                end if
 
                 do ieq = 1,nQ
                     do i4=1,nface
@@ -323,7 +315,7 @@ contains
 
                 call flux_calc_pnts_r(Qface_y,fface_y,2,nfe)
 
-                ! if (.not. ihllc) then
+                if (.not. ihllc) then
                     do i4=1,nfe
                         do ieq=1,nQ
                             qvin(ieq) = Qface_y(i4,ieq)
@@ -334,7 +326,7 @@ contains
                     do i4=1,nface
                         cfry(i4,rh:en) = max(cwavey(i4),cwavey(i4+nface))
                     end do
-                ! end if
+                end if
 
                 do ieq = 1,nQ
                     do i4=1,nface
@@ -403,7 +395,7 @@ contains
 
                 call flux_calc_pnts_r(Qface_z,fface_z,3,nfe)
 
-                ! if (.not. ihllc) then
+                if (.not. ihllc) then
                     do i4=1,nfe
                         do ieq=1,nQ
                             qvin(ieq) = Qface_z(i4,ieq)
@@ -414,7 +406,7 @@ contains
                     do i4=1,nface
                         cfrz(i4,rh:en) = max(cwavez(i4),cwavez(i4+nface))
                     end do
-                ! end if
+                end if
 
                 do ieq = 1,nQ
                     do i4=1,nface
@@ -1010,13 +1002,12 @@ contains
 !-----------------------------------------------------------!
 !*******************calculate freezing speeds***************!
 !-----------------------------------------------------------!
-    real function cfcal(Qcf,cases)
-
+    real function cfcal(Qcf, cases)
         implicit none
-        integer cases
-        real Qcf(nQ)
-        real Pi, Pe, P, B2, ne, cs
-        real dn,dni,vx,vy,vz,hx,hy,hz,va2,vf1,lil02,va,fac
+        real, dimension(nQ), intent(in) :: Qcf
+        integer, intent(in) :: cases
+
+        real dn,dni, vx,vy,vz, P, cs
 
         dn = Qcf(rh)
         dni = 1./dn
@@ -1024,22 +1015,33 @@ contains
         vy = Qcf(my)*dni
         vz = Qcf(mz)*dni
 
-        select case (ieos)
-            case (1)
+        !--- pressure -----------------
+        select case(ivis)
+            case(0)
                 P = aindm1*(Qcf(en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
+            case(1)
+                P = aindm1*(Qcf(en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
+            case(2)
+                P = c1d3 * ( Qcf(pxx) + Qcf(pyy) + Qcf(pzz) - dn*(vx**2 + vy**2 + vz**2) )
+        end select
+
+        !--- sound speed --------------
+        select case(ieos)
+            case(1)
                 cs = sqrt(aindex*P*dni)
-            case (2)
+            case(2)
                 cs = sqrt(7.2*P_1*dn**6.2)
         end select
 
-        select case (cases)
-            case (1) !freezing speed in x direction for fluid variable
+        !--- freezing speed -----------
+        select case(cases)
+            case(1) !freezing speed in x direction for fluid variable
                 cfcal = abs(vx) + cs
 
-            case (2) !freezing speed in y direction for fluid variable
+            case(2) !freezing speed in y direction for fluid variable
                 cfcal = abs(vy) + cs
 
-            case (3) !freezing speed in z direction for fluid variable
+            case(3) !freezing speed in z direction for fluid variable
                 cfcal = abs(vz) + cs
         end select
 

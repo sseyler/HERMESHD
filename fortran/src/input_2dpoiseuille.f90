@@ -34,7 +34,7 @@ module input
     integer, parameter :: icid = 5
 
     ! Boundary conditions
-    character(*), parameter :: xlobc = 'outflow' !'periodic'
+    character(*), parameter :: xlobc = 'wall' !'periodic'
     character(*), parameter :: xhibc = 'outflow' !'periodic'
     character(*), parameter :: ylobc = 'noslip'  !'periodic'
     character(*), parameter :: yhibc = 'noslip'  !'periodic'
@@ -75,7 +75,7 @@ module input
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_poi2d_cyl_temp3"
+    character (*), parameter :: outname = "test_poi2d_cyl_temp4"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density

@@ -46,7 +46,7 @@ contains
                         source(ipg,pxy) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
                         source(ipg,pxz) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
                         source(ipg,pyz) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
-                    case (2)
+                    case (2) ! NOTE: for doing full 10-moment equations explicitly
                         dn = Qin(rh)
                         dni = 1./dn
                         vx = Qin(mx)*dni
@@ -59,12 +59,12 @@ contains
                         ! te = Pres*dni
                         colldn = coll*dn
 
-                        source(ipg,pxx) = -colldn*(2*vx2 - vy2 - vz2)*c1d3
-                        source(ipg,pyy) = -colldn*(2*vy2 - vz2 - vx2)*c1d3
-                        source(ipg,pzz) = -colldn*(2*vz2 - vx2 - vy2)*c1d3
-                        source(ipg,pxy) = -colldn*vx*vy
-                        source(ipg,pxz) = -colldn*vx*vz
-                        source(ipg,pyz) = -colldn*vy*vz
+                        source(ipg,pxx) = colldn*(2*vx2 - vy2 - vz2)*c1d3
+                        source(ipg,pyy) = colldn*(2*vy2 - vz2 - vx2)*c1d3
+                        source(ipg,pzz) = colldn*(2*vz2 - vx2 - vy2)*c1d3
+                        source(ipg,pxy) = colldn*vx*vy
+                        source(ipg,pxz) = colldn*vx*vz
+                        source(ipg,pyz) = colldn*vy*vz
                 end select
 
             end do
@@ -80,8 +80,7 @@ contains
         end do
 
     end subroutine source_calc
-
-!----------------------------------------------------------------------------------------------
+    !---------------------------------------------------------------------------
 
 
 end module sources

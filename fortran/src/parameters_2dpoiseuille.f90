@@ -81,7 +81,7 @@ module parameters
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
     real, parameter :: L0 = 1.0e0  ! 1.0e-9                 ! length
     real, parameter :: t0 = 1.0e0   ! 1.0e-12                ! time
-    real, parameter :: n0 = 2.25e25 ! 2.5e25 for ideal gas   ! number density
+    real, parameter :: n0 = 2.25e28 ! 2.5e25 for ideal gas   ! number density
 
     ! Derived units
     real, parameter :: v0  = L0/t0                 ! velocity
@@ -115,6 +115,8 @@ module parameters
     !   colvis = coll*vis = density*temp  (vis is dynamic viscosity, e.g. eta)
     real :: coll, colvis    ! values set in set_ic
     real :: c2d3cv, c4d3cv  ! probably want to set in set_ic (not currently used)
+
+    real :: mflowrate
 
     ! NOTE: Old way of handling relaxation system
     real, parameter :: nu = epsi*vis

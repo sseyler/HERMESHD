@@ -247,14 +247,38 @@ contains
         real, dimension(ny,nz,nface,nQ), intent(in) :: Qxhi_i
         real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxhi_e
         integer j,k
+        real, dimension(nface) :: dn_i,dni_i, mx_i,my_i,mz_i,vx_i, Ener_i,Ener_e,P_i
+        real mflowrate_out, mflowrate_net
+
+        ! Qxlo_e(i,k,1:nface,:) = Qxlo_i(i,k,1:nface,:)
+        ! if (minval(Qxlo_e(i,k,1:nface,my)) < 0.0) then
+        !     Qxlo_e(i,k,1:nface,my) = 0.0
+        ! end if
+
         do k = 1,nz
         do j = 1,ny
-            Qxhi_e(j,k,1:nface,:) = Qxhi_i(j,k,1:nface,:)
-            if (minval(Qxhi_e(j,k,1:nface,mx)) < 0.0 ) then
-                Qxhi_e(j,k,1:nface,mx) = 0.0
-            end if
+            where(Qxlow_ext(j,k,:,mx) > 0.0) Qxlow_ext(j,k,:,mx) = -Qxlow_int(j,k,:,mx)
         enddo
         enddo
+
+        ! mflowrate_out = 0.0
+        ! do k = 1,nz
+        ! do j = 1,ny
+        !     Qxhi_e(j,k,1:nface,:) = Qxhi_i(j,k,1:nface,:)
+        !
+        !     mx_i = Qxhi_i(j,k,1:nface,mx)
+        !     mflowrate_out = mflowrate_out + sum(mx_i)
+        ! enddo
+        ! enddo
+        ! ! print *,'mflowrate_out', mflowrate_out,'mflowrate', mflowrate
+        ! mflowrate_net = mflowrate_out - mflowrate
+        ! do k = 1,nz
+        ! do j = 1,ny
+        !     Qxhi_e(j,k,1:nface,mx) = Qxhi_e(j,k,1:nface,mx) - mflowrate_net/ny/nface
+        ! enddo
+        ! enddo
+
+        ! print *,Qxhi_e(:,1,1,en)
     end subroutine xhibc_outflow
     !--------------------------------------------------------
     subroutine ylobc_outflow(Qylo_i, Qylo_e)
@@ -547,29 +571,21 @@ contains
         real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxbc_ext
         integer j,k,i4
 
-        ! do i4=1,nface
+        do i4=1,nface
             do k = 1,nz
             do j = 1,ny
                 ! Initially, set all values to internal face values
-                Qxbc_ext(j,k,1:nface,:)     = Qxbc_int(j,k,1:nface,:)
+                Qxbc_ext(j,k,i4,:)     = Qxbc_int(j,k,i4,:)
 
                 ! Set external face values to those specified by Qxbc_def
-                Qxbc_ext(j,k,1:nface,rh)    = Qxbc_def(j,k,1:nface,rh)
+                Qxbc_ext(j,k,i4,rh)    = Qxbc_def(j,k,i4,rh)
 
-                ! if (minval(Qxbc_ext(j,k,1:nface,mx)) < 0.0) then
-                !     Qxbc_ext(j,k,1:nface,mx) = Qxbc_def(j,k,1:nface,mx) - Qxbc_ext(j,k,1:nface,mx)
-                ! else
-                !     Qxbc_ext(j,k,1:nface,mx) = Qxbc_def(j,k,1:nface,mx)
-                ! end if
-                Qxbc_ext(j,k,1:nface,mx) = Qxbc_def(j,k,1:nface,mx)
-                Qxbc_ext(j,k,1:nface,my:mz) = 0.0
-                Qxbc_ext(j,k,1:nface,en)    = Qxbc_def(j,k,1:nface,en)
-
-                ! Force internal cells to take external values
-                Qxbc_int(j,k,1:nface,rh:en) = Qxbc_ext(j,k,1:nface,rh:en)
+                Qxbc_ext(j,k,i4,mx)    = Qxbc_def(j,k,i4,mx)
+                Qxbc_ext(j,k,i4,my:mz) = 0.0
+                Qxbc_ext(j,k,i4,en)    = Qxbc_def(j,k,i4,en)
             end do
             end do
-        ! end do
+        end do
     end subroutine x_bc_inflow
 
 
@@ -582,6 +598,7 @@ contains
 
         yp0 = lyd  ! set zero-value of y-coordinate to domain bottom
 
+        mflowrate = 0.0
         ! apply parabolic inflow BCs on lower x wall
         ! Qxbc_d(:,:,:,:) = 0.0
         do i4 = 1,nface
@@ -589,6 +606,7 @@ contains
             do j = 1,ny
                 yp = yc(j) - yp0
                 vx = 4*ux_amb*yp*(ly-yp)/ly**2
+                mflowrate = mflowrate + den*vx
 
                 Qxbc_d(j,k,i4,rh) = den
                 Qxbc_d(j,k,i4,mx) = den*vx
@@ -598,6 +616,8 @@ contains
             end do
             end do
         end do
+        print *,'den',den,'pres',pres,'mfr',mflowrate
+
     end subroutine set_xlobc_inflow
 
 

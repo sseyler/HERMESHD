@@ -130,9 +130,9 @@ contains
 
         faci = 1./(1. + dt*coll)  ! need to ensure a value is given to coll!
 
-        select case (ivis)
+        select case(ivis)
         !-----------------------------------------------------------------------
-        case (0) ! Fully explicit integration: forward-Euler for all fields
+        case(0) ! Fully explicit integration: forward-Euler for all fields
             do ir=1,nbasis
             do ieq = 1,nQ
                 do k = 1,nz
@@ -148,7 +148,7 @@ contains
             end do
 
         !-----------------------------------------------------------------------
-        case (1) ! Semi-implicit integration: backward-Euler for stress fields
+        case(1) ! Semi-implicit integration: backward-Euler for stress fields
             do ir=1,nbasis
                 do k = 1,nz
                 do j = 1,ny
@@ -172,7 +172,7 @@ contains
             end do
 
         !-----------------------------------------------------------------------
-        case (2) ! Semi-implicit integration: backward-Euler for stress fields
+        case(2) ! Semi-implicit integration: backward-Euler for stress fields
             do ir=1,nbasis
                 do k = 1,nz
                 do j = 1,ny

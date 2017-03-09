@@ -122,7 +122,7 @@ endif
 #********************************************
 ifeq ($(NAME),poi2d)
 	OBJS = main.f90
-	MODULES =  input_2doiseuille.f90 parameters_2dpoiseuille.f90 basis_funcs.f90 \
+	MODULES =  input_2dpoiseuille.f90 parameters_2dpoiseuille.f90 basis_funcs.f90 \
 			   helpers.f90 boundary.f90 \
 			   random.f90 initialcon.f90 initialize.f90 \
 			   prepare_step.f90 sources.f90 flux.f90 \
