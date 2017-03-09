@@ -9,8 +9,8 @@ module input
     ! Number of Gaussian quadrature points per spatial dimension
     ! (iquad, nbasis):
     !   * (2, 4), (2, 8), (3, 10), (3, 27), (4, 20)
-    integer, parameter :: iquad   = 3
-    integer, parameter :: nbasis  = 27
+    integer, parameter :: iquad   = 2
+    integer, parameter :: nbasis  = 4
 
     ! Grid cell dimensions per MPI domain
     integer, parameter :: nx = 50
@@ -72,7 +72,7 @@ module input
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_sod_iq3_nb27"
+    character (*), parameter :: outname = "test_sod_iq2_nb4"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density
