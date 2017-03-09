@@ -2,14 +2,15 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 1.0e1 !1.0e6 !4.1e2
+    real, parameter :: lx = 1.0e0 !1.0e6 !4.1e2
     real, parameter :: ly = lx/12. !1.0e6 !4.1e2
     real, parameter :: lz = lx/120. !1.0e6/120. !4.1e2/120.
 
     ! Number of Gaussian quadrature points per spatial dimension
-    integer, parameter :: iquad = 2
-    integer, parameter :: nbasis  = 8 ! 8
-    integer, parameter :: nbastot = 27 !30  ! TODO: only used in setup + innerintegral()
+    ! (iquad, nbasis):
+    !   * (2, 4), (2, 8), (3, 10), (3, 27), (4, 20)
+    integer, parameter :: iquad   = 3
+    integer, parameter :: nbasis  = 27
 
     ! Grid cell dimensions per MPI domain
     integer, parameter :: nx = 50
@@ -42,10 +43,10 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 8.5e-3 !8.5e4
+    real, parameter :: tf = 7.0e-4
 
     ! Console output frequency
-    integer, parameter :: ntout = 100
+    integer, parameter :: ntout = 200
 
     ! Riemann solver
     logical, parameter :: ihllc = .true.
@@ -65,23 +66,25 @@ module input
     !   * 0 for explicit integration
     !   * 1 for semi-implicit integration of stress terms
     !   * 2 for full 10-moment formulation (NOTE: not finished!)
-    integer, parameter :: ivis = 1
-    real, parameter    :: vis  = 1.0e-3  ! dynamic viscosity
+    integer, parameter :: ivis = 0
+    real, parameter    :: vis  = 0       ! dynamic viscosity
     real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_sod_0"
+    character (*), parameter :: outname = "test_sod_iq3_nb27"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
-    logical, parameter :: o_density     = .true.
-    logical, parameter :: o_logdensity  = .false.
-    logical, parameter :: o_velocity    = .true.
-    logical, parameter :: o_temperature = .true.
-    logical, parameter :: o_entropy     = .false.
-    logical, parameter :: o_pressure    = .true.
-    logical, parameter :: o_stress      = .false.
-    logical, parameter :: o_vorticity   = .false.
+    integer, parameter :: nstdout  = ntout ! density
+    integer, parameter :: nstldout = 0     ! log density
+    integer, parameter :: nstvout  = ntout ! velocity
+    integer, parameter :: nsttout  = ntout ! temperature
+    integer, parameter :: nsteiout = 0     ! internal energy density
+    integer, parameter :: nstenout = 0     ! total energy density
+    integer, parameter :: nstesout = 0     ! entropy density
+    integer, parameter :: nstpout  = ntout ! pressure
+    integer, parameter :: nststout = 0     ! stress components
+    integer, parameter :: nstvrout = 0     ! vorticity
 
     ! Checkpointing
     !   set iread to 1 or 2 (when using the odd/even scheme)

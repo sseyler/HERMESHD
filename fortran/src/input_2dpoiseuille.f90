@@ -9,7 +9,6 @@ module input
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad   = 2
     integer, parameter :: nbasis  = 8 ! 8
-    integer, parameter :: nbastot = 27 !30  ! TODO: only used in setup + innerintegral()
 
     ! Grid cell dimensions per MPI domain
     integer, parameter :: nx = 24  ! 55 (mpi_nx = 8)
@@ -48,10 +47,6 @@ module input
     integer, parameter :: ntout = 200
 
     ! Riemann solver
-    ! If all of them = 0, then LLF is used for fluxes.
-    !   LLF is very diffusive for the hydro problem. Roe and HLLC are much less
-    !   diffusive than LLF and give very similar results with similar cpu overhead
-    !   Only HLLC is setup to handle water EOS (ieos = 2)
     logical, parameter :: ihllc = .true.
 
     ! Equation of state:

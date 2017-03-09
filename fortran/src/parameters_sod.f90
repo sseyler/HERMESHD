@@ -48,6 +48,7 @@ module parameters
     integer, parameter :: pxy = 9, pxz = 10, pyz = 11 ! deviatoric stress
     integer, parameter :: nQ  = 11                    ! number of field variables
 
+    integer, parameter :: nbastot = 30
     integer, parameter :: ngu = 0  ! TODO: only used in output_vtk()
 
     ! iquad: # of Gaussian quadrature points per direction. iquad should not be:
@@ -81,7 +82,7 @@ module parameters
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
     real, parameter :: L0 = 1.0e0  ! 1.0e-9                 ! length
     real, parameter :: t0 = 1.0e0  ! 1.0e-12                ! time
-    real, parameter :: n0 = 3.32e25 ! 2.5e25 for ideal gas   ! number density
+    real, parameter :: n0 = 2.5e25 ! ideal gas              ! number density
 
     ! Derived units
     real, parameter :: v0  = L0/t0                 ! velocity

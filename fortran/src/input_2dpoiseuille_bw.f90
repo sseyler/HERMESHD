@@ -9,7 +9,6 @@ module input
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad   = 2
     integer, parameter :: nbasis  = 8 ! 8
-    integer, parameter :: nbastot = 27 !30  ! TODO: only used in setup + innerintegral()
 
     ! Grid cell dimensions per MPI domain
     integer, parameter :: nx = 48  ! 55 (mpi_nx = 8)

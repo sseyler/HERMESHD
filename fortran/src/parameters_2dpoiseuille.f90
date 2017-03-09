@@ -48,6 +48,7 @@ module parameters
     integer, parameter :: pxy = 9, pxz = 10, pyz = 11 ! deviatoric stress
     integer, parameter :: nQ  = 11                    ! number of field variables
 
+    integer, parameter :: nbastot = 30
     integer, parameter :: ngu = 0  ! TODO: only used in output_vtk()
 
     ! iquad: # of Gaussian quadrature points per direction. iquad should not be:

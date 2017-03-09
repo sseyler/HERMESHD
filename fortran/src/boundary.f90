@@ -257,7 +257,7 @@ contains
 
         do k = 1,nz
         do j = 1,ny
-            where(Qxlow_ext(j,k,:,mx) > 0.0) Qxlow_ext(j,k,:,mx) = -Qxlow_int(j,k,:,mx)
+            where(Qxhi_e(j,k,:,mx) > 0.0) Qxhi_e(j,k,:,mx) = -Qxhi_i(j,k,:,mx)
         enddo
         enddo
 
@@ -756,7 +756,7 @@ contains
             ! end if
             ! Qxlo_ext_scale(:,:,:,:) = ux_scale*Qxlo_ext_def(:,:,:,:)
             ! call x_bc_inflow(Qxlo_int, Qxlo_ext_scale, Qxlo_ext)
-            call x_bc_inflow(Qxlo_int, Qxlo_ext_def, Qxlo_ext)
+            ! call x_bc_inflow(Qxlo_int, Qxlo_ext_def, Qxlo_ext)
         end if
         if ( mpi_P == mpi_nx ) then
             call apply_xhibc(Qxhi_int, Qxhi_ext)

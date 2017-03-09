@@ -84,7 +84,7 @@ contains
             case(1)
                 fpnts_r(ife,rh) = M_x
 
-                if (ivis == 1) then
+                if (ivis == 0 .or. ivis == 1) then
                     fpnts_r(ife,mx) = M_x*vx + P + P_xx - Sxx
                     fpnts_r(ife,my) = M_y*vx     + P_xy - Sxy
                     fpnts_r(ife,mz) = M_z*vx     + P_xz - Sxz
@@ -95,10 +95,10 @@ contains
                     fpnts_r(ife,mz) = P_xz
                 end if
 
-                fpnts_r(ife,en) = (Ener + P)*vx                                    &
-                                + (P_xx - Sxx)*vx + (P_xy - Sxy)*vy + (P_xz - Sxz)*vz
+                fpnts_r(ife,en) = (Ener + P)*vx                                 &
+                                + (P_xx-Sxx)*vx + (P_xy-Sxy)*vy + (P_xz-Sxz)*vz
 
-                if (ivis == 1) then
+                if (ivis == 0 .or. ivis == 1) then
                     fpnts_r(ife,pxx) =  c4d3cv*vx
                     fpnts_r(ife,pyy) = -c2d3cv*vx
                     fpnts_r(ife,pzz) = -c2d3cv*vx
@@ -120,7 +120,7 @@ contains
             case(2)
                 fpnts_r(ife,rh) = M_y
 
-                if (ivis == 1) then
+                if (ivis == 0 .or. ivis == 1) then
                     fpnts_r(ife,mx) = M_x*vy     + P_xy - Sxy
                     fpnts_r(ife,my) = M_y*vy + P + P_yy - Syy
                     fpnts_r(ife,mz) = M_z*vy     + P_yz - Syz
@@ -131,10 +131,10 @@ contains
                     fpnts_r(ife,mz) = P_yz
                 end if
 
-                fpnts_r(ife,en) = (Ener + P)*vy                                    &
-                                + (P_yy - Syy)*vy + (P_xy - Sxy)*vx + (P_yz - Syz)*vz
+                fpnts_r(ife,en) = (Ener + P)*vy                                 &
+                                + (P_yy-Syy)*vy + (P_xy-Sxy)*vx + (P_yz-Syz)*vz
 
-                if (ivis == 1) then
+                if (ivis == 0 .or. ivis == 1) then
                     fpnts_r(ife,pxx) = -c2d3cv*vy
                     fpnts_r(ife,pyy) =  c4d3cv*vy
                     fpnts_r(ife,pzz) = -c2d3cv*vy
@@ -156,7 +156,7 @@ contains
             case(3)
                 fpnts_r(ife,rh) = M_z
 
-                if (ivis == 1) then
+                if (ivis == 0 .or. ivis == 1) then
                     fpnts_r(ife,mx) = M_x*vz     + P_xz - Sxz
                     fpnts_r(ife,my) = M_y*vz     + P_yz - Syz
                     fpnts_r(ife,mz) = M_z*vz + P + P_zz - Szz
@@ -167,10 +167,10 @@ contains
                     fpnts_r(ife,mz) = P_zz - P_10 + P_5
                 end if
 
-                fpnts_r(ife,en) = (Ener + P)*vz                                    &
-                                + (P_zz - Szz)*vz + (P_xz - Sxz)*vx + (P_yz - Syz)*vy
+                fpnts_r(ife,en) = (Ener + P)*vz                                 &
+                                + (P_zz-Szz)*vz + (P_xz-Sxz)*vx + (P_yz-Syz)*vy
 
-                if (ivis == 1) then
+                if (ivis == 0 .or. ivis == 1) then
                     fpnts_r(ife,pxx) = -c2d3cv*vz
                     fpnts_r(ife,pyy) = -c2d3cv*vz
                     fpnts_r(ife,pzz) =  c4d3cv*vz

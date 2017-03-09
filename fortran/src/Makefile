@@ -56,82 +56,84 @@ OTHERFILES = mkl_vsl.mod mkl_vsl_type.mod mkl_vsl.o lib_vtk_io.mod lib_vtk_io.o
 # Reference original code
 #********************************************
 ifeq ($(NAME),bitri)
-	OBJS = PERSEUSHydro_bitri_FH_test.f90
-	MODULES =
+    OBJS = PERSEUSHydro_bitri_FH_test.f90
+    MODULES =
 endif
 
 #********************************************
 # Reference modular code
 #********************************************
 ifeq ($(NAME),mod)
-	OBJS = perseushd_main.f90
-	MODULES = parameters_mod.f90 ic_mod.f90 \
-			   prepare_time_advance_mod.f90 basis_funcs_mod.f90 \
-			   io_mod.f90
+    OBJS = perseushd_main.f90
+    MODULES = parameters_mod.f90 ic_mod.f90 \
+               prepare_time_advance_mod.f90 basis_funcs_mod.f90 \
+               io_mod.f90
 endif
 
 #********************************************
 # Semi-old modular code
 #********************************************
 ifeq ($(NAME),mod2)
-	OBJS = main.f90
-	MODULES = input.f90 parameters.f90 helpers.f90 \
-			   init_conditions.f90 initialize.f90 \
-			   prep_time_advance.f90 basis_funcs.f90 io.f90
+    OBJS = main.f90
+    MODULES = input.f90 parameters.f90 helpers.f90 \
+               init_conditions.f90 initialize.f90 \
+               prep_time_advance.f90 basis_funcs.f90 io.f90
     MODFILES = input.mod parameters.mod helpers.mod \
-			   init_conditions.mod initialize.mod \
-			   prep_time_advance.mod basis_funcs.mod io.mod
+               init_conditions.mod initialize.mod \
+               prep_time_advance.mod basis_funcs.mod io.mod
 endif
 
 #********************************************
 # Default modular (development) code
 #********************************************
 ifeq ($(NAME),modbc)
-	OBJS = main.f90
-	MODULES =  input.f90 parameters.f90 basis_funcs.f90 helpers.f90 \
-			   boundary.f90 \
-			   random.f90 initialcon.f90 initialize.f90 \
-			   prepare_step.f90 sources.f90 flux.f90 \
-			   integrator.f90 output.f90
+    OBJS = main.f90
+    MODULES =  input.f90 parameters.f90 basis_funcs.f90 helpers.f90 \
+               boundary.f90 \
+               random.f90 initialcon.f90 initialize.f90 \
+               prepare_step.f90 sources.f90 flux.f90 \
+               integrator.f90 output.f90
     MODFILES = input.mod parameters.mod basis_funcs.mod helpers.mod \
-			   boundary_defs.mod boundary_custom.mod boundary.mod \
-			   random.mod initialcon.mod initialize.mod \
-			   prepare_step.mod sources.mod flux.mod \
-			   integrator.mod output.mod
+               boundary_defs.mod boundary_custom.mod boundary.mod \
+               random.mod initialcon.mod initialize.mod \
+               prepare_step.mod sources.mod flux.mod \
+               integrator.mod output.mod
 endif
 
 #********************************************
 # Sod Shock Tube 1D for development code
 #********************************************
 ifeq ($(NAME),sod)
-	OBJS = main.f90
-	MODULES =  input_sod.f90 parameters_sod.f90 basis_funcs.f90 helpers.f90 \
-			   boundary.f90 \
-			   random.f90 initialcon.f90 initialize.f90 \
-			   prepare_step.f90 sources.f90 flux.f90 \
-			   integrator.f90 output.f90
-    MODFILES = input.mod parameters.mod basis_funcs.mod helpers.mod \
-			   boundary_defs.mod boundary_custom.mod boundary.mod \
-			   random.mod initialcon.mod initialize.mod \
-			   prepare_step.mod sources.mod flux.mod \
-			   integrator.mod output.mod
+    OBJS = main.f90
+    MODULES =  input_sod.f90 parameters_sod.f90 \
+               basis_funcs.f90 helpers.f90 boundary.f90 \
+               random.f90 initialcon.f90 initialize.f90 \
+               prepare_step.f90 sources.f90 flux.f90 \
+               integrator.f90 output.f90
+    MODFILES = input.mod parameters.mod \
+               basis_funcs.mod helpers.mod \
+               boundary_defs.mod boundary_custom.mod boundary.mod \
+               random.mod initialcon.mod initialize.mod \
+               prepare_step.mod sources.mod flux.mod \
+               integrator.mod output.mod
 endif
 
 #********************************************
 # 2D Poiseuille flow for development code
 #********************************************
 ifeq ($(NAME),poi2d)
-	OBJS = main.f90
-	MODULES =  input_2dpoiseuille.f90 parameters_2dpoiseuille.f90 basis_funcs.f90 \
-			   helpers.f90 boundary.f90 \
-			   random.f90 initialcon.f90 initialize.f90 \
-			   prepare_step.f90 sources.f90 flux.f90 \
-			   integrator.f90 output.f90
-    MODFILES = input.mod parameters.mod basis_funcs.mod helpers.mod \
-			   boundary_defs.mod boundary_custom.mod boundary.mod \
-			   random.mod initialcon.mod initialize.mod \
-			   prepare_step.mod sources.mod flux.mod \
-			   integrator.mod output.mod
+    OBJS = main.f90
+    MODULES =  input_2dpoiseuille.f90 parameters_2dpoiseuille.f90
+               basis_funcs.f90 helpers.f90 boundary.f90 \
+               random.f90 initialcon.f90 initialize.f90 \
+               prepare_step.f90 sources.f90 flux.f90 \
+               integrator.f90 output.f90
+    MODFILES = input.mod parameters.mod \
+               basis_funcs.mod helpers.mod \
+               boundary_defs.mod boundary_custom.mod boundary.mod \
+               random.mod initialcon.mod initialize.mod \
+               prepare_step.mod sources.mod flux.mod \
+               integrator.mod output.mod
 endif
 ##################################################################
 
@@ -153,6 +155,6 @@ $(PROGNAME) : $(OBJS)
 	cd $(TESTDIR) && mpirun -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
 
 clean:
-#   $(rm) $(PROGNAME) core *~
+#	$(rm) $(PROGNAME) core *~
 	$(rm) $(MODFILES)
 ##################################################################

@@ -32,21 +32,21 @@ contains
                 source(ipg,rh:en) = 0
 
                 select case (ivis)
-                    case (0)  ! NOTE: THIS DOESN'T MAKE ANY SENSE IF THERE'S NO VISCOSITY
+                    case(0)  ! NOTE: THIS DOESN'T MAKE ANY SENSE IF THERE'S NO VISCOSITY
                         source(ipg,pxx) = -coll*Qin(pxx)
                         source(ipg,pyy) = -coll*Qin(pyy)
                         source(ipg,pzz) = -coll*Qin(pzz)
                         source(ipg,pxy) = -coll*Qin(pxy)
                         source(ipg,pxz) = -coll*Qin(pxz)
                         source(ipg,pyz) = -coll*Qin(pyz)
-                    case (1)
+                    case(1)
                         source(ipg,pxx) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
                         source(ipg,pyy) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
                         source(ipg,pzz) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
                         source(ipg,pxy) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
                         source(ipg,pxz) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
                         source(ipg,pyz) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
-                    case (2) ! NOTE: for doing full 10-moment equations explicitly
+                    case(2) ! NOTE: for doing full 10-moment equations explicitly
                         dn = Qin(rh)
                         dni = 1./dn
                         vx = Qin(mx)*dni
