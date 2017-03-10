@@ -72,7 +72,7 @@ module input
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_sod_iq2_nb4"
+    character (*), parameter :: outname = "test_sod_python"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density

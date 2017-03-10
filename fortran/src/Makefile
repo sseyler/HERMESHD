@@ -13,7 +13,7 @@ DEFS =
 PROGNAME = perseus_$(NAME)
 TESTDIR = /scratch/sseyler/WORK/PERSEUSHD_testing
 INCLUDES = -I. #-I$(MKLINCLUDE)
-LIBS = lib_vtk_io.o mkl_vsl.o #-L$(MKLPATH)
+OBJS = lib_vtk_io.o mkl_vsl.o #-L$(MKLPATH)
 
 DEFINES = $(INCLUDES) $(DEFS)
 # FORTFLAGS = -O3 -coarray=distributed
@@ -28,11 +28,10 @@ DEFINES = $(INCLUDES) $(DEFS)
 # ifortvars.sh -arch intel64 -platform linux
 # IGNORE := $(shell bash -c "source ifortvars.sh; env | sed 's/=/:=/' | sed 's/^/export /' > makeenv")
 # include makeenv
+
+# libmkl_intel_lp64.so lives here: $(MKLROOT)/lib/intel64_lin
+
 MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/fortran/mkl
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MKLROOT/lib/intel64_lin
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
-# MKLBIN=$(MKLPATH)/bin
-# MKLINCLUDE=$(MKLPATH)/include
 MKL_TARGET_ARCH = intel64_lin
 MISCFLAGS = -diag-disable 13003 # disable the warning for message verification
 
@@ -56,16 +55,16 @@ OTHERFILES = mkl_vsl.mod mkl_vsl_type.mod mkl_vsl.o lib_vtk_io.mod lib_vtk_io.o
 # Reference original code
 #********************************************
 ifeq ($(NAME),bitri)
-    OBJS = PERSEUSHydro_bitri_FH_test.f90
-    MODULES =
+    SRC = PERSEUSHydro_bitri_FH_test.f90
+    MODSRC =
 endif
 
 #********************************************
 # Reference modular code
 #********************************************
 ifeq ($(NAME),mod)
-    OBJS = perseushd_main.f90
-    MODULES = parameters_mod.f90 ic_mod.f90 \
+    SRC = perseushd_main.f90
+    MODSRC = parameters_mod.f90 ic_mod.f90 \
                prepare_time_advance_mod.f90 basis_funcs_mod.f90 \
                io_mod.f90
 endif
@@ -74,8 +73,8 @@ endif
 # Semi-old modular code
 #********************************************
 ifeq ($(NAME),mod2)
-    OBJS = main.f90
-    MODULES = input.f90 parameters.f90 helpers.f90 \
+    SRC = main.f90
+    MODSRC = input.f90 parameters.f90 helpers.f90 \
                init_conditions.f90 initialize.f90 \
                prep_time_advance.f90 basis_funcs.f90 io.f90
     MODFILES = input.mod parameters.mod helpers.mod \
@@ -87,8 +86,8 @@ endif
 # Default modular (development) code
 #********************************************
 ifeq ($(NAME),modbc)
-    OBJS = main.f90
-    MODULES =  input.f90 parameters.f90 basis_funcs.f90 helpers.f90 \
+    SRC = main.f90
+    MODSRC =  input.f90 parameters.f90 basis_funcs.f90 helpers.f90 \
                boundary.f90 \
                random.f90 initialcon.f90 initialize.f90 \
                prepare_step.f90 sources.f90 flux.f90 \
@@ -104,8 +103,8 @@ endif
 # Sod Shock Tube 1D for development code
 #********************************************
 ifeq ($(NAME),sod)
-    OBJS = main.f90
-    MODULES =  input_sod.f90 parameters_sod.f90 \
+    SRC = main.f90
+    MODSRC =  input_sod.f90 parameters_sod.f90 \
                basis_funcs.f90 helpers.f90 boundary.f90 \
                random.f90 initialcon.f90 initialize.f90 \
                prepare_step.f90 sources.f90 flux.f90 \
@@ -122,8 +121,8 @@ endif
 # 2D Poiseuille flow for development code
 #********************************************
 ifeq ($(NAME),poi2d)
-    OBJS = main.f90
-    MODULES =  input_2dpoiseuille.f90 parameters_2dpoiseuille.f90
+    SRC = main.f90
+    MODSRC =  input_2dpoiseuille.f90 parameters_2dpoiseuille.f90
                basis_funcs.f90 helpers.f90 boundary.f90 \
                random.f90 initialcon.f90 initialize.f90 \
                prepare_step.f90 sources.f90 flux.f90 \
@@ -147,9 +146,12 @@ endif
 
 all: $(PROGNAME)
 
-$(PROGNAME) : $(OBJS)
-	cp $(OBJS) $(MODULES) $(OTHERFILES) $(TESTDIR) && cd $(TESTDIR) && \
-	$(FORT) $(FORTFLAGS) $(LIBS) $(MODULES) $(OBJS) -o $(PROGNAME)
+shlib:
+	$(FORT) -shared -fPIC $(FORTFLAGS) $(SRC) LIB_VTK_IO.f90 $(MODSRC) mkl_vsl.o -o $(PROGNAME).so
+
+$(PROGNAME) : $(SRC)
+	cp $(SRC) $(MODSRC) $(OTHERFILES) $(TESTDIR) && cd $(TESTDIR) && \
+	$(FORT) $(FORTFLAGS) $(SRC) $(MODSRC) $(OBJS) -o $(PROGNAME)
 #	strip $(PROGNAME)
 #	$(PROGNAME)
 	cd $(TESTDIR) && mpirun -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err

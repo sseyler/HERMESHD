@@ -7,7 +7,7 @@ use helpers
 use basis_funcs!, only: wgt1d, wgt2d, wgt3d, ibitri, cbasis, set_bfvals_3D
 
 use initialcon
-use random
+! use random  ! TODO: commented to get working w/o MKL
 
 implicit none
 
@@ -19,9 +19,9 @@ integer :: nout
 contains
 
     !===========================================================================
-    ! perform_setup : perform general setup & variable initialization
+    ! initializer : perform general setup & variable initialization
     !------------------------------------------------------------
-    subroutine perform_setup(t, dt, nout)
+    subroutine initializer(t, dt, nout)
         implicit none
         real, intent(out) :: t, dt
         integer, intent(out) :: nout
@@ -53,11 +53,11 @@ contains
         call init_random_seed(iam, iseed)
 
         ! Initialize MKL random number generator
-        vsl_errcode = vslnewstream(vsl_stream, vsl_brng, iseed)
+        ! vsl_errcode = vslnewstream(vsl_stream, vsl_brng, iseed)  ! TODO: commented to get working w/o MKL
 
         call print_startup_info
 
-    end subroutine perform_setup
+    end subroutine initializer
     !---------------------------------------------------------------------------
 
 
@@ -388,12 +388,12 @@ contains
 
 
     !===========================================================================
-    ! initialize_from_file : initialize simulation from checkpoint file
+    ! set_ic_from_file : initialize simulation from checkpoint file
     !------------------------------------------------------------
-    subroutine initialize_from_file(Q_r, t, dt, nout)
+    subroutine set_ic_from_file(Q_r, t, dt, dtout, nout)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
-        real, intent(out) :: t, dt
+        real, intent(out) :: t, dt, dtout
         integer, intent(out) :: nout
 
         real t_p,dt_p,dtout_p
@@ -433,7 +433,7 @@ contains
             call mpi_print(iam, 'Bad restart, non-matching mpi_nx, mpi_ny, or mpi_nz')
             call exit(-1)
         end if
-    end subroutine initialize_from_file
+    end subroutine set_ic_from_file
     !---------------------------------------------------------------------------
 
 
