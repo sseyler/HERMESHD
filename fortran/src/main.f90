@@ -15,7 +15,7 @@ use initialize
 
 use prepare_step
 use sources
-use random
+! use random
 use flux
 use output
 
@@ -30,6 +30,7 @@ use output
 call initializer(t, dt, nout)
 
 t_start = get_clock_time()  ! start timer for wall time
+dtout = tf/ntout  ! TODO: move this to a more sensible place once output scheme is improved!
 
 !-------------------------------------------------
 ! 2. Select and set initial conditions
@@ -37,14 +38,13 @@ t_start = get_clock_time()  ! start timer for wall time
 if (iread == 0) then
     call set_ic(Q_r0, icid)
 else
-    call set_ic_from_file(Q_r0, t, dt, nout)
+    call set_ic_from_file(Q_r0, t, dt, dtout, nout)
 endif
 
 !-------------------------------------------------
 ! 3. Select integration method
 !-------------------------------------------------
-dtout = tf/ntout  ! TODO: move this to a more sensible place once output scheme is improved!
-call select_integrator(iname, update)
+call select_integrator(iname, step)
 
 !-------------------------------------------------
 ! 4. Select boundary conditions
@@ -85,7 +85,7 @@ end do
 !-------------------------------------------------
 ! 1. De-allocate system resources for RNG
 !-------------------------------------------------
-vsl_errcode = vsldeletestream( vsl_stream )
+! vsl_errcode = vsldeletestream( vsl_stream )  ! TODO: commented to get working w/o MKL
 
 !-------------------------------------------------
 ! 2. MPI cleanup

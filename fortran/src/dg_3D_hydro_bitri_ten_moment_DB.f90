@@ -1,25 +1,25 @@
-!      DG-Hydro in 3 dimensions: Extension of the finite volume PERSEUS Algorithm (Physics of the Extended-mhd Relaxation System using an Efficient Upwind Scheme, 
+!      DG-Hydro in 3 dimensions: Extension of the finite volume PERSEUS Algorithm (Physics of the Extended-mhd Relaxation System using an Efficient Upwind Scheme,
 !                                by Matt Martin and Charles Seyler) to the Discontinuous Galerkin Method specialized to hydrodynamics.
-!                
-!                DG Algorithm by Xuan Zhao, Nat Hamlin and Charles Seyler. 
+!
+!                DG Algorithm by Xuan Zhao, Nat Hamlin and Charles Seyler.
 !
 !                Solves the 3D compressible Euler equations
-!                 
+!
 !                Variables:    There are 5 dependent variables: density (rh), velocity (vx,vy,vz), energy (en)
 !
 !                Units:        A value of unity for each variable or parameter corresponds to the following dimensional units:
 !
 !                              Length              L0
 !                              Time                t0
-!                              Number density      n0 
+!                              Number density      n0
 !                              Velocity            v0
 !                              Temperature         te0
 !
-!-------------------------------------------------------------------------------------------------------------------------------------------                                        
+!-------------------------------------------------------------------------------------------------------------------------------------------
 
-    program main  
-    use lib_vtk_io 
-    include 'mpif.h'  
+    program main
+    use lib_vtk_io
+    include 'mpif.h'
 	integer, parameter :: rh=1, mx=2, my=3, mz=4, en=5, exx=6, eyy=7, ezz=8, exy=9, exz=10, eyz=11, nQ=11
 
 	integer, parameter :: nx = 40, ny = 40, nz = 1, ngu = 0, nbasis = 8, nbastot = 27
@@ -33,7 +33,7 @@
 	integer, parameter :: iquad=2, nedge = iquad
 	! iquad: number of Gaussian quadrature points per direction. iquad should not be less than ipoly, where ipoly is the maximum Legendre polynomial order used,
         ! otherwise instability results. iquad should not be larger than ipoly + 1, which is an exact Gaussian quadrature for the Legendre polynomial used. Thus there are only
-        ! two cases of iquad for a given nbasis.  Both cases give similar results although the iquad = ipoly + 1 case is formally more accurate. 
+        ! two cases of iquad for a given nbasis.  Both cases give similar results although the iquad = ipoly + 1 case is formally more accurate.
 
     	integer, parameter :: nface = iquad*iquad, npg = nface*iquad, nfe = 2*nface, npge = 6*nface, nslim=npg+6*nface
 	! nface: number of quadrature points per cell face.
@@ -53,10 +53,10 @@
 	character (4), parameter :: fpre = 'Qout'
 	logical, parameter :: resuming = .false.
 
-	real, parameter :: lx = 300., ly = 300., lz = 1.25 
+	real, parameter :: lx = 300., ly = 300., lz = 1.25
 
 	real, parameter :: tf = 2000.
-                 
+
         real, parameter :: pi = 4.0*atan(1.0)
 
         real, parameter :: aindex = 5./3., mu = 22.
@@ -66,20 +66,20 @@
     	! dimensional units (expressed in MKS)
         real, parameter :: L0=1.0e4, t0=1.0e2, n0=6.e18
 
-    	! derived units 
+    	! derived units
         real, parameter :: v0=L0/t0, p0=mu*1.67e-27*n0*v0**2, te0=p0/n0/1.6e-19, vis=1.e-3, epsi=5., clt=3.
 
 	real, parameter :: T_floor = 0.01/te0, rh_floor = 1.e-5, P_floor = T_floor*rh_floor, rh_mult = 1.01
 
- 
-	real, dimension(nx,ny,nz,nQ,nbasis) ::  Q_r0, Q_r1, Q_r2, Q_r3	
+
+	real, dimension(nx,ny,nz,nQ,nbasis) ::  Q_r0, Q_r1, Q_r2, Q_r3
 	real, dimension(nx,ny,nz,nQ,nbasis) ::  glflux_r, source_r
-	real, dimension(nx,ny,nz,nQ,nbasis) :: integral_r 
-	
+	real, dimension(nx,ny,nz,nQ,nbasis) :: integral_r
+
  	real eta(nx,ny,nz,npg),den0(nx,ny,nz),Ez0,Zdy(nx,ny,nz,npg)
 	real flux_x(nface,1:nx+1,ny,nz,1:nQ), flux_y(nface,nx,1:ny+1,nz,1:nQ), flux_z(nface,nx,ny,1:nz+1,1:nQ)
         real cfrx(nface,nQ),cfry(nface,nQ),cfrz(nface,nQ)
-	logical MMask(nx,ny,nz),BMask(nx,ny,nz)   
+	logical MMask(nx,ny,nz),BMask(nx,ny,nz)
 	real xcell(npg), ycell(npg), zcell(npg), xface(npge), yface(npge), zface(npge)
 	integer ticks, count_rate, count_max
 	real t1, t2, t3, t4, elapsed_time, t_start, t_stop, dtoriginal
@@ -87,8 +87,8 @@
         real lxd,lxu,lyd,lyu,lzd,lzu,pin_rad,pin_height,foil_thickness,rh_foil,rh_fluid,pin_rad_in,pin_rad_out,rim_rad
         real disk_rad,disk_height,foil_rad,buf_rad,buf_z,dish_height,foil_height
         real gpz_rad,rh_gpz,kappa,coll
-	real Qxhigh_ext(ny,nz,nface,nQ), Qxlow_int(ny,nz,nface,nQ), Qxlow_ext(ny,nz,nface,nQ), Qxhigh_int(ny,nz,nface,nQ) 
-	real Qyhigh_ext(nx,nz,nface,nQ), Qylow_int(nx,nz,nface,nQ), Qylow_ext(nx,nz,nface,nQ), Qyhigh_int(nx,nz,nface,nQ)	
+	real Qxhigh_ext(ny,nz,nface,nQ), Qxlow_int(ny,nz,nface,nQ), Qxlow_ext(ny,nz,nface,nQ), Qxhigh_int(ny,nz,nface,nQ)
+	real Qyhigh_ext(nx,nz,nface,nQ), Qylow_int(nx,nz,nface,nQ), Qylow_ext(nx,nz,nface,nQ), Qyhigh_int(nx,nz,nface,nQ)
 	real Qzhigh_ext(nx,ny,nface,nQ), Qzlow_int(nx,ny,nface,nQ), Qzlow_ext(nx,ny,nface,nQ), Qzhigh_int(nx,ny,nface,nQ)
 	integer mxa(3),mya(3),mza(3),kroe(nface),niter,iseed
 
@@ -98,9 +98,9 @@
 	real wgt1d(5), wgt2d(30), wgt3d(100), cbasis(nbastot)
 	! wgt1d: quadrature weights for 1-D integration
 	! wgt2d: quadrature weights for 2-D integration
-	! wgt3d: quadrature weights for 3-D integration	
+	! wgt3d: quadrature weights for 3-D integration
 
-	
+
 	real, dimension(nface,nbastot) :: bfvals_zp, bfvals_zm, bfvals_yp, bfvals_ym, bfvals_xp, bfvals_xm
 	real bf_faces(nslim,nbastot), bfvals_int(npg,nbastot),xquad(20)
         real bval_int_wgt(npg,nbastot),wgtbfvals_xp(nface,nbastot),wgtbfvals_yp(nface,nbastot),wgtbfvals_zp(nface,nbastot)
@@ -118,12 +118,12 @@
 	integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
 	real, dimension(nvtk3,nbastot) :: bfvtk, bfvtk_dx, bfvtk_dy, bfvtk_dz
 	real xgrid(20),dxvtk,dyvtk,dzvtk
-	
-			
+
+
     ! MPI definitions
 
-	integer :: mpi_nx=6, mpi_ny=6, print_mpi=0  
-       
+	integer :: mpi_nx=6, mpi_ny=6, print_mpi=0
+
     	integer iam,ierr,mpi_nz,numprocs,reorder,cartcomm,mpi_P,mpi_Q,mpi_R
     	integer dims(3),coords(3),periods(3),nbrs(6),reqs(4),stats(MPI_STATUS_SIZE,4)
     	integer,parameter:: NORTH=1,SOUTH=2,EAST=3,WEST=4,UP=5,DOWN=6,MPI_TT=MPI_REAL4
@@ -131,8 +131,8 @@
         real cflm
 
 	if (nbasis .le. 8) cflm = 0.12
-	if (nbasis .eq. 27) cflm = 0.08 
-   
+	if (nbasis .eq. 27) cflm = 0.08
+
     ! Initialize grid sizes and local lengths
 
 	cbasis(1) = 1.			! coefficient for basis function {1}
@@ -150,13 +150,13 @@
 
 	call MPI_Init ( ierr )
         call MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierr)
-	
+
 	mpi_nz=numprocs/(mpi_nx*mpi_ny)
 
 	dims(1)=mpi_nx
 	dims(2)=mpi_ny
 	dims(3)=mpi_nz
-	
+
 	periods(:)=0
 	if (xhbc .eq. 2) then
      	   periods(1)=1
@@ -166,29 +166,29 @@
 	end if
 	if (zhbc .eq. 2) then
      	   periods(3)=1
-	end if	
+	end if
 	reorder = 1
-	
+
     	call MPI_CART_CREATE(MPI_COMM_WORLD, 3, dims, periods, reorder,cartcomm, ierr)
     	call MPI_COMM_RANK (cartcomm, iam, ierr )
     	call MPI_CART_COORDS(cartcomm, iam, 3, coords, ierr)
     	mpi_P=coords(1)+1
     	mpi_Q=coords(2)+1
-    	mpi_R=coords(3)+1    	
+    	mpi_R=coords(3)+1
     	call MPI_CART_SHIFT(cartcomm, 0, 1, nbrs(WEST), nbrs(EAST), ierr)
     	call MPI_CART_SHIFT(cartcomm, 1, 1, nbrs(SOUTH), nbrs(NORTH), ierr)
-    	call MPI_CART_SHIFT(cartcomm, 2, 1, nbrs(DOWN), nbrs(UP), ierr)	
-    	
+    	call MPI_CART_SHIFT(cartcomm, 2, 1, nbrs(DOWN), nbrs(UP), ierr)
+
     	half_length = lx/2.0
     	lxd = -half_length
     	lxu = half_length
 	half_length = ly/2.0
     	lyd = -half_length
-    	lyu = half_length 
+    	lyu = half_length
     	half_length = lz/2.0
     	lzd = -half_length
-    	lzu = half_length 
-    	
+    	lzu = half_length
+
     	dxi = (nx*mpi_nx)/(lxu-lxd)
     	dyi = (ny*mpi_ny)/(lyu-lyd)
     	dzi = (nz*mpi_nz)/(lzu-lzd)
@@ -250,7 +250,7 @@
         end do
 
         call init_random_seed(123456789)
-    
+
     if (iam .eq. print_mpi) then
     	print *,'total dim= ',mpi_nx*nx,mpi_ny*ny,mpi_nz*nz
     	print *,'mpi dim= ',mpi_nx,mpi_ny,mpi_nz
@@ -259,10 +259,10 @@
         print *, 'iquad is: ',  iquad
         print *, 'nbasis is: ', nbasis
     end if
-    	
+
 	call system_clock(ticks, count_rate, count_max)
 	t_start = ticks*1./count_rate
-	
+
 	if (iread .eq. 0) then
 
 		call initial_condition
@@ -312,19 +312,19 @@
 
 	end if
 
-	
+
 	call system_clock( ticks, count_rate, count_max )
     	t1 = 1.*ticks / count_rate
-	call output_vtk(Q_r0,nout,iam)	
-    	
+	call output_vtk(Q_r0,nout,iam)
+
 	do while (t<tf)
 
 !	   if (mod(niter,200) .eq. 0 .and. iam .eq. print_mpi) print *,'niter,t,dt = ',niter,t,dt,dtout*nout
 	   niter = niter + 1
  	call get_min_dt(dt)
-		
+
 	if (iorder .eq. 2) then
-		
+
 		call prep_advance(Q_r0)
 		call advance_time_level_gl(Q_r0,Q_r1)
 
@@ -344,14 +344,14 @@
 
 		Q_r3 = 0.75*Q_r0 + 0.25*Q_r2
 
-		call prep_advance(Q_r3)		
-		call advance_time_level_gl(Q_r3,Q_r2)	
+		call prep_advance(Q_r3)
+		call advance_time_level_gl(Q_r3,Q_r2)
 
                 Q_r0 = (Q_r0 + 2.*Q_r2)/3.
-			
+
 	end if
 
-		t = t+dt	
+		t = t+dt
 
 	if (t .gt. dtout*nout) then
 		nout = nout+1
@@ -362,14 +362,14 @@
 			t1 = t2
 			print *, 'nout = ', nout
 		        print *, "        t= ",t*100.,"         dt= ",dt
-		end if	
-		
+		end if
+
 		call MPI_BARRIER(cartcomm,ierr)
-		call output_vtk(Q_r0,nout,iam)	
+		call output_vtk(Q_r0,nout,iam)
 
 		! write checkpoint files; assign an odd/even id to ensure last two sets are kept
 		if (iwrite .eq. 1) then
-			ioe = 2 - mod(nout,2) 
+			ioe = 2 - mod(nout,2)
 			call writeQ(fpre,iam,ioe,Q_r0,t,dt,nout,mpi_nx,mpi_ny,mpi_nz)
 		end if
 		call MPI_BARRIER(cartcomm,ierr)
@@ -379,39 +379,39 @@
 			t2 = ticks/count_rate
 			print *, 'Output time', (t2-t1), 'seconds'
 			t1 = t2
-		end if	
+		end if
 
 	end if
 
-	end do 
+	end do
 
     	call MPI_Finalize (ierr)
 
     contains
 
-!------------------------------------------        
+!------------------------------------------
 	subroutine init_random_seed(iseed)
 		implicit none
 		integer :: i, n, clock,iseed
 		integer, dimension(:), allocatable :: seed
-		
+
 		call random_seed(size = n)
 		allocate(seed(n))
-		  
+
 		call system_clock(count=clock)
-		  
-		if (iseed .eq. 0) then 
+
+		if (iseed .eq. 0) then
 			seed =  clock*(iam+1) + 37 * (/ (i - 1, i = 1, n) /)
 		else
 			seed =  iseed*(iam+1)
 		endif
 		call random_seed(put = seed)
-		  
+
 	!	print *,seed(1)
 		deallocate(seed)
 	end subroutine
 
-!------------------------------------------------------------------------------- 
+!-------------------------------------------------------------------------------
 
        subroutine prep_advance(Q_ri)
 
@@ -427,18 +427,18 @@
 
        end subroutine prep_advance
 
-!------------------------------------------------------------------------------- 
- 
+!-------------------------------------------------------------------------------
+
        subroutine get_min_dt(dt)
        real dt,dt_min,dt_val(numprocs-1),tt,cfl,vmax,vmag,valf,vmag0,valf0,vex,vey,vez,vem,vem0,dni,dn,vx,vy,vz,Pr,sqdni,vacc,vacc0,cs
        integer :: i,j,k,main_proc=0,mpi_size=1,loc_reqs(numprocs-1),loc_stats(MPI_STATUS_SIZE,numprocs-1)
 
        vmag = 0.
-		
+
        do k=1,nz
        do j=1,ny
        do i=1,nx
-              
+
              dn = Q_r0(i,j,k,rh,1)
              dni = 1./dn
              vx = Q_r0(i,j,k,mx,1)*dni
@@ -450,23 +450,23 @@
              if(vmag0 > vmag)vmag = vmag0
 
        end do
-       end do  
+       end do
        end do
 
        vmax = vmag*dxi
        dt_min = 1*cflm/vmax  ! time step is determined by the maximum flow + sound speed in the domain
-       
+
 		call MPI_BARRIER(cartcomm,ierr)
 		if (iam.eq.main_proc) then
 		do i=1,numprocs-1
-        	call MPI_IRecv(dt_val(i),mpi_size,MPI_TT,i,0,cartcomm,loc_reqs(i),ierr)        			
+        	call MPI_IRecv(dt_val(i),mpi_size,MPI_TT,i,0,cartcomm,loc_reqs(i),ierr)
 		enddo
 		call MPI_WaitAll(numprocs-1,loc_reqs,loc_stats,ierr)
 		do i=1,numprocs-1
         	dt_min=min(dt_min,dt_val(i))
 		enddo
 		do i=1,numprocs-1
-        	call MPI_ISend(dt_min,mpi_size,MPI_TT,i,0,cartcomm,loc_reqs(i),ierr)        			
+        	call MPI_ISend(dt_min,mpi_size,MPI_TT,i,0,cartcomm,loc_reqs(i),ierr)
 		enddo
 		call MPI_WaitAll(numprocs-1,loc_reqs,loc_stats,ierr)
 		else
@@ -475,9 +475,9 @@
         	call MPI_IRecv(dt_min,mpi_size,MPI_TT,main_proc,0,cartcomm,reqs(1),ierr)
 		call MPI_Wait(reqs(1),stats(:,1),ierr)
 		endif
-		
+
 		dt = dt_min
-		
+
 	end subroutine get_min_dt
 
 !----------------------------------------------------------------------------------------------
@@ -489,10 +489,10 @@
     real den, Pre, wtev
 
         wtev = T_floor
-	
+
 	Q_r0(:,:,:,:,:) = 0.0
 	Q_r0(:,:,:,rh,1) = rh_floor
-	Q_r0(:,:,:,en,1) = T_floor*rh_floor/(aindex - 1.)	
+	Q_r0(:,:,:,en,1) = T_floor*rh_floor/(aindex - 1.)
 	MMask(:,:,:) = .false.
 
         call fill_fluid
@@ -502,12 +502,12 @@
 !-------------------------------------------------------
 
     subroutine fill_fluid
-        
+
 !-------------------------------------------------------
 
         integer i,j,k,ir,izw(4),ixw(4),iyw(4),iw,iseed,igrid,ieq,inds(nbasis)
         real wirer,x,y,x0,y0,rhline,wtev,rx,ry,rnum,w0,P,vx,vy,vz,rho
-	real qquad(npg,nQ),xcc,ycc,zcc 
+	real qquad(npg,nQ),xcc,ycc,zcc
         iseed = 1317345*mpi_P + 5438432*mpi_Q + 3338451*mpi_R
 
         wtev = T_floor
@@ -526,13 +526,13 @@
 	         Q_r0(i,j,k,rh,1) = rh_floor
 	         Q_r0(i,j,k,en,1) = wtev*Q_r0(i,j,k,rh,1)/(aindex - 1.)
 
-		 xcc = xc(i)	
-		 ycc = yc(j) 	
-		 zcc = zc(k) 
-               
+		 xcc = xc(i)
+		 ycc = yc(j)
+		 zcc = zc(k)
+
                  Q_r0(i,j,k,rh,1) = rh_fluid
-		 Q_r0(i,j,k,my,1) = 0.0001*rnum/cosh(20*yc(j)/lyu)**2 
-		 Q_r0(i,j,k,mz,1) = 0.  
+		 Q_r0(i,j,k,my,1) = 0.0001*rnum/cosh(20*yc(j)/lyu)**2
+		 Q_r0(i,j,k,mz,1) = 0.
 		 Q_r0(i,j,k,mx,1) = 1.0*Q_r0(i,j,k,rh,1)/cosh(20*ycc/lyu)/1.
 	         Q_r0(i,j,k,en,1) = (1. + 0.001*rnum)*wtev*Q_r0(i,j,k,rh,1)/(aindex - 1.)  &
                                   + 0.5*(Q_r0(i,j,k,mx,1)**2 + Q_r0(i,j,k,my,1)**2 + Q_r0(i,j,k,mz,1)**2)/Q_r0(i,j,k,rh,1)
@@ -543,17 +543,17 @@
                  vz = Q_r0(i,j,k,mz,1)/rh_fluid
                  P = wtev*Q_r0(i,j,k,rh,1)
 
-                 Q_r0(i,j,k,exx,1) = P + rho*vx**2 
+                 Q_r0(i,j,k,exx,1) = P + rho*vx**2
                  Q_r0(i,j,k,eyy,1) = P + rho*vy**2
                  Q_r0(i,j,k,ezz,1) = P + rho*vz**2
-                 Q_r0(i,j,k,exy,1) = rho*vx*vy 
+                 Q_r0(i,j,k,exy,1) = rho*vx*vy
                  Q_r0(i,j,k,exz,1) = rho*vx*vz
                  Q_r0(i,j,k,eyz,1) = rho*vy*vz
 
-              end do     
+              end do
            end do
         end do
-           
+
     end subroutine fill_fluid
 
 !----------------------------------------------------------------------------------------------
@@ -567,7 +567,7 @@
 	if (mpi_P .eq. 1 .and. xlbc .ne. 2) then
 		! Set B.C.'s at bottom x-boundary.
 
-	do k = 1,nz	
+	do k = 1,nz
 	do j = 1,ny
 
 		do i4=1,nface
@@ -577,7 +577,7 @@
 		if (maxval(Qxlow_ext(j,k,1:nface,mx)) .gt. 0.) then
 		   Qxlow_ext(j,k,1:nface,mx) = 0.
 		end if
-			
+
 	end do
 	end do
 
@@ -588,18 +588,18 @@
 	if (mpi_P .eq. mpi_nx .and. xlbc .ne. 2) then
 		! Set B.C.'s at top x-boundary.
 
-	do k = 1,nz	
+	do k = 1,nz
 	do j = 1,ny
 
 		do i4=1,nface
 		   Qxhigh_ext(j,k,i4,:) = Qxhigh_int(j,k,i4,:)
 		end do
-		
+
 		if (minval(Qxhigh_ext(j,k,1:nface,mx)) .lt. 0.) then
 		   Qxhigh_ext(j,k,1:nface,mx) = 0.
-		end if		
-	
-	end do 
+		end if
+
+	end do
 	end do
 
         end if
@@ -608,18 +608,18 @@
 
 	if (mpi_Q .eq. 1 .and. ylbc .ne. 2) then
 		! Set B.C.'s at bottom y-boundary.
-	
-	do k = 1,nz	
+
+	do k = 1,nz
 	do i = 1,nx
 
 		do i4=1,nface
 		   Qylow_ext(i,k,i4,:) = Qylow_int(i,k,i4,:)
 		end do
-		
+
 		if (maxval(Qylow_ext(i,k,1:nface,my)) .gt. 0.) then
 		   Qylow_ext(i,k,1:nface,my) = 0.
-		end if		
-			
+		end if
+
 	end do
 	end do
 
@@ -630,7 +630,7 @@
 	if (mpi_Q .eq. mpi_ny .and. ylbc .ne. 2) then
 		! Set B.C.'s at top y-boundary.
 
-	do k = 1,nz	
+	do k = 1,nz
 	do i = 1,nx
 
 		do i4=1,nface
@@ -641,7 +641,7 @@
 		   Qyhigh_ext(i,k,1:nface,my) = 0.
 		end if
 
-	end do 
+	end do
 	end do
 
 	end if
@@ -650,8 +650,8 @@
 
         if (mpi_R .eq. 1 .and. zlbc .ne. 2) then
 		! Set B.C.'s at bottom z-boundary.
-	
-	do j = 1,ny	
+
+	do j = 1,ny
 	do i = 1,nx
 
             if (r(i,j) .ge. disk_rad .and. r(i,j) .le. lxu - 2.*dx) then
@@ -664,7 +664,7 @@
 		if (maxval(Qzlow_ext(i,j,1:nface,mz)) .gt. 0.) then
 		   Qzlow_ext(i,j,1:nface,mz) = 0.
 		end if
-	
+
 	end do
 	end do
 
@@ -675,16 +675,16 @@
 	if (mpi_R .eq. mpi_nz .and. zlbc .ne. 2) then
 		! Set B.C.'s at top z-boundary.
 
-	do j = 1,ny	
+	do j = 1,ny
 	do i = 1,nx
-	
+
                 Qzhigh_ext(i,j,1:nface,:) = Qzhigh_int(i,j,1:nface,:)
 
 		if (minval(Qzhigh_ext(i,j,1:nface,mz)) .lt. 0.) then
 		   Qzhigh_ext(i,j,1:nface,mz) = 0
-		end if	
-			
-	end do 
+		end if
+
+	end do
 	end do
 
 	end if
@@ -753,7 +753,7 @@
 	end do
 	end do
 	end do
-	
+
     end subroutine advance_time_level_gl
 
 !----------------------------------------------------------------------------------------------
@@ -761,7 +761,7 @@
     subroutine source_calc(Q_ri,t)
     implicit none
     integer i,j,k,ieq,ipg,ir
-    real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri 	
+    real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri
     real t,source(npg,nQ),Qin(nQ),dn,dni,Zin,vx,vy,vz,alpha,temp,dne,eta_a,Teev,Tiev,etaJ2,nuei,TemR,Tev,vmax,P
     real Tcoef,fac,en_floor,gyro,Pres,rh_buf,oth
 
@@ -769,15 +769,15 @@
 	source(:,:) = 0.0
         en_floor = P_floor/(aindex - 1.)
         oth = 1./3.
-	
+
 	do k = 1,nz
 	do j = 1,ny
 	do i = 1,nx
 
 	do ipg = 1,npg
-	
+
 	do ieq = 1,nQ
-	   Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,ieq,1:nbasis))  
+	   Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_ri(i,j,k,ieq,1:nbasis))
 	end do
 
         dn = Qin(rh)
@@ -788,32 +788,32 @@
 
 !       Sources for the fluid variables. Nonzero if randomly forced.
 
-        source(ipg,rh) = 0 
-        source(ipg,mx) = 0 
-        source(ipg,my) = 0 
-        source(ipg,mz) = 0  
-	source(ipg,en) = 0 
+        source(ipg,rh) = 0
+        source(ipg,mx) = 0
+        source(ipg,my) = 0
+        source(ipg,mz) = 0
+	source(ipg,en) = 0
 
 	! For ivis = 1 the sources for the deviatoric stress are zero for the implicit solve used in advance_time_level.
 	! For ivis = 0 the sources are for the 6 equations for the energy tensor E_ij with the implicit solve implemented in advance_time_level.
 
         if(ivis .eq. 1)then
 
-        source(ipg,exx) = 0 
-        source(ipg,eyy) = 0 
-        source(ipg,ezz) = 0     
-        source(ipg,exy) = 0   
-        source(ipg,exz) = 0    
-        source(ipg,eyz) = 0 
+        source(ipg,exx) = 0
+        source(ipg,eyy) = 0
+        source(ipg,ezz) = 0
+        source(ipg,exy) = 0
+        source(ipg,exz) = 0
+        source(ipg,eyz) = 0
 
         else
 
         source(ipg,exx) = coll*dn*(2*vx**2 - vy**2 - vz**2)*oth
         source(ipg,eyy) = coll*dn*(2*vy**2 - vz**2 - vx**2)*oth
-        source(ipg,ezz) = coll*dn*(2*vz**2 - vx**2 - vy**2)*oth 
-        source(ipg,exy) = coll*dn*vx*vy  
-        source(ipg,exz) = coll*dn*vx*vz  
-        source(ipg,eyz) = coll*dn*vy*vz 
+        source(ipg,ezz) = coll*dn*(2*vz**2 - vx**2 - vy**2)*oth
+        source(ipg,exy) = coll*dn*vx*vy
+        source(ipg,exz) = coll*dn*vx*vz
+        source(ipg,eyz) = coll*dn*vy*vz
 
         end if
 
@@ -824,25 +824,25 @@
 	      source_r(i,j,k,ieq,ir) = 0.125*cbasis(ir)*sum(bval_int_wgt(1:npg,ir)*source(1:npg,ieq))
 	   end do
 	end do
-	
+
 	end do
 	end do
 	end do
-	
+
     end subroutine source_calc
 
 !----------------------------------------------------------------------------------------------
 
     subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
 
-	! Calculate the flux "fpnts_r" in direction "ixyz" (x, y, or z) at a set of 
+	! Calculate the flux "fpnts_r" in direction "ixyz" (x, y, or z) at a set of
 	! points corresponding to conserved quantities "Qpnts_r".
 
 	! ixyz=1: x-direction
 	! ixyz=2: y-direction
-	! ixyz=3: z-direction	
+	! ixyz=3: z-direction
 
-	! For ivis = 0 the fluxes for the 10-moment equations are computed based on Grad's 13-moment approximation. 
+	! For ivis = 0 the fluxes for the 10-moment equations are computed based on Grad's 13-moment approximation.
 	! The energy tensor components are E_ij = S_ij + rho u_i u_j + delta_ij P, where S_ij is the deviatoric stress tensor
 	! and P is the scalar pressure.
 
@@ -864,7 +864,7 @@
 
 	do ife = 1,npnts
 
-	dn = Qpnts_r(ife,rh) 
+	dn = Qpnts_r(ife,rh)
 	dni = 1./dn
 	vx = Qpnts_r(ife,mx)*dni
 	vy = Qpnts_r(ife,my)*dni
@@ -875,8 +875,8 @@
         E_xy = Qpnts_r(ife,exy)
         E_xz = Qpnts_r(ife,exz)
         E_yz = Qpnts_r(ife,eyz)
-	
-	P = (aindex - 1.)*(Qpnts_r(ife,en) - 0.5*dn*(vx**2 + vy**2 + vz**2)) 
+
+	P = (aindex - 1.)*(Qpnts_r(ife,en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
         P_10 = (E_xx + E_yy + E_zz - dn*(vx**2 + vy**2 + vz**2))/3.
 	if (P < P_floor) P = P_floor
 	if (P_10 < P_floor) P_10 = P_floor
@@ -884,29 +884,29 @@
 
         if(ixyz .eq. 1)then
 
-	fpnts_r(ife,rh) = Qpnts_r(ife,mx) 
+	fpnts_r(ife,rh) = Qpnts_r(ife,mx)
 
         if(ivis .eq. 1)then
 
 	fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vx + E_xx + P
-	fpnts_r(ife,my) = Qpnts_r(ife,my)*vx + E_xy    
-	fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx + E_xz 
+	fpnts_r(ife,my) = Qpnts_r(ife,my)*vx + E_xy
+	fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vx + E_xz
 
         else
 
 	fpnts_r(ife,mx) = E_xx - P_10 + P_5
-	fpnts_r(ife,my) = E_xy   
-	fpnts_r(ife,mz) = E_xz   
+	fpnts_r(ife,my) = E_xy
+	fpnts_r(ife,mz) = E_xz
 
         end if
 
-	fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx !+ (vx*E_xx + vy*E_xy + vz*E_xz) 
+	fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vx !+ (vx*E_xx + vy*E_xy + vz*E_xz)
 
         if(ivis .eq. 1)then
 
-	fpnts_r(ife,exx) =  c4d3*nu*vx 
-	fpnts_r(ife,eyy) = -c2d3*nu*vx 
-	fpnts_r(ife,ezz) = -c2d3*nu*vx 
+	fpnts_r(ife,exx) =  c4d3*nu*vx
+	fpnts_r(ife,eyy) = -c2d3*nu*vx
+	fpnts_r(ife,ezz) = -c2d3*nu*vx
 
 	fpnts_r(ife,exy) = nu*vy
 	fpnts_r(ife,exz) = nu*vz
@@ -928,23 +928,23 @@
 
         if(ixyz .eq. 2)then
 
-	fpnts_r(ife,rh) = Qpnts_r(ife,mxa(ixyz)) 
+	fpnts_r(ife,rh) = Qpnts_r(ife,mxa(ixyz))
 
         if(ivis .eq. 1)then
 
-	fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy + E_xy    
+	fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vy + E_xy
 	fpnts_r(ife,my) = Qpnts_r(ife,my)*vy + E_yy + P
-	fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy + E_yz 
+	fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vy + E_yz
 
         else
 
-	fpnts_r(ife,mx) = E_xy     
+	fpnts_r(ife,mx) = E_xy
 	fpnts_r(ife,my) = E_yy - P_10 + P_5
-	fpnts_r(ife,mz) = E_yz 
+	fpnts_r(ife,mz) = E_yz
 
         end if
 
-	fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy !+ (vy*E_yy + vx*E_xy + vz*E_yz) 
+	fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vy !+ (vy*E_yy + vx*E_xy + vz*E_yz)
 
         if(ivis .eq. 1)then
 
@@ -972,23 +972,23 @@
 
         if(ixyz .eq. 3)then
 
-	fpnts_r(ife,rh) = Qpnts_r(ife,mz) 
+	fpnts_r(ife,rh) = Qpnts_r(ife,mz)
 
         if(ivis .eq. 1)then
 
-	fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz + E_xz   
-	fpnts_r(ife,my) = Qpnts_r(ife,my)*vz + E_yz    
-	fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + E_zz + P 
+	fpnts_r(ife,mx) = Qpnts_r(ife,mx)*vz + E_xz
+	fpnts_r(ife,my) = Qpnts_r(ife,my)*vz + E_yz
+	fpnts_r(ife,mz) = Qpnts_r(ife,mz)*vz + E_zz + P
 
         else
 
-	fpnts_r(ife,mx) = E_xz    
-	fpnts_r(ife,my) = E_yz    
+	fpnts_r(ife,mx) = E_xz
+	fpnts_r(ife,my) = E_yz
 	fpnts_r(ife,mz) = E_zz - P_10 + P_5
 
         end if
 
-	fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz !+ (vz*E_zz + vx*E_xz + vy* E_yz) 
+	fpnts_r(ife,en) = (Qpnts_r(ife,en) + P)*vz !+ (vz*E_zz + vx*E_xz + vy* E_yz)
 
         if(ivis .eq. 1)then
 
@@ -1013,7 +1013,7 @@
         end if
 
         end if
-		
+
 	end do
 
     end subroutine
@@ -1037,22 +1037,22 @@
 	do i=1,nx+1
 
 	iback = i-1
-	
+
 	if (i .gt. 1) then
 	do ieq = 1,nQ
-        do ipnt=1,nface	
+        do ipnt=1,nface
 		Qface_x(ipnt,ieq) = sum(bfvals_xp(ipnt,1:nbasis)*Q_r(iback,j,k,ieq,1:nbasis))
         end do
 	end do
 	end if
 	if (i .eq. 1) then
-	do ieq = 1,nQ	
+	do ieq = 1,nQ
 		Qface_x(1:nface,ieq) = Qxlow_ext(j,k,1:nface,ieq)
 	end do
 	end if
 
 	if (i .lt. nx+1) then
-	do ieq = 1,nQ	
+	do ieq = 1,nQ
 	  do ipnt=1,nface
 		Qface_x(ipnt+nface,ieq) = sum(bfvals_xm(ipnt,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
 	  end do
@@ -1060,7 +1060,7 @@
 	end if
 
 	if (i .eq. nx+1) then
-	do ieq = 1,nQ	
+	do ieq = 1,nQ
 	   Qface_x(nface+1:nfe,ieq) = Qxhigh_ext(j,k,1:nface,ieq)
 	end do
 	end if
@@ -1097,7 +1097,7 @@
 	   if (kroe(i4) .gt. 0) then
 	     flux_x(i4,i,j,k,ieq) = fhllc_x(i4,ieq)
 	   end if
-	   end do 
+	   end do
 	end do
 
         end if
@@ -1149,7 +1149,7 @@
            end do
 
            do i4=1,nface
-              cfry(i4,:) = max(cwavey(i4),cwavey(i4+nface))            
+              cfry(i4,:) = max(cwavey(i4),cwavey(i4+nface))
            end do
 
 	do ieq = 1,nQ
@@ -1171,7 +1171,7 @@
 	   if (kroe(i4) .gt. 0) then
 	     flux_y(i4,i,j,k,ieq) = fhllc_y(i4,ieq)
 	   end if
-	   end do 
+	   end do
 	end do
 
         end if
@@ -1223,7 +1223,7 @@
            cwavez(i4) = cfcal(qvin,3)
         end do
 
-        do i4=1,nface           
+        do i4=1,nface
            cfrz(i4,:) = max(cwavez(i4),cwavez(i4+nface))
         end do
 
@@ -1246,11 +1246,11 @@
 	   if (kroe(i4) .gt. 0) then
 	     flux_z(i4,i,j,k,ieq) = fhllc_z(i4,ieq)
 	   end if
-	   end do 
+	   end do
 	end do
 
         end if
-		
+
 	end do
 	end do
 	end do
@@ -1261,13 +1261,13 @@
 
     subroutine flux_hllc(Qlr,flr,fhllc,ixyz)
 
-!	Compute ion or electron fluxes (density, momentum, energy) using 
+!	Compute ion or electron fluxes (density, momentum, energy) using
 !	nonrelativistic HD HLLC approximate Riemann solver developed by Batten, 1997,
 !	*****    "On the Choice of Wavespeeds for the HLLC Riemann Solver"
 
-!	This takes into account the left and right propagating shocks along with 
+!	This takes into account the left and right propagating shocks along with
 !	the contact (tangential) discontinuity.
-	
+
 	implicit none
 	real Qlr(nfe,nQ),flr(nfe,nQ),fhllc(nface,5)
 	real sm_num(nface),sm_den(nface),qtilde(nface,5),rtrho(nfe),rtrho_i(nface),qsq(nfe)
@@ -1287,7 +1287,7 @@
 	iparr  = mxa(ixyz)
 	iperp1 = mya(ixyz)
 	iperp2 = mza(ixyz)
-	
+
 	ivar(1) = rhj
 	ivar(2) = iparr
 	ivar(3) = iperp1
@@ -1328,7 +1328,7 @@
 	      rtrho_i(k) = 1.0/(rtrho(k) + rtrho(k2))
 	      qtilde(k,1) = (rtrho(k)*vlr(k,1) + rtrho(k2)*vlr(k2,1))*rtrho_i(k)
 	      qtilde(k,2) = (rtrho(k)*vlr(k,2) + rtrho(k2)*vlr(k2,2))*rtrho_i(k)
-	      qtilde(k,3) = (rtrho(k)*vlr(k,3) + rtrho(k2)*vlr(k2,3))*rtrho_i(k)		  
+	      qtilde(k,3) = (rtrho(k)*vlr(k,3) + rtrho(k2)*vlr(k2,3))*rtrho_i(k)
 	      qsq(k) = qtilde(k,1)**2 + qtilde(k,2)**2 + qtilde(k,3)**2
 	      hlr(k) = (Qlr(k,enj) + plr(k))/rhov(k)
 	      hlr(k2) = (Qlr(k2,enj) + plr(k2))/rhov(k2)
@@ -1366,10 +1366,10 @@
 	   where (sm_den .eq. 0.0) sm_den = rh_floor
 
 !	   Calculate the wavespeed S_M of the contact discontinuity.
-	
+
 	   do k=1,nface
 	      s_m(k) = sm_num(k)/sm_den(k)	     	! Eq. (34) of Batten, 1997
-	      pstar(k) = rhov(k)*(vlr(k,1) - s_lr(k))*(vlr(k,1) - s_m(k)) + plr(k) 		
+	      pstar(k) = rhov(k)*(vlr(k,1) - s_lr(k))*(vlr(k,1) - s_m(k)) + plr(k)
 							! Eq. (36) of Batten, 1997
 	   end do
 
@@ -1387,15 +1387,15 @@
 
 	      slrm_i(k) = 1.0/sm_den(1)
 	      sq_lr(k) = s_lr(k) - vlr(k,1)			! S_{L,R} - q_{l,r}
-	      Qstar(k,1) = rhov(k)*sq_lr(k)*slrm_i(k)		! Eq. (35) of Batten ,1997			
+	      Qstar(k,1) = rhov(k)*sq_lr(k)*slrm_i(k)		! Eq. (35) of Batten ,1997
 	      Qstar(k,2) = (sq_lr(k)*Qlr(k,iparr) + pstar(i4) - plr(k))*slrm_i(k) 	! Eq. (37-39) of Batten, 1997
 	      Qstar(k,3) = sq_lr(k)*Qlr(k,iperp1)*slrm_i(k)		! Eq. (37-39) of Batten, 1997
 	      Qstar(k,4) = sq_lr(k)*Qlr(k,iperp2)*slrm_i(k)		! Eq. (37-39) of Batten, 1997
-	      Qstar(k,5) = (sq_lr(k)*Qlr(k,enj) - plr(k)*vlr(k,1) + pstar(i4)*s_m(i4))*slrm_i(k) 	
+	      Qstar(k,5) = (sq_lr(k)*Qlr(k,enj) - plr(k)*vlr(k,1) + pstar(i4)*s_m(i4))*slrm_i(k)
 								! Eq. (40) of Batten, 1997
 
 	      do ieq=1,nhll
-	        fstar(k,ieq) = flr(k,ivar(ieq)) + s_lr(k)*(Qstar(k,ieq) - Qlr(k,ivar(ieq)))		
+	        fstar(k,ieq) = flr(k,ivar(ieq)) + s_lr(k)*(Qstar(k,ieq) - Qlr(k,ivar(ieq)))
 								! Eq. (29) of Batten, 1997
 	      end do
 
@@ -1438,11 +1438,11 @@
     real Qinner(npg,nQ),finner_x(npg,nQ), finner_y(npg,nQ), finner_z(npg,nQ), int_r(nbastot,nQ)
 
 	integral_r(:,:,:,:,:) = 0.
-	
+
 	do k = 1,nz
 	do j = 1,ny
 	do i = 1,nx
-	
+
 	   do ieq = 1,nQ
 	      do ipg = 1,npg
 	         Qinner(ipg,ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
@@ -1452,16 +1452,16 @@
 	   call flux_calc_pnts_r(Qinner,finner_x,1,npg)
 	   call flux_calc_pnts_r(Qinner,finner_y,2,npg)
 	   call flux_calc_pnts_r(Qinner,finner_z,3,npg)
-		
+
 	   do ieq = 1,nQ
 
-	      int_r(kx,ieq) = 0.25*cbasis(kx)*dxi*sum(wgt3d(1:npg)*finner_x(1:npg,ieq)) 
-	      int_r(ky,ieq) = 0.25*cbasis(ky)*dyi*sum(wgt3d(1:npg)*finner_y(1:npg,ieq)) 
-	      int_r(kz,ieq) = 0.25*cbasis(kz)*dzi*sum(wgt3d(1:npg)*finner_z(1:npg,ieq)) 
+	      int_r(kx,ieq) = 0.25*cbasis(kx)*dxi*sum(wgt3d(1:npg)*finner_x(1:npg,ieq))
+	      int_r(ky,ieq) = 0.25*cbasis(ky)*dyi*sum(wgt3d(1:npg)*finner_y(1:npg,ieq))
+	      int_r(kz,ieq) = 0.25*cbasis(kz)*dzi*sum(wgt3d(1:npg)*finner_z(1:npg,ieq))
 
 	      if (nbasis .gt. 4) then
 	      int_r(kyz,ieq)  = 0.25*cbasis(kyz)*dyi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kz)*finner_y(1:npg,ieq)) &
-			      + 0.25*cbasis(kyz)*dzi*sum(wgt3d(1:npg)*bfvals_int(1:npg,ky)*finner_z(1:npg,ieq)) 
+			      + 0.25*cbasis(kyz)*dzi*sum(wgt3d(1:npg)*bfvals_int(1:npg,ky)*finner_z(1:npg,ieq))
 	      int_r(kzx,ieq)  = 0.25*cbasis(kzx)*dxi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kz)*finner_x(1:npg,ieq)) &
 			      + 0.25*cbasis(kzx)*dzi*sum(wgt3d(1:npg)*bfvals_int(1:npg,kx)*finner_z(1:npg,ieq))
 	      int_r(kxy,ieq)  = 0.25*cbasis(kxy)*dxi*sum(wgt3d(1:npg)*bfvals_int(1:npg,ky)*finner_x(1:npg,ieq)) &
@@ -1512,19 +1512,19 @@
 			      + 0.25*cbasis(kxxyyzz)*dyi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kyzzxx)*finner_y(1:npg,ieq)) &
 			      + 0.25*cbasis(kxxyyzz)*dzi*sum(wgt3d(1:npg)*3.*bfvals_int(1:npg,kzxxyy)*finner_z(1:npg,ieq))
 
-	      end if   
+	      end if
            end do
 
 	   do ieq = 1,nQ
 	      do ir=1,nbasis
-	         integral_r(i,j,k,ieq,ir) = int_r(ir,ieq) 
-	      end do 
+	         integral_r(i,j,k,ieq,ir) = int_r(ir,ieq)
+	      end do
            end do
-		
+
 	end do
 	end do
 	end do
-	
+
     end subroutine innerintegral
 
 
@@ -1539,7 +1539,7 @@
 	do k = 1,nz
 	do j = 1,ny
 
-	do i = 1,nx 
+	do i = 1,nx
 
             sumx = 0.
             sumy = 0.
@@ -1551,7 +1551,7 @@
 		sumz = sumz + 0.25*dzi*wgt2d(iqfa)*(flux_z(iqfa,i,j,k+1,ieq) - flux_z(iqfa,i,j,k,ieq))
 	    end do
 
-	    glflux_r(i,j,k,ieq,1) = sumx + sumy + sumz 
+	    glflux_r(i,j,k,ieq,1) = sumx + sumy + sumz
 
 	end do
 
@@ -1570,7 +1570,7 @@
 
 	    glflux_r(i,j,k,ieq,ir) = sumx + sumy + sumz - integral_r(i,j,k,ieq,ir)
 
-	end do  
+	end do
 	end do
 
 	end do
@@ -1596,33 +1596,33 @@
 				        + dzi*(wgt2d(1)*(flux_z(1,i,j,k+1,ieq) - flux_z(1,i,j,k,ieq)))  &
                                         + dxi*(wgt2d(2)*(flux_x(2,i+1,j,k,ieq) - flux_x(2,i,j,k,ieq)))  &
 				        + dyi*(wgt2d(2)*(flux_y(2,i,j+1,k,ieq) - flux_y(2,i,j,k,ieq)))  &
-				        + dzi*(wgt2d(2)*(flux_z(2,i,j,k+1,ieq) - flux_z(2,i,j,k,ieq)))  &					  
+				        + dzi*(wgt2d(2)*(flux_z(2,i,j,k+1,ieq) - flux_z(2,i,j,k,ieq)))  &
                                         + dxi*(wgt2d(3)*(flux_x(3,i+1,j,k,ieq) - flux_x(3,i,j,k,ieq)))  &
 				        + dyi*(wgt2d(3)*(flux_y(3,i,j+1,k,ieq) - flux_y(3,i,j,k,ieq)))  &
 				        + dzi*(wgt2d(3)*(flux_z(3,i,j,k+1,ieq) - flux_z(3,i,j,k,ieq)))  &
                                         + dxi*(wgt2d(4)*(flux_x(4,i+1,j,k,ieq) - flux_x(4,i,j,k,ieq)))  &
 				        + dyi*(wgt2d(4)*(flux_y(4,i,j+1,k,ieq) - flux_y(4,i,j,k,ieq)))  &
-				        + dzi*(wgt2d(4)*(flux_z(4,i,j,k+1,ieq) - flux_z(4,i,j,k,ieq)))) 
+				        + dzi*(wgt2d(4)*(flux_z(4,i,j,k+1,ieq) - flux_z(4,i,j,k,ieq))))
 	end do
 
 	do ir=2,nbasis
 	do i = 1,nx
 
 	    glflux_r(i,j,k,ieq,ir) = wgtbf_xmp(1,2,ir)*flux_x(1,i+1,j,k,ieq) + wgtbf_xmp(1,1,ir)*flux_x(1,i,j,k,ieq)  &
-			           + wgtbf_ymp(1,2,ir)*flux_y(1,i,j+1,k,ieq) + wgtbf_ymp(1,1,ir)*flux_y(1,i,j,k,ieq)  & 
+			           + wgtbf_ymp(1,2,ir)*flux_y(1,i,j+1,k,ieq) + wgtbf_ymp(1,1,ir)*flux_y(1,i,j,k,ieq)  &
 			           + wgtbf_zmp(1,2,ir)*flux_z(1,i,j,k+1,ieq) + wgtbf_zmp(1,1,ir)*flux_z(1,i,j,k,ieq)  &
 			           + wgtbf_xmp(2,2,ir)*flux_x(2,i+1,j,k,ieq) + wgtbf_xmp(2,1,ir)*flux_x(2,i,j,k,ieq)  &
-			           + wgtbf_ymp(2,2,ir)*flux_y(2,i,j+1,k,ieq) + wgtbf_ymp(2,1,ir)*flux_y(2,i,j,k,ieq)  & 
+			           + wgtbf_ymp(2,2,ir)*flux_y(2,i,j+1,k,ieq) + wgtbf_ymp(2,1,ir)*flux_y(2,i,j,k,ieq)  &
 			           + wgtbf_zmp(2,2,ir)*flux_z(2,i,j,k+1,ieq) + wgtbf_zmp(2,1,ir)*flux_z(2,i,j,k,ieq)  &
 			           + wgtbf_xmp(3,2,ir)*flux_x(3,i+1,j,k,ieq) + wgtbf_xmp(3,1,ir)*flux_x(3,i,j,k,ieq)  &
-			           + wgtbf_ymp(3,2,ir)*flux_y(3,i,j+1,k,ieq) + wgtbf_ymp(3,1,ir)*flux_y(3,i,j,k,ieq)  & 
+			           + wgtbf_ymp(3,2,ir)*flux_y(3,i,j+1,k,ieq) + wgtbf_ymp(3,1,ir)*flux_y(3,i,j,k,ieq)  &
 			           + wgtbf_zmp(3,2,ir)*flux_z(3,i,j,k+1,ieq) + wgtbf_zmp(3,1,ir)*flux_z(3,i,j,k,ieq)  &
 			           + wgtbf_xmp(4,2,ir)*flux_x(4,i+1,j,k,ieq) + wgtbf_xmp(4,1,ir)*flux_x(4,i,j,k,ieq)  &
-			           + wgtbf_ymp(4,2,ir)*flux_y(4,i,j+1,k,ieq) + wgtbf_ymp(4,1,ir)*flux_y(4,i,j,k,ieq)  & 
+			           + wgtbf_ymp(4,2,ir)*flux_y(4,i,j+1,k,ieq) + wgtbf_ymp(4,1,ir)*flux_y(4,i,j,k,ieq)  &
 			           + wgtbf_zmp(4,2,ir)*flux_z(4,i,j,k+1,ieq) + wgtbf_zmp(4,1,ir)*flux_z(4,i,j,k,ieq)  &
-		                   - integral_r(i,j,k,ieq,ir) 
+		                   - integral_r(i,j,k,ieq,ir)
 
-	end do  
+	end do
 	end do
 
 	end do
@@ -1634,18 +1634,18 @@
 
 !-----------------------------------------------------------!
 !*******************calculate freezing speeds***************!
-!-----------------------------------------------------------!        
+!-----------------------------------------------------------!
    real function cfcal(Qcf,cases)
         implicit none
         integer cases
         real Qcf(nQ)
      	real Pi, Pe, P, B2, ne, cs
     	real dn,dni,vx,vy,vz,hx,hy,hz,dnei,va2,vf1,lil02,va,fac
-      
+
         dn = Qcf(rh)
         dni = 1./dn
         vx = Qcf(mx)*dni
-        vy = Qcf(my)*dni 
+        vy = Qcf(my)*dni
         vz = Qcf(mz)*dni
         if(ivis .eq. 1)then
 	   P = (aindex - 1.)*(Qcf(en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
@@ -1654,10 +1654,10 @@
         end if
 
 	cs = sqrt(aindex*P*dni)
-	 
+
 	select case (cases)
 
-   	case (1) !freezing speed in x direction for fluid variable 
+   	case (1) !freezing speed in x direction for fluid variable
               cfcal = abs(vx) + cs
 
 	case (2) !freezing speed in y direction for fluid variable
@@ -1667,48 +1667,48 @@
               cfcal = abs(vz) + cs
 
         end select
-        
-    end function cfcal 
+
+    end function cfcal
 
 !----------------------------------------------------------------------------------------------
 
-    subroutine prepare_exchange(Q_r) 
+    subroutine prepare_exchange(Q_r)
 	integer ieq, i, j, k, ipnt
         real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r
 
 	do ieq = 1,nQ
 	do j = 1,ny
 	do i = 1,nx
-      do ipnt=1,nface	
+      do ipnt=1,nface
 		 Qzlow_int(i,j,ipnt,ieq) = sum(bfvals_zm(ipnt,1:nbasis)*Q_r(i,j,1,ieq,1:nbasis))
 		 Qzhigh_int(i,j,ipnt,ieq) = sum(bfvals_zp(ipnt,1:nbasis)*Q_r(i,j,nz,ieq,1:nbasis))
 	  end do
 	end do
 	end do
 	end do
-	
+
 	do ieq = 1,nQ
 	do k = 1,nz
-	do i = 1,nx	
-      do ipnt=1,nface	
+	do i = 1,nx
+      do ipnt=1,nface
 		Qylow_int(i,k,ipnt,ieq) = sum(bfvals_ym(ipnt,1:nbasis)*Q_r(i,1,k,ieq,1:nbasis))
 		Qyhigh_int(i,k,ipnt,ieq) = sum(bfvals_yp(ipnt,1:nbasis)*Q_r(i,ny,k,ieq,1:nbasis))
 	  end do
 	end do
 	end do
-	end do	
-	
+	end do
+
 	do ieq = 1,nQ
 	do k = 1,nz
-	do j = 1,ny	
-      do ipnt=1,nface	
+	do j = 1,ny
+      do ipnt=1,nface
 		Qxlow_int(j,k,ipnt,ieq) = sum(bfvals_xm(ipnt,1:nbasis)*Q_r(1,j,k,ieq,1:nbasis))
 		Qxhigh_int(j,k,ipnt,ieq) = sum(bfvals_xp(ipnt,1:nbasis)*Q_r(nx,j,k,ieq,1:nbasis))
-	  end do		
+	  end do
 	end do
 	end do
-	end do	
-	call exchange_flux	
+	end do
+	call exchange_flux
 
     end subroutine
 
@@ -1722,7 +1722,7 @@
     real epsi, Qrhmin, QPmin, P(npge), Pave, dn, dni, epsiP, thetaj
     real*8 a, b, c
 
-    epsi = rh_floor 
+    epsi = rh_floor
     epsiP = rh_floor*T_floor
 
     do k = 1,nz
@@ -1730,21 +1730,21 @@
     do i = 1,nx
 	if (Q_r(i,j,k,rh,1) < rh_floor) then
 		do ir=2,nbasis
-		   Q_r(i,j,k,rh:en,ir) = 0.0	
-	    end do	   
+		   Q_r(i,j,k,rh:en,ir) = 0.0
+	    end do
             Q_r(i,j,k,rh,1) = rh_floor
-	else	
+	else
 		do ipge = 1,npge
 			Qedge(ipge,rh) = sum(bf_faces(ipge,1:nbasis)*Q_r(i,j,k,rh,1:nbasis))
 		end do
-		
+
 		Qrhmin = minval(Qedge(:,rh))
 		if (Qrhmin < epsi) then
 			theta = (epsi-Q_r(i,j,k,rh,1))/(Qrhmin-Q_r(i,j,k,rh,1))
 			if (theta .gt. 1.) then
 				theta = 1.
 			end if
-		
+
 			if (theta .lt. 0) then
 				theta = 0.
 			end if
@@ -1755,18 +1755,18 @@
 		end if
 
 		Pave = (aindex-1.)*(Q_r(i,j,k,en,1) - 0.5*(Q_r(i,j,k,mx,1)**2 + Q_r(i,j,k,my,1)**2 + Q_r(i,j,k,mz,1)**2)/Q_r(i,j,k,rh,1))
-	
+
 		if (Pave < epsiP) then
 		   do ir=2,nbasis
-			Q_r(i,j,k,rh:en,ir) = 0.0	
-		   end do	
+			Q_r(i,j,k,rh:en,ir) = 0.0
+		   end do
 		else
 			theta = 1.
-			do ipge = 1,npge 
+			do ipge = 1,npge
 				do ieq = 1,5
 				   Qedge(ipge,ieq) = sum(bf_faces(ipge,1:nbasis)*Q_r(i,j,k,ieq,1:nbasis))
 				end do
-			
+
 				dn = Qedge(ipge,rh)
         			dni = 1./dn
 				P(ipge) = (aindex - 1.)*(Qedge(ipge,en) - 0.5*(Qedge(ipge,mx)**2+Qedge(ipge,my)**2+Qedge(ipge,mz)**2)*dni)
@@ -1776,17 +1776,17 @@
 			              thetaj = (Pave - epsiP)/(Pave - P(ipge))
 				      theta = min(theta,thetaj)
 				   end if
-				end if	
+				end if
 			end do
 			if (theta .gt. 1.) then
 				theta = 1.
 			end if
-		
+
 			if (theta .lt. 0.) then
 				theta = 0.
 			end if
 			do ir=2,nbasis
-				Q_r(i,j,k,rh:en,ir) = theta*Q_r(i,j,k,rh:en,ir) 
+				Q_r(i,j,k,rh:en,ir) = theta*Q_r(i,j,k,rh:en,ir)
 			end do
 		end if
 	end if
@@ -1801,11 +1801,11 @@
 
 
     subroutine exchange_flux
-        integer mpi_size 
-    
+        integer mpi_size
+
 	call MPI_BARRIER(cartcomm,ierr)
 
- 	mpi_size=ny*nz*nface*nQ 
+ 	mpi_size=ny*nz*nface*nQ
 
         if (nbrs(EAST) .ne. MPI_PROC_NULL) then
             call MPI_ISend(Qxhigh_int,mpi_size,MPI_TT,nbrs(EAST),0,cartcomm,reqs(1),ierr)
@@ -1814,7 +1814,7 @@
         if (nbrs(WEST) .ne. MPI_PROC_NULL) then
             call MPI_IRecv(Qxlow_ext,mpi_size,MPI_TT,nbrs(WEST),0,cartcomm,reqs(2),ierr)
 	endif
-	
+
         if (nbrs(EAST) .ne. MPI_PROC_NULL) then
            call MPI_Wait(reqs(1),stats(:,1),ierr)
            call MPI_IRecv(Qxhigh_ext,mpi_size,MPI_TT,nbrs(EAST),0,cartcomm,reqs(3),ierr)
@@ -1822,9 +1822,9 @@
 
         if (nbrs(WEST) .ne. MPI_PROC_NULL) then
            call MPI_Wait(reqs(2),stats(:,2),ierr)
-           call MPI_ISend(Qxlow_int,mpi_size,MPI_TT,nbrs(WEST),0,cartcomm,reqs(4),ierr)        			
+           call MPI_ISend(Qxlow_int,mpi_size,MPI_TT,nbrs(WEST),0,cartcomm,reqs(4),ierr)
 	endif
-		
+
         if (nbrs(EAST) .ne. MPI_PROC_NULL) then
            call MPI_Wait(reqs(3),stats(:,3),ierr)
 	endif
@@ -1835,14 +1835,14 @@
 
 	if (mpi_P .eq. 1 .and. xlbc .eq. 0) then
 		Qxlow_ext = Qxlow_int
-	end if	
-	
+	end if
+
 	if (mpi_P .eq. mpi_nx .and. xhbc .eq. 0) then
 		Qxhigh_ext = Qxhigh_int
 	end if
 
         mpi_size=nface*nx*nz*nQ
-       
+
         if (nbrs(NORTH) .ne. MPI_PROC_NULL) then
            call MPI_ISend(Qyhigh_int,mpi_size,MPI_TT,nbrs(NORTH),0,cartcomm,reqs(1),ierr)
 	endif
@@ -1858,9 +1858,9 @@
 
         if (nbrs(SOUTH) .ne. MPI_PROC_NULL) then
            call MPI_Wait(reqs(2),stats(:,2),ierr)
-           call MPI_ISend(Qylow_int,mpi_size,MPI_TT,nbrs(SOUTH),0,cartcomm,reqs(4),ierr)        			
+           call MPI_ISend(Qylow_int,mpi_size,MPI_TT,nbrs(SOUTH),0,cartcomm,reqs(4),ierr)
 	endif
-		
+
         if (nbrs(NORTH) .ne. MPI_PROC_NULL) then
            call MPI_Wait(reqs(3),stats(:,3),ierr)
 	endif
@@ -1868,19 +1868,19 @@
         if (nbrs(SOUTH) .ne. MPI_PROC_NULL) then
            call MPI_Wait(reqs(4),stats(:,4),ierr)
 	endif
-	
-		
+
+
 	if (mpi_Q .eq. 1 .and. ylbc .eq. 0) then
 		Qylow_ext = Qylow_int
-	end if	
-	
+	end if
+
 	if (mpi_Q .eq. mpi_ny .and. yhbc .eq. 0) then
 		Qyhigh_ext = Qyhigh_int
 	end if
-	
-        
+
+
         mpi_size=nface*nx*ny*nQ
-       
+
         if (nbrs(UP) .ne. MPI_PROC_NULL) then
            call MPI_ISend(Qzhigh_int,mpi_size,MPI_TT,nbrs(UP),0,cartcomm,reqs(1),ierr)
 	endif
@@ -1893,7 +1893,7 @@
 	endif
         if (nbrs(DOWN) .ne. MPI_PROC_NULL) then
            call MPI_Wait(reqs(2),stats(:,2),ierr)
-           call MPI_ISend(Qzlow_int,mpi_size,MPI_TT,nbrs(DOWN),0,cartcomm,reqs(4),ierr)        			
+           call MPI_ISend(Qzlow_int,mpi_size,MPI_TT,nbrs(DOWN),0,cartcomm,reqs(4),ierr)
 	endif
         if (nbrs(UP) .ne. MPI_PROC_NULL) then
            call MPI_Wait(reqs(3),stats(:,3),ierr)
@@ -1903,17 +1903,17 @@
            call MPI_Wait(reqs(4),stats(:,4),ierr)
 	endif
 
-		
+
 	if (mpi_R .eq. 1 .and. zlbc .eq. 0) then
 		Qzlow_ext = Qzlow_int
-	end if	
-	
+	end if
+
 	if (mpi_R .eq. mpi_nz .and. zhbc .eq. 0) then
 		Qzhigh_ext = Qzhigh_int
 	end if
-		
+
     end subroutine
-	
+
 
 !-----------------------------------------------------------
 
@@ -1923,14 +1923,14 @@
         end function xc
 
 !-----------------------------------------------------------
-        
+
         real function yc(j)
         integer j
         yc = loc_lyd + (j - 0.5)*dy
         end function yc
 
 !-----------------------------------------------------------
-        
+
         real function zc(k)
         integer k
         zc = loc_lzd + (k - 0.5)*dz
@@ -1965,14 +1965,14 @@
         end function xvtk
 
 !-----------------------------------------------------------
-        
+
         real function yvtk(j)
         integer j
         yvtk = loc_lyd + (j - 0.5)*dyvtk
         end function yvtk
 
 !-----------------------------------------------------------
-        
+
         real function zvtk(k)
         integer k
         zvtk = loc_lzd + (k - 0.5)*dzvtk
@@ -1995,7 +1995,7 @@
 
 !------------More realistic COBRA  current driver -----------
 
-        
+
         real function E_z(t)
         real t
 
@@ -2003,11 +2003,11 @@
 
         if(t.ge.tr)E_z = 0.
 
-        end function E_z 
+        end function E_z
 
 !------------More realistic COBRA  current driver -----------
 
-        
+
         real function Icur(t)
         real t
 
@@ -2021,16 +2021,16 @@
 
 !        if(t.ge.3*tr)Icur = 0.
 
-        end function Icur 
+        end function Icur
 
 !-----------------------------------------------------------
-       
+
         subroutine output_vtk0(Qin,nout,iam)
         implicit none
         real Qin(nx,ny,nz,nQ,nbasis)
 	integer nout
 	integer(I4P) , parameter :: nb=1*ngu,sprd=0*1
-!	integer(I4P), parameter:: nnx=nx-2*nb,nny=ny-2*nb,nnz=nz-2*nb 
+!	integer(I4P), parameter:: nnx=nx-2*nb,nny=ny-2*nb,nnz=nz-2*nb
 	real(R4P), dimension(nnx+1):: x_xml_rect
 	real(R4P), dimension(nny+1):: y_xml_rect
 	real(R4P), dimension(nnz+1):: z_xml_rect
@@ -2044,33 +2044,33 @@
         character (5) :: tname1
         character (4) :: pname
         character (5) :: pname1
-        
-       
+
+
 	num=nout+10000
 
         write(tname1,'(i5)')num
-	tname=tname1(2:5) 
+	tname=tname1(2:5)
         tname = trim(tname)
-        tname = adjustr(tname) 
+        tname = adjustr(tname)
 
 	num=iam+10000
-        
+
         write(pname1,'(i5)')num
-	pname=pname1(2:5) 
+	pname=pname1(2:5)
         pname = trim(pname)
-        pname = adjustr(pname) 
+        pname = adjustr(pname)
 !	out_name='/data/data5/perseus_p'//pname//'_t'//tname//'.vtr'
 	out_name='data/perseus_p'//pname//'_t'//tname//'.vtr'
 !        print *, out_name
         out_name = trim(out_name)
-        out_name = adjustr(out_name) 
-			
+        out_name = adjustr(out_name)
+
 		E_IO = VTK_INI_XML(output_format = 'BINARY',              &
 		                   filename      = out_name, &
 		                   mesh_topology = 'RectilinearGrid',     &
 		                   nx1=1,nx2=nnx+1,ny1=1,ny2=nny+1,nz1=1,nz2=nnz+1)
 
-	
+
 		do i=1+nb,nx-nb+1
 			x_xml_rect(i)=(xc(i) - 0.5/dxi)*1e-3
 		enddo
@@ -2084,7 +2084,7 @@
 
 		E_IO = VTK_GEO_XML(nx1=1,nx2=nnx+1,ny1=1,ny2=nny+1,nz1=1,nz2=nnz+1, &
 			                 X=x_xml_rect,Y=y_xml_rect,Z=z_xml_rect)
-		
+
 		E_IO = VTK_DAT_XML(var_location     = 'cell', &
 		                   var_block_action = 'OPEN')
 
@@ -2112,12 +2112,12 @@
 		E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
 		                   varname = 'Density',                    &
 		                   var     = var_xml_val_x)
-		                   
+
 		do i=1+nb,nx-nb
 			do j=1+nb,ny-nb
 				do k=1+nb,nz-nb
 					l=(i-nb)+(j-nb-1)*(nx-2*nb)+(k-nb-1)*(nx-2*nb)*(ny-2*nb)
-					dni = 1./Qin(i,j,k,rh,1)					
+					dni = 1./Qin(i,j,k,rh,1)
 					vx = Qin(i,j,k,mx,1)*dni
 					vy = Qin(i,j,k,my,1)*dni
 					vz = Qin(i,j,k,mz,1)*dni
@@ -2134,7 +2134,7 @@
 			do j=1+nb,ny-nb
 				do k=1+nb,nz-nb
 					l=(i-nb)+(j-nb-1)*(nx-2*nb)+(k-nb-1)*(nx-2*nb)*(ny-2*nb)
-					dni = 1./Qin(i,j,k,rh,1)					
+					dni = 1./Qin(i,j,k,rh,1)
 					vx = Qin(i,j,k,mx,1)*dni
 					vy = Qin(i,j,k,my,1)*dni
 					vz = Qin(i,j,k,mz,1)*dni
@@ -2172,8 +2172,8 @@
 		E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
 		                   varname = 'Vorticity',                    &
 		                   var     = var_xml_val_x)
-		                   
-		                   
+
+
 		E_IO = VTK_DAT_XML(var_location     = 'cell', &
 		                   var_block_action = 'Close')
 		E_IO = VTK_GEO_XML()
@@ -2182,7 +2182,7 @@
         end subroutine output_vtk0
 
 !-----------------------------------------------------------
-       
+
         subroutine output_vtk(Qin,nout,iam)
         implicit none
         real Qin(nx,ny,nz,nQ,nbasis)
@@ -2205,26 +2205,26 @@
         character (4) :: pname
         character (5) :: pname1
 
-       
+
 	num=nout+10000
 
         write(tname1,'(i5)')num
-	tname=tname1(2:5) 
+	tname=tname1(2:5)
         tname = trim(tname)
-        tname = adjustr(tname) 
+        tname = adjustr(tname)
 
 	num=iam+10000
-        
+
         write(pname1,'(i5)')num
-	pname=pname1(2:5) 
+	pname=pname1(2:5)
         pname = trim(pname)
-        pname = adjustr(pname) 
+        pname = adjustr(pname)
 	out_name='/data/data8/perseus_p'//pname//'_t'//tname//'.vtr'
 !	out_name='data/perseus_p'//pname//'_t'//tname//'.vtr'
 !        print *, out_name
         out_name = trim(out_name)
-        out_name = adjustr(out_name) 
-			
+        out_name = adjustr(out_name)
+
 		E_IO = VTK_INI_XML(output_format = 'BINARY',              &
 		                   filename      = out_name, &
 		                   mesh_topology = 'RectilinearGrid',     &
@@ -2232,7 +2232,7 @@
 
 
 
-	
+
 		do i=1+nb,nnx-nb+1
 			x_xml_rect(i-nb)=(xvtk(i) - 0.5*dxvtk)*1e-3
 		enddo
@@ -2246,7 +2246,7 @@
 
 		E_IO = VTK_GEO_XML(nx1=1,nx2=nnx+1,ny1=1,ny2=nny+1,nz1=1,nz2=nnz+1, &
 			                 X=x_xml_rect,Y=y_xml_rect,Z=z_xml_rect)
-		
+
 		E_IO = VTK_DAT_XML(var_location     = 'cell', &
 		                   var_block_action = 'OPEN')
 
@@ -2282,7 +2282,7 @@
 					   dxmy = sum(bfvtk_dx(igrid,1:nbasis)*Qin(ir,jr,kr,my,1:nbasis))
 					   dymx = sum(bfvtk_dy(igrid,1:nbasis)*Qin(ir,jr,kr,mx,1:nbasis))
 	      			   	qvtk_dxvy(i,j,k) = (qvtk(i,j,k,rh)*dxmy - qvtk(i,j,k,my)*dxrh)/qvtk(i,j,k,rh)**2
-	      			   	qvtk_dyvx(i,j,k) = (qvtk(i,j,k,rh)*dymx - qvtk(i,j,k,mx)*dyrh)/qvtk(i,j,k,rh)**2	
+	      			   	qvtk_dyvx(i,j,k) = (qvtk(i,j,k,rh)*dymx - qvtk(i,j,k,mx)*dyrh)/qvtk(i,j,k,rh)**2
 				end do
 			end do
 		end do
@@ -2309,14 +2309,14 @@
 		enddo
 		E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
 		                   varname = 'Density',                    &
-		                   var     = var_xml_val_x)	
+		                   var     = var_xml_val_x)
 
-	                   
+
 		do i=1+nb,nnx-nb
 			do j=1+nb,nny-nb
 				do k=1+nb,nnz-nb
 					l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
-					dni = 1./qvtk(i,j,k,rh)					
+					dni = 1./qvtk(i,j,k,rh)
 					vx = qvtk(i,j,k,mx)*dni
 					vy = qvtk(i,j,k,my)*dni
 					vz = qvtk(i,j,k,mz)*dni
@@ -2333,7 +2333,7 @@
 			do j=1+nb,nny-nb
 				do k=1+nb,nnz-nb
 					l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
-					dni = 1./qvtk(i,j,k,rh)					
+					dni = 1./qvtk(i,j,k,rh)
 					vx = qvtk(i,j,k,mx)*dni
 					vy = qvtk(i,j,k,my)*dni
 					vz = qvtk(i,j,k,mz)*dni
@@ -2383,8 +2383,8 @@
 		E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz, &
 		                   varname = 'Vorticity',                    &
 		                   var     = var_xml_val_x)
-		                   
-		                   
+
+
 		E_IO = VTK_DAT_XML(var_location     = 'cell', &
 		                   var_block_action = 'Close')
 		E_IO = VTK_GEO_XML()
@@ -2406,16 +2406,16 @@
 	nump = iam + 10000
 
 	write(pname1,'(i5)')nump
-	pname=pname1(2:5) 
+	pname=pname1(2:5)
 	pname = trim(pname)
 	pname = adjustr(pname)
 
 	numd = iddump + 10000
- 
+
 	write(dname1,'(i5)')numd
-	dname=dname1(2:5) 
+	dname=dname1(2:5)
 	dname = trim(dname)
-	dname = adjustr(dname) 
+	dname = adjustr(dname)
 
 	fname2 = 'data/'//fprefix//'_p'//pname//'_d'//dname//'.dat'
 !	print *,'fname2 ',fname2
@@ -2454,19 +2454,19 @@
 	nump = irank + 10000
 
 	write(pname1,'(i5)')nump
-	pname=pname1(2:5) 
+	pname=pname1(2:5)
 	pname = trim(pname)
-	pname = adjustr(pname) 
+	pname = adjustr(pname)
 
 	numd = iddump + 10000
 
 	write(dname1,'(i5)')numd
-	dname=dname1(2:5) 
+	dname=dname1(2:5)
 	dname = trim(dname)
-	dname = adjustr(dname) 
+	dname = adjustr(dname)
 
 	fname2 = 'data/'//fpre//'_p'//pname//'_d'//dname//'.dat'
- 
+
 	open(unit=3,file=fname2,action='read')
 
 	do ir=1,nbasis
@@ -2486,16 +2486,16 @@
 	end subroutine readQ
 
 !----------------------------------------------------------
-	
+
 	subroutine set_bfvals_3D
 		! Defines local basis function values and weights for 1, 2, or 3-point Gaussian quadrature.
 		! Basis functions are evaluated in cell interior and on cell faces.
 
 	implicit none
-	
+
         call set_vtk_vals_3D()    ! Define basis function values on a 3D grid INTERNAL to the cell.
-        call set_internal_vals_3D()     ! Define basis function values at quadrature points INTERNAL to cell. 
-        call set_face_vals_3D()   ! Define local basis function values at quadrature points on a cell face.   	
+        call set_internal_vals_3D()     ! Define basis function values at quadrature points INTERNAL to cell.
+        call set_face_vals_3D()   ! Define local basis function values at quadrature points on a cell face.
         call set_weights_3D()     ! Define weights for integral approximation using Gaussian quadrature.
 
 	end subroutine set_bfvals_3D
@@ -2503,7 +2503,7 @@
 !----------------------------------------------------------
 	subroutine set_vtk_vals_3D
 
-	! Define basis function values on a rectangular 3D grid INTERNAL to the cell.  
+	! Define basis function values on a rectangular 3D grid INTERNAL to the cell.
 	! For use in output_vtk().
 
 	implicit none
@@ -2533,31 +2533,31 @@
 
 
 	    bfvtk(1,1) = 1.		! basis function = 1
-	    bfvtk(1,kx) = 0.		! basis function = x		
-	    bfvtk(1,ky) = 0.		! basis function = y	
-	    bfvtk(1,kz) = 0.		! basis function = z	
-	
-	
+	    bfvtk(1,kx) = 0.		! basis function = x
+	    bfvtk(1,ky) = 0.		! basis function = y
+	    bfvtk(1,kz) = 0.		! basis function = z
+
+
 		bfvtk(1:nvtk3,1) = 1.		! basis function = 1
 		do i=1,nvtk
-	       bfvtk((i-1)*nvtk+1:i*nvtk,ky) = xgrid(i)		! basis function = y	   		
+	       bfvtk((i-1)*nvtk+1:i*nvtk,ky) = xgrid(i)		! basis function = y
 	       bfvtk((i-1)*nvtk+1:i*nvtk,kz) = xgrid(1:nvtk)		! basis function = z
 		end do
 		do i=1,nvtk
 		   bfvtk((i-1)*nvtk2+1:i*nvtk2,kx) = xgrid(i)		! basis function = x
 		   bfvtk((i-1)*nvtk2+1:i*nvtk2,ky) = bfvtk(1:nvtk2,ky)		! basis function = y
 		   bfvtk((i-1)*nvtk2+1:i*nvtk2,kz) = bfvtk(1:nvtk2,kz)		! basis function = z
-		end do		
+		end do
 
-	do i=0,2		
+	do i=0,2
 		bfvtk(1:nvtk3,kxx+i) = 1.5*bfvtk(1:nvtk3,kx+i)**2 - 0.5    ! basis function = P_2(s)
 	!	bfvtk(1:nvtk3,kxxx+i) = 2.5*bfvtk(1:nvtk3,kx+i)**3 - 1.5*bfvtk(1:nvtk3,kx+i)   ! basis function = P3(s)
 	end do
-	
+
 	bfvtk(1:nvtk3,kyz) = bfvtk(1:nvtk3,ky)*bfvtk(1:nvtk3,kz)		! basis function = yz
 	bfvtk(1:nvtk3,kzx) = bfvtk(1:nvtk3,kz)*bfvtk(1:nvtk3,kx)		! basis function = zx
 	bfvtk(1:nvtk3,kxy) = bfvtk(1:nvtk3,kx)*bfvtk(1:nvtk3,ky)		! basis function = xy
-	bfvtk(1:nvtk3,kxyz) = bfvtk(1:nvtk3,kx)*bfvtk(1:nvtk3,ky)*bfvtk(1:nvtk3,kz)     ! basis function = xyz	
+	bfvtk(1:nvtk3,kxyz) = bfvtk(1:nvtk3,kx)*bfvtk(1:nvtk3,ky)*bfvtk(1:nvtk3,kz)     ! basis function = xyz
 
 	bfvtk(1:nvtk3,kyyz) = bfvtk(1:nvtk3,kyy)*bfvtk(1:nvtk3,kz)     ! basis function = P2(y)z
 	bfvtk(1:nvtk3,kyzz) = bfvtk(1:nvtk3,ky)*bfvtk(1:nvtk3,kzz)     ! basis function = P2(z)y
@@ -2578,7 +2578,7 @@
 
 	   do igrid=1,nvtk3
 		   bfvtk_dx(igrid,1) = 0.
-		   bfvtk_dx(igrid,kx) = 1.	
+		   bfvtk_dx(igrid,kx) = 1.
 		   bfvtk_dx(igrid,ky:kz) = 0.
 		   bfvtk_dx(igrid,kyz) = 0.
 		   bfvtk_dx(igrid,kzx) = bfvtk(igrid,kz)
@@ -2605,7 +2605,7 @@
 		   bfvtk_dx(igrid,kxxyyzz) = 3.*bfvtk(igrid,kx)*bfvtk(igrid,kyy)*bfvtk(igrid,kzz)
 
 		   bfvtk_dy(igrid,1) = 0.
-		   bfvtk_dy(igrid,ky) = 1.	
+		   bfvtk_dy(igrid,ky) = 1.
 		   bfvtk_dy(igrid,kx) = 0.
 		   bfvtk_dy(igrid,kz) = 0.
 		   bfvtk_dy(igrid,kyz) = bfvtk(igrid,kz)
@@ -2635,7 +2635,7 @@
 
 
 		   bfvtk_dz(igrid,1) = 0.
-		   bfvtk_dz(igrid,kz) = 1.	
+		   bfvtk_dz(igrid,kz) = 1.
 		   bfvtk_dz(igrid,kx) = 0.
 		   bfvtk_dz(igrid,ky) = 0.
 		   bfvtk_dz(igrid,kyz) = bfvtk(igrid,ky)
@@ -2648,7 +2648,7 @@
 		   bfvtk_dz(igrid,kyy) = 0.
 
 		   bfvtk_dz(igrid,kyzz) = bfvtk(igrid,ky)*3.*bfvtk(igrid,kz)
-		   bfvtk_dz(igrid,kyyz) = bfvtk(igrid,kyy)  
+		   bfvtk_dz(igrid,kyyz) = bfvtk(igrid,kyy)
 		   bfvtk_dz(igrid,kzzx) = 3.*bfvtk(igrid,kz)*bfvtk(igrid,kx)
 		   bfvtk_dz(igrid,kzxx) = bfvtk(igrid,kxx)
 		   bfvtk_dz(igrid,kxxy) = 0.
@@ -2661,7 +2661,7 @@
 		   bfvtk_dz(igrid,kxyzz) = 3.*bfvtk(igrid,kz)*bfvtk(igrid,kxy)
 		   bfvtk_dz(igrid,kxyyzz) = 3.*bfvtk(igrid,kz)*bfvtk(igrid,kxyy)
 		   bfvtk_dz(igrid,kyzzxx) = 3.*bfvtk(igrid,kz)*bfvtk(igrid,kxxy)
-		   bfvtk_dz(igrid,kzxxyy) = bfvtk(igrid,kxxyy)  
+		   bfvtk_dz(igrid,kzxxyy) = bfvtk(igrid,kxxyy)
 		   bfvtk_dz(igrid,kxxyyzz) = 3.*bfvtk(igrid,kz)*bfvtk(igrid,kxx)*bfvtk(igrid,kyy)
 
 
@@ -2672,7 +2672,7 @@
 	!	   bfvtk_dy(igrid,kzzz) = 0.
 	!	   bfvtk_dz(igrid,kzzz) = 7.5*bfvtk(igrid,kz)**2 - 1.5
 	!	   bfvtk_dz(igrid,kxxx) = 0.
-	!	   bfvtk_dz(igrid,kyyy) = 0.			   
+	!	   bfvtk_dz(igrid,kyyy) = 0.
 	   end do
 
 
@@ -2681,7 +2681,7 @@
 !----------------------------------------------------------
 
 !----------------------------------------------------------
-	subroutine set_internal_vals_3D	
+	subroutine set_internal_vals_3D
 
 	! Define basis function values at quadrature points INTERNAL to cell.
 
@@ -2714,36 +2714,36 @@
 
 	if (iquad .eq. 1) then			! 2-point Gaussian quadrature
 	    bfvals_int(1,1) = 1.		! basis function = 1
-	    bfvals_int(1,kx) = 0.		! basis function = x		
-	    bfvals_int(1,ky) = 0.		! basis function = y	
-	    bfvals_int(1,kz) = 0.		! basis function = z	
-	end if	
-	
+	    bfvals_int(1,kx) = 0.		! basis function = x
+	    bfvals_int(1,ky) = 0.		! basis function = y
+	    bfvals_int(1,kz) = 0.		! basis function = z
+	end if
+
 
 	if (iquad .gt. 1) then
 		bfvals_int(1:npg,1) = 1.		! basis function = 1
 		do i=1,nedge
-	       bfvals_int((i-1)*nedge+1:i*nedge,ky) = xquad(i)		! basis function = y	   		
+	       bfvals_int((i-1)*nedge+1:i*nedge,ky) = xquad(i)		! basis function = y
 	       bfvals_int((i-1)*nedge+1:i*nedge,kz) = xquad(1:nedge)		! basis function = z
 		end do
 		do i=1,nedge
 		   bfvals_int((i-1)*nface+1:i*nface,kx) = xquad(i)		! basis function = x
 		   bfvals_int((i-1)*nface+1:i*nface,ky) = bfvals_int(1:nface,ky)		! basis function = y
 		   bfvals_int((i-1)*nface+1:i*nface,kz) = bfvals_int(1:nface,kz)		! basis function = z
-		end do		
+		end do
 	end if
 
-	do i=0,2		
+	do i=0,2
 		bfvals_int(1:npg,kxx+i) = 1.5*bfvals_int(1:npg,kx+i)**2 - 0.5    ! basis function = P_2(s)
 	!	bfvals_int(1:npg,kxxx+i) = 2.5*bfvals_int(1:npg,kx+i)**3 - 1.5*bfvals_int(1:npg,kx+i)   ! basis function = P_3(s)
 	end do
-	
+
 	bfvals_int(1:npg,kyz) = bfvals_int(1:npg,ky)*bfvals_int(1:npg,kz)		! basis function = yz
 	bfvals_int(1:npg,kzx) = bfvals_int(1:npg,kz)*bfvals_int(1:npg,kx)		! basis function = zx
 	bfvals_int(1:npg,kxy) = bfvals_int(1:npg,kx)*bfvals_int(1:npg,ky)		! basis function = xy
 	bfvals_int(1:npg,kxyz) = bfvals_int(1:npg,kx)*bfvals_int(1:npg,ky)*bfvals_int(1:npg,kz)     ! basis function = xyz
 
-	
+
 	bfvals_int(1:npg,kyyz) = bfvals_int(1:npg,kyy)*bfvals_int(1:npg,kz)     ! basis function = P_2(y)z
 	bfvals_int(1:npg,kyzz) = bfvals_int(1:npg,ky)*bfvals_int(1:npg,kzz)     ! basis function = P_2(z)y
 	bfvals_int(1:npg,kzzx) = bfvals_int(1:npg,kzz)*bfvals_int(1:npg,kx)     ! basis function = P_2(z)x
@@ -2761,7 +2761,7 @@
 	bfvals_int(1:npg,kzxxyy) = bfvals_int(1:npg,kz)*bfvals_int(1:npg,kxx)*bfvals_int(1:npg,kyy)   ! basis function = z P_2(x)P_2(y)
 	bfvals_int(1:npg,kxxyyzz) = bfvals_int(1:npg,kx)*bfvals_int(1:npg,kyy)*bfvals_int(1:npg,kzz)  ! basis function = P_2(x)P_2(y)P_2(z)
 
-	end subroutine set_internal_vals_3D		
+	end subroutine set_internal_vals_3D
 
 !----------------------------------------------------------
 	subroutine set_face_vals_3D
@@ -2800,12 +2800,12 @@
 
 
 	! bfvals_rsp:  positive rs-face
-	! bfvals_rsm:  negative rs-face	
+	! bfvals_rsm:  negative rs-face
 	! bfvals_rsp(,1):  value=1 on positive rs-face
-	! bfvals_rsp(,kx):  x-values on positive rs-face 
+	! bfvals_rsp(,kx):  x-values on positive rs-face
 	! bfvals_rsp(,ky):  y-values on positive rs-face
 	! bfvals_rsp(,kz):  z-values on positive rs-face
-	! bfvals_rsp(,kxx):  P_2(x)-values on positive rs-face	
+	! bfvals_rsp(,kxx):  P_2(x)-values on positive rs-face
 	! bfvals_rsp(,kyy):  P_2(y)-values on positive rs-face
 	! bfvals_rsp(,kzz):  P_2(z)-values on positive rs-face
 	! bfvals_rsp(,kyz):  yz-values on positive rs-face
@@ -2816,37 +2816,37 @@
 	if (iquad .eq. 1) then
 		bfvals_zp(1,kx) = 0.
 		bfvals_zp(1,ky) = 0.
-	end if	
+	end if
 
 	if (iquad .gt. 1) then
 	do i=1,nedge
-	    bfvals_zp((i-1)*nedge+1:i*nedge,kx) = xquad(1:nedge)  
+	    bfvals_zp((i-1)*nedge+1:i*nedge,kx) = xquad(1:nedge)
 	    bfvals_zp((i-1)*nedge+1:i*nedge,ky) = xquad(i)
 	end do
 	end if
-	
+
 	bfvals_zp(1:nface,kz) = 1.
 	bfvals_zp(1:nface,kyz) = bfvals_zp(1:nface,ky)*bfvals_zp(1:nface,kz)
 	bfvals_zp(1:nface,kzx) = bfvals_zp(1:nface,kz)*bfvals_zp(1:nface,kx)
 	bfvals_zp(1:nface,kxy) = bfvals_zp(1:nface,kx)*bfvals_zp(1:nface,ky)
-	bfvals_zp(1:nface,kxyz) = bfvals_zp(1:nface,kx)*bfvals_zp(1:nface,ky)*bfvals_zp(1:nface,kz)     ! basis function = xyz	
+	bfvals_zp(1:nface,kxyz) = bfvals_zp(1:nface,kx)*bfvals_zp(1:nface,ky)*bfvals_zp(1:nface,kz)     ! basis function = xyz
 
 	bfvals_yp(1:nface,1) = 1.
 	bfvals_yp(1:nface,kx) = bfvals_zp(1:nface,ky)
-	bfvals_yp(1:nface,ky) = 1.	
+	bfvals_yp(1:nface,ky) = 1.
 	bfvals_yp(1:nface,kz) = bfvals_zp(1:nface,kx)
 	bfvals_yp(1:nface,kyz) = bfvals_yp(1:nface,ky)*bfvals_yp(1:nface,kz)
 	bfvals_yp(1:nface,kzx) = bfvals_yp(1:nface,kz)*bfvals_yp(1:nface,kx)
 	bfvals_yp(1:nface,kxy) = bfvals_yp(1:nface,kx)*bfvals_yp(1:nface,ky)
-	bfvals_yp(1:nface,kxyz) = bfvals_yp(1:nface,kx)*bfvals_yp(1:nface,ky)*bfvals_yp(1:nface,kz)     ! basis function = xyz		
-	
+	bfvals_yp(1:nface,kxyz) = bfvals_yp(1:nface,kx)*bfvals_yp(1:nface,ky)*bfvals_yp(1:nface,kz)     ! basis function = xyz
+
 	bfvals_xp(1:nface,1) = 1.
 	bfvals_xp(1:nface,kx) = 1.
-	bfvals_xp(1:nface,ky) = bfvals_zp(1:nface,kx)	
+	bfvals_xp(1:nface,ky) = bfvals_zp(1:nface,kx)
 	bfvals_xp(1:nface,kz) = bfvals_zp(1:nface,ky)
 	bfvals_xp(1:nface,kyz) = bfvals_xp(1:nface,ky)*bfvals_xp(1:nface,kz)
 	bfvals_xp(1:nface,kzx) = bfvals_xp(1:nface,kz)*bfvals_xp(1:nface,kx)
-	bfvals_xp(1:nface,kxy) = bfvals_xp(1:nface,kx)*bfvals_xp(1:nface,ky)	
+	bfvals_xp(1:nface,kxy) = bfvals_xp(1:nface,kx)*bfvals_xp(1:nface,ky)
 	bfvals_xp(1:nface,kxyz) = bfvals_xp(1:nface,kx)*bfvals_xp(1:nface,ky)*bfvals_xp(1:nface,kz)     ! basis function = xyz
 
 	do i=1,3
@@ -2858,7 +2858,7 @@
 	!	bfvals_zp(1:nface,kxxx+i-1) = 2.5*bfvals_zp(1:nface,kx+i-1)**3 - 1.5*bfvals_zp(1:nface,kx+i-1)
 	end do
 
-	
+
 	bfvals_xp(1:nface,kyyz) = bfvals_xp(1:nface,kyy)*bfvals_xp(1:nface,kz)     ! basis function = P_2(y)z
 	bfvals_xp(1:nface,kyzz) = bfvals_xp(1:nface,ky)*bfvals_xp(1:nface,kzz)     ! basis function = P_2(z)y
 	bfvals_xp(1:nface,kzzx) = bfvals_xp(1:nface,kzz)*bfvals_xp(1:nface,kx)     ! basis function = P_2(z)x
@@ -2875,7 +2875,7 @@
 	bfvals_xp(1:nface,kyzzxx) = bfvals_xp(1:nface,ky)*bfvals_xp(1:nface,kzz)*bfvals_xp(1:nface,kxx)   ! basis function = y P_2(z)P_2(x)
 	bfvals_xp(1:nface,kzxxyy) = bfvals_xp(1:nface,kz)*bfvals_xp(1:nface,kxx)*bfvals_xp(1:nface,kyy)   ! basis function = z P_2(x)P_2(y)
 	bfvals_xp(1:nface,kxxyyzz) = bfvals_xp(1:nface,kx)*bfvals_xp(1:nface,kyy)*bfvals_xp(1:nface,kzz)  ! basis function = P_2(x)P_2(y)P_2(z)
-	
+
 	bfvals_xm = bfvals_xp
 	bfvals_xm(1:nface,kx) = -bfvals_xp(1:nface,kx)
 	bfvals_xm(1:nface,kzx) = -bfvals_xp(1:nface,kzx)
@@ -2883,7 +2883,7 @@
 	bfvals_xm(1:nface,kxyz) = -bfvals_xp(1:nface,kxyz)
 	bfvals_xm(1:nface,kzzx) = -bfvals_xp(1:nface,kzzx)
 	bfvals_xm(1:nface,kxyy) = -bfvals_xp(1:nface,kxyy)
-	! bfvals_xm(1:nface,kxxx) = -bfvals_xp(1:nface,kxxx)	
+	! bfvals_xm(1:nface,kxxx) = -bfvals_xp(1:nface,kxxx)
 	bfvals_xm(1:nface,kzxyy) = -bfvals_xp(1:nface,kzxyy)
 	bfvals_xm(1:nface,kxyzz) = -bfvals_xp(1:nface,kxyzz)
 	bfvals_xm(1:nface,kxyyzz) = -bfvals_xp(1:nface,kxyyzz)
@@ -2904,7 +2904,7 @@
 	bfvals_yp(1:nface,kyzzxx) = bfvals_yp(1:nface,ky)*bfvals_yp(1:nface,kzz)*bfvals_yp(1:nface,kxx)   ! basis function = y P_2(z)P_2(x)
 	bfvals_yp(1:nface,kzxxyy) = bfvals_yp(1:nface,kz)*bfvals_yp(1:nface,kxx)*bfvals_yp(1:nface,kyy)   ! basis function = z P_2(x)P_2(y)
 	bfvals_yp(1:nface,kxxyyzz) = bfvals_yp(1:nface,kx)*bfvals_yp(1:nface,kyy)*bfvals_yp(1:nface,kzz)  ! basis function = P_2(x)P_2(y)P_2(z)
-	
+
 	bfvals_ym = bfvals_yp
 	bfvals_ym(1:nface,ky) = -bfvals_yp(1:nface,ky)
 	bfvals_ym(1:nface,kyz) = -bfvals_yp(1:nface,kyz)
@@ -2916,7 +2916,7 @@
 	bfvals_ym(1:nface,kyzxx) = -bfvals_yp(1:nface,kyzxx)
 	bfvals_ym(1:nface,kxyzz) = -bfvals_yp(1:nface,kxyzz)
 	bfvals_ym(1:nface,kyzzxx) = -bfvals_yp(1:nface,kyzzxx)
-	
+
 	bfvals_zp(1:nface,kyyz) = bfvals_zp(1:nface,kyy)*bfvals_zp(1:nface,kz)     ! basis function = P_2(y)z
 	bfvals_zp(1:nface,kyzz) = bfvals_zp(1:nface,ky)*bfvals_zp(1:nface,kzz)     ! basis function = P_2(z)y
 	bfvals_zp(1:nface,kzzx) = bfvals_zp(1:nface,kzz)*bfvals_zp(1:nface,kx)     ! basis function = P_2(z)x
@@ -2934,24 +2934,24 @@
 	bfvals_zp(1:nface,kzxxyy) = bfvals_zp(1:nface,kz)*bfvals_zp(1:nface,kxx)*bfvals_zp(1:nface,kyy)   ! basis function = z P_2(x)P_2(y)
 	bfvals_zp(1:nface,kxxyyzz) = bfvals_zp(1:nface,kx)*bfvals_zp(1:nface,kyy)*bfvals_zp(1:nface,kzz)  ! basis function = P_2(x)P_2(y)P_2(z)
 
-	
+
 	bfvals_zm = bfvals_zp
 	bfvals_zm(1:nface,kz) = -bfvals_zp(1:nface,kz)
 	bfvals_zm(1:nface,kyz) = -bfvals_zp(1:nface,kyz)
 	bfvals_zm(1:nface,kzx) = -bfvals_zp(1:nface,kzx)
 	bfvals_zm(1:nface,kxyz) = -bfvals_zp(1:nface,kxyz)
-	bfvals_zm(1:nface,kyyz) = -bfvals_zp(1:nface,kyyz)	
+	bfvals_zm(1:nface,kyyz) = -bfvals_zp(1:nface,kyyz)
 	bfvals_zm(1:nface,kzxx) = -bfvals_zp(1:nface,kzxx)
 	! bfvals_zm(1:nface,kzzz) = -bfvals_zp(1:nface,kzzz)
 	bfvals_zm(1:nface,kyzxx) = -bfvals_zp(1:nface,kyzxx)
 	bfvals_zm(1:nface,kzxyy) = -bfvals_zp(1:nface,kzxyy)
 	bfvals_zm(1:nface,kzxxyy) = -bfvals_zp(1:nface,kzxxyy)
-	
+
 	! Organize local basis values on faces into 1-D vectors.
 	! Used in limiter() and max_lim().
 
 	bf_faces(1:nslim,1) = 1.		! basis function = 1
-	
+
 	do ixyz=kx,kz
 		bf_faces(1:nface,ixyz) = bfvals_xm(1:nface,ixyz)		! basis function = x,y,z
 		bf_faces(nface+1:2*nface,ixyz) = bfvals_xp(1:nface,ixyz)		! basis function = x,y,z
@@ -2966,8 +2966,8 @@
 	bf_faces(1:nslim,kzx) = bf_faces(1:nslim,kz)*bf_faces(1:nslim,kx)     ! basis function = zx
 	bf_faces(1:nslim,kxy) = bf_faces(1:nslim,kx)*bf_faces(1:nslim,ky)     ! basis function = xy
 	bf_faces(1:nslim,kxyz) = bf_faces(1:nslim,kx)*bf_faces(1:nslim,ky)*bf_faces(1:nslim,kz)     ! basis function = xyz
-	
-	do i=0,2		
+
+	do i=0,2
 		bf_faces(1:nslim,kxx+i) = 1.5*bf_faces(1:nslim,kx+i)**2 - 0.5    ! basis function = P_2(s)
 	!	bf_faces(1:nslim,kxxx+i) = 2.5*bf_faces(1:nslim,kx+i)**3 - 1.5*bf_faces(1:nslim,kx+i)   ! basis function = P_3(s)
 	end do
@@ -3022,9 +3022,9 @@
 	    wgt1d(3) = wq4p
 	    wgt1d(4) = wq4m
 	 end if
-	
+
 	!  Define weights for 2-D integration
-	
+
 	 if (iquad .eq. 1) then		! 1-point quadrature
 	    wgt2d(1) = 4.
 	 end if
@@ -3037,7 +3037,7 @@
 		  wgt2d((i-1)*nedge+1:i*nedge) = wgt1d(1:nedge)*wgt1d(i)
 	   end do
 	end if
-	
+
 	!  Define weights for 3-D integration
 
 	 if (iquad .eq. 1) then		! 1-point quadrature
@@ -3058,5 +3058,3 @@
 !--------------------------------------------------------------------------------
 
 end program
-
-

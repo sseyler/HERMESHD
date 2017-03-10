@@ -1,29 +1,46 @@
 !****** MAIN.F90 *************************************************************************
 program main_py
 
-use input!, only : nx,ny,nz
-use parameters!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
-use helpers!, only : xc,yc,zc,get_clock_time
-
-use integrator
-use boundary_custom
-use boundary
-use initialcon
-use basis_funcs
-
-use initialize
-
-use prepare_step
-use sources
-use random
-use flux
-use output
+! use input!, only : nx,ny,nz
+! use parameters!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
+! use helpers!, only : xc,yc,zc,get_clock_time
+!
+! use integrator
+! use boundary_custom
+! use boundary
+! use initialcon
+! use basis_funcs
+!
+! use initialize
+!
+! use prepare_step
+! use sources
+! use random  ! TODO: commented to get working w/o MKL
+! use flux
+! use output
 
 
 contains
 
     !===========================================================================
     subroutine update(Q_io, Q_1, Q_2, t, dt)
+        use input!, only : nx,ny,nz
+        use parameters!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
+        use helpers!, only : xc,yc,zc,get_clock_time
+
+        use integrator
+        use boundary_custom
+        use boundary
+        use initialcon
+        use basis_funcs
+
+        use initialize
+
+        use prepare_step
+        use sources
+        ! use random  ! TODO: commented to get working w/o MKL
+        use flux
+        use output
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2
@@ -38,6 +55,21 @@ contains
 
     !===========================================================================
     subroutine setup(Q_io, t, dt, t1, t_start, dtout, nout)
+        use input!, only : nx,ny,nz
+        use parameters!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
+        use helpers!, only : xc,yc,zc,get_clock_time
+
+        use boundary_custom
+        use initialcon
+        use basis_funcs
+
+        use initialize
+
+        use prepare_step
+        use sources
+        ! use random  ! TODO: commented to get working w/o MKL
+        use flux
+        use output
         use integrator, only: select_integrator, step
         use boundary, only: apply_xlobc, apply_ylobc, apply_zlobc,              &
                             apply_xhibc, apply_yhibc, apply_zhibc,              &
@@ -89,6 +121,23 @@ contains
 
     !===========================================================================
     subroutine cleanup(t_start)
+        use input!, only : nx,ny,nz
+        use parameters!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
+        use helpers!, only : xc,yc,zc,get_clock_time
+
+        use integrator
+        use boundary_custom
+        use boundary
+        use initialcon
+        use basis_funcs
+
+        use initialize
+
+        use prepare_step
+        use sources
+        ! use random  ! TODO: commented to get working w/o MKL
+        use flux
+        use output
         implicit none
         real, intent(in) :: t_start
         real :: t_stop
@@ -115,7 +164,6 @@ contains
     ! Get the smallest time step required by CFL condition
     !------------------------------------------------------------
     real function get_min_dt(Q_r)
-        ! uses the global variable cflm (set in initialize.f90)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
 
@@ -123,6 +171,7 @@ contains
         real vex,vey,vez,vem,vem0,dni,dn,vx,vy,vz,Pr,sqdni,vacc,vacc0,cs
         integer :: i,j,k,main_proc=0,mpi_size=1
         integer :: loc_reqs(numprocs-1),loc_stats(MPI_STATUS_SIZE,numprocs-1)
+        ! NOTE: uses the global variable cflm (set in initialize.f90)
 
         vmag = 0.
 

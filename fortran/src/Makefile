@@ -12,15 +12,14 @@ FORT = mpif90
 DEFS =
 PROGNAME = perseus_$(NAME)
 TESTDIR = /scratch/sseyler/WORK/PERSEUSHD_testing
-INCLUDES = -I. #-I$(MKLINCLUDE)
+
+# NOTE: Seems to work when doing "include 'mpif.h'" in the code
+INC_DIR = /nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include
+INCLUDES = -I. -I$(INC_DIR) #-I$(MKLINCLUDE)
 OBJS = lib_vtk_io.o mkl_vsl.o #-L$(MKLPATH)
 
 DEFINES = $(INCLUDES) $(DEFS)
-# FORTFLAGS = -O3 -coarray=distributed
-# FORTFLAGS = -O3 -coarray -coarray-num-images=9
-# FORTFLAGS = -O3 -coarray -coarray-num-images=4
-# FORTFLAGS = -O3 -openmp
-# FORTFLAGS = -O2 -xHost #-CB -fpe:0 -traceback -check noarg_temp_created #-fpp
+
 
 ##################################################################
 # Intel compiler and MKL files
@@ -29,15 +28,20 @@ DEFINES = $(INCLUDES) $(DEFS)
 # IGNORE := $(shell bash -c "source ifortvars.sh; env | sed 's/=/:=/' | sed 's/^/export /' > makeenv")
 # include makeenv
 
-# libmkl_intel_lp64.so lives here: $(MKLROOT)/lib/intel64_lin
+# NOTE: libmkl_intel_lp64.so lives here: $(MKLROOT)/lib/intel64_lin
+# NOTE: "mpif.h" is in /nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include
 
 MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/fortran/mkl
 MKL_TARGET_ARCH = intel64_lin
 MISCFLAGS = -diag-disable 13003 # disable the warning for message verification
 
 FORTFLAGS = -O2 -xHost -mkl -L$(MKLROOT)/lib/$(MKL_TARGET_ARCH) $(MISCFLAGS)
-# FORTFLAGS = -O3 -xHost -mkl -L$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
 # FORTFLAGS = -O2 -xHost -CB -fpe:0 -traceback -check noarg_temp_created #-fpp
+# FORTFLAGS = -O3 -coarray=distributed
+# FORTFLAGS = -O3 -coarray -coarray-num-images=9
+# FORTFLAGS = -O3 -coarray -coarray-num-images=4
+# FORTFLAGS = -O3 -openmp
+# FORTFLAGS = -O2 -xHost #-CB -fpe:0 -traceback -check noarg_temp_created #-fpp
 ##################################################################
 
 
@@ -118,6 +122,26 @@ ifeq ($(NAME),sod)
 endif
 
 #********************************************
+# Sod Shock Tube 1D for development code
+#********************************************
+ifeq ($(NAME),sodpy)
+    SRC = main_py.f90
+    MODSRC =  input_sod.f90 parameters_sod.f90 \
+               basis_funcs.f90 helpers.f90 boundary.f90 \
+               initialcon.f90 initialize.f90 \
+               prepare_step.f90 sources.f90 flux.f90 \
+               integrator.f90 output.f90
+    MODFILES = input.mod parameters.mod \
+               basis_funcs.mod helpers.mod \
+               boundary_defs.mod boundary_custom.mod boundary.mod \
+               initialcon.mod initialize.mod \
+               prepare_step.mod sources.mod flux.mod \
+               integrator.mod output.mod
+    FORTFLAGS = -O2 -xHost $(MISCFLAGS)
+endif
+
+
+#********************************************
 # 2D Poiseuille flow for development code
 #********************************************
 ifeq ($(NAME),poi2d)
@@ -148,6 +172,11 @@ all: $(PROGNAME)
 
 shlib:
 	$(FORT) -shared -fPIC $(FORTFLAGS) $(SRC) LIB_VTK_IO.f90 $(MODSRC) mkl_vsl.o -o $(PROGNAME).so
+
+f2py:
+	# NOTE: The compiled *.mod file for LIB_VTK_IO.f90 is lowercase and the object file is uppercase!!!
+	# NOTE: LIB_VTK_IO.f90 needs to be compiled BEFORE output.f90!!!
+	$(FORT) -c -fPIC $(FORTFLAGS) LIB_VTK_IO.f90 $(MODSRC) # lib_vtk_io.o mkl_vsl.o
 
 $(PROGNAME) : $(SRC)
 	cp $(SRC) $(MODSRC) $(OTHERFILES) $(TESTDIR) && cd $(TESTDIR) && \

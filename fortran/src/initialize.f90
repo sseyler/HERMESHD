@@ -393,8 +393,8 @@ contains
     subroutine set_ic_from_file(Q_r, t, dt, dtout, nout)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
-        real, intent(out) :: t, dt, dtout
-        integer, intent(out) :: nout
+        real, intent(inout) :: t, dt, dtout
+        integer, intent(inout) :: nout
 
         real t_p,dt_p,dtout_p
         integer nout_p,mpi_nx_p,mpi_ny_p,mpi_nz_p
