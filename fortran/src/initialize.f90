@@ -50,7 +50,7 @@ contains
 
         call init_bf_weights(bval_int_wgt, wgtbf_xmp, wgtbf_ymp, wgtbf_zmp)
 
-        call init_random_seed(iam, iseed)
+        ! call init_random_seed(iam, iseed)
 
         ! Initialize MKL random number generator
         ! vsl_errcode = vslnewstream(vsl_stream, vsl_brng, iseed)  ! TODO: commented to get working w/o MKL
