@@ -137,7 +137,6 @@ ifeq ($(NAME),sodpy)
                initialcon.mod initialize.mod \
                prepare_step.mod sources.mod flux.mod \
                integrator.mod output.mod
-    FORTFLAGS = -O2 -xHost $(MISCFLAGS)
 endif
 
 
@@ -146,7 +145,7 @@ endif
 #********************************************
 ifeq ($(NAME),poi2d)
     SRC = main.f90
-    MODSRC =  input_2dpoiseuille.f90 parameters_2dpoiseuille.f90
+    MODSRC =  input_2dpoiseuille.f90 parameters_2dpoiseuille.f90 \
                basis_funcs.f90 helpers.f90 boundary.f90 \
                random.f90 initialcon.f90 initialize.f90 \
                prepare_step.f90 sources.f90 flux.f90 \
@@ -173,10 +172,10 @@ all: $(PROGNAME)
 shlib:
 	$(FORT) -shared -fPIC $(FORTFLAGS) $(SRC) LIB_VTK_IO.f90 $(MODSRC) mkl_vsl.o -o $(PROGNAME).so
 
+# NOTE: The compiled *.mod file for LIB_VTK_IO.f90 is lowercase and the object file is uppercase!!!
+# NOTE: LIB_VTK_IO.f90 needs to be compiled BEFORE output.f90!!!
 f2py:
-	# NOTE: The compiled *.mod file for LIB_VTK_IO.f90 is lowercase and the object file is uppercase!!!
-	# NOTE: LIB_VTK_IO.f90 needs to be compiled BEFORE output.f90!!!
-	$(FORT) -c -fPIC $(FORTFLAGS) LIB_VTK_IO.f90 $(MODSRC) # lib_vtk_io.o mkl_vsl.o
+	env OMPI_FC=gfortran $(FORT) -c -fPIC $(MODSRC) lib_vtk_io.mod  # LIB_VTK_IO.o lib_vtk_io.o mkl_vsl.o LIB_VTK_IO.f90
 
 $(PROGNAME) : $(SRC)
 	cp $(SRC) $(MODSRC) $(OTHERFILES) $(TESTDIR) && cd $(TESTDIR) && \
