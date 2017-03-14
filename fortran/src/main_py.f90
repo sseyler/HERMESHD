@@ -84,7 +84,7 @@ contains
         !-------------------------------------------------
         call initializer(t, dt, nout)
 
-        t_start = get_clock_time()  ! start timer for wall time
+        t_start = 0!get_clock_time()  ! start timer for wall time
         dtout = tf/ntout  ! TODO: move this to a more sensible place once output scheme is improved!
 
         !-------------------------------------------------
@@ -108,7 +108,7 @@ contains
         call select_y_boundaries(ylobc, yhibc, apply_ylobc, apply_yhibc)
         call select_z_boundaries(zlobc, zhibc, apply_zlobc, apply_zhibc)
 
-        t1 = get_clock_time()
+        t1 = 0!get_clock_time()
 
         !-------------------------------------------------
         ! 5. Generate initial output
@@ -123,7 +123,7 @@ contains
     subroutine cleanup(t_start)
         use input!, only : nx,ny,nz
         use parameters!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
-        use helpers!, only : xc,yc,zc,get_clock_time
+        use helpers!, only : xc,yc,zc
 
         use integrator
         use boundary_custom
@@ -154,7 +154,7 @@ contains
         !-------------------------------------------------
         ! 3. Report simulation wall time
         !-------------------------------------------------
-        t_stop = get_clock_time()  ! start timer for wall time
+        t_stop = 0!get_clock_time()  ! start timer for wall time
         call report_wall_time(iam, t_stop-t_start)
     end subroutine cleanup
     !---------------------------------------------------------------------------
@@ -257,7 +257,7 @@ contains
             if (iam == print_mpi) then
                 print *, 'nout = ', nout
                 print *, '   t = ',t*100.,'         dt= ',dt
-                t2 = get_clock_time()
+                t2 = 0!get_clock_time()
                 print *, '  >> Iteration time', (t2-t1), 'seconds'
                 t1 = t2
             end if
@@ -274,7 +274,7 @@ contains
             call MPI_BARRIER(cartcomm,ierr)
 
             if (iam == print_mpi) then
-                t2 = get_clock_time()
+                t2 = 0!get_clock_time()
                 print *, '  >> Output time', (t2-t1), 'seconds'
                 print *, ''
                 t1 = t2

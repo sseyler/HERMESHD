@@ -175,7 +175,8 @@ shlib:
 # NOTE: The compiled *.mod file for LIB_VTK_IO.f90 is lowercase and the object file is uppercase!!!
 # NOTE: LIB_VTK_IO.f90 needs to be compiled BEFORE output.f90!!!
 f2py:
-	env OMPI_FC=gfortran $(FORT) -c -fPIC $(MODSRC) lib_vtk_io.mod  # LIB_VTK_IO.o lib_vtk_io.o mkl_vsl.o LIB_VTK_IO.f90
+	$(FORT) -c -fPIC LIB_VTK_IO.f90 $(MODSRC) #lib_vtk_io.o
+	#env OMPI_FC=gfortran $(FORT) -c -fPIC $(MODSRC) lib_vtk_io.mod  # LIB_VTK_IO.o lib_vtk_io.o mkl_vsl.o LIB_VTK_IO.f90
 
 $(PROGNAME) : $(SRC)
 	cp $(SRC) $(MODSRC) $(OTHERFILES) $(TESTDIR) && cd $(TESTDIR) && \
