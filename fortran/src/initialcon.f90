@@ -121,11 +121,11 @@ contains
         integer i,j,k
         real rh_amb,vx_amb,vy_amb,vz_amb,pr_amb,te_amb,beta
         real xctr,yctr,zctr,xp,yp,r2,delta_vx,delta_vy,delta_T
-        real dn,vx,vy,vz,te
+        real dn,vx,vy,vz,te,pr
 
-        beta   = 5.0           ! vortex strength
+        beta   = 0.5           ! vortex strength
         rh_amb = 1.0           ! ambient density
-        vx_amb = 1.0           ! ambient x-velocity
+        vx_amb = 0.1           ! ambient x-velocity
         vy_amb = 0.0           ! ambient y-velocity
         vz_amb = 0.0           ! ambient z-velocity
         pr_amb = 1.0           ! ambient pressure (atmospheric pressure)
@@ -142,8 +142,8 @@ contains
             yp = yc(j) - yctr   ! y-value from vortex center
             r2 = xp**2 + yp**2  ! radial distance from vortex center
 
-            delta_vx = -yp*beta/(2*pi) * exp( (1 - r2)/2 )
-            delta_vy =  xp*beta/(2*pi) * exp( (1 - r2)/2 )
+            delta_vx = -yp*beta/(2*pi) * exp( 0.5*(1 - r2) )
+            delta_vy =  xp*beta/(2*pi) * exp( 0.5*(1 - r2) )
             delta_T  = -aindm1*beta**2/(8*aindex*pi**2) * exp(1 - r2)
 
             vx = vx_amb + delta_vx
@@ -151,12 +151,13 @@ contains
             vz = vz_amb
             te = te_amb + delta_T
             dn = rh_amb * te**(1./aindm1)
+            pr = dn**aindex
 
             Q_r(i,j,k,rh,1) = dn
             Q_r(i,j,k,mx,1) = dn*vx
             Q_r(i,j,k,my,1) = dn*vy
             Q_r(i,j,k,mz,1) = dn*vz
-            Q_r(i,j,k,en,1) = te*dn/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
+            Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
         end do
         end do
         end do

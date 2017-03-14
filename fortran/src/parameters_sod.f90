@@ -39,7 +39,7 @@ module parameters
     use MKL_VSL_TYPE
     use MKL_VSL
 
-    include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
+    include 'mpif.h'
 
     integer, parameter :: rh = 1                      ! density
     integer, parameter :: mx = 2, my = 3, mz = 4      ! vector momentum
