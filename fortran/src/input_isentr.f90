@@ -2,8 +2,8 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 1.0e0 !1.0e6 !4.1e2
-    real, parameter :: ly = lx/12. !1.0e6 !4.1e2
+    real, parameter :: lx = 1.0e1 !1.0e6 !4.1e2
+    real, parameter :: ly = 1.0e1 !1.0e6 !4.1e2
     real, parameter :: lz = lx/120. !1.0e6/120. !4.1e2/120.
 
     ! Number of Gaussian quadrature points per spatial dimension
@@ -13,13 +13,13 @@ module input
     integer, parameter :: nbasis  = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 50
-    integer, parameter :: ny = 1
+    integer, parameter :: nx = 20
+    integer, parameter :: ny = 20
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
-    integer :: mpi_nx = 16
-    integer :: mpi_ny = 1
+    integer :: mpi_nx = 4
+    integer :: mpi_ny = 4
 
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK
@@ -32,18 +32,18 @@ module input
 
     ! Initial conditions
     ! character(*), parameter :: icname = ''
-    integer, parameter :: icid = 3
+    integer, parameter :: icid = 2
 
     ! Boundary conditions
-    character(*), parameter :: xlobc = 'wall'
-    character(*), parameter :: xhibc = 'wall'
+    character(*), parameter :: xlobc = 'periodic'
+    character(*), parameter :: xhibc = 'periodic'
     character(*), parameter :: ylobc = 'periodic'
     character(*), parameter :: yhibc = 'periodic'
     character(*), parameter :: zlobc = 'periodic'
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 7.0e-4
+    real, parameter :: tf = 1.0e2
 
     ! Console output frequency
     integer, parameter :: ntout = 200
@@ -72,7 +72,7 @@ module input
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_sod_iq2_nb8"
+    character (*), parameter :: outname = "test_isentr_iq2_nb8"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density

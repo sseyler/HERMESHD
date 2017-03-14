@@ -119,6 +119,24 @@ ifeq ($(NAME),sod)
 endif
 
 #********************************************
+# 2D isentropic vortex for development code
+#********************************************
+ifeq ($(NAME),ise)
+    OBJS = main.f90
+    MODULES =  input_isentr.f90 parameters_isentr.f90 \
+               basis_funcs.f90 helpers.f90 boundary.f90 \
+               random.f90 initialcon.f90 initialize.f90 \
+               prepare_step.f90 sources.f90 flux.f90 \
+               integrator.f90 output.f90
+    MODFILES = input.mod parameters.mod \
+               basis_funcs.mod helpers.mod \
+               boundary_defs.mod boundary_custom.mod boundary.mod \
+               random.mod initialcon.mod initialize.mod \
+               prepare_step.mod sources.mod flux.mod \
+               integrator.mod output.mod
+endif
+
+#********************************************
 # 2D Poiseuille flow for development code
 #********************************************
 ifeq ($(NAME),poi2d)

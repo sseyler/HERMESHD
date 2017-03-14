@@ -128,8 +128,8 @@ contains
         vx_amb = 1.0           ! ambient x-velocity
         vy_amb = 0.0           ! ambient y-velocity
         vz_amb = 0.0           ! ambient z-velocity
-        te_amb = 1.0           ! ambient temperature
-        pr_amb = te_amb*rh_amb ! ambient pressure
+        pr_amb = 1.0           ! ambient pressure (atmospheric pressure)
+        te_amb = pr_amb/rh_amb ! ambient temperature
 
         xctr = 0               ! vortex center in x-directionrh_fluid*te/vis
         yctr = 0               ! vortex center in y-direction
