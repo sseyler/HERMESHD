@@ -9,12 +9,12 @@ module input
     ! Number of Gaussian quadrature points per spatial dimension
     ! (iquad, nbasis):
     !   * (2, 4), (2, 8), (3, 10), (3, 27), (4, 20)
-    integer, parameter :: iquad   = 2
-    integer, parameter :: nbasis  = 8
+    integer, parameter :: iquad  = 4
+    integer, parameter :: nbasis = 20
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 20
-    integer, parameter :: ny = 20
+    integer, parameter :: nx = 30
+    integer, parameter :: ny = 30
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
@@ -24,8 +24,8 @@ module input
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK
     !   * 3 or 'shu-osher' for 3rd-order RK
-    integer, parameter :: iorder = 3
-    character(*), parameter :: iname = 'heun'
+    ! integer, parameter :: iorder = 2
+    character(*), parameter :: iname = 'shu-osher'
 
     ! Fluctuating hydrodynamics
     logical, parameter :: llns = .false.
@@ -43,7 +43,7 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 1.0e2
+    real, parameter :: tf = 1.0e1
 
     ! Console output frequency
     integer, parameter :: ntout = 200
@@ -71,7 +71,8 @@ module input
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "isen_io3_iq2_nb8_v0"
+    character (*), parameter :: outname = "ise_30x30_i3_q4_b20_v0"
+    ! character (*), parameter :: outname = trim('ise_'//nx//'x'//ny//'_'//iname//'_q'//iquad//'_b'//nbasis//'_v'//(icid-1))
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density

@@ -24,7 +24,7 @@ contains
         real(R4P), dimension(nnx,nny,nnz) :: qvtk_dxvy,qvtk_dyvx
         real dn,dni, vx,vy,vz, U,P, dxrh,dyrh,dxmy,dymx
         integer(I4P):: E_IO,i,j,k,l,num,iam,igrid,ir,jr,kr,ib,jb,kb,ieq
-        character (50) :: out_name
+        character (70) :: out_name
         character (4) :: tname
         character (5) :: tname1
         character (4) :: pname
