@@ -42,12 +42,15 @@ contains
             ! case(0)
             !     call mpi_print(iam, 'Setting up 2D hydrodynamic jet (old version)...')
             !     call fill_fluid2(Q_r)
-            case(1)
+            case(0)
                 call mpi_print(iam, 'Setting up 2D hydrodynamic jet...')
                 call hydro_jet(Q_r)
+            case(1)
+                call mpi_print(iam, 'Setting up 2D isentropic vortex v0...')
+                call isentropic_vortex(Q_r, 0)
             case(2)
-                call mpi_print(iam, 'Setting up 2D isentropic vortex...')
-                call isentropic_vortex(Q_r)
+                call mpi_print(iam, 'Setting up 2D isentropic vortex v1...')
+                call isentropic_vortex(Q_r, 1)
             case(3)
                 call mpi_print(iam, 'Setting up 1D Sod Shock Tube v1...')
                 call sod_shock_tube_1d(Q_r, 0)
@@ -115,25 +118,29 @@ contains
     !===========================================================================
     ! 2D isentropic vortex
     !------------------------------------------------------------
-    subroutine isentropic_vortex(Q_r)
+    subroutine isentropic_vortex(Q_r, ver)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
-        integer i,j,k
+        integer i,j,k, ver
         real rh_amb,vx_amb,vy_amb,vz_amb,pr_amb,te_amb,beta
         real xctr,yctr,zctr,xp,yp,r2,delta_vx,delta_vy,delta_T
         real dn,vx,vy,vz,te,pr
 
-        beta   = 0.5           ! vortex strength
-        rh_amb = 1.0           ! ambient density
-        vx_amb = 0.1           ! ambient x-velocity
-        vy_amb = 0.0           ! ambient y-velocity
-        vz_amb = 0.0           ! ambient z-velocity
-        pr_amb = 1.0           ! ambient pressure (atmospheric pressure)
-        te_amb = pr_amb/rh_amb ! ambient temperature
+        beta   = 5.0            ! vortex strength
+        rh_amb = 1.0            ! ambient density
+        vx_amb = 1.0            ! ambient x-velocity
+        if (ver == 1) then      ! ambient y-velocity
+            vy_amb = 1.0
+        else
+            vy_amb = 0.0
+        end if
+        vz_amb = 0.0            ! ambient z-velocity
+        pr_amb = 1.0            ! ambient pressure (atmospheric pressure)
+        te_amb = pr_amb/rh_amb  ! ambient temperature
 
-        xctr = 0               ! vortex center in x-directionrh_fluid*te/vis
-        yctr = 0               ! vortex center in y-direction
-        zctr = 0               ! vortex center in z-direction
+        xctr = 0.0              ! vortex center in x-directionrh_fluid*te/vis
+        yctr = 0.0              ! vortex center in y-direction
+        zctr = 0.0              ! vortex center in z-direction
 
         do k = 1,nz
         do j = 1,ny
@@ -144,14 +151,14 @@ contains
 
             delta_vx = -yp*beta/(2*pi) * exp( 0.5*(1 - r2) )
             delta_vy =  xp*beta/(2*pi) * exp( 0.5*(1 - r2) )
-            delta_T  = -aindm1*beta**2/(8*aindex*pi**2) * exp(1 - r2)
+            delta_T  = -(aindm1*beta**2)/(8*aindex*pi**2) * exp(1 - r2)
 
             vx = vx_amb + delta_vx
             vy = vy_amb + delta_vy
             vz = vz_amb
             te = te_amb + delta_T
             dn = rh_amb * te**(1./aindm1)
-            pr = dn**aindex
+            pr = dn**aindex  ! use te*dn OR dn**aindex (for ideal gas)
 
             Q_r(i,j,k,rh,1) = dn
             Q_r(i,j,k,mx,1) = dn*vx
@@ -169,10 +176,10 @@ contains
     !===========================================================================
     ! SOD Shock Tube
     !------------------------------------------------------------
-    subroutine sod_shock_tube_1d(Q_r, version)
+    subroutine sod_shock_tube_1d(Q_r, ver)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
-        integer i,j,k,version
+        integer i,j,k, ver
         real rh_hi,rh_lo,pr_hi,pr_lo,xctr,yctr,xp,yp,dn,vx,vy,vz,pr
 
         rh_hi = 1.0 !e-4  ! NOTE: density floor needs to be 5.0e-6 (e-4 for original)
@@ -190,7 +197,7 @@ contains
         do j = 1,ny
         do i = 1,nx
             xp = xc(i) - xctr
-            if ( version == 1 ) then
+            if ( ver == 1 ) then
                 yp = yc(j) - yctr
             else
                 yp = 0
@@ -269,7 +276,7 @@ contains
 
     !===========================================================================
     ! 2D pipe flow around a cylinder
-    !   * Re ~ 20 for laminar case (version 0)
+    !   * Re ~ 20 for laminar case (ver 0)
     !   * Re ~ 100 for periodic case (version 1)
     !   * Need outflow BCs on right wall: nu d u/d eta - p*eta = 0
     !   * No-slip BCs everywhere else

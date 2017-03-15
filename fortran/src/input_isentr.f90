@@ -24,7 +24,7 @@ module input
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK
     !   * 3 or 'shu-osher' for 3rd-order RK
-    integer, parameter :: iorder = 2
+    integer, parameter :: iorder = 3
     character(*), parameter :: iname = 'heun'
 
     ! Fluctuating hydrodynamics
@@ -32,7 +32,7 @@ module input
 
     ! Initial conditions
     ! character(*), parameter :: icname = ''
-    integer, parameter :: icid = 2
+    integer, parameter :: icid = 1
 
     ! Boundary conditions
     character(*), parameter :: xlobc = 'periodic'
@@ -43,7 +43,7 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 1.0e1
+    real, parameter :: tf = 1.0e2
 
     ! Console output frequency
     integer, parameter :: ntout = 200
@@ -57,9 +57,8 @@ module input
     integer, parameter :: ieos = 1
 
     ! Thermodynamic, constitutive, and transport parameters
-    real, parameter :: TK     = 300.0    ! in Kelvin
     real, parameter :: mu     = 18.0     ! AMU per molecule
-    real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
+    real, parameter :: aindex = 7./5.    ! adiabatic index (gamma)
     real, parameter :: clt    = 2.0      ! numerical speed of sound
 
     ! Viscosity control
@@ -72,7 +71,7 @@ module input
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_isentr_iq2_nb8"
+    character (*), parameter :: outname = "isen_io3_iq2_nb8_v0"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density
