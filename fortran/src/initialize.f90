@@ -28,7 +28,7 @@ contains
 
         !-------------------------
         ! Create output directory
-        call system('mkdir -p '//outdir)
+        call system('mkdir -p '//outdir)  ! NOTE: transfer to scratch in BW batch script!!!
 
         !-----------------------------------------
         ! Initialize grid sizes and local lengths
@@ -52,8 +52,7 @@ contains
 
         call init_random_seed(iam, iseed)
 
-        ! Initialize MKL random number generator
-        vsl_errcode = vslnewstream(vsl_stream, vsl_brng, iseed)
+        call random_init(iseed)  ! initialize MKL random number generator
 
         call print_startup_info
 

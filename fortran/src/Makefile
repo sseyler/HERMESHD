@@ -169,14 +169,14 @@ endif
 
 all: $(PROGNAME)
 
-$(PROGNAME) : $(SRC)
+$(PROGNAME) : $(SRC) $(MODSRC)
 	cp $(SRC) $(MODSRC) $(OTHERFILES) $(TESTDIR) && cd $(TESTDIR) && \
 	$(FORT) $(FORTFLAGS) $(SRC) $(MODSRC) $(OBJS) -o $(PROGNAME)
-#	strip $(PROGNAME)
+#	strip $(PROGNAME) # may also need to copy over OJBS
 #	$(PROGNAME)
 	cd $(TESTDIR) && mpirun -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
 
 clean:
 #	$(rm) $(PROGNAME) core *~
-	$(rm) $(MODFILES)
+	$(rm) $(MODFILES) core $(PROGNAME)
 ##################################################################

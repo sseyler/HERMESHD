@@ -1,9 +1,13 @@
 !***** OUTPUT.F90 ************************************************************************
 module output
 
+use lib_vtk_io
+
 use parameters
 use helpers
 use basis_funcs
+
+integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
 
 contains
 

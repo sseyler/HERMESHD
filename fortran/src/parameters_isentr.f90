@@ -35,9 +35,8 @@ module parameters
 
     use input
 
-    use lib_vtk_io
-    use MKL_VSL_TYPE
-    use MKL_VSL
+    ! use MKL_VSL_TYPE
+    ! use MKL_VSL
 
     include 'mpif.h'
 
@@ -154,14 +153,6 @@ module parameters
     integer kx,ky,kz, kyz,kzx,kxy, kxyz, kxx,kyy,kzz, kyzz,kzxx,kxyy
     integer kyyz,kzzx,kxxy, kyyzz,kzzxx,kxxyy, kyzxx,kzxyy,kxyzz
     integer kxyyzz,kyzzxx,kzxxyy, kxxyyzz, kxxx,kyyy,kzzz
-
-    ! TODO: only in output & basis_funcs
-    integer, parameter :: nvtk  = 1    ! (was 2)
-    integer, parameter :: nvtk2 = nvtk*nvtk
-    integer, parameter :: nvtk3 = nvtk*nvtk*nvtk
-
-    ! TODO: only in set_vtk_vals_3D, output_vtk
-    real, dimension(nvtk3,nbastot) :: bfvtk, bfvtk_dx, bfvtk_dy, bfvtk_dz
 
     ! TODO: only in set_vtk_vals_3D, xvtk/yvtk/zvtk (parameters), output_vtk
     real dxvtk,dyvtk,dzvtk

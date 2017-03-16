@@ -122,18 +122,28 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k, ver
-        real rh_amb,vx_amb,vy_amb,vz_amb,pr_amb,te_amb,beta
+        real rh_amb,vx_amb,vy_amb,vz_amb,pr_amb,te_amb,Rgsqi,beta
         real xctr,yctr,zctr,xp,yp,r2,delta_vx,delta_vy,delta_T
         real dn,vx,vy,vz,te,pr
 
+        ! For a survey of 2D isentropic vortex problems:
+        !    Spiegel, et al. "A Survey of the Isentropic..." (2015)
+        ! Version 0 -- horizontal propagation, see
+        !    Hesthaven & Warburton, "Nodal Discontinuous Galerkin..." (2008)
+        ! Version 1 -- diagonal propagation, see
+        !    Shu, "Essentially Non-oscillatory and... Weighted" (1998)
+
         beta   = 5.0            ! vortex strength
         rh_amb = 1.0            ! ambient density
-        vx_amb = 1.0            ! ambient x-velocity
-        if (ver == 1) then      ! ambient y-velocity
-            vy_amb = 1.0
-        else
-            vy_amb = 0.0
-        end if
+        vx_amb = 1.0            ! ambient x-velocity  1.0/aindex**0.5
+        select case(ver)
+        case(0)
+            vy_amb = 0          ! ambient y-velocity  1.0/aindex**0.5
+            Rgsqi = 1.0         ! inverse grid length scale squared
+        case(1)
+            vy_amb = 1.0        ! ambient y-velocity  1.0/aindex**0.5
+            Rgsqi = 0.5         ! inverse grid length scale squared
+        end select
         vz_amb = 0.0            ! ambient z-velocity
         pr_amb = 1.0            ! ambient pressure (atmospheric pressure)
         te_amb = pr_amb/rh_amb  ! ambient temperature
@@ -149,15 +159,15 @@ contains
             yp = yc(j) - yctr   ! y-value from vortex center
             r2 = xp**2 + yp**2  ! radial distance from vortex center
 
-            delta_vx = -yp*beta/(2*pi) * exp( 0.5*(1 - r2) )
-            delta_vy =  xp*beta/(2*pi) * exp( 0.5*(1 - r2) )
-            delta_T  = -(aindm1*beta**2)/(8*aindex*pi**2) * exp(1 - r2)
+            delta_vx = -yp*beta/(2*pi) * exp( Rgsqi*(1 - r2) )
+            delta_vy =  xp*beta/(2*pi) * exp( Rgsqi*(1 - r2) )
+            delta_T  = -(aindm1*beta**2)/(8*aindex*pi**2) * exp( 2*Rgsqi*(1 - r2) )
 
             vx = vx_amb + delta_vx
             vy = vy_amb + delta_vy
             vz = vz_amb
             te = te_amb + delta_T
-            dn = rh_amb * te**(1./aindm1)
+            dn = rh_amb * te**(1./aindm1)  ! OR (1 - delta_T)**(1/(gamma-1))
             pr = dn**aindex  ! use te*dn OR dn**aindex (for ideal gas)
 
             Q_r(i,j,k,rh,1) = dn

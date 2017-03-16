@@ -85,7 +85,7 @@ end do
 !-------------------------------------------------
 ! 1. De-allocate system resources for RNG
 !-------------------------------------------------
-vsl_errcode = vsldeletestream( vsl_stream )
+call random_cleanup()
 
 !-------------------------------------------------
 ! 2. MPI cleanup
