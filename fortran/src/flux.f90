@@ -201,8 +201,9 @@ contains
         real, dimension(nface,nx+1,ny,nz,nQ), intent(out) :: flux_x
 
         integer i,j,k,ieq,iback,i4,i4p,ipnt
-        real cwavex(nfe),fhllc_x(nface,5),qvin(nQ) !,fhllc_y(nface,5),fhllc_z(nface,5),fs(nface,nQ)
+        real cwavex(nfe),fhllc_x(nface,5),qvin(nQ)
 
+        !$OMP PARALLEL DO PRIVATE(iback,Qface_x,qvin) FIRSTPRIVATE(fface_x,cfrx,cwavex,fhllc_x)
         do k=1,nz
             do j=1,ny
             do i=1,nx+1
@@ -269,6 +270,7 @@ contains
             end do
             end do
         end do
+        !$OMP END PARALLEL DO
 
     end subroutine calc_flux_x
 !-------------------------------------------------------------------------------
@@ -280,13 +282,13 @@ contains
         real, dimension(nface,nx,ny+1,nz,nQ), intent(out) :: flux_y
 
         integer i,j,k,ieq,jleft,i4,i4p,ipnt
-        real cwavey(nfe),fhllc_y(nface,5),qvin(nQ) !,fhllc_z(nface,5),fs(nface,nQ)
+        real cwavey(nfe),fhllc_y(nface,5),qvin(nQ)
 
+        !$OMP PARALLEL DO PRIVATE(jleft,Qface_y,qvin) FIRSTPRIVATE(fface_y,cfry,cwavey,fhllc_y)
         do k=1,nz
             do j=1,ny+1
             jleft = j-1
             do i=1,nx
-
                 if (j > 1) then
                     do ieq = 1,nQ
                         do ipnt=1,nface
@@ -348,6 +350,7 @@ contains
             end do
             end do
         end do
+        !$OMP END PARALLEL DO
 
     end subroutine calc_flux_y
 !-------------------------------------------------------------------------------
@@ -358,13 +361,13 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny,nz+1,nQ), intent(out) :: flux_z
         integer i,j,k,ieq,kdown,i4,i4p,ipnt
-        real cwavez(nfe),fhllc_z(nface,5),qvin(nQ) !fs(nface,nQ)
+        real cwavez(nfe),fhllc_z(nface,5),qvin(nQ)
 
+        !$OMP PARALLEL DO PRIVATE(kdown,Qface_z,qvin) FIRSTPRIVATE(fface_z,cfrz,cwavez,fhllc_z)
         do k=1,nz+1
             kdown = k-1
             do j=1,ny
             do i=1,nx
-
                 if (k > 1) then
                     do ieq = 1,nQ
                         do ipnt=1,nface
@@ -428,6 +431,7 @@ contains
             end do
             end do
         end do
+        !$OMP END PARALLEL DO
 
     end subroutine calc_flux_z
 !-------------------------------------------------------------------------------

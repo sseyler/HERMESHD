@@ -10,7 +10,7 @@ module input
     ! (iquad, nbasis):
     !   * (2, 4), (2, 8), (3, 10), (3, 27), (4, 20)
     integer, parameter :: iquad  = 2
-    integer, parameter :: nbasis = 4
+    integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
     integer, parameter :: nx = 10
@@ -71,7 +71,7 @@ module input
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "ise_10x10_i2_q2_b4_v1"
+    character (*), parameter :: outname = "nomp-ise_40x40_i2_q2_b8_v1"
     ! character (*), parameter :: outname = trim('ise_'//nx//'x'//ny//'_'//iname//'_q'//iquad//'_b'//nbasis//'_v'//(icid-1))
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
