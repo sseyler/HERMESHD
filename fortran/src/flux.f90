@@ -203,7 +203,7 @@ contains
         integer i,j,k,ieq,iback,i4,i4p,ipnt
         real cwavex(nfe),fhllc_x(nface,5),qvin(nQ)
 
-        !$OMP PARALLEL DO PRIVATE(iback,Qface_x,qvin) FIRSTPRIVATE(fface_x,cfrx,cwavex,fhllc_x)
+        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(iback,Qface_x,qvin) FIRSTPRIVATE(fface_x,cfrx,cwavex,fhllc_x)
         do k=1,nz
             do j=1,ny
             do i=1,nx+1
@@ -284,7 +284,7 @@ contains
         integer i,j,k,ieq,jleft,i4,i4p,ipnt
         real cwavey(nfe),fhllc_y(nface,5),qvin(nQ)
 
-        !$OMP PARALLEL DO PRIVATE(jleft,Qface_y,qvin) FIRSTPRIVATE(fface_y,cfry,cwavey,fhllc_y)
+        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(jleft,Qface_y,qvin) FIRSTPRIVATE(fface_y,cfry,cwavey,fhllc_y)
         do k=1,nz
             do j=1,ny+1
             jleft = j-1
@@ -363,7 +363,7 @@ contains
         integer i,j,k,ieq,kdown,i4,i4p,ipnt
         real cwavez(nfe),fhllc_z(nface,5),qvin(nQ)
 
-        !$OMP PARALLEL DO PRIVATE(kdown,Qface_z,qvin) FIRSTPRIVATE(fface_z,cfrz,cwavez,fhllc_z)
+        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(kdown,Qface_z,qvin) FIRSTPRIVATE(fface_z,cfrz,cwavez,fhllc_z)
         do k=1,nz+1
             kdown = k-1
             do j=1,ny
@@ -643,6 +643,7 @@ contains
 
         integral_r(:,:,:,:,:) = 0.
 
+        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(Qinner,integral_r) FIRSTPRIVATE(finner_x,finner_y,finner_z,int_r)
         do k = 1,nz
         do j = 1,ny
         do i = 1,nx
@@ -727,6 +728,7 @@ contains
         end do
         end do
         end do
+        !$OMP END PARALLEL DO
 
     end subroutine innerintegral
 !-------------------------------------------------------------------------------

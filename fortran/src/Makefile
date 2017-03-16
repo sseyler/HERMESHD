@@ -174,6 +174,9 @@ $(PROGNAME) : $(SRC) $(MODSRC)
 	$(FORT) $(FORTFLAGS) $(SRC) $(MODSRC) $(OBJS) -o $(PROGNAME)
 	cd $(TESTDIR) && mpirun -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
 
+# main.o : main.f90
+# 	$(FORT) -c $(FORTFLAGS)
+
 clean:
 #	$(rm) $(PROGNAME) core *~
 	$(rm) $(MODFILES) core $(PROGNAME)
