@@ -178,6 +178,7 @@ contains
         end do
         end do
         end do
+        print *,'iam=',iam,'xl=',xc(1),'xh=',xc(nx),'yl=',yc(1),'yh=',yc(ny)
 
     end subroutine isentropic_vortex
     !---------------------------------------------------------------------------

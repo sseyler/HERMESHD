@@ -13,9 +13,9 @@ real, dimension(nface,1:nx+1,ny,nz,1:nQ) :: flux_x
 real, dimension(nface,nx,1:ny+1,nz,1:nQ) :: flux_y
 real, dimension(nface,nx,ny,1:nz+1,1:nQ) :: flux_z
 
-! real, dimension(nface,nQ) :: cfrx,cfry,cfrz
-! real, dimension(nfe,nQ) :: Qface_x,Qface_y,Qface_z
-! real, dimension(nfe,nQ) :: fface_x,fface_y,fface_z
+real, dimension(nface,nQ) :: cfrx,cfry,cfrz         ! in CES's code, these are defined globally
+real, dimension(nfe,nQ) :: Qface_x,Qface_y,Qface_z  ! in CES's code, these are inside flux_cal
+real, dimension(nfe,nQ) :: fface_x,fface_y,fface_z  ! in CES's code, these are inside flux_cal
 
 contains
 
@@ -199,8 +199,8 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx+1,ny,nz,nQ), intent(out) :: flux_x
 
-        real, dimension(nface,nQ) :: cfrx
-        real, dimension(nfe,nQ) :: Qface_x,fface_x
+        ! real, dimension(nface,nQ) :: cfrx
+        ! real, dimension(nfe,nQ) :: Qface_x,fface_x
 
         integer i,j,k,ieq,iback,i4,i4p,ipnt
         real cwavex(nfe),fhllc_x(nface,5),qvin(nQ)
@@ -284,8 +284,8 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny+1,nz,nQ), intent(out) :: flux_y
 
-        real, dimension(nface,nQ) :: cfry
-        real, dimension(nfe,nQ) :: Qface_y,fface_y
+        ! real, dimension(nface,nQ) :: cfry
+        ! real, dimension(nfe,nQ) :: Qface_y,fface_y
 
         integer i,j,k,ieq,jleft,i4,i4p,ipnt
         real cwavey(nfe),fhllc_y(nface,5),qvin(nQ)
@@ -368,8 +368,8 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny,nz+1,nQ), intent(out) :: flux_z
 
-        real, dimension(nface,nQ) :: cfrz
-        real, dimension(nfe,nQ) :: Qface_z, fface_z
+        ! real, dimension(nface,nQ) :: cfrz
+        ! real, dimension(nfe,nQ) :: Qface_z, fface_z
 
         integer i,j,k,ieq,kdown,i4,i4p,ipnt
         real cwavez(nfe),fhllc_z(nface,5),qvin(nQ)
@@ -757,6 +757,7 @@ contains
         integral_r(:,:,:,:,:) = 0.
 
         do k = 1,nz
+        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(Qinner,integral_r,sum1,sum2,sum3,sum4,sum5,sum6,sum7,sum8,sum8) FIRSTPRIVATE(finner_x,finner_y,finner_z,int_r)
         do j = 1,ny
         do i = 1,nx
 
@@ -919,6 +920,7 @@ contains
 
         end do
         end do
+        !$OMP END PARALLEL DO
         end do
 
     end subroutine innerintegral2
@@ -952,7 +954,8 @@ contains
         !   --
         !---------------------------------------------------------
         do ieq = 1,nQ
-        do k = 1,nz
+        do k = 1,nz                        !FIRSTPRIVATE(flux_x,flux_y,flux_z)
+        !$OMP PARALLEL DO DEFAULT(SHARED)
         do j = 1,ny
         do i = 1,nx
            glflux_r(i,j,k,ieq,1) = 0.25*(dxi*sum(wgt2d(1:nface)*(flux_x(1:nface,i+1,j,k,ieq) - flux_x(1:nface,i,j,k,ieq))) &
@@ -969,6 +972,7 @@ contains
         end do
         end do
         end do
+        !$OMP END PARALLEL DO
         end do
 
         ! NOTE: This was the original code before newCES

@@ -13,13 +13,13 @@ module input
     integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 160
+    integer, parameter :: nx = 20
     integer, parameter :: ny = 20
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
-    integer :: mpi_nx = 1
-    integer :: mpi_ny = 8
+    integer :: mpi_nx = 4
+    integer :: mpi_ny = 4
 
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK
@@ -43,7 +43,7 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 0.5e1
+    real, parameter :: tf = 1.0e1
 
     ! Console output frequency
     integer, parameter :: ntout = 200
@@ -71,7 +71,7 @@ module input
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "omp-ise_160x160_i2_q2_b8_v0"
+    character (*), parameter :: outname = "ise_80x80_i2_q2_b8_v0"
     ! character (*), parameter :: outname = trim('ise_'//nx//'x'//ny//'_'//iname//'_q'//iquad//'_b'//nbasis//'_v'//(icid-1))
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
