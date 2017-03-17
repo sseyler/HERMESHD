@@ -205,8 +205,8 @@ contains
         integer i,j,k,ieq,iback,i4,i4p,ipnt
         real cwavex(nfe),fhllc_x(nface,5),qvin(nQ)
 
-        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(iback,Qface_x,qvin) FIRSTPRIVATE(fface_x,cfrx,cwavex,fhllc_x)
         do k=1,nz
+            !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(iback,Qface_x,qvin) FIRSTPRIVATE(fface_x,cfrx,cwavex,fhllc_x)
             do j=1,ny
             do i=1,nx+1
                 iback = i-1
@@ -240,17 +240,18 @@ contains
                 call flux_calc_pnts_r(Qface_x,fface_x,1,nfe)
 
                 ! if (.not. ihllc) then
-                do i4=1,nfe
-                    do ieq=1,nQ
-                        qvin(ieq) = Qface_x(i4,ieq)
+                if (ivis == 2) then
+                    do i4=1,nfe
+                        do ieq=1,nQ
+                            qvin(ieq) = Qface_x(i4,ieq)
+                        end do
+                        cwavex(i4) = cfcal(qvin,1)
                     end do
-                    cwavex(i4) = cfcal(qvin,1)
-                end do
 
-                do i4=1,nface
-                    cfrx(i4,1:nQ) = max(cwavex(i4),cwavex(i4+nface))
-                end do
-                ! end if
+                    do i4=1,nface
+                        cfrx(i4,1:nQ) = max(cwavex(i4),cwavex(i4+nface))
+                    end do
+                end if
 
                 do ieq = 1,nQ
                     do i4=1,nface
@@ -271,8 +272,8 @@ contains
 
             end do
             end do
+            !$OMP END PARALLEL DO
         end do
-        !$OMP END PARALLEL DO
 
     end subroutine calc_flux_x
 !-------------------------------------------------------------------------------
@@ -289,8 +290,8 @@ contains
         integer i,j,k,ieq,jleft,i4,i4p,ipnt
         real cwavey(nfe),fhllc_y(nface,5),qvin(nQ)
 
-        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(jleft,Qface_y,qvin) FIRSTPRIVATE(fface_y,cfry,cwavey,fhllc_y)
         do k=1,nz
+            !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(jleft,Qface_y,qvin) FIRSTPRIVATE(fface_y,cfry,cwavey,fhllc_y)
             do j=1,ny+1
             jleft = j-1
             do i=1,nx
@@ -323,17 +324,18 @@ contains
                 call flux_calc_pnts_r(Qface_y,fface_y,2,nfe)
 
                 ! if (.not. ihllc) then
-                do i4=1,nfe
-                    do ieq=1,nQ
-                        qvin(ieq) = Qface_y(i4,ieq)
+                if (ivis == 2) then
+                    do i4=1,nfe
+                        do ieq=1,nQ
+                            qvin(ieq) = Qface_y(i4,ieq)
+                        end do
+                        cwavey(i4) = cfcal(qvin,2)
                     end do
-                    cwavey(i4) = cfcal(qvin,2)
-                end do
 
-                do i4=1,nface
-                    cfry(i4,1:nQ) = max(cwavey(i4),cwavey(i4+nface))
-                end do
-                ! end if
+                    do i4=1,nface
+                        cfry(i4,1:nQ) = max(cwavey(i4),cwavey(i4+nface))
+                    end do
+                end if
 
                 do ieq = 1,nQ
                     do i4=1,nface
@@ -354,8 +356,8 @@ contains
 
             end do
             end do
+            !$OMP END PARALLEL DO
         end do
-        !$OMP END PARALLEL DO
 
     end subroutine calc_flux_y
 !-------------------------------------------------------------------------------
@@ -372,9 +374,9 @@ contains
         integer i,j,k,ieq,kdown,i4,i4p,ipnt
         real cwavez(nfe),fhllc_z(nface,5),qvin(nQ)
 
-        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(kdown,Qface_z,qvin) FIRSTPRIVATE(fface_z,cfrz,cwavez,fhllc_z)
         do k=1,nz+1
             kdown = k-1
+            !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(Qface_z,qvin) FIRSTPRIVATE(fface_z,cfrz,cwavez,fhllc_z)
             do j=1,ny
             do i=1,nx
                 if (k > 1) then
@@ -408,17 +410,18 @@ contains
                 call flux_calc_pnts_r(Qface_z,fface_z,3,nfe)
 
                 ! if (.not. ihllc) then
-                do i4=1,nfe
-                    do ieq=1,nQ
-                        qvin(ieq) = Qface_z(i4,ieq)
+                if (ivis == 2) then
+                    do i4=1,nfe
+                        do ieq=1,nQ
+                            qvin(ieq) = Qface_z(i4,ieq)
+                        end do
+                        cwavez(i4) = cfcal(qvin,3)
                     end do
-                    cwavez(i4) = cfcal(qvin,3)
-                end do
 
-                do i4=1,nface
-                    cfrz(i4,1:nQ) = max(cwavez(i4),cwavez(i4+nface))
-                end do
-                ! end if
+                    do i4=1,nface
+                        cfrz(i4,1:nQ) = max(cwavez(i4),cwavez(i4+nface))
+                    end do
+                end if
 
                 do ieq = 1,nQ
                     do i4=1,nface
@@ -439,8 +442,8 @@ contains
 
             end do
             end do
+            !$OMP END PARALLEL DO
         end do
-        !$OMP END PARALLEL DO
 
     end subroutine calc_flux_z
 !-------------------------------------------------------------------------------
@@ -652,8 +655,8 @@ contains
 
         integral_r(:,:,:,:,:) = 0.
 
-        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(Qinner,integral_r) FIRSTPRIVATE(finner_x,finner_y,finner_z,int_r)
         do k = 1,nz
+        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(Qinner,integral_r) FIRSTPRIVATE(finner_x,finner_y,finner_z,int_r)
         do j = 1,ny
         do i = 1,nx
 
@@ -736,8 +739,8 @@ contains
 
         end do
         end do
-        end do
         !$OMP END PARALLEL DO
+        end do
 
     end subroutine innerintegral
 !-------------------------------------------------------------------------------

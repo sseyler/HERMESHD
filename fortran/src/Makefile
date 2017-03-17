@@ -171,8 +171,8 @@ all: $(PROGNAME)
 
 $(PROGNAME) : $(SRC) $(MODSRC)
 	cp $(SRC) $(MODSRC) $(OTHERFILES) $(TESTDIR) && cd $(TESTDIR) && \
-	$(FORT) $(FORTFLAGS) $(OBJS) $(MODSRC) $(SRC) -o $(PROGNAME)
-	cd $(TESTDIR) && mpirun -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
+	$(FORT) -fopenmp $(FORTFLAGS) $(OBJS) $(MODSRC) $(SRC) -o $(PROGNAME)
+	cd $(TESTDIR) && mpirun -n 8 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
 
 # main.o : main.f90
 # 	$(FORT) -c $(FORTFLAGS)

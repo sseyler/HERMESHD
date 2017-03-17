@@ -118,6 +118,13 @@ contains
     !===========================================================================
     ! 2D isentropic vortex
     !------------------------------------------------------------
+    ! For a survey of 2D isentropic vortex problems:
+    !    Spiegel, et al. "A Survey of the Isentropic..." (2015)
+    ! Version 0 -- horizontal propagation, see
+    !    Hesthaven & Warburton, "Nodal Discontinuous Galerkin..." (2008)
+    ! Version 1 -- diagonal propagation, see
+    !    Shu, "Essentially Non-oscillatory and... Weighted" (1998)
+    !---------------------------------------------------------------------------
     subroutine isentropic_vortex(Q_r, ver)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
@@ -125,13 +132,6 @@ contains
         real rh_amb,vx_amb,vy_amb,vz_amb,pr_amb,te_amb,Rgsqi,beta
         real xctr,yctr,zctr,xp,yp,r2,delta_vx,delta_vy,delta_T
         real dn,vx,vy,vz,te,pr
-
-        ! For a survey of 2D isentropic vortex problems:
-        !    Spiegel, et al. "A Survey of the Isentropic..." (2015)
-        ! Version 0 -- horizontal propagation, see
-        !    Hesthaven & Warburton, "Nodal Discontinuous Galerkin..." (2008)
-        ! Version 1 -- diagonal propagation, see
-        !    Shu, "Essentially Non-oscillatory and... Weighted" (1998)
 
         beta   = 5.0            ! vortex strength
         rh_amb = 1.0            ! ambient density
