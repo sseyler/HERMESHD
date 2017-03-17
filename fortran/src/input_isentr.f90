@@ -32,7 +32,7 @@ module input
 
     ! Initial conditions
     ! character(*), parameter :: icname = ''
-    integer, parameter :: icid = 2
+    integer, parameter :: icid = 1
 
     ! Boundary conditions
     character(*), parameter :: xlobc = 'periodic'
@@ -71,7 +71,7 @@ module input
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "ise_80x80_i2_q2_b8_v1"
+    character (*), parameter :: outname = "ise_80x80_i2_q2_b8_v0"
     ! character (*), parameter :: outname = trim('ise_'//nx//'x'//ny//'_'//iname//'_q'//iquad//'_b'//nbasis//'_v'//(icid-1))
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 

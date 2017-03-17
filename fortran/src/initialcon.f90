@@ -137,10 +137,10 @@ contains
         rh_amb = 1.0            ! ambient density
         vx_amb = 1.0            ! ambient x-velocity  1.0/aindex**0.5
         select case(ver)
-        case(0)
-            vy_amb = 0          ! ambient y-velocity  1.0/aindex**0.5
+          case(0)
+            vy_amb = 0.0        ! ambient y-velocity  1.0/aindex**0.5
             Rgsqi = 1.0         ! inverse grid length scale squared
-        case(1)
+          case(1)
             vy_amb = 1.0        ! ambient y-velocity  1.0/aindex**0.5
             Rgsqi = 0.5         ! inverse grid length scale squared
         end select
@@ -161,13 +161,13 @@ contains
 
             delta_vx = -yp*beta/(2*pi) * exp( Rgsqi*(1 - r2) )
             delta_vy =  xp*beta/(2*pi) * exp( Rgsqi*(1 - r2) )
-            delta_T  = -(aindm1*beta**2)/(8*aindex*pi**2) * exp( 2*Rgsqi*(1 - r2) )
+            delta_T  = -(aindm1*beta**2)/(16*Rgsqi*aindex*pi**2) * exp( 2*Rgsqi*(1 - r2) )
 
             vx = vx_amb + delta_vx
             vy = vy_amb + delta_vy
             vz = vz_amb
             te = te_amb + delta_T
-            dn = rh_amb * te**(1./aindm1)  ! OR (1 - delta_T)**(1/(gamma-1))
+            dn = te**(1./aindm1)  ! OR (1 - delta_T)**(1/(gamma-1)), rh_amb * te**(1./aindm1)
             pr = dn**aindex  ! use te*dn OR dn**aindex (for ideal gas)
 
             Q_r(i,j,k,rh,1) = dn

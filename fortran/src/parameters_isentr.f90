@@ -35,9 +35,6 @@ module parameters
 
     use input
 
-    ! use MKL_VSL_TYPE
-    ! use MKL_VSL
-
     include 'mpif.h'
 
     integer, parameter :: rh = 1                      ! density
@@ -75,7 +72,7 @@ module parameters
     real, parameter :: eV_per_K = 8.61728e-5
 
     ! Useful derived parameters
-    real, parameter :: TK     = 10.0        ! set temperature floor in Kelvin
+    real, parameter :: TK     = 1.0         ! set temperature floor in Kelvin
     real, parameter :: aindm1 = aindex - 1. ! gamma - 1
     real, parameter :: cp = aindex/aindm1   ! specific heat at constant pressure
 

@@ -13,11 +13,6 @@ real, dimension(nface,1:nx+1,ny,nz,1:nQ) :: flux_x
 real, dimension(nface,nx,1:ny+1,nz,1:nQ) :: flux_y
 real, dimension(nface,nx,ny,1:nz+1,1:nQ) :: flux_z
 
-! Only used by flux_calc (flux_cal) -- may be better to leave local to subrout
-real, dimension(nface,nQ) :: cfrx,cfry,cfrz
-real, dimension(nfe,nQ) :: Qface_x,Qface_y,Qface_z
-real, dimension(nfe,nQ) :: fface_x,fface_y,fface_z
-
 contains
 
 !-------------------------------------------------------------------------------
@@ -200,6 +195,9 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx+1,ny,nz,nQ), intent(out) :: flux_x
 
+        real, dimension(nface,nQ) :: cfrx
+        real, dimension(nfe,nQ) :: Qface_x,fface_x
+
         integer i,j,k,ieq,iback,i4,i4p,ipnt
         real cwavex(nfe),fhllc_x(nface,5),qvin(nQ)
 
@@ -281,6 +279,9 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny+1,nz,nQ), intent(out) :: flux_y
 
+        real, dimension(nface,nQ) :: cfry
+        real, dimension(nfe,nQ) :: Qface_y,fface_y
+
         integer i,j,k,ieq,jleft,i4,i4p,ipnt
         real cwavey(nfe),fhllc_y(nface,5),qvin(nQ)
 
@@ -360,6 +361,10 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny,nz+1,nQ), intent(out) :: flux_z
+
+        real, dimension(nface,nQ) :: cfrz
+        real, dimension(nfe,nQ) :: Qface_z, fface_z
+
         integer i,j,k,ieq,kdown,i4,i4p,ipnt
         real cwavez(nfe),fhllc_z(nface,5),qvin(nQ)
 
