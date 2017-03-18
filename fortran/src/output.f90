@@ -180,7 +180,7 @@ contains
                         vy = qvtk(i,j,k,my)*dni
                         vz = qvtk(i,j,k,mz)*dni
                         P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
-                        var_xml_val_x(l)=P*te0*dni/eV_per_K  ! Kelvin
+                        var_xml_val_x(l)=P*te0*dni/eV_per_K  ! Kelvin  (CES code just had P*te0)
                     enddo
                 enddo
             enddo

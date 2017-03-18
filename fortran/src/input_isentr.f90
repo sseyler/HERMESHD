@@ -13,13 +13,13 @@ module input
     integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 20
-    integer, parameter :: ny = 20
+    integer, parameter :: nx = 21
+    integer, parameter :: ny = 21
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
-    integer :: mpi_nx = 4
-    integer :: mpi_ny = 4
+    integer :: mpi_nx = 3
+    integer :: mpi_ny = 3
 
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK
@@ -71,7 +71,7 @@ module input
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "ise_80x80_i2_q2_b8_v0"
+    character (*), parameter :: outname = "ise_63x63_i2_q2_b8_v0"
     ! character (*), parameter :: outname = trim('ise_'//nx//'x'//ny//'_'//iname//'_q'//iquad//'_b'//nbasis//'_v'//(icid-1))
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
