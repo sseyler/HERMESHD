@@ -295,6 +295,7 @@ contains
             do j=1,ny+1
             jleft = j-1
             do i=1,nx
+
                 if (j > 1) then
                     do ieq = 1,nQ
                         do ipnt=1,nface
@@ -379,6 +380,7 @@ contains
             !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(Qface_z,qvin) FIRSTPRIVATE(fface_z,cfrz,cwavez,fhllc_z)
             do j=1,ny
             do i=1,nx
+
                 if (k > 1) then
                     do ieq = 1,nQ
                         do ipnt=1,nface
