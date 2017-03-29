@@ -38,7 +38,9 @@ real, dimension(nface,nbastot) :: bfvals_zp, bfvals_zm
 real, dimension(nface,nbastot) :: bfvals_yp, bfvals_ym
 real, dimension(nface,nbastot) :: bfvals_xp, bfvals_xm
 
-integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
+! TODO: original types are I4P from LIB_VTK_IO.f90
+! integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
+integer, parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
 real :: xgrid(20) ! used in set_vtk_vals_3D
 
 ! These are used in test_basis_3D

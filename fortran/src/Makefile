@@ -130,13 +130,13 @@ ifeq ($(NAME),sodpy)
                basis_funcs.f90 helpers.f90 boundary.f90 \
                initialcon.f90 initialize.f90 \
                prepare_step.f90 sources.f90 flux.f90 \
-               integrator.f90 output.f90
+               integrator.f90 #output.f90
     MODFILES = input.mod parameters.mod \
                basis_funcs.mod helpers.mod \
                boundary_defs.mod boundary_custom.mod boundary.mod \
                initialcon.mod initialize.mod \
                prepare_step.mod sources.mod flux.mod \
-               integrator.mod output.mod
+               integrator.mod #output.mod
 endif
 
 
@@ -174,11 +174,12 @@ shlib:
 
 # NOTE: The compiled *.mod file for LIB_VTK_IO.f90 is lowercase and the object file is uppercase!!!
 # NOTE: LIB_VTK_IO.f90 needs to be compiled BEFORE output.f90!!!
-f2py:
-	$(FORT) -c -fPIC LIB_VTK_IO.f90 $(MODSRC) #lib_vtk_io.o
-	#env OMPI_FC=gfortran $(FORT) -c -fPIC $(MODSRC) lib_vtk_io.mod  # LIB_VTK_IO.o lib_vtk_io.o mkl_vsl.o LIB_VTK_IO.f90
 
-$(PROGNAME) : $(SRC)
+#env OMPI_FC=gfortran $(FORT) -c -fPIC $(MODSRC) lib_vtk_io.mod  # LIB_VTK_IO.o lib_vtk_io.o mkl_vsl.o LIB_VTK_IO.f90
+f2py:
+	$(FORT) -c -fPIC $(MODSRC) $(SRC)
+
+$(PROGNAME) : $(SRC) $(MODSRC)
 	cp $(SRC) $(MODSRC) $(OTHERFILES) $(TESTDIR) && cd $(TESTDIR) && \
 	$(FORT) $(FORTFLAGS) $(SRC) $(MODSRC) $(OBJS) -o $(PROGNAME)
 #	strip $(PROGNAME)
@@ -187,5 +188,5 @@ $(PROGNAME) : $(SRC)
 
 clean:
 #	$(rm) $(PROGNAME) core *~
-	$(rm) $(MODFILES)
+	$(rm) $(MODFILES) *.o .f2py_f2cmap f90wrap_*.f90 *.py* *.so
 ##################################################################

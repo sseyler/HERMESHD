@@ -35,7 +35,7 @@ module parameters
 
     use input
 
-    use lib_vtk_io
+    ! use lib_vtk_io
     ! use MKL_VSL_TYPE
     ! use MKL_VSL
 
