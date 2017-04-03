@@ -31,7 +31,7 @@
 !   nbasis = 20: nbasis10 + {xyz, xP2(y), yP2(x), xP2(z),
 !                                 zP2(x), yP2(z), zP2(y), P3(x), P3(y), P3(z)}
 !*******************************************************************************
-module parameters
+module params
 
     use input
 
@@ -282,4 +282,4 @@ contains
         thetavtk = atan2(yvtk(j),xvtk(i))
     end function thetavtk
 
-end module parameters
+end module params

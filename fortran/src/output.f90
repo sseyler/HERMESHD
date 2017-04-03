@@ -3,7 +3,7 @@ module output
 
 use LIB_VTK_IO
 
-use parameters
+use params
 use helpers
 use basis_funcs
 

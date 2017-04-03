@@ -1,7 +1,7 @@
 !***** INITIALCON.F90 ********************************************************************
 module initialcon
 
-use parameters
+use params
 use helpers
 use basis_funcs
 

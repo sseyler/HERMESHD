@@ -4,9 +4,9 @@ module random
 use MKL_VSL_TYPE
 use MKL_VSL
 
-use parameters
-use helpers
-use boundary
+use params
+! use helpers
+! use boundary
 
 !===========================================================================
 ! MKL VSL parameters

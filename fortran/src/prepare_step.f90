@@ -1,7 +1,7 @@
 !***** PREPARE_STEP.F90 ******************************************************************
 module prepare_step
 
-use parameters
+use params
 use helpers
 use basis_funcs
 

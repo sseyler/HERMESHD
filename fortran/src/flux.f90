@@ -1,7 +1,7 @@
 !***** FLUX.F90 **************************************************************************
 module flux
 
-use parameters
+use params
 use helpers
 use basis_funcs
 

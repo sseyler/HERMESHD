@@ -1,7 +1,7 @@
 !****** BASIS_FUNCS.F90 ******************************************************************
 module basis_funcs
 
-use parameters
+use params
 
 ! TODO: only in init, innerintegral, source_calc
 real, dimension(nbastot) :: cbasis

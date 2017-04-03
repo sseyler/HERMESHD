@@ -2,7 +2,7 @@
 module integrator
 
     use input!, only : nx,ny,nz
-    use parameters!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
+    use params!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
     use helpers
 
     use prepare_step

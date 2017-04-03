@@ -1,0 +1,275 @@
+#!/usr/bin/make -f
+
+rm = /bin/rm -f
+F90 = ifort
+MPIF90 = mpif90
+
+SOURCEDIR = .
+BUILDDIR = .
+RUNDIR = /scratch/sseyler/WORK/PERSEUSHD_testing
+
+PROGRAM = perseus
+BUILDEXEC = $(BUILDDIR)/$(PROGRAM)
+EXEC = $(RUNDIR)/$(PROGRAM)
+
+# NOTE: Seems to work when doing "include 'mpif.h'" in the code
+# MPIVERS = openmpi/1.6.3/intel13.0
+MPIVERS = openmpi/2.1.0/intel17.0
+INC_DIR = /nfs/packages/opt/Linux_x86_64/$(MPIVERS)/include
+
+INCLUDES = -I. -I$(INC_DIR)
+
+DEFINES = $(INCLUDES) $(DEFS)
+
+################################################################################
+# Intel compiler and MKL files
+MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/mkl
+MKLPATH = $(MKLROOT)/lib
+MKLINCLUDE = $(MKLROOT)/include
+DYLD_LIBRARY_PATH = $(MKLPATH)
+
+MKL_TARGET_ARCH = intel64_lin
+MISCFLAGS = -diag-disable 13003 # disable the warning for message verification
+
+F90FLAGS = -O2 -xHost -mkl -I$(MKLINCLUDE) -L$(MKLPATH)/$(MKL_TARGET_ARCH) -lmkl_intel_lp64 #$(MISCFLAGS)
+################################################################################
+
+
+#********************************************
+# Sod Shock Tube 1D for development code
+#********************************************
+ifeq ($(NAME),sodpy)
+    SRC = hermeshd.f90
+    MODSRC =  LIB_VTK_IO.f90 input_sod.f90 parameters_sod.f90 \
+               basis_funcs.f90 helpers.f90 boundary.f90 \
+               random.f90 initialcon.f90 initialize.f90 \
+               prepare_step.f90 sources.f90 flux.f90 \
+               integrator.f90 output.f90
+    MODFILES = LIB_VTK_IO.mod input.mod parameters.mod \
+               basis_funcs.mod helpers.mod \
+               random.mod boundary_defs.mod boundary_custom.mod boundary.mod \
+               initialcon.mod initialize.mod \
+               prepare_step.mod sources.mod flux.mod \
+               integrator.mod output.mod
+endif
+
+#********************************************
+# Sod Shock Tube 1D for development code
+#********************************************
+ifeq ($(NAME),sodpymkl)
+    SRC = hermeshd.f90
+    MODSRC =  LIB_VTK_IO.f90 mkl_vsl.f90 input_sod.f90 parameters_sod.f90 \
+               basis_funcs.f90 helpers.f90 boundary.f90 \
+               random.f90 initialcon.f90 initialize.f90 \
+               prepare_step.f90 sources.f90 flux.f90 \
+               integrator.f90 output.f90
+    MODFILES = LIB_VTK_IO.mod mkl_vsl_type.mod mkl_vsl.mod input.mod parameters.mod \
+               basis_funcs.mod helpers.mod \
+               random.mod boundary_defs.mod boundary_custom.mod boundary.mod \
+               initialcon.mod initialize.mod \
+               prepare_step.mod sources.mod flux.mod \
+               integrator.mod output.mod
+endif
+
+#********************************************
+# Sod Shock Tube 1D for development code
+#********************************************
+ifeq ($(NAME),sodmkl)
+    SRC = main.f90
+    MODSRC =  LIB_VTK_IO.f90 mkl_vsl.f90 input.f90 params.f90 \
+               basis_funcs.f90 helpers.f90 boundary.f90 \
+               random.f90 initialcon.f90 initialize.f90 \
+               prepare_step.f90 sources.f90 flux.f90 \
+               integrator.f90 output.f90
+    MODFILES = LIB_VTK_IO.mod mkl_vsl_type.mod mkl_vsl.mod input.mod params.mod \
+               basis_funcs.mod helpers.mod \
+               random.mod boundary_defs.mod boundary_custom.mod boundary.mod \
+               initialcon.mod initialize.mod \
+               prepare_step.mod sources.mod flux.mod \
+               integrator.mod output.mod
+    OBJECTS =  main.o LIB_VTK_IO.o mkl_vsl.o input.o params.o basis_funcs.o helpers.o \
+               random.o boundary.o initialcon.o initialize.o \
+               prepare_step.o sources.o flux.o integrator.o output.o
+
+	SOURCES =   main.f90 LIB_VTK_IO.f90 mkl_vsl.f90 input.f90 params.f90 \
+				basis_funcs.f90 helpers.f90 boundary.f90 \
+				random.f90 initialcon.f90 initialize.f90 \
+				prepare_step.f90 sources.f90 flux.f90 \
+				integrator.f90 output.f90
+
+
+
+endif
+################################################################################
+
+
+OBJECTS = $(SOURCES:f90=o)
+# OBJECTS = $(patsubst $(SOURCEDIR)/%.f90, $(BUILDDIR)/%.o, $(SOURCES))
+
+
+################################################################################
+# Recipes
+#-----------------------------------------------------------------
+all: $(BUILDDIR) $(BUILDEXEC)
+
+run: $(BUILDEXEC)
+	cd $(RUNDIR) && mpirun -n 16 $(EXEC) 2>&1 | tee $(PROGRAM).err
+
+$(BUILDDIR):
+	mkdir -p $@
+
+$(BUILDEXEC): $(OBJECTS)
+	$(MPIF90) -o $(BUILDEXEC) $(OBJECTS)
+
+
+lib_vtk_io.mod: LIB_VTK_IO.o LIB_VTK_IO.f90
+	$(MPIF90) -c LIB_VTK_IO.f90
+
+LIB_VTK_IO.o: LIB_VTK_IO.f90
+	$(MPIF90) -c LIB_VTK_IO.f90
+
+
+mkl_vsl.mod: mkl_vsl.o mkl_vsl.f90
+	$(MPIF90) -c mkl_vsl.f90
+
+mkl_vsl_type.mod: mkl_vsl.o mkl_vsl.f90
+	$(MPIF90) -c mkl_vsl.f90
+
+mkl_vsl.o: mkl_vsl.f90
+	$(MPIF90) -c mkl_vsl.f90
+
+helpers.mod: helpers.o helpers.f90
+	$(MPIF90) -c helpers.f90
+
+helpers.o: helpers.f90
+	$(MPIF90) -c helpers.f90
+
+
+input.mod: input.o input.f90
+	$(MPIF90) -c input.f90
+
+input.o: input.f90
+	$(MPIF90) -c input.f90
+
+params.mod: params.o params.f90
+	$(MPIF90) -c params.f90
+
+params.o: params.f90 input.mod
+	$(MPIF90) -c params.f90
+
+
+basis_funcs.mod: basis_funcs.o basis_funcs.f90
+	$(MPIF90) -c basis_funcs.f90
+
+basis_funcs.o: basis_funcs.f90 params.mod
+	$(MPIF90) -c basis_funcs.f90
+
+
+random.mod: random.o random.f90
+	$(MPIF90) -c random.f90
+
+random.o: random.f90 mkl_vsl_type.mod mkl_vsl.mod params.mod
+	$(MPIF90) -c random.f90
+
+
+boundary.mod: boundary.o boundary.f90
+	$(MPIF90) -c boundary.f90
+
+# boundary_custom.mod: boundary.o boundary.f90
+# 	$(MPIF90) -c boundary.f90
+#
+# boundary_defs.mod: boundary.o boundary.f90
+# 	$(MPIF90) -c boundary.f90
+
+boundary.o: boundary.f90 params.mod helpers.mod
+	$(MPIF90) -c boundary.f90
+
+
+initialcon.mod: initialcon.o initialcon.f90
+	$(MPIF90) -c initialcon.f90
+
+initialcon.o: initialcon.f90 params.mod helpers.mod basis_funcs.mod 			\
+				boundary.mod boundary_custom.mod
+	$(MPIF90) -c initialcon.f90
+
+
+initialize.mod: initialize.o initialize.f90
+	$(MPIF90) -c initialize.f90
+
+initialize.o: initialize.f90 input.mod params.mod helpers.mod basis_funcs.mod	\
+				initialcon.mod
+	$(MPIF90) -c initialize.f90
+
+
+prepare_step.mod: prepare_step.o prepare_step.f90
+	$(MPIF90) -c prepare_step.f90
+
+prepare_step.o: prepare_step.f90 params.mod helpers.mod basis_funcs.mod 		\
+				boundary.mod
+	$(MPIF90) -c prepare_step.f90
+
+
+sources.mod: sources.o sources.f90
+	$(MPIF90) -c sources.f90
+
+sources.o: sources.f90 params.mod helpers.mod basis_funcs.mod					\
+	$(MPIF90) -c sources.f90
+
+flux.mod: flux.o flux.f90
+	$(MPIF90) -c flux.f90
+
+flux.o: flux.f90 params.mod helpers.mod basis_funcs.mod	boundary.mod			\
+	$(MPIF90) -c flux.f90
+
+
+integrator.mod: integrator.o integrator.f90
+	$(MPIF90) -c integrator.f90
+
+integrator.o: integrator.f90 input.mod params.mod helpers.mod prepare_step.mod	\
+				sources.mod flux.mod
+	$(MPIF90) -c integrator.f90
+
+
+output.mod: output.o output.f90
+	$(MPIF90) -c output.f90
+
+output.o: output.f90 lib_vtk_io.mod params.mod helpers.mod basis_funcs.mod		\
+	$(MPIF90) -c output.f90
+
+
+main.o: $(MODFILES) main.f90
+	$(MPIF90) -c output.f90
+
+
+
+clean:
+	$(rm) -r $(BUILDDIR)
+
+#-----------------------------------------------------------------
+# .c.o:
+# 	$(rm) $@
+# 	$(MPIF90) $(F90FLAGS) -c $*.f90
+#
+# all: $(PROGNAME)
+#
+# shlib:
+# 	$(MPIF90) -shared -fPIC $(F90FLAGS) $(SRC) LIB_VTK_IO.f90 $(MODSRC) mkl_vsl.o -o $(PROGNAME).so
+#
+# #env OMPI_FC=gfortran $(MPIF90) -c -fPIC $(MODSRC) lib_vtk_io.mod  # LIB_VTK_IO.o lib_vtk_io.o mkl_vsl.o LIB_VTK_IO.f90
+# f2py:
+# 	$(MPIF90) -fc=$(F90) -c -fPIC $(MODSRC) $(SRC)
+#
+# # $(PROGNAME) : $(SRC) $(MODSRC)
+# # 	cp $(SRC) $(MODSRC) $(OBJS) $(RUNDIR) && cd $(RUNDIR) && \
+# # 	$(MPIF90) $(F90FLAGS) $(SRC) $(MODSRC) $(OBJS) -o $(PROGNAME)
+# # 	cd $(RUNDIR) && mpirun -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
+#
+# $(PROGNAME) : $(SRC) $(MODSRC)
+# 	cp $(SRC) $(MODSRC) $(RUNDIR) && cd $(RUNDIR) && \
+# 	$(MPIF90) $(F90FLAGS) $(SRC) $(MODSRC) -o $(PROGNAME)
+# 	cd $(RUNDIR) && mpirun -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
+#
+# clean:
+# #	$(rm) $(PROGNAME) core *~
+# 	$(rm) $(MODFILES) *.o .f2py_f2cmap f90wrap_*.f90 hermeshd.py* *.so
+################################################################################
