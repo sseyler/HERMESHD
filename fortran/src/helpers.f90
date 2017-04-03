@@ -10,11 +10,11 @@ contains
     !===========================================================================
     ! Get current time from system_clock
     !------------------------------------------------------------
-    ! real function get_clock_time()
-    !     integer :: ticks, count_rate, count_max
-    !     call system_clock( ticks, count_rate, count_max )
-    !     get_clock_time = 1.0 * ticks / count_rate
-    ! end function get_clock_time
+    real function get_clock_time()
+        integer :: ticks, count_rate, count_max
+        call system_clock( ticks, count_rate, count_max )
+        get_clock_time = 1.0 * ticks / count_rate
+    end function get_clock_time
     !---------------------------------------------------------------------------
 
 

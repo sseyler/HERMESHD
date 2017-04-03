@@ -7,19 +7,21 @@
 
 rm = /bin/rm -f
 FORT = ifort
-FORT = mpif90
+MPIFORT = mpif90
 
 DEFS =
 PROGNAME = perseus_$(NAME)
 TESTDIR = /scratch/sseyler/WORK/PERSEUSHD_testing
 
 # NOTE: Seems to work when doing "include 'mpif.h'" in the code
-INC_DIR = /nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include
+MPIVERS = openmpi/1.6.3/intel13.0
+MPIVERS = openmpi/2.1.0/intel17.0
+INC_DIR = /nfs/packages/opt/Linux_x86_64/$(MPIVERS)/include
+
 INCLUDES = -I. -I$(INC_DIR) #-I$(MKLINCLUDE)
 OBJS = lib_vtk_io.o mkl_vsl.o #-L$(MKLPATH)
 
 DEFINES = $(INCLUDES) $(DEFS)
-
 
 ##################################################################
 # Intel compiler and MKL files
@@ -31,8 +33,13 @@ DEFINES = $(INCLUDES) $(DEFS)
 # NOTE: libmkl_intel_lp64.so lives here: $(MKLROOT)/lib/intel64_lin
 # NOTE: "mpif.h" is in /nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include
 
-MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/fortran/mkl
-MKL_TARGET_ARCH = intel64_lin
+MKLROOT=/nfs/packages/opt/Linux_x86_64/intel/13.0/mkl
+MKLPATH=$(MKLROOT)/lib
+MKLINCLUDE=$(MKLROOT)/include
+DYLD_LIBRARY_PATH=$(MKLPATH)
+
+# MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/fortran/mkl
+# MKL_TARGET_ARCH = intel64_lin
 MISCFLAGS = -diag-disable 13003 # disable the warning for message verification
 
 FORTFLAGS = -O2 -xHost -mkl -L$(MKLROOT)/lib/$(MKL_TARGET_ARCH) $(MISCFLAGS)
@@ -125,18 +132,36 @@ endif
 # Sod Shock Tube 1D for development code
 #********************************************
 ifeq ($(NAME),sodpy)
-    SRC = main_py.f90
-    MODSRC =  input_sod.f90 parameters_sod.f90 \
+    SRC = hermeshd.f90
+    MODSRC =  LIB_VTK_IO.f90 input_sod.f90 parameters_sod.f90 \
                basis_funcs.f90 helpers.f90 boundary.f90 \
-               initialcon.f90 initialize.f90 \
+               random.f90 initialcon.f90 initialize.f90 \
                prepare_step.f90 sources.f90 flux.f90 \
-               integrator.f90 #output.f90
-    MODFILES = input.mod parameters.mod \
+               integrator.f90 output.f90
+    MODFILES = LIB_VTK_IO.mod input.mod parameters.mod \
                basis_funcs.mod helpers.mod \
-               boundary_defs.mod boundary_custom.mod boundary.mod \
+               random.mod boundary_defs.mod boundary_custom.mod boundary.mod \
                initialcon.mod initialize.mod \
                prepare_step.mod sources.mod flux.mod \
-               integrator.mod #output.mod
+               integrator.mod output.mod
+endif
+
+#********************************************
+# Sod Shock Tube 1D for development code
+#********************************************
+ifeq ($(NAME),sodpymkl)
+    SRC = hermeshd.f90
+    MODSRC =  LIB_VTK_IO.f90 mkl_vsl.f90 input_sod.f90 parameters_sod.f90 \
+               basis_funcs.f90 helpers.f90 boundary.f90 \
+               random.f90 initialcon.f90 initialize.f90 \
+               prepare_step.f90 sources.f90 flux.f90 \
+               integrator.f90 output.f90
+    MODFILES = LIB_VTK_IO.mod mkl_vsl_type.mod mkl_vsl.mod input.mod parameters.mod \
+               basis_funcs.mod helpers.mod \
+               random.mod boundary_defs.mod boundary_custom.mod boundary.mod \
+               initialcon.mod initialize.mod \
+               prepare_step.mod sources.mod flux.mod \
+               integrator.mod output.mod
 endif
 
 
@@ -165,28 +190,26 @@ endif
 #-----------------------------------------------------------------
 .c.o:
 	$(rm) $@
-	$(FORT) $(FORTFLAGS) -c $*.f90
+	$(MPIFORT) $(FORTFLAGS) -c $*.f90
 
 all: $(PROGNAME)
 
 shlib:
-	$(FORT) -shared -fPIC $(FORTFLAGS) $(SRC) LIB_VTK_IO.f90 $(MODSRC) mkl_vsl.o -o $(PROGNAME).so
+	$(MPIFORT) -shared -fPIC $(FORTFLAGS) $(SRC) LIB_VTK_IO.f90 $(MODSRC) mkl_vsl.o -o $(PROGNAME).so
 
 # NOTE: The compiled *.mod file for LIB_VTK_IO.f90 is lowercase and the object file is uppercase!!!
 # NOTE: LIB_VTK_IO.f90 needs to be compiled BEFORE output.f90!!!
 
-#env OMPI_FC=gfortran $(FORT) -c -fPIC $(MODSRC) lib_vtk_io.mod  # LIB_VTK_IO.o lib_vtk_io.o mkl_vsl.o LIB_VTK_IO.f90
+#env OMPI_FC=gfortran $(MPIFORT) -c -fPIC $(MODSRC) lib_vtk_io.mod  # LIB_VTK_IO.o lib_vtk_io.o mkl_vsl.o LIB_VTK_IO.f90
 f2py:
-	$(FORT) -c -fPIC $(MODSRC) $(SRC)
+	$(MPIFORT) -fc=$(FORT) -c -fPIC $(MODSRC) $(SRC)
 
 $(PROGNAME) : $(SRC) $(MODSRC)
 	cp $(SRC) $(MODSRC) $(OTHERFILES) $(TESTDIR) && cd $(TESTDIR) && \
-	$(FORT) $(FORTFLAGS) $(SRC) $(MODSRC) $(OBJS) -o $(PROGNAME)
-#	strip $(PROGNAME)
-#	$(PROGNAME)
+	$(MPIFORT) $(FORTFLAGS) $(SRC) $(MODSRC) $(OBJS) -o $(PROGNAME)
 	cd $(TESTDIR) && mpirun -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
 
 clean:
 #	$(rm) $(PROGNAME) core *~
-	$(rm) $(MODFILES) *.o .f2py_f2cmap f90wrap_*.f90 *.py* *.so
+	$(rm) $(MODFILES) *.o .f2py_f2cmap f90wrap_*.f90 hermeshd.py* *.so
 ##################################################################

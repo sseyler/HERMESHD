@@ -1,8 +1,8 @@
 !***** RANDOM.F90 ************************************************************************
 module random
 
-! use MKL_VSL_TYPE
-! use MKL_VSL
+use MKL_VSL_TYPE
+use MKL_VSL
 
 use parameters
 use helpers
