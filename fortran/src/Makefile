@@ -6,16 +6,16 @@
 ##----------------------------------------------------------------------------
 
 rm = /bin/rm -f
-FORT = ifort
-MPIFORT = mpif90
+F90 = ifort
+MPIF90 = mpif90
 
 PROGNAME = perseus_$(NAME)
-TESTDIR = /scratch/sseyler/WORK/PERSEUSHD_testing
+RUNDIR = /scratch/sseyler/WORK/PERSEUSHD_testing
 
 # NOTE: Seems to work when doing "include 'mpif.h'" in the code
-MPIVERS = openmpi/1.6.3/intel13.0
+# MPIVERS = openmpi/1.6.3/intel13.0
 # MPIVERS = openmpi/2.1.0/intel17.0
-INC_DIR = /nfs/packages/opt/Linux_x86_64/$(MPIVERS)/include
+# INC_DIR = /nfs/packages/opt/Linux_x86_64/$(MPIVERS)/include
 
 INCLUDES = -I. -I$(INC_DIR)
 OBJS = LIB_VTK_IO.o mkl_vsl.o
@@ -30,28 +30,29 @@ OBJS = LIB_VTK_IO.o mkl_vsl.o
 # NOTE: libmkl_intel_lp64.so lives here: $(MKLROOT)/lib/intel64_lin
 # NOTE: "mpif.h" is in /nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include
 
-MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/13.0/mkl
-# MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/mkl
-MKLPATH = $(MKLROOT)/lib
+# MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/13.0/mkl
+MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/mkl
+MKLPATH = $(MKLROOT)/lib/intel64
 MKLINCLUDE = $(MKLROOT)/include
 DYLD_LIBRARY_PATH = $(MKLPATH)
 
 MKL_TARGET_ARCH = intel64_lin
 MISCFLAGS = -diag-disable 13003 # disable the warning for message verification
 
-FORTFLAGS = -O2 -xHost -I$(INCLUDES) -mkl -I$(MKLINCLUDE) -L$(MKLPATH)/$(MKL_TARGET_ARCH) #$(MISCFLAGS)
-# FORTFLAGS = -O2 -xHost -CB -fpe:0 -traceback -check noarg_temp_created #-fpp
-# FORTFLAGS = -O3 -coarray=distributed
-# FORTFLAGS = -O3 -coarray -coarray-num-images=4
-# FORTFLAGS = -O3 -openmp
-# FORTFLAGS = -O2 -xHost #-CB -fpe:0 -traceback -check noarg_temp_created #-fpp
+# F90FLAGS = -O2 -xHost -mkl $(MISCFLAGS) -I$(INCLUDES) -I$(MKLINCLUDE) -L$(MKLPATH)/$(MKL_TARGET_ARCH)
+F90FLAGS = -O2 -xHost -mkl $(MISCFLAGS)
 ##################################################################
+
+
+ifndef $(NPROC)
+	NPROC = 16
+endif
+
 
 
 ##################################################################
 # Source files
 #-----------------------------------------------------------------
-# OTHERFILES = mkl_vsl.mod mkl_vsl_type.mod mkl_vsl.o lib_vtk_io.mod lib_vtk_io.o
 
 #********************************************
 # Reference original code
@@ -157,29 +158,29 @@ endif
 #-----------------------------------------------------------------
 # .c.o:
 # 	$(rm) $@
-# 	$(MPIFORT) $(FORTFLAGS) -c $*.f90
+# 	$(MPIF90) $(F90FLAGS) -c $*.f90
 #
 # all: $(PROGNAME)
 #
 # shlib:
-# 	$(MPIFORT) -shared -fPIC $(FORTFLAGS) $(SRC) LIB_VTK_IO.f90 $(MODSRC) mkl_vsl.o -o $(PROGNAME).so
+# 	$(MPIF90) -shared -fPIC $(F90FLAGS) $(SRC) LIB_VTK_IO.f90 $(MODSRC) mkl_vsl.o -o $(PROGNAME).so
 
 # $(PROGNAME) : $(SRC) $(MODSRC)
-# 	cp $(SRC) $(MODSRC) $(OBJS) $(TESTDIR) && cd $(TESTDIR) && \
-# 	$(MPIFORT) $(FORTFLAGS) $(SRC) $(MODSRC) $(OBJS) -o $(PROGNAME)
-# 	cd $(TESTDIR) && mpirun -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
+# 	cp $(SRC) $(MODSRC) $(OBJS) $(RUNDIR) && cd $(RUNDIR) && \
+# 	$(MPIF90) $(F90FLAGS) $(SRC) $(MODSRC) $(OBJS) -o $(PROGNAME)
+# 	cd $(RUNDIR) && mpirun -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
 
 f2py:
-	$(MPIFORT) -fc=$(FORT) -c -fPIC $(MODSRC) $(SRC)
+	$(MPIF90) -fc=$(F90) -c -fPIC $(MODSRC) $(SRC)
 
-run: $(TESTDIR)/$(PROGNAME)
-	cd $(TESTDIR) && mpirun -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
+run: $(RUNDIR)/$(PROGNAME)
+	cd $(RUNDIR) && mpirun -n $(NPROC) $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
 
-$(TESTDIR)/$(PROGNAME): $(MODSRC) $(SRC) copy
-	cd $(TESTDIR) && $(MPIFORT) $(FORTFLAGS) $(MODSRC) $(SRC) -o $(PROGNAME)
+$(RUNDIR)/$(PROGNAME): $(MODSRC) $(SRC) cprun
+	cd $(RUNDIR) && $(MPIF90) $(F90FLAGS) $(MODSRC) $(SRC) -o $(PROGNAME)
 
-copy:
-	cp $(SRC) $(MODSRC) $(TESTDIR)
+cprun:
+	cp $(SRC) $(MODSRC) $(RUNDIR)
 
 clean:
 #	$(rm) $(PROGNAME) core *~
