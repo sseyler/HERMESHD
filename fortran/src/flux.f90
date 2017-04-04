@@ -6,7 +6,7 @@ use helpers
 use basis_funcs
 
 use boundary
-use random
+! use random  ! TODO: commented to get working w/o MKL
 
 ! Only used by flux_calc (flux_cal) and glflux
 real, dimension(nface,1:nx+1,ny,nz,1:nQ) :: flux_x
@@ -38,7 +38,7 @@ contains
 
         Spnts_r(:,:,:) = 0.0
         Hpnts_r(:,:) = 0.0
-        if (llns) call random_stresses_pnts_r(Spnts_r, npnts)
+        ! if (llns) call random_stresses_pnts_r(Spnts_r, npnts)  ! TODO: commented to get working w/o MKL
 
         do ife = 1,npnts
             dn   = Qpnts_r(ife,rh)

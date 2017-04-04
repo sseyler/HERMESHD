@@ -1,7 +1,7 @@
 !***** OUTPUT.F90 ************************************************************************
 module output
 
-use lib_vtk_io
+use LIB_VTK_IO
 
 use params
 use helpers
@@ -16,8 +16,8 @@ contains
         implicit none
         real Qin(nx,ny,nz,nQ,nbasis)
         integer nout
-        integer(I4P) , parameter :: nb=1*ngu,sprd=0*1
-
+        integer(I4P), parameter :: nb=1*ngu,sprd=0*1
+        ! integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
         real(R4P), dimension(nnx+1) :: x_xml_rect
         real(R4P), dimension(nny+1) :: y_xml_rect
         real(R4P), dimension(nnz+1) :: z_xml_rect
@@ -323,8 +323,8 @@ contains
         implicit none
         real Qin(nx,ny,nz,nQ,nbasis)
         integer nout
-        integer(I4P) , parameter :: nb=1*ngu,sprd=0*1
-        !    integer(I4P), parameter:: nnx=nx-2*nb,nny=ny-2*nb,nnz=nz-2*nb
+        integer(I4P), parameter :: nb=1*ngu,sprd=0*1
+        integer(I4P), parameter :: nnx=nx-2*nb,nny=ny-2*nb,nnz=nz-2*nb
         real(R4P), dimension(nnx+1):: x_xml_rect
         real(R4P), dimension(nny+1):: y_xml_rect
         real(R4P), dimension(nnz+1):: z_xml_rect

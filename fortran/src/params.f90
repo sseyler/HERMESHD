@@ -1,4 +1,4 @@
-!****** PARAMETERS.F90 *******************************************************************
+!****** PARAMS.F90 *******************************************************************
 
 ! TEST RESULTS SUMMARY USING VARIOUS #s OF BASIS FUNCTIONS & QUADRATURE POINTS
 !

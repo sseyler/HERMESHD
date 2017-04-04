@@ -5,6 +5,8 @@ use params
 use helpers
 use basis_funcs
 
+! use random  ! TODO: commented to get working w/o MKL
+
 contains
 
     subroutine source_calc(Q_ri)

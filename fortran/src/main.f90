@@ -27,9 +27,10 @@ use output
 !-------------------------------------------------
 ! 1. Initialize general simulation variables
 !-------------------------------------------------
-call perform_setup(t, dt, nout)
+call initializer(t, dt, nout)
 
 t_start = get_clock_time()  ! start timer for wall time
+dtout = tf/ntout  ! TODO: move this to a more sensible place once output scheme is improved!
 
 !-------------------------------------------------
 ! 2. Select and set initial conditions
@@ -37,13 +38,12 @@ t_start = get_clock_time()  ! start timer for wall time
 if (iread == 0) then
     call set_ic(Q_r0, icid)
 else
-    call initialize_from_file(Q_r0, t, dt, nout)
+    call set_ic_from_file(Q_r0, t, dt, dtout, nout)
 endif
 
 !-------------------------------------------------
 ! 3. Select integration method
 !-------------------------------------------------
-dtout = tf/ntout  ! TODO: move this to a more sensible place once output scheme is improved!
 call select_integrator(iname, update)
 
 !-------------------------------------------------
@@ -69,7 +69,7 @@ call output_vtk(Q_r0, nout, iam)
 do while( t < tf )
 
     dt = get_min_dt(Q_r0)
-    call update(Q_r0, Q_r1, Q_r2)
+    call update(Q_r0, Q_r1, Q_r2, dt)
     t = t + dt
 
     call generate_output(Q_r0, t, nout)  ! determines when output should be generated
