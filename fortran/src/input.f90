@@ -7,8 +7,8 @@ module input
     real, parameter :: lz = ly/120. !1.0e6/120. !4.1e2/120.
 
     ! Number of Gaussian quadrature points per spatial dimension
-    integer, parameter :: iquad = 2
-    integer, parameter :: nbasis  = 8 ! 8
+    integer, parameter :: iquad  = 2
+    integer, parameter :: nbasis = 8 ! 8
 
     ! Grid cell dimensions per MPI domain
     integer, parameter :: nx = 6  ! 55 (mpi_nx = 8)

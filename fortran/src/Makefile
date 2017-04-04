@@ -58,7 +58,7 @@ F90FLAGS = -O2 -xHost -mkl $(MISCFLAGS)
 #********************************************
 SRC      = main.f90
 MODSRC   =  LIB_VTK_IO.f90 mkl_vsl.f90 \
-			input.f90 params.f90 basis_funcs.f90 helpers.f90 random.f90 \
+			input_sod.f90 params_sod.f90 basis_funcs.f90 helpers.f90 random.f90 \
 			boundary.f90 initialcon.f90 initialize.f90 prepare_step.f90 \
 			sources.f90 flux.f90 integrator.f90 output.f90
 MODFILES = LIB_VTK_IO.mod mkl_vsl_type.mod mkl_vsl.mod \
