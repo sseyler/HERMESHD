@@ -52,7 +52,7 @@ contains
 
         ! call init_random_seed(iam, iseed)
 
-        ! call random_init(iseed)  ! initialize MKL random number generator
+        call random_init(iseed)  ! initialize MKL random number generator
 
         call print_startup_info
 

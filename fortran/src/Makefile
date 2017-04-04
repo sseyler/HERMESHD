@@ -35,13 +35,16 @@ INCLUDES = -I. -I$(INC_DIR)
 # NOTE: libmkl_intel_lp64.so lives here: $(MKLROOT)/lib/intel64_lin
 # NOTE: "mpif.h" is in /nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include
 
-MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/13.0/mkl
-# MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/mkl
-MKLPATH = $(MKLROOT)/lib/intel64
+# MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/13.0/mkl
+# MKL_TARGET_ARCH = intel64
+MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/mkl
+MKL_TARGET_ARCH = intel64_lin
+
+MKLPATH = $(MKLROOT)/lib/$(MKL_TARGET_ARCH)
 MKLINCLUDE = $(MKLROOT)/include
 DYLD_LIBRARY_PATH = $(MKLPATH)
 
-MKL_TARGET_ARCH = intel64_lin
+
 MISCFLAGS = -diag-disable 13003 # disable the warning for message verification
 
 # F90FLAGS = -O2 -xHost -mkl $(MISCFLAGS) -I$(INCLUDES) -I$(MKLINCLUDE) -L$(MKLPATH)/$(MKL_TARGET_ARCH)
@@ -133,13 +136,13 @@ pyrun:
 
 f2py: cp-py cp-src
 	@echo $(STAGE2)
-	cd $(BUILDDIR) && $(MPIF90) -fc=$(F90) -c -fPIC $(MODSRC) $(SRC)
+	cd $(BUILDDIR) && $(MPIF90) $(F90FLAGS) -fc=$(F90) -c -fPIC $(MODSRC) $(SRC)
 	@echo "\nStage 2 completed. $(LINE1N)"
 
 	@echo $(STAGE3)
 	cd $(BUILDDIR) && f2py-f90wrap --f90exec=$(MPIF90) --opt="-O2"				\
-		--f90flags="-xHost -fc=ifort" -c -m _$(NAME) *.o $(WRAPSRC)				\
-		-L$(MKLPATH) -lmkl_intel_lp64 -lmkl_sequential -lmkl_core
+		--f90flags="-fc=ifort $(F90FLAGS)" -c -m _$(NAME) *.o $(WRAPSRC)				\
+		-L$(MKLPATH) -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_vml_avx
 	@echo "\nStage 3 completed. $(LINE1N)"
 
 cp-py: $(WRAPSRC) | $(BUILDDIR)
