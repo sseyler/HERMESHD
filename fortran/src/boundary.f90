@@ -3,7 +3,7 @@
 !##### boundary_defs ###########################################################
 module boundary_defs
 
-use parameters
+use params
 
     !===========================================================================
     ! ABSTRACT INTERFACE to subroutines for setting BCs
@@ -11,21 +11,21 @@ use parameters
     abstract interface
         subroutine xbc_fcn_ptr(Qxbc_i, Qxbc_e)
             use input, only : ny,nz
-            use parameters, only : mx,my,mz,nface,nQ
+            use params, only : mx,my,mz,nface,nQ
             real, dimension(ny,nz,nface,nQ), intent(in) :: Qxbc_i
             real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxbc_e
         end subroutine xbc_fcn_ptr
 
         subroutine ybc_fcn_ptr(Qybc_i, Qybc_e)
             use input, only : nx,nz
-            use parameters, only : mx,my,mz,nface,nQ
+            use params, only : mx,my,mz,nface,nQ
             real, dimension(nx,nz,nface,nQ), intent(in) :: Qybc_i
             real, dimension(nx,nz,nface,nQ), intent(inout) :: Qybc_e
         end subroutine ybc_fcn_ptr
 
         subroutine zbc_fcn_ptr(Qzbc_i, Qzbc_e)
             use input, only : nx,ny
-            use parameters, only : mx,my,mz,nface,nQ
+            use params, only : mx,my,mz,nface,nQ
             real, dimension(nx,ny,nface,nQ), intent(in) :: Qzbc_i
             real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzbc_e
         end subroutine zbc_fcn_ptr
@@ -366,7 +366,7 @@ end module boundary_defs
 !
 ! module boundary_defs2
 !
-! use parameters
+! use params
 !
 !     !===========================================================================
 !     ! ABSTRACT INTERFACE to subroutines for setting BCs
@@ -374,21 +374,21 @@ end module boundary_defs
 !     abstract interface
 !         subroutine xbc_fcn_ptr(Qxbc_int, Qxbc_ext)
 !             use input, only : ny,nz
-!             use parameters
+!             use params
 !             real, dimension(ny,nz,nface,nQ), intent(in) :: Qxbc_int
 !             real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxbc_ext
 !         end subroutine xbc_fcn_ptr
 !
 !         subroutine ybc_fcn_ptr(Qybc_int, Qybc_ext)
 !             use input, only : nx,nz
-!             use parameters
+!             use params
 !             real, dimension(nx,nz,nface,nQ), intent(in) :: Qybc_int
 !             real, dimension(nx,nz,nface,nQ), intent(inout) :: Qybc_ext
 !         end subroutine ybc_fcn_ptr
 !
 !         subroutine zbc_fcn_ptr(Qzbc_int, Qzbc_ext)
 !             use input, only : nx,ny
-!             use parameters
+!             use params
 !             real, dimension(nx,ny,nface,nQ), intent(in) :: Qzbc_int
 !             real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzbc_ext
 !         end subroutine zbc_fcn_ptr
@@ -552,11 +552,11 @@ end module boundary_defs
 !##### boundary_custom #########################################################
 module boundary_custom
 
-    use parameters
+    use params
     use helpers
 
     !===========================================================================
-    ! Masking parameters (for advanced or internal initial/boundary conditions)
+    ! Masking params (for advanced or internal initial/boundary conditions)
     !------------------------------------------------------------
     real, dimension(ny,nz,nface,nQ) :: Qxlo_ext_def, Qxlo_ext_scale
     real, dimension(nx,ny,nface,nQ) :: Qcyl_ext_c, Qcyl_ext
@@ -711,7 +711,7 @@ end module boundary_custom
 !##### boundary ################################################################
 module boundary
 
-    use parameters
+    use params
     use helpers, only : mpi_print
     use boundary_defs
     ! use boundary_defs2

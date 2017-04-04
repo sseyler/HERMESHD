@@ -4,7 +4,7 @@ module basis_funcs
 !===========================================================================
 ! Parameters
 !------------------------------------------------------------
-use parameters
+use params
 
 integer, parameter :: nvtk  = 1    ! (was 2)
 integer, parameter :: nvtk2 = nvtk*nvtk

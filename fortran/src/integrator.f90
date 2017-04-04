@@ -2,7 +2,7 @@
 module integrator
 
     use input!, only : nx,ny,nz
-    use parameters!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
+    use params!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
     use helpers
 
     use prepare_step
@@ -15,7 +15,7 @@ module integrator
     abstract interface
         subroutine update_ptr (Q_io, Q_1, Q_2)
             use input, only : nx,ny,nz
-            use parameters, only : nQ,nbasis
+            use params, only : nQ,nbasis
 
             real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
             real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2

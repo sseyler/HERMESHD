@@ -79,10 +79,10 @@ endif
 #********************************************
 ifeq ($(NAME),mod2)
     SRC = main.f90
-    MODSRC = input.f90 parameters.f90 helpers.f90 \
+    MODSRC = input.f90 params.f90 helpers.f90 \
                init_conditions.f90 initialize.f90 \
                prep_time_advance.f90 basis_funcs.f90 io.f90
-    MODFILES = input.mod parameters.mod helpers.mod \
+    MODFILES = input.mod params.mod helpers.mod \
                init_conditions.mod initialize.mod \
                prep_time_advance.mod basis_funcs.mod io.mod
 endif
@@ -92,12 +92,12 @@ endif
 #********************************************
 ifeq ($(NAME),modbc)
     SRC = main.f90
-    MODSRC =  input.f90 parameters.f90 basis_funcs.f90 helpers.f90 \
+    MODSRC =  input.f90 params.f90 basis_funcs.f90 helpers.f90 \
                boundary.f90 \
                random.f90 initialcon.f90 initialize.f90 \
                prepare_step.f90 sources.f90 flux.f90 \
                integrator.f90 output.f90
-    MODFILES = input.mod parameters.mod basis_funcs.mod helpers.mod \
+    MODFILES = input.mod params.mod basis_funcs.mod helpers.mod \
                boundary_defs.mod boundary_custom.mod boundary.mod \
                random.mod initialcon.mod initialize.mod \
                prepare_step.mod sources.mod flux.mod \
@@ -109,12 +109,12 @@ endif
 #********************************************
 ifeq ($(NAME),sod)
     SRC = main.f90
-    MODSRC =  input_sod.f90 parameters_sod.f90 \
+    MODSRC =  input_sod.f90 params_sod.f90 \
                basis_funcs.f90 helpers.f90 boundary.f90 \
                random.f90 initialcon.f90 initialize.f90 \
                prepare_step.f90 sources.f90 flux.f90 \
                integrator.f90 output.f90
-    MODFILES = input.mod parameters.mod \
+    MODFILES = input.mod params.mod \
                basis_funcs.mod helpers.mod \
                boundary_defs.mod boundary_custom.mod boundary.mod \
                random.mod initialcon.mod initialize.mod \
@@ -127,12 +127,12 @@ endif
 #********************************************
 ifeq ($(NAME),ise)
     SRC = main.f90
-    MODSRC =  input_isentr.f90 parameters_isentr.f90 \
+    MODSRC =  input_isentr.f90 params_isentr.f90 \
                basis_funcs.f90 helpers.f90 boundary.f90 \
                random.f90 initialcon.f90 initialize.f90 \
                prepare_step.f90 sources.f90 flux.f90 \
                integrator.f90 output.f90
-    MODFILES = input.mod parameters.mod \
+    MODFILES = input.mod params.mod \
                basis_funcs.mod helpers.mod \
                boundary_defs.mod boundary_custom.mod boundary.mod \
                random.mod initialcon.mod initialize.mod \
@@ -145,12 +145,12 @@ endif
 #********************************************
 ifeq ($(NAME),poi2d)
     SRC = main.f90
-    MODSRC =  input_2dpoiseuille.f90 parameters_2dpoiseuille.f90
+    MODSRC =  input_2dpoiseuille.f90 params_2dpoiseuille.f90
                basis_funcs.f90 helpers.f90 boundary.f90 \
                random.f90 initialcon.f90 initialize.f90 \
                prepare_step.f90 sources.f90 flux.f90 \
                integrator.f90 output.f90
-    MODFILES = input.mod parameters.mod \
+    MODFILES = input.mod params.mod \
                basis_funcs.mod helpers.mod \
                boundary_defs.mod boundary_custom.mod boundary.mod \
                random.mod initialcon.mod initialize.mod \

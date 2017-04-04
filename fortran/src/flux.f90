@@ -1,7 +1,7 @@
 !***** FLUX.F90 **************************************************************************
 module flux
 
-use parameters
+use params
 use helpers
 use basis_funcs
 
@@ -33,8 +33,8 @@ contains
         real Spnts_r(npnts,3,3), Hpnts_r(npnts,3)
         real Sxx,Syy,Szz,Sxy,Sxz,Syz, Qx,Qy,Qz
 
-        c2d3cv = c2d3*colvis  ! global vars declared in parameters.f90
-        c4d3cv = c4d3*colvis  ! global vars declared in parameters.f90
+        c2d3cv = c2d3*colvis  ! global vars declared in params.f90
+        c4d3cv = c4d3*colvis  ! global vars declared in params.f90
 
         Spnts_r(:,:,:) = 0.0
         Hpnts_r(:,:) = 0.0

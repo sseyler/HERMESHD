@@ -31,14 +31,12 @@
 !   nbasis = 20: nbasis10 + {xyz, xP2(y), yP2(x), xP2(z),
 !                                 zP2(x), yP2(z), zP2(y), P3(x), P3(y), P3(z)}
 !*******************************************************************************
-module parameters
+module params
 
     use input
 
-    use lib_vtk_io
-    use MKL_VSL_TYPE
-    use MKL_VSL
-
+    ! NOTE: "mpif.h" is in /nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include
+    ! include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
     include 'mpif.h'
 
     integer, parameter :: rh = 1                      ! density
@@ -284,4 +282,4 @@ contains
         thetavtk = atan2(yvtk(j),xvtk(i))
     end function thetavtk
 
-end module parameters
+end module params

@@ -1,7 +1,7 @@
 !***** SOURCES.F90 ***********************************************************************
 module sources
 
-use parameters
+use params
 use helpers
 use basis_funcs
 

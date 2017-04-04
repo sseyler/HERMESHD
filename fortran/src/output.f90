@@ -3,7 +3,7 @@ module output
 
 use lib_vtk_io
 
-use parameters
+use params
 use helpers
 use basis_funcs
 
