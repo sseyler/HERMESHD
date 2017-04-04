@@ -35,18 +35,7 @@ INCLUDES = -I. -I$(INC_DIR)
 # NOTE: libmkl_intel_lp64.so lives here: $(MKLROOT)/lib/intel64_lin
 # NOTE: "mpif.h" is in /nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include
 
-# MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/13.0/mkl
-# MKL_TARGET_ARCH = intel64
-MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/mkl
-MKL_TARGET_ARCH = intel64_lin
-
-MKLPATH = $(MKLROOT)/lib/$(MKL_TARGET_ARCH)
-MKLINCLUDE = $(MKLROOT)/include
-DYLD_LIBRARY_PATH = $(MKLPATH)
-
-
-MISCFLAGS = -diag-disable 13003 # disable the warning for message verification
-
+MISCFLAGS = -diag-disable 13003 # disable the warning for ifort message verification
 # F90FLAGS = -O2 -xHost -mkl $(MISCFLAGS) -I$(INCLUDES) -I$(MKLINCLUDE) -L$(MKLPATH)/$(MKL_TARGET_ARCH)
 F90FLAGS = -O2 -xHost -mkl $(MISCFLAGS)
 ################################################################################
@@ -85,6 +74,16 @@ ifeq ($(VERS),pymkl)
 	PYOBJS    = $(PYMAIN) $(PYWRAPSRC) $(PYSHARED)
 
 	# PYRUN = $(patsubst %, $(RUNDIR)/%, $(PYOBJS))
+
+	# Explicit MKL paths needed when using f2py
+	MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/13.0/mkl
+	MKL_TARGET_ARCH = intel64
+	# MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/mkl
+	# MKL_TARGET_ARCH = intel64_lin
+
+	MKLPATH = $(MKLROOT)/lib/$(MKL_TARGET_ARCH)
+	MKLINCLUDE = $(MKLROOT)/include
+	DYLD_LIBRARY_PATH = $(MKLPATH)
 endif
 
 # OBJECTS = $(SOURCES:f90=o)
