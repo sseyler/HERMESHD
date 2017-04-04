@@ -44,7 +44,7 @@ endif
 !-------------------------------------------------
 ! 3. Select integration method
 !-------------------------------------------------
-call select_integrator(iname, step)
+call select_integrator(iname, update)
 
 !-------------------------------------------------
 ! 4. Select boundary conditions
@@ -69,7 +69,7 @@ call output_vtk(Q_r0, nout, iam)
 do while( t < tf )
 
     dt = get_min_dt(Q_r0)
-    call step(Q_r0, Q_r1, Q_r2, dt)
+    call update(Q_r0, Q_r1, Q_r2, dt)
     t = t + dt
 
     call generate_output(Q_r0, t, nout)  ! determines when output should be generated

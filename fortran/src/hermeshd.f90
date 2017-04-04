@@ -34,7 +34,7 @@ contains
         ! II. SIMULATION
         !-----------------------------
         do while( t < tf )
-            call update(Q_r0, Q_r1, Q_r2, t, dt)
+            call step(Q_r0, Q_r1, Q_r2, t, dt)
             call generate_output(Q_r0, t, dt, t1, nout)  ! determines when output should be generated
         end do
 
@@ -48,22 +48,22 @@ contains
 
 
     !===========================================================================
-    subroutine update(Q_io, Q_1, Q_2, t, dt)
+    subroutine step(Q_io, Q_1, Q_2, t, dt)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2
         real, intent(inout) :: t, dt
 
         dt = get_min_dt(Q_io)
-        call step(Q_io, Q_1, Q_2, dt)
+        call update(Q_io, Q_1, Q_2, dt)
         t = t + dt
-    end subroutine update
+    end subroutine step
     !---------------------------------------------------------------------------
 
 
     !===========================================================================
     subroutine setup(Q_io, t, dt, t1, t_start, dtout, nout)
-        use integrator, only: select_integrator, step
+        use integrator, only: select_integrator, update
         use boundary, only: apply_xlobc, apply_ylobc, apply_zlobc,              &
                             apply_xhibc, apply_yhibc, apply_zhibc,              &
                             select_x_boundaries, select_y_boundaries, select_z_boundaries
@@ -92,7 +92,7 @@ contains
         !-------------------------------------------------
         ! 3. Select integration method
         !-------------------------------------------------
-        call select_integrator(iname, step)
+        call select_integrator(iname, update)
 
         !-------------------------------------------------
         ! 4. Select boundary conditions

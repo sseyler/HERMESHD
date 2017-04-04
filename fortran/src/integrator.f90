@@ -13,14 +13,14 @@ module integrator
     ! ABSTRACT INTERFACE to subroutine for temporal integration
     !-----------------------------------------------------------------
     abstract interface
-        subroutine step_ptr (Q_io, Q_1, Q_2, dt)
+        subroutine update_ptr (Q_io, Q_1, Q_2, dt)
             use input, only : nx,ny,nz
             use params, only : nQ,nbasis
 
             real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
             real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2
             real, intent(inout) :: dt
-        end subroutine step_ptr
+        end subroutine update_ptr
     end interface
     !---------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ module integrator
     !===========================================================================
     ! Initialize pointer to temporal integration subroutine
     !-----------------------------------------------------------------
-    procedure (step_ptr), pointer :: step => null ()
+    procedure (update_ptr), pointer :: update => null ()
     !---------------------------------------------------------------------------
 
 contains
@@ -39,7 +39,7 @@ contains
     subroutine select_integrator(name, integrator)
         implicit none
         character(*), intent(in) :: name
-        procedure(step_ptr), pointer :: integrator
+        procedure(update_ptr), pointer :: integrator
 
         select case (name)
             case ('heun')
