@@ -120,7 +120,7 @@ contains
         !-------------------------------------------------
         ! 1. De-allocate system resources for RNG
         !-------------------------------------------------
-        ! vsl_errcode = vsldeletestream( vsl_stream )  ! TODO: commented to get working w/o MKL
+        ! call random_cleanup()
 
         !-------------------------------------------------
         ! 2. MPI cleanup
