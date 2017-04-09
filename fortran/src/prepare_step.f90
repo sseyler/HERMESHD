@@ -1,7 +1,7 @@
 !***** PREPARE_STEP.F90 ******************************************************************
 module prepare_step
 
-use parameters
+use params
 use helpers
 use basis_funcs
 
@@ -103,6 +103,13 @@ contains
             call MPI_Wait(reqs(4),stats(:,4),ierr)
         endif
 
+        ! if (xlobc == 'outflow' and mpi_P == 1) then
+        !     Qxlo_ext = Qxlo_int
+    	! end if
+    	! if (xhibc == 'outflow' and mpi_P == nx) then
+    	! 	Qxhi_ext = Qxhi_int
+    	! end if
+
         !---------------------------------------------
         mpi_size = nface*nx*nz*nQ
 
@@ -129,6 +136,13 @@ contains
             call MPI_Wait(reqs(4),stats(:,4),ierr)
         endif
 
+        ! if (ylobc == 'outflow' and mpi_Q == 1) then
+        !     Qylo_ext = Qylo_int
+    	! end if
+    	! if (yhibc == 'outflow' and mpi_Q == ny) then
+    	! 	Qyhi_ext = Qyhi_int
+    	! end if
+
         !---------------------------------------------
         mpi_size = nface*nx*ny*nQ
 
@@ -154,6 +168,13 @@ contains
         if (nbrs(DOWN) .ne. MPI_PROC_NULL) then
             call MPI_Wait(reqs(4),stats(:,4),ierr)
         endif
+
+        ! if (zlobc == 'outflow' and mpi_R == 1) then
+        !     Qzlo_ext = Qzlo_int
+    	! end if
+    	! if (zhibc == 'outflow' and mpi_R == nz) then
+    	! 	Qzhi_ext = Qzhi_int
+    	! end if
 
     end subroutine perform_flux_exchange
     !---------------------------------------------------------------------------

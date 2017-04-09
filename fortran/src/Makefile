@@ -1,160 +1,194 @@
 #!/usr/bin/make -f
-##----------------------------------------------------------------------------
-# Created with genmake.pl v1.1 on Sat Jan  5 21:18:00 2008
-# genmake.pl home: http://muquit.com/muquit/software/
-# Copryright: GNU GPL (http://www.gnu.org/copyleft/gpl.html)
-##----------------------------------------------------------------------------
-
 rm = /bin/rm -f
-FORT = ifort
-FORT = mpif90
 
-DEFS =
-PROGNAME = perseus_$(NAME)
-TESTDIR = /scratch/sseyler/WORK/PERSEUSHD_testing
-INCLUDES = -I. #-I$(MKLINCLUDE)
-LIBS = lib_vtk_io.o mkl_vsl.o #-L$(MKLPATH)
+################################################################################
+# Definitions
+#-----------------------------------------------------------------
 
-DEFINES = $(INCLUDES) $(DEFS)
-# FORTFLAGS = -O3 -coarray=distributed
-# FORTFLAGS = -O3 -coarray -coarray-num-images=9
-# FORTFLAGS = -O3 -coarray -coarray-num-images=4
-# FORTFLAGS = -O3 -openmp
-# FORTFLAGS = -O2 -xHost #-CB -fpe:0 -traceback -check noarg_temp_created #-fpp
+#--- Fortran compilers -----------
+F90 = ifort
+MPIF90 = mpif90
 
-##################################################################
+ifndef $(NPROC)
+	NPROC = 16
+endif
+
+ifndef $(BUILDDIR)
+	BUILDDIR = build
+endif
+
+ifndef $(EXEC)
+	EXEC = perseus
+endif
+
+RUNDIR = /scratch/sseyler/WORK/PERSEUSHD_testing
+#-----------------------------------------------------------------
+
+
+# NOTE: Seems to work when doing "include 'mpif.h'" in the code
+# MPIVERS = openmpi/1.6.3/intel13.0
+# MPIVERS = openmpi/2.1.0/intel17.0
+# INC_DIR = /nfs/packages/opt/Linux_x86_64/$(MPIVERS)/include
+
+INCLUDES = -I. -I$(INC_DIR)
+
+################################################################################
 # Intel compiler and MKL files
 #-----------------------------------------------------------------
 # ifortvars.sh -arch intel64 -platform linux
 # IGNORE := $(shell bash -c "source ifortvars.sh; env | sed 's/=/:=/' | sed 's/^/export /' > makeenv")
 # include makeenv
-MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/fortran/mkl
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MKLROOT/lib/intel64_lin
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
-# MKLBIN=$(MKLPATH)/bin
-# MKLINCLUDE=$(MKLPATH)/include
-MKL_TARGET_ARCH = intel64_lin
-MISCFLAGS = -diag-disable 13003 # disable the warning for message verification
 
-FORTFLAGS = -O2 -xHost -mkl -L$(MKLROOT)/lib/$(MKL_TARGET_ARCH) $(MISCFLAGS)
-# FORTFLAGS = -O3 -xHost -mkl -L$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
-# FORTFLAGS = -O2 -xHost -CB -fpe:0 -traceback -check noarg_temp_created #-fpp
-##################################################################
+# NOTE: libmkl_intel_lp64.so lives here: $(MKLROOT)/lib/intel64_lin
+# NOTE: "mpif.h" is in /nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include
+
+MISCFLAGS = -diag-disable 13003 # disable the warning for ifort message verification
+# F90FLAGS = -O2 -xHost -mkl $(MISCFLAGS) -I$(INCLUDES) -I$(MKLINCLUDE) -L$(MKLPATH)/$(MKL_TARGET_ARCH)
+F90FLAGS = -O2 -xHost -mkl $(MISCFLAGS)
+################################################################################
 
 
-##################################################################
+################################################################################
 # Source files
 #-----------------------------------------------------------------
-# OBJS = dg_3D_hydro_bitri_H2O.f90
-# OBJS = dg_3D_hydro_bitri_H2O_old.f90
-# OBJS = dg_3D_hydro_bitri_version2_SEAN.f90
-# OBJS = dg_3D_hydro_bitri_viscosity.f90
-
-OTHERFILES = mkl_vsl.mod mkl_vsl_type.mod mkl_vsl.o lib_vtk_io.mod lib_vtk_io.o
-
-#********************************************
-# Reference original code
-#********************************************
-ifeq ($(NAME),bitri)
-    OBJS = PERSEUSHydro_bitri_FH_test.f90
-    MODULES =
-endif
-
-#********************************************
-# Reference modular code
-#********************************************
-ifeq ($(NAME),mod)
-    OBJS = perseushd_main.f90
-    MODULES = parameters_mod.f90 ic_mod.f90 \
-               prepare_time_advance_mod.f90 basis_funcs_mod.f90 \
-               io_mod.f90
-endif
-
-#********************************************
-# Semi-old modular code
-#********************************************
-ifeq ($(NAME),mod2)
-    OBJS = main.f90
-    MODULES = input.f90 parameters.f90 helpers.f90 \
-               init_conditions.f90 initialize.f90 \
-               prep_time_advance.f90 basis_funcs.f90 io.f90
-    MODFILES = input.mod parameters.mod helpers.mod \
-               init_conditions.mod initialize.mod \
-               prep_time_advance.mod basis_funcs.mod io.mod
-endif
-
-#********************************************
-# Default modular (development) code
-#********************************************
-ifeq ($(NAME),modbc)
-    OBJS = main.f90
-    MODULES =  input.f90 parameters.f90 basis_funcs.f90 helpers.f90 \
-               boundary.f90 \
-               random.f90 initialcon.f90 initialize.f90 \
-               prepare_step.f90 sources.f90 flux.f90 \
-               integrator.f90 output.f90
-    MODFILES = input.mod parameters.mod basis_funcs.mod helpers.mod \
-               boundary_defs.mod boundary_custom.mod boundary.mod \
-               random.mod initialcon.mod initialize.mod \
-               prepare_step.mod sources.mod flux.mod \
-               integrator.mod output.mod
-endif
 
 #********************************************
 # Sod Shock Tube 1D for development code
 #********************************************
-ifeq ($(NAME),sod)
-    OBJS = main.f90
-    MODULES =  input_sod.f90 parameters_sod.f90 \
-               basis_funcs.f90 helpers.f90 boundary.f90 \
-               random.f90 initialcon.f90 initialize.f90 \
-               prepare_step.f90 sources.f90 flux.f90 \
-               integrator.f90 output.f90
-    MODFILES = input.mod parameters.mod \
-               basis_funcs.mod helpers.mod \
-               boundary_defs.mod boundary_custom.mod boundary.mod \
-               random.mod initialcon.mod initialize.mod \
-               prepare_step.mod sources.mod flux.mod \
-               integrator.mod output.mod
-endif
+SRC      = main.f90
+MODSRC   =  LIB_VTK_IO.f90 mkl_vsl.f90 \
+			input.f90 params.f90 basis_funcs.f90 helpers.f90 random.f90 \
+			boundary.f90 initialcon.f90 initialize.f90 prepare_step.f90 \
+			sources.f90 flux.f90 integrator.f90 output.f90
+MODFILES = LIB_VTK_IO.mod mkl_vsl_type.mod mkl_vsl.mod \
+			input.mod params.mod basis_funcs.mod helpers.mod random.mod \
+			boundary_defs.mod boundary_custom.mod boundary.mod \
+			initialcon.mod initialize.mod prepare_step.mod sources.mod flux.mod \
+			integrator.mod output.mod
 
 #********************************************
-# 2D Poiseuille flow for development code
+# Sod Shock Tube 1D for development code
 #********************************************
-ifeq ($(NAME),poi2d)
-    OBJS = main.f90
-    MODULES =  input_2dpoiseuille.f90 parameters_2dpoiseuille.f90
-               basis_funcs.f90 helpers.f90 boundary.f90 \
-               random.f90 initialcon.f90 initialize.f90 \
-               prepare_step.f90 sources.f90 flux.f90 \
-               integrator.f90 output.f90
-    MODFILES = input.mod parameters.mod \
-               basis_funcs.mod helpers.mod \
-               boundary_defs.mod boundary_custom.mod boundary.mod \
-               random.mod initialcon.mod initialize.mod \
-               prepare_step.mod sources.mod flux.mod \
-               integrator.mod output.mod
+ifeq ($(VERS),pymkl)
+	EXEC    = hermes
+	NAME    = hermeshd
+	SRC     = $(NAME).f90
+	WRAPSRC = f90wrap_$(NAME).f90
+
+	PYMAIN    = test_$(NAME).py
+	PYWRAPSRC = $(NAME).py
+	PYSHARED  = _$(NAME).so
+	PYOBJS    = $(PYMAIN) $(PYWRAPSRC) $(PYSHARED)
+
+	# PYRUN = $(patsubst %, $(RUNDIR)/%, $(PYOBJS))
+
+	# Explicit MKL paths needed when using f2py
+	MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/13.0/mkl
+	MKL_TARGET_ARCH = intel64
+	# MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/17.0/mkl
+	# MKL_TARGET_ARCH = intel64_lin
+
+	MKLPATH = $(MKLROOT)/lib/$(MKL_TARGET_ARCH)
+	MKLINCLUDE = $(MKLROOT)/include
+	DYLD_LIBRARY_PATH = $(MKLPATH)
 endif
-##################################################################
+
+# OBJECTS = $(SOURCES:f90=o)
+# OBJECTS = $(patsubst $(SOURCEDIR)/%.f90, $(BUILDDIR)/%.o, $(SOURCES))
+################################################################################
+
+
+################################################################################
+# For printing out information
+#-----------------------------------------------------------------
+LINE1 = "--------------------------------------------------------------------"
+LINE2 = "===================================================================="
+LINE1N = \n$(LINE1)\n
+LINE2N = \n$(LINE2)\n
+
+STAGE1 = "\n$(LINE2N) Stage 1: generating Python wrappers for $(SRC)... $(LINE1N)"
+STAGE2 = "\n$(LINE2N) Stage 2: generating Fortran module and object files... $(LINE1N)"
+STAGE3 = "\n$(LINE2N) Stage 3: compiling extension module $(PYSHARED)... $(LINE1N)"
+
+
+################################################################################
+# Fortran recipes
+#-----------------------------------------------------------------
+all: $(BUILDDIR)/$(EXEC) run
+
+run:
+	@echo "$(LINE2N) Running $(EXEC)... $(LINE1N)"
+	cp $(BUILDDIR)/$(EXEC) $(RUNDIR)
+	cd $(RUNDIR) && mpirun -n $(NPROC) $(EXEC) 2>&1 | tee out.$(EXEC).run
+
+$(BUILDDIR)/$(EXEC): $(MODSRC) $(SRC) cp-src
+	cd $(BUILDDIR) && $(MPIF90) $(F90FLAGS) $(MODSRC) $(SRC) -o $(EXEC)
+
+cp-src: $(MODSRC) $(SRC) | $(BUILDDIR)
+	@echo "\n>>> Copying source files to build directory..."
+	cp $(MODSRC) $(SRC) $(BUILDDIR)
+
+
+#-----------------------------------------------------------------
+# Python recipes
+#-----------------------------------------------------------------
+pyall: wrap f2py pyrun
+
+pyrun: cp-py-run
+	@echo "\n>>> Changing to run directory..."
+	cd $(RUNDIR) && mpirun -n $(NPROC) python $(PYMAIN) 2>&1 | tee out.$(NAME).pyrun
+
+f2py: cp-py-bld cp-src
+	@echo $(STAGE2)
+	cd $(BUILDDIR) && $(MPIF90) $(F90FLAGS) -fc=$(F90) -c -fPIC $(MODSRC) $(SRC)
+	@echo "\nStage 2 completed. $(LINE1N)"
+
+	@echo $(STAGE3)
+	cd $(BUILDDIR) && f2py-f90wrap --f90exec=$(MPIF90) --opt="-O2"				\
+		--f90flags="-fc=ifort $(F90FLAGS)" -c -m _$(NAME) *.o $(WRAPSRC)				\
+		-L$(MKLPATH) -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_vml_avx
+	@echo "\nStage 3 completed. $(LINE1N)"
+
+wrap:
+	@echo $(STAGE1)
+	f90wrap -m $(NAME) $(SRC) --only main setup step cleanup generate_output temp
+	@echo "\nStage 1 completed. $(LINE1N)"
+
+
+cp-py-bld: $(WRAPSRC) | $(BUILDDIR)
+	@echo "\n>>> Copying Python files to build directory..."
+	cp $(WRAPSRC) $(PYWRAPSRC) $(PYMAIN) $(BUILDDIR)
+
+cp-py-run:
+	@echo "$(LINE2N) Running $(PYMAIN)... $(LINE1N)"
+	@echo "\n>>> Copying Python files to run directory..."
+	cp $(PYOBJS:%=$(BUILDDIR)/%) $(RUNDIR)
+
+#-----------------------------------------------------------------
+$(BUILDDIR):
+	mkdir -p $@
+
+clean:
+	$(rm) -r $(BUILDDIR)
+
+clean-src:
+	$(rm) $(MODFILES) *.o .f2py_f2cmap $(WRAPSRC) $(PYWRAPSRC)* $(PYSHARED) lib_vtk_io.mod
+################################################################################
 
 
 ##################################################################
 # Recipes
 #-----------------------------------------------------------------
-.c.o:
-	$(rm) $@
-	$(FORT) $(FORTFLAGS) -c $*.f90
+# .c.o:
+# 	$(rm) $@
+# 	$(MPIF90) $(F90FLAGS) -c $*.f90
+#
+# all: $(EXEC)
+#
+# shlib:
+# 	$(MPIF90) -shared -fPIC $(F90FLAGS) $(SRC) LIB_VTK_IO.f90 $(MODSRC) mkl_vsl.o -o $(EXEC).so
 
-all: $(PROGNAME)
-
-$(PROGNAME) : $(OBJS)
-	cp $(OBJS) $(MODULES) $(OTHERFILES) $(TESTDIR) && cd $(TESTDIR) && \
-	$(FORT) $(FORTFLAGS) $(LIBS) $(MODULES) $(OBJS) -o $(PROGNAME)
-#	strip $(PROGNAME)
-#	$(PROGNAME)
-	cd $(TESTDIR) && mpirun -n 16 $(PROGNAME) 2>&1 | tee $(PROGNAME).$(NAME).err
-
-clean:
-#	$(rm) $(PROGNAME) core *~
-	$(rm) $(MODFILES)
-##################################################################
+# $(EXEC) : $(SRC) $(MODSRC)
+# 	cp $(SRC) $(MODSRC) $(OBJS) $(RUNDIR) && cd $(RUNDIR) && \
+# 	$(MPIF90) $(F90FLAGS) $(MODSRC) $(SRC) $(OBJS) -o $(EXEC)
+# 	cd $(RUNDIR) && mpirun -n 16 $(EXEC) 2>&1 | tee $(EXEC).$(VERS).out

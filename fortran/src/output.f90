@@ -1,9 +1,13 @@
 !***** OUTPUT.F90 ************************************************************************
 module output
 
-use parameters
+use LIB_VTK_IO
+
+use params
 use helpers
 use basis_funcs
+
+integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
 
 contains
 
@@ -12,8 +16,8 @@ contains
         implicit none
         real Qin(nx,ny,nz,nQ,nbasis)
         integer nout
-        integer(I4P) , parameter :: nb=1*ngu,sprd=0*1
-
+        integer(I4P), parameter :: nb=1*ngu,sprd=0*1
+        ! integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
         real(R4P), dimension(nnx+1) :: x_xml_rect
         real(R4P), dimension(nny+1) :: y_xml_rect
         real(R4P), dimension(nnz+1) :: z_xml_rect
@@ -24,7 +28,7 @@ contains
         real(R4P), dimension(nnx,nny,nnz) :: qvtk_dxvy,qvtk_dyvx
         real dn,dni, vx,vy,vz, U,P, dxrh,dyrh,dxmy,dymx
         integer(I4P):: E_IO,i,j,k,l,num,iam,igrid,ir,jr,kr,ib,jb,kb,ieq
-        character (50) :: out_name
+        character (70) :: out_name
         character (4) :: tname
         character (5) :: tname1
         character (4) :: pname
@@ -176,7 +180,7 @@ contains
                         vy = qvtk(i,j,k,my)*dni
                         vz = qvtk(i,j,k,mz)*dni
                         P = (aindex - 1.)*(qvtk(i,j,k,en) - 0.5*qvtk(i,j,k,rh)*(vx**2 + vy**2 + vz**2))
-                        var_xml_val_x(l)=P*te0*dni
+                        var_xml_val_x(l)=P*te0*dni/eV_per_K  ! Kelvin  (CES code just had P*te0)
                     enddo
                 enddo
             enddo
@@ -319,8 +323,8 @@ contains
         implicit none
         real Qin(nx,ny,nz,nQ,nbasis)
         integer nout
-        integer(I4P) , parameter :: nb=1*ngu,sprd=0*1
-        !    integer(I4P), parameter:: nnx=nx-2*nb,nny=ny-2*nb,nnz=nz-2*nb
+        integer(I4P), parameter :: nb=1*ngu,sprd=0*1
+        integer(I4P), parameter :: nnx=nx-2*nb,nny=ny-2*nb,nnz=nz-2*nb
         real(R4P), dimension(nnx+1):: x_xml_rect
         real(R4P), dimension(nny+1):: y_xml_rect
         real(R4P), dimension(nnz+1):: z_xml_rect

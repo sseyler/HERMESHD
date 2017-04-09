@@ -1,6 +1,6 @@
 program main
 
-use parameters_mod
+use params_mod
 use ic_mod
 use prepare_time_advance_mod
 use io_mod

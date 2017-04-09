@@ -1,22 +1,21 @@
 !***** FLUX.F90 **************************************************************************
 module flux
 
-use parameters
+use params
 use helpers
 use basis_funcs
 
 use boundary
-use random
+! use random  ! TODO: commented to get working w/o MKL
 
 ! Only used by flux_calc (flux_cal) and glflux
 real, dimension(nface,1:nx+1,ny,nz,1:nQ) :: flux_x
 real, dimension(nface,nx,1:ny+1,nz,1:nQ) :: flux_y
 real, dimension(nface,nx,ny,1:nz+1,1:nQ) :: flux_z
 
-! Only used by flux_calc (flux_cal) -- may be better to leave local to subrout
-real, dimension(nface,nQ) :: cfrx,cfry,cfrz
-real, dimension(nfe,nQ) :: Qface_x,Qface_y,Qface_z
-real, dimension(nfe,nQ) :: fface_x,fface_y,fface_z
+real, dimension(nface,nQ) :: cfrx,cfry,cfrz         ! in CES's code, these are defined globally
+real, dimension(nfe,nQ) :: Qface_x,Qface_y,Qface_z  ! in CES's code, these are inside flux_cal
+real, dimension(nfe,nQ) :: fface_x,fface_y,fface_z  ! in CES's code, these are inside flux_cal
 
 contains
 
@@ -34,12 +33,12 @@ contains
         real Spnts_r(npnts,3,3), Hpnts_r(npnts,3)
         real Sxx,Syy,Szz,Sxy,Sxz,Syz, Qx,Qy,Qz
 
-        c2d3cv = c2d3*colvis  ! global vars declared in parameters.f90
-        c4d3cv = c4d3*colvis  ! global vars declared in parameters.f90
+        c2d3cv = c2d3*colvis  ! global vars declared in params.f90
+        c4d3cv = c4d3*colvis  ! global vars declared in params.f90
 
         Spnts_r(:,:,:) = 0.0
         Hpnts_r(:,:) = 0.0
-        if (llns) call random_stresses_pnts_r(Spnts_r, npnts)
+        ! if (llns) call random_stresses_pnts_r(Spnts_r, npnts)  ! TODO: commented to get working w/o MKL
 
         do ife = 1,npnts
             dn   = Qpnts_r(ife,rh)
@@ -200,10 +199,14 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx+1,ny,nz,nQ), intent(out) :: flux_x
 
+        ! real, dimension(nface,nQ) :: cfrx
+        ! real, dimension(nfe,nQ) :: Qface_x,fface_x
+
         integer i,j,k,ieq,iback,i4,i4p,ipnt
-        real cwavex(nfe),fhllc_x(nface,5),qvin(nQ) !,fhllc_y(nface,5),fhllc_z(nface,5),fs(nface,nQ)
+        real cwavex(nfe),fhllc_x(nface,5),qvin(nQ)
 
         do k=1,nz
+            !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(iback,Qface_x,qvin) FIRSTPRIVATE(fface_x,cfrx,cwavex,fhllc_x)
             do j=1,ny
             do i=1,nx+1
                 iback = i-1
@@ -236,7 +239,8 @@ contains
 
                 call flux_calc_pnts_r(Qface_x,fface_x,1,nfe)
 
-                if (.not. ihllc) then
+                ! if (.not. ihllc) then
+                if (ivis == 2) then
                     do i4=1,nfe
                         do ieq=1,nQ
                             qvin(ieq) = Qface_x(i4,ieq)
@@ -245,7 +249,7 @@ contains
                     end do
 
                     do i4=1,nface
-                        cfrx(i4,rh:en) = max(cwavex(i4),cwavex(i4+nface))
+                        cfrx(i4,1:nQ) = max(cwavex(i4),cwavex(i4+nface))
                     end do
                 end if
 
@@ -268,6 +272,7 @@ contains
 
             end do
             end do
+            !$OMP END PARALLEL DO
         end do
 
     end subroutine calc_flux_x
@@ -279,10 +284,14 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny+1,nz,nQ), intent(out) :: flux_y
 
+        ! real, dimension(nface,nQ) :: cfry
+        ! real, dimension(nfe,nQ) :: Qface_y,fface_y
+
         integer i,j,k,ieq,jleft,i4,i4p,ipnt
-        real cwavey(nfe),fhllc_y(nface,5),qvin(nQ) !,fhllc_z(nface,5),fs(nface,nQ)
+        real cwavey(nfe),fhllc_y(nface,5),qvin(nQ)
 
         do k=1,nz
+            !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(jleft,Qface_y,qvin) FIRSTPRIVATE(fface_y,cfry,cwavey,fhllc_y)
             do j=1,ny+1
             jleft = j-1
             do i=1,nx
@@ -315,7 +324,8 @@ contains
 
                 call flux_calc_pnts_r(Qface_y,fface_y,2,nfe)
 
-                if (.not. ihllc) then
+                ! if (.not. ihllc) then
+                if (ivis == 2) then
                     do i4=1,nfe
                         do ieq=1,nQ
                             qvin(ieq) = Qface_y(i4,ieq)
@@ -324,7 +334,7 @@ contains
                     end do
 
                     do i4=1,nface
-                        cfry(i4,rh:en) = max(cwavey(i4),cwavey(i4+nface))
+                        cfry(i4,1:nQ) = max(cwavey(i4),cwavey(i4+nface))
                     end do
                 end if
 
@@ -347,6 +357,7 @@ contains
 
             end do
             end do
+            !$OMP END PARALLEL DO
         end do
 
     end subroutine calc_flux_y
@@ -357,11 +368,16 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny,nz+1,nQ), intent(out) :: flux_z
+
+        ! real, dimension(nface,nQ) :: cfrz
+        ! real, dimension(nfe,nQ) :: Qface_z, fface_z
+
         integer i,j,k,ieq,kdown,i4,i4p,ipnt
-        real cwavez(nfe),fhllc_z(nface,5),qvin(nQ) !fs(nface,nQ)
+        real cwavez(nfe),fhllc_z(nface,5),qvin(nQ)
 
         do k=1,nz+1
             kdown = k-1
+            !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(Qface_z,qvin) FIRSTPRIVATE(fface_z,cfrz,cwavez,fhllc_z)
             do j=1,ny
             do i=1,nx
 
@@ -395,7 +411,8 @@ contains
 
                 call flux_calc_pnts_r(Qface_z,fface_z,3,nfe)
 
-                if (.not. ihllc) then
+                ! if (.not. ihllc) then
+                if (ivis == 2) then
                     do i4=1,nfe
                         do ieq=1,nQ
                             qvin(ieq) = Qface_z(i4,ieq)
@@ -404,7 +421,7 @@ contains
                     end do
 
                     do i4=1,nface
-                        cfrz(i4,rh:en) = max(cwavez(i4),cwavez(i4+nface))
+                        cfrz(i4,1:nQ) = max(cwavez(i4),cwavez(i4+nface))
                     end do
                 end if
 
@@ -427,6 +444,7 @@ contains
 
             end do
             end do
+            !$OMP END PARALLEL DO
         end do
 
     end subroutine calc_flux_z
@@ -640,6 +658,7 @@ contains
         integral_r(:,:,:,:,:) = 0.
 
         do k = 1,nz
+        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(Qinner,integral_r) FIRSTPRIVATE(finner_x,finner_y,finner_z,int_r)
         do j = 1,ny
         do i = 1,nx
 
@@ -722,6 +741,7 @@ contains
 
         end do
         end do
+        !$OMP END PARALLEL DO
         end do
 
     end subroutine innerintegral
@@ -739,6 +759,7 @@ contains
         integral_r(:,:,:,:,:) = 0.
 
         do k = 1,nz
+        !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(Qinner,integral_r,sum1,sum2,sum3,sum4,sum5,sum6,sum7,sum8,sum8) FIRSTPRIVATE(finner_x,finner_y,finner_z,int_r)
         do j = 1,ny
         do i = 1,nx
 
@@ -901,6 +922,7 @@ contains
 
         end do
         end do
+        !$OMP END PARALLEL DO
         end do
 
     end subroutine innerintegral2
@@ -934,7 +956,8 @@ contains
         !   --
         !---------------------------------------------------------
         do ieq = 1,nQ
-        do k = 1,nz
+        do k = 1,nz                        !FIRSTPRIVATE(flux_x,flux_y,flux_z)
+        !$OMP PARALLEL DO DEFAULT(SHARED)
         do j = 1,ny
         do i = 1,nx
            glflux_r(i,j,k,ieq,1) = 0.25*(dxi*sum(wgt2d(1:nface)*(flux_x(1:nface,i+1,j,k,ieq) - flux_x(1:nface,i,j,k,ieq))) &
@@ -951,6 +974,7 @@ contains
         end do
         end do
         end do
+        !$OMP END PARALLEL DO
         end do
 
         ! NOTE: This was the original code before newCES

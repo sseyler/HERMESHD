@@ -31,7 +31,7 @@
 !   nbasis = 20: nbasis10 + {xyz, xP2(y), yP2(x), xP2(z),
 !                                 zP2(x), yP2(z), zP2(y), P3(x), P3(y), P3(z)}
 !*******************************************************************************
-module parameters
+module params
 
     use input
 
@@ -39,7 +39,7 @@ module parameters
     use MKL_VSL_TYPE
     use MKL_VSL
 
-    include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
+    include 'mpif.h'
 
     integer, parameter :: rh = 1                      ! density
     integer, parameter :: mx = 2, my = 3, mz = 4      ! vector momentum
@@ -284,4 +284,4 @@ contains
         thetavtk = atan2(yvtk(j),xvtk(i))
     end function thetavtk
 
-end module parameters
+end module params

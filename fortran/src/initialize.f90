@@ -2,33 +2,35 @@
 module initialize
 
 use input
-use parameters
+use params
 use helpers
 use basis_funcs!, only: wgt1d, wgt2d, wgt3d, ibitri, cbasis, set_bfvals_3D
 
 use initialcon
-use random
+use random  ! TODO: commented to get working w/o MKL
 
 implicit none
 
 integer, parameter :: iseed = 123456789  ! 1317345*mpi_P + 5438432*mpi_Q + 38472613*mpi_R
 
 real :: cflm
-integer :: nout
+! integer :: nout
 
 contains
 
     !===========================================================================
-    ! perform_setup : perform general setup & variable initialization
+    ! initializer : perform general setup & variable initialization
     !------------------------------------------------------------
-    subroutine perform_setup(t, dt, nout)
+    subroutine initializer(t, dt, nout, comm)
         implicit none
         real, intent(out) :: t, dt
         integer, intent(out) :: nout
 
+        integer :: comm
+
         !-------------------------
         ! Create output directory
-        call system('mkdir -p '//outdir)
+        call system('mkdir -p '//outdir)  ! NOTE: transfer to scratch in BW batch script!!!
 
         !-----------------------------------------
         ! Initialize grid sizes and local lengths
@@ -38,7 +40,7 @@ contains
 
         !-----------------------------------------
         ! Initialize various parameters
-        call setup_MPI(mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
+        call setup_MPI(comm, mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
         call init_spatial_params(dx,dy,dz, dxi,dyi,dzi, loc_lxd,loc_lyd,loc_lzd)
         ! call set_mxa_mya_mza(mxa, mya, mza)  ! not needed anymore probably
         call init_temporal_params(t, dt, nout)
@@ -50,14 +52,13 @@ contains
 
         call init_bf_weights(bval_int_wgt, wgtbf_xmp, wgtbf_ymp, wgtbf_zmp)
 
-        call init_random_seed(iam, iseed)
+        ! call init_random_seed(iam, iseed)
 
-        ! Initialize MKL random number generator
-        vsl_errcode = vslnewstream(vsl_stream, vsl_brng, iseed)
+        call random_init(iseed)  ! initialize MKL random number generator
 
         call print_startup_info
 
-    end subroutine perform_setup
+    end subroutine initializer
     !---------------------------------------------------------------------------
 
 
@@ -109,13 +110,13 @@ contains
         ! if (nbasis == 64) cflm = 0.08  ! nbasis = 20  0.1  is unstable for hydro
         select case (ibitri)
             case (0)
-        	    if (iquad == 2) set_cflm = 0.2
-        	    if (iquad == 3) set_cflm = 0.12
-        	    if (iquad == 4) set_cflm = 0.08
+        	    if (iquad == 2) set_cflm = 0.14
+        	    if (iquad == 3) set_cflm = 0.08
+        	    if (iquad == 4) set_cflm = 0.05
         	case (1)  ! coefficients for basis functions {P2(x)P2(y)P2(z)}
         	    if (iquad == 2) set_cflm = 0.14
-        	    if (iquad == 3) set_cflm = 0.10
-        	    if (iquad == 4) set_cflm = 0.07
+        	    if (iquad == 3) set_cflm = 0.08
+        	    if (iquad == 4) set_cflm = 0.05
         end select
         return
     end function set_cflm
@@ -221,11 +222,13 @@ contains
 
 
     !===========================================================================
-    subroutine setup_MPI(mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
+    subroutine setup_MPI(comm, mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
         implicit none
         integer, intent(inout) :: mpi_nx, mpi_ny
         integer, intent(out)   :: mpi_nz
         integer, intent(out)   :: mpi_P, mpi_Q, mpi_R
+
+        integer :: comm
 
         integer, dimension(3) :: dims, coords, periods ! only used in init for MPI things
         integer reorder
@@ -239,8 +242,9 @@ contains
         !   * mpi_nz
         !   * mpi_P, mpi_Q, mpi_R
 
-        call MPI_Init ( ierr )
-        call MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierr)
+        ! call MPI_Init ( ierr )
+        ! call MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierr)
+        call MPI_COMM_SIZE(comm, numprocs, ierr)
 
         mpi_nz = numprocs/(mpi_nx*mpi_ny)
 
@@ -388,13 +392,13 @@ contains
 
 
     !===========================================================================
-    ! initialize_from_file : initialize simulation from checkpoint file
+    ! set_ic_from_file : initialize simulation from checkpoint file
     !------------------------------------------------------------
-    subroutine initialize_from_file(Q_r, t, dt, nout)
+    subroutine set_ic_from_file(Q_r, t, dt, dtout, nout)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
-        real, intent(out) :: t, dt
-        integer, intent(out) :: nout
+        real, intent(inout) :: t, dt, dtout
+        integer, intent(inout) :: nout
 
         real t_p,dt_p,dtout_p
         integer nout_p,mpi_nx_p,mpi_ny_p,mpi_nz_p
@@ -433,7 +437,7 @@ contains
             call mpi_print(iam, 'Bad restart, non-matching mpi_nx, mpi_ny, or mpi_nz')
             call exit(-1)
         end if
-    end subroutine initialize_from_file
+    end subroutine set_ic_from_file
     !---------------------------------------------------------------------------
 
 

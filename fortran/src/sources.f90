@@ -1,9 +1,11 @@
 !***** SOURCES.F90 ***********************************************************************
 module sources
 
-use parameters
+use params
 use helpers
 use basis_funcs
+
+! use random  ! TODO: commented to get working w/o MKL
 
 contains
 
@@ -32,7 +34,7 @@ contains
                 source(ipg,rh:en) = 0
 
                 select case (ivis)
-                    case(0)  ! NOTE: THIS DOESN'T MAKE ANY SENSE IF THERE'S NO VISCOSITY
+                case(0)  ! NOTE: FOR INVISCID FLOW, MUST ENSURE coll = colvis = 0
                         source(ipg,pxx) = -coll*Qin(pxx)
                         source(ipg,pyy) = -coll*Qin(pyy)
                         source(ipg,pzz) = -coll*Qin(pzz)

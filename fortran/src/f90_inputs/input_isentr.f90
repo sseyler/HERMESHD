@@ -1,28 +1,30 @@
-!****** INPUT.F90 ************************************************************************
+!****** SOD_INPUT.F90 ************************************************************************
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 2.2e0 !1.0e6 !4.1e2
-    real, parameter :: ly = 4.1e-1 !1.0e6 !4.1e2
-    real, parameter :: lz = ly/120. !1.0e6/120. !4.1e2/120.
+    real, parameter :: lx = 1.0e1 !1.0e6 !4.1e2
+    real, parameter :: ly = 1.0e1 !1.0e6 !4.1e2
+    real, parameter :: lz = lx/120. !1.0e6/120. !4.1e2/120.
 
     ! Number of Gaussian quadrature points per spatial dimension
-    integer, parameter :: iquad   = 2
-    integer, parameter :: nbasis  = 8 ! 8
+    ! (iquad, nbasis):
+    !   * (2, 4), (2, 8), (3, 10), (3, 27), (4, 20)
+    integer, parameter :: iquad  = 2
+    integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 48  ! 55 (mpi_nx = 8)
-    integer, parameter :: ny = 18  ! 41 (mpi_ny = 2)
+    integer, parameter :: nx = 21
+    integer, parameter :: ny = 21
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
-    integer :: mpi_nx = 8
-    integer :: mpi_ny = 4
+    integer :: mpi_nx = 3
+    integer :: mpi_ny = 3
 
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK
     !   * 3 or 'shu-osher' for 3rd-order RK
-    integer, parameter :: iorder = 2
+    ! integer, parameter :: iorder = 2
     character(*), parameter :: iname = 'heun'
 
     ! Fluctuating hydrodynamics
@@ -30,27 +32,23 @@ module input
 
     ! Initial conditions
     ! character(*), parameter :: icname = ''
-    integer, parameter :: icid = 5
+    integer, parameter :: icid = 1
 
     ! Boundary conditions
-    character(*), parameter :: xlobc = 'outflow' !'periodic'
-    character(*), parameter :: xhibc = 'outflow' !'periodic'
-    character(*), parameter :: ylobc = 'noslip'  !'periodic'
-    character(*), parameter :: yhibc = 'noslip'  !'periodic'
+    character(*), parameter :: xlobc = 'periodic'
+    character(*), parameter :: xhibc = 'periodic'
+    character(*), parameter :: ylobc = 'periodic'
+    character(*), parameter :: yhibc = 'periodic'
     character(*), parameter :: zlobc = 'periodic'
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 1.0e-2 !8.5e4
+    real, parameter :: tf = 1.0e1
 
     ! Console output frequency
-    integer, parameter :: ntout = 100
+    integer, parameter :: ntout = 200
 
     ! Riemann solver
-    ! If all of them = 0, then LLF is used for fluxes.
-    !   LLF is very diffusive for the hydro problem. Roe and HLLC are much less
-    !   diffusive than LLF and give very similar results with similar cpu overhead
-    !   Only HLLC is setup to handle water EOS (ieos = 2)
     logical, parameter :: ihllc = .true.
 
     ! Equation of state:
@@ -59,22 +57,22 @@ module input
     integer, parameter :: ieos = 1
 
     ! Thermodynamic, constitutive, and transport parameters
-    real, parameter :: TK     = 300.0    ! in Kelvin
     real, parameter :: mu     = 18.0     ! AMU per molecule
-    real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
+    real, parameter :: aindex = 7./5.    ! adiabatic index (gamma)
     real, parameter :: clt    = 2.0      ! numerical speed of sound
 
     ! Viscosity control
     !   * 0 for explicit integration
     !   * 1 for semi-implicit integration of stress terms
     !   * 2 for full 10-moment formulation (NOTE: not finished!)
-    integer, parameter :: ivis = 1
-    real, parameter    :: vis  = 1.0e-3  !1.79e-6  ! dynamic viscosity (air @ 15 C)
-    real, parameter    :: epsi = 5.0      ! inverse relaxation coefficient
+    integer, parameter :: ivis = 0
+    real, parameter    :: vis  = 0       ! dynamic viscosity
+    real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_poi2d_temp_long_bw"
+    character (*), parameter :: outname = "ise_63x63_i2_q2_b8_v0"
+    ! character (*), parameter :: outname = trim('ise_'//nx//'x'//ny//'_'//iname//'_q'//iquad//'_b'//nbasis//'_v'//(icid-1))
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density

@@ -31,15 +31,11 @@
 !   nbasis = 20: nbasis10 + {xyz, xP2(y), yP2(x), xP2(z),
 !                                 zP2(x), yP2(z), zP2(y), P3(x), P3(y), P3(z)}
 !*******************************************************************************
-module parameters
+module params
 
     use input
 
-    use lib_vtk_io
-    use MKL_VSL_TYPE
-    use MKL_VSL
-
-    include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
+    include 'mpif.h'
 
     integer, parameter :: rh = 1                      ! density
     integer, parameter :: mx = 2, my = 3, mz = 4      ! vector momentum
@@ -73,27 +69,35 @@ module parameters
     real, parameter :: sqrt2 = 2**0.5, sqrt2i = 1.0/sqrt2
     real, parameter :: c1d5 = 1./5.
     real, parameter :: c1d3 = 1./3., c2d3 = 2./3., c4d3 = 4./3.
-    real, parameter :: eV_per_K = 8.61728e-5
+
+    ! Physical constants and unit conversions
+    real, parameter :: M_u      = 1.660539e-27 ! unified AMU in kg
+    real, parameter :: n_ig     = 2.504e25     ! ideal gas num density @ 1 atm, 293.15 K (20 C)
+
+    real, parameter :: k_B      = 1.380651e-23 ! Boltzmann constant in J/K
+    real, parameter :: J_per_eV = 1.602176e-19 ! J per eV
+    real, parameter :: eV_per_K = k_B/J_per_eV ! eV per K
 
     ! Useful derived parameters
+    real, parameter :: TK     = 1.0         ! set temperature floor in Kelvin
     real, parameter :: aindm1 = aindex - 1. ! gamma - 1
     real, parameter :: cp = aindex/aindm1   ! specific heat at constant pressure
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
     real, parameter :: L0 = 1.0e0  ! 1.0e-9                 ! length
     real, parameter :: t0 = 1.0e0  ! 1.0e-12                ! time
-    real, parameter :: n0 = 3.32e25 ! 2.5e25 for ideal gas   ! number density
+    real, parameter :: n0 = n_ig   ! ideal gas (# per m^3)  ! number density
 
     ! Derived units
-    real, parameter :: v0  = L0/t0                 ! velocity
-    real, parameter :: p0  = mu*1.67e-27*n0*v0**2  ! pressure
-    real, parameter :: te0 = p0/n0/1.6e-19         ! temperature (eV, not K!)
+    real, parameter :: v0  = L0/t0            ! velocity
+    real, parameter :: p0  = mu*M_u*n0*v0**2  ! pressure
+    real, parameter :: te0 = p0/n0/J_per_eV   ! temperature (eV, not K!)
 
     ! rh_min is a min density to be used for ideal gas EOS, rh_min is min density
     ! below which the pressure becomes negative for the MT water EOS.
     ! The DG-based subroutine "limiter" keeps density above rh_mult*rh_min.
     real, parameter :: rh_floor = 5.0e-6     ! 1.0e-1 was old value
-    real, parameter :: T_floor  = (te*eV_per_K)/te0  ! 0.02585 eV ~ 300 K
+    real, parameter :: T_floor  = (TK*eV_per_K)/te0  ! 0.02585 eV ~ 300 K
     real, parameter :: P_floor  = T_floor*rh_floor
 
     ! Murnaghan-Tait EOS
@@ -103,7 +107,7 @@ module parameters
     ! some of which account for ionic solutions. Would be worthwhile to
     ! further investigate and experiment with different EOS's.
     real, parameter :: n_tm = 7.2  ! 7.2 (or 7.15) for water
-    real, parameter :: P_1 = 2.15e9/n_tm/p0, P_base = 1.01e5/p0 ! atmo pressure
+    real, parameter :: P_1 = 2.15e9/n_tm/p0, P_base = 1.013e5/p0 ! atmo pressure (101.3 kPa)
     real, parameter :: rh_mult = 1.01, rh_min = rh_mult*(1.0-P_base/P_1)**(1./n_tm)
     !---------------------------------------------------------------------------
 
@@ -121,7 +125,7 @@ module parameters
     real, parameter :: nu = epsi*vis
     real, parameter :: c2d3nu=c2d3*nu, c4d3nu=c4d3*nu
 
-    real, parameter :: T_base     = 300.0*eV_per_K/te0 ! te*eV_per_K/te0  ! temp (isothermal)
+    real, parameter :: T_base     = TK*eV_per_K/te0 ! te*eV_per_K/te0  ! temp (isothermal)
     real, parameter :: eta_base   = vis    ! dynamic viscosity
     real, parameter :: zeta_base  = 0.  ! bulk viscosity---will need to adjust this!
     real, parameter :: kappa_base = 1.e-1
@@ -153,14 +157,6 @@ module parameters
     integer kx,ky,kz, kyz,kzx,kxy, kxyz, kxx,kyy,kzz, kyzz,kzxx,kxyy
     integer kyyz,kzzx,kxxy, kyyzz,kzzxx,kxxyy, kyzxx,kzxyy,kxyzz
     integer kxyyzz,kyzzxx,kzxxyy, kxxyyzz, kxxx,kyyy,kzzz
-
-    ! TODO: only in output & basis_funcs
-    integer, parameter :: nvtk  = 1    ! (was 2)
-    integer, parameter :: nvtk2 = nvtk*nvtk
-    integer, parameter :: nvtk3 = nvtk*nvtk*nvtk
-
-    ! TODO: only in set_vtk_vals_3D, output_vtk
-    real, dimension(nvtk3,nbastot) :: bfvtk, bfvtk_dx, bfvtk_dy, bfvtk_dz
 
     ! TODO: only in set_vtk_vals_3D, xvtk/yvtk/zvtk (parameters), output_vtk
     real dxvtk,dyvtk,dzvtk
@@ -284,4 +280,4 @@ contains
         thetavtk = atan2(yvtk(j),xvtk(i))
     end function thetavtk
 
-end module parameters
+end module params

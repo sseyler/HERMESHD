@@ -1,7 +1,21 @@
 !****** BASIS_FUNCS.F90 ******************************************************************
 module basis_funcs
 
-use parameters
+!===========================================================================
+! Parameters
+!------------------------------------------------------------
+use params
+
+integer, parameter :: nvtk  = 1    ! (was 2)
+integer, parameter :: nvtk2 = nvtk*nvtk
+integer, parameter :: nvtk3 = nvtk*nvtk*nvtk
+!===========================================================================
+
+
+!===========================================================================
+! Definitions
+!------------------------------------------------------------
+real, dimension(nvtk3,nbastot) :: bfvtk, bfvtk_dx, bfvtk_dy, bfvtk_dz
 
 ! TODO: only in init, innerintegral, source_calc
 real, dimension(nbastot) :: cbasis
@@ -38,7 +52,10 @@ real, dimension(nface,nbastot) :: bfvals_zp, bfvals_zm
 real, dimension(nface,nbastot) :: bfvals_yp, bfvals_ym
 real, dimension(nface,nbastot) :: bfvals_xp, bfvals_xm
 
-integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
+! TODO: original types are I4P from LIB_VTK_IO.f90
+! integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
+! integer, parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
+
 real :: xgrid(20) ! used in set_vtk_vals_3D
 
 ! These are used in test_basis_3D
@@ -46,6 +63,7 @@ real, dimension(nbastot,nbastot) :: cell_int,xp_int,xm_int,yp_int,ym_int,zp_int,
 real, dimension(nbastot,nbastot) :: cell_int0,xp_int0,xm_int0,yp_int0,ym_int0,zp_int0,zm_int0
 real, dimension(nbastot) :: cbas_xp,cbas_xm,cbas_yp,cbas_ym,cbas_zp,cbas_zm
 integer, dimension(nbastot) :: ibas_x, ibas_y, ibas_z
+!===========================================================================
 
 contains
 

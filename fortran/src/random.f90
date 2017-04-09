@@ -1,9 +1,12 @@
 !***** RANDOM.F90 ************************************************************************
 module random
 
-use parameters
-use helpers
-use boundary
+use MKL_VSL_TYPE
+use MKL_VSL
+
+use params
+! use helpers
+! use boundary
 
 !===========================================================================
 ! MKL VSL parameters
@@ -28,6 +31,21 @@ real, parameter :: vsl_sigma = 1.0
 ! real Sflux_z(nface, nx,     ny,     1:nz+1, 3,3)
 
 contains
+
+!-------------------------------------------------------------------------------
+    subroutine random_init(seed)
+        integer, intent(in) :: seed
+        vsl_errcode = vslnewstream(vsl_stream, vsl_brng, seed)
+    end subroutine random_init
+!-------------------------------------------------------------------------------
+
+
+!-------------------------------------------------------------------------------
+    subroutine random_cleanup()
+        vsl_errcode = vsldeletestream( vsl_stream )
+    end subroutine random_cleanup
+!-------------------------------------------------------------------------------
+
 
 !-------------------------------------------------------------------------------
     subroutine get_GRM(GRMpnts_r, npnts)

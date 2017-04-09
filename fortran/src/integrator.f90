@@ -2,7 +2,7 @@
 module integrator
 
     use input!, only : nx,ny,nz
-    use parameters!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
+    use params!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
     use helpers
 
     use prepare_step
@@ -13,12 +13,13 @@ module integrator
     ! ABSTRACT INTERFACE to subroutine for temporal integration
     !-----------------------------------------------------------------
     abstract interface
-        subroutine update_ptr (Q_io, Q_1, Q_2)
+        subroutine update_ptr (Q_io, Q_1, Q_2, dt)
             use input, only : nx,ny,nz
-            use parameters, only : nQ,nbasis
+            use params, only : nQ,nbasis
 
             real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
             real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2
+            real, intent(inout) :: dt
         end subroutine update_ptr
     end interface
     !---------------------------------------------------------------------------
@@ -29,7 +30,6 @@ module integrator
     !-----------------------------------------------------------------
     procedure (update_ptr), pointer :: update => null ()
     !---------------------------------------------------------------------------
-
 
 contains
 
@@ -59,28 +59,30 @@ contains
     !===========================================================================
     ! Temporal integration subroutines (subject to change!)
     !-----------------------------------------------------------------
-    subroutine RK2(Q_io, Q_1, Q_2)
+    subroutine RK2(Q_io, Q_1, Q_2, dt)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2
+        real, intent(inout) :: dt
 
-        call euler_step(Q_io, Q_1)
-        call euler_step(Q_1, Q_2)
+        call euler_step(Q_io, Q_1, dt)
+        call euler_step(Q_1, Q_2, dt)
         Q_io = 0.5 * ( Q_io + Q_2 )
     end subroutine RK2
 
     !----------------------------------------------------
-    subroutine RK3(Q_io, Q_1, Q_2)
+    subroutine RK3(Q_io, Q_1, Q_2, dt)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2
+        real, intent(inout) :: dt
 
-        call euler_step(Q_io, Q_1)
-        call euler_step(Q_1, Q_2)
+        call euler_step(Q_io, Q_1, dt)
+        call euler_step(Q_1, Q_2, dt)
         Q_1 = 0.75*Q_io + 0.25*Q_2
 
-        call euler_step(Q_1, Q_2)  ! re-use the second array
-        Q_io = c1d3 * ( Q_io + 2.0*Q_2 )
+        call euler_step(Q_1, Q_2, dt)  ! re-use the second array
+        Q_io = c1d3*Q_io + c2d3*Q_2
     end subroutine RK3
     !---------------------------------------------------------------------------
 
@@ -88,15 +90,17 @@ contains
     !===========================================================================
     ! Explicit Euler integration step
     !-----------------------------------------------------------------
-    subroutine euler_step(Q_in, Q_out)
+    subroutine euler_step(Q_in, Q_out, dt)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_in
         real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
+        real, intent(inout) :: dt
 
         call prep_advance(Q_in)
         call calc_rhs(Q_in)
-        call advance_time_level(Q_in, Q_out)
+        call advance_time_level(Q_in, Q_out, dt)
     end subroutine euler_step
+
 
     !----------------------------------------------------
     subroutine prep_advance(Q_io)
@@ -118,10 +122,12 @@ contains
     end subroutine calc_rhs
 
     !----------------------------------------------------
-    subroutine advance_time_level(Q_in, Q_out)
+    subroutine advance_time_level(Q_in, Q_out, dt)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_in
         real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
+        real, intent(inout) :: dt
+
         real P_xx,P_yy,P_zz,P_xy,P_xz,P_yz
         real glf_pxx,glf_pyy,glf_pzz,glf_pxy,glf_pxz,glf_pyz
         real src_pxx,src_pyy,src_pzz,src_pxy,src_pxz,src_pyz
