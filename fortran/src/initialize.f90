@@ -14,7 +14,7 @@ implicit none
 integer, parameter :: iseed = 123456789  ! 1317345*mpi_P + 5438432*mpi_Q + 38472613*mpi_R
 
 real :: cflm
-integer :: nout
+! integer :: nout
 
 contains
 

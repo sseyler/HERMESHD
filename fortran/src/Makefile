@@ -158,7 +158,7 @@ cp-py: $(WRAPSRC) | $(BUILDDIR)
 
 wrap:
 	@echo $(STAGE1)
-	f90wrap -m $(NAME) $(SRC) --only main
+	f90wrap -m $(NAME) $(SRC) --only main setup step cleanup generate_output temp
 	@echo "\nStage 1 completed. $(LINE1N)"
 
 

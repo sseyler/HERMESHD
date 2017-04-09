@@ -22,7 +22,6 @@ use output
 
 contains
 
-
     !===========================================================================
     subroutine main(comm)
 
@@ -47,6 +46,17 @@ contains
         call cleanup(t_start)
 
     end subroutine main
+    !---------------------------------------------------------------------------
+
+    !===========================================================================
+    subroutine temp(a, b, c)
+        integer, intent(in) :: a
+        integer, intent(inout) :: b, c
+        !f2py intent(in,out) :: c
+
+        b = b + 1
+        c = c + 1
+    end subroutine temp
     !---------------------------------------------------------------------------
 
 
@@ -74,9 +84,7 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
         real, intent(inout) :: t, dt, t1, t_start, dtout
-        integer, intent(inout) :: nout
-
-        integer :: comm
+        integer, intent(inout) :: nout, comm
 
         !-------------------------------------------------
         ! 1. Initialize general simulation variables
