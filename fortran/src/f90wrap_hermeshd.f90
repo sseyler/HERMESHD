@@ -8,15 +8,14 @@ subroutine f90wrap_main(comm)
     call main(comm=comm)
 end subroutine f90wrap_main
 
-subroutine f90wrap_temp(a, b, c, d)
+subroutine f90wrap_temp(a, b, c)
     use hermeshd, only: temp
     implicit none
     
-    integer, intent(in) :: a
+    integer, intent(inout) :: a
     integer, intent(inout) :: b
-    real :: c
-    integer, intent(out) :: d
-    call temp(a=a, b=b, c=c, d=d)
+    integer, intent(inout) :: c
+    call temp(a=a, b=b, c=c)
 end subroutine f90wrap_temp
 
 subroutine f90wrap_step(q_io, q_1, q_2, t, dt, n0, n1, n2, n3, n4, n5, n6, n7, &
@@ -97,7 +96,8 @@ subroutine f90wrap_cleanup(t_start)
     call cleanup(t_start=t_start)
 end subroutine f90wrap_cleanup
 
-subroutine f90wrap_generate_output(q_r, t, dt, t1, nout, n0, n1, n2, n3, n4)
+subroutine f90wrap_generate_output(q_r, t, dt, t1, dtout, nout, n0, n1, n2, n3, &
+    n4)
     use hermeshd, only: generate_output
     implicit none
     
@@ -105,6 +105,7 @@ subroutine f90wrap_generate_output(q_r, t, dt, t1, nout, n0, n1, n2, n3, n4)
     real, intent(inout) :: t
     real, intent(inout) :: dt
     real, intent(inout) :: t1
+    real, intent(inout) :: dtout
     integer, intent(inout) :: nout
     integer :: n0
     !f2py intent(hide), depend(q_r) :: n0 = shape(q_r,0)
@@ -116,7 +117,7 @@ subroutine f90wrap_generate_output(q_r, t, dt, t1, nout, n0, n1, n2, n3, n4)
     !f2py intent(hide), depend(q_r) :: n3 = shape(q_r,3)
     integer :: n4
     !f2py intent(hide), depend(q_r) :: n4 = shape(q_r,4)
-    call generate_output(Q_r=q_r, t=t, dt=dt, t1=t1, nout=nout)
+    call generate_output(Q_r=q_r, t=t, dt=dt, t1=t1, dtout=dtout, nout=nout)
 end subroutine f90wrap_generate_output
 
 ! End of module hermeshd defined in file hermeshd.f90

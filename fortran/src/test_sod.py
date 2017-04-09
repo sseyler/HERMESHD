@@ -46,9 +46,9 @@ nx, ny, nz = 50, 1, 1
 nQ, nB = 11, 8
 
 # Field arrays
-Qio = np.empty((nx, ny, nz, nQ, nB), order='F', dtype=np.float32)
-Q1  = np.empty((nx, ny, nz, nQ, nB), order='F', dtype=np.float32)
-Q2  = np.empty((nx, ny, nz, nQ, nB), order='F', dtype=np.float32)
+Qio = np.empty((nx, ny, nz, nQ, nB), order='F', dtype=float)
+Q1  = np.empty((nx, ny, nz, nQ, nB), order='F', dtype=float)
+Q2  = np.empty((nx, ny, nz, nQ, nB), order='F', dtype=float)
 
 # Time variables
 t  = np.array(0.0, dtype=float)  # works w/ np.float32 and None
@@ -56,9 +56,9 @@ tf = np.array(7.0e-4, dtype=float)
 dt = np.array(0.0, dtype=float)
 
 # Timing and output variables
-t1      = np.array(0.0)
-t_start = np.array(0.0)
-dtout   = np.array(0.0)
+t1      = np.array(0.0, dtype=float)
+t_start = np.array(0.0, dtype=float)
+dtout   = np.array(0.0, dtype=float)
 nout    = np.array(0, dtype=int)  # works w/ np.int32 and None
 
 

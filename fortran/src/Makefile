@@ -134,14 +134,11 @@ cp-src: $(MODSRC) $(SRC) | $(BUILDDIR)
 #-----------------------------------------------------------------
 pyall: wrap f2py pyrun
 
-pyrun:
-	@echo "$(LINE2N) Running $(PYMAIN)... $(LINE1N)"
-	@echo "\n>>> Copying Python files to run directory..."
-	cp $(PYOBJS:%=$(BUILDDIR)/%) $(RUNDIR)
+pyrun: cp-py-run
 	@echo "\n>>> Changing to run directory..."
 	cd $(RUNDIR) && mpirun -n $(NPROC) python $(PYMAIN) 2>&1 | tee out.$(NAME).pyrun
 
-f2py: cp-py cp-src
+f2py: cp-py-bld cp-src
 	@echo $(STAGE2)
 	cd $(BUILDDIR) && $(MPIF90) $(F90FLAGS) -fc=$(F90) -c -fPIC $(MODSRC) $(SRC)
 	@echo "\nStage 2 completed. $(LINE1N)"
@@ -152,15 +149,20 @@ f2py: cp-py cp-src
 		-L$(MKLPATH) -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_vml_avx
 	@echo "\nStage 3 completed. $(LINE1N)"
 
-cp-py: $(WRAPSRC) | $(BUILDDIR)
-	@echo "\n>>> Copying Python files to build directory..."
-	cp $(WRAPSRC) $(PYWRAPSRC) $(PYMAIN) $(BUILDDIR)
-
 wrap:
 	@echo $(STAGE1)
 	f90wrap -m $(NAME) $(SRC) --only main setup step cleanup generate_output temp
 	@echo "\nStage 1 completed. $(LINE1N)"
 
+
+cp-py-bld: $(WRAPSRC) | $(BUILDDIR)
+	@echo "\n>>> Copying Python files to build directory..."
+	cp $(WRAPSRC) $(PYWRAPSRC) $(PYMAIN) $(BUILDDIR)
+
+cp-py-run:
+	@echo "$(LINE2N) Running $(PYMAIN)... $(LINE1N)"
+	@echo "\n>>> Copying Python files to run directory..."
+	cp $(PYOBJS:%=$(BUILDDIR)/%) $(RUNDIR)
 
 #-----------------------------------------------------------------
 $(BUILDDIR):

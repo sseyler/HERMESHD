@@ -37,7 +37,7 @@ contains
         !-----------------------------
         do while( t < tf )
             call step(Q_r0, Q_r1, Q_r2, t, dt)
-            call generate_output(Q_r0, t, dt, t1, nout)  ! determines when output should be generated
+            call generate_output(Q_r0, t, dt, t1, dtout, nout)  ! determines when output should be generated
         end do
 
         !#############################
@@ -50,12 +50,10 @@ contains
 
     !===========================================================================
     subroutine temp(a, b, c)
-        integer, intent(in) :: a
+        integer, intent(inout) :: a
         integer, intent(inout) :: b, c
-        !f2py intent(in,out) :: c
-
         b = b + 1
-        c = c + 1
+        c = c + a
     end subroutine temp
     !---------------------------------------------------------------------------
 
@@ -214,13 +212,14 @@ contains
     !===========================================================================
     ! Generate console and VTK output
     !------------------------------------------------------------
-    subroutine generate_output(Q_r, t, dt, t1, nout)
+    subroutine generate_output(Q_r, t, dt, t1, dtout, nout)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
-        real, intent(inout) :: t, dt, t1
+        real, intent(inout) :: t, dt, t1, dtout
         integer, intent(inout) :: nout
 
-        integer ioe
+        real    :: t2
+        integer :: ioe
 
         ! TODO: dtout may be deprecated once improved output scheme is used
         ! TODO: consider using init_temporal_params() to initialize the

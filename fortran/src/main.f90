@@ -19,6 +19,7 @@ use random
 use flux
 use output
 
+integer :: nout
 
 !###############################################################################
 ! I. SETUP
@@ -27,7 +28,7 @@ use output
 !-------------------------------------------------
 ! 1. Initialize general simulation variables
 !-------------------------------------------------
-call initializer(t, dt, nout)
+call initializer(t, dt, nout, comm)
 
 t_start = get_clock_time()  ! start timer for wall time
 dtout = tf/ntout  ! TODO: move this to a more sensible place once output scheme is improved!

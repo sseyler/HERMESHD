@@ -7,7 +7,7 @@ class Hermeshd(f90wrap.runtime.FortranModule):
     Module hermeshd
     
     
-    Defined at hermeshd.f90 lines 2-279
+    Defined at hermeshd.f90 lines 2-276
     
     """
     @staticmethod
@@ -29,24 +29,19 @@ class Hermeshd(f90wrap.runtime.FortranModule):
     @staticmethod
     def temp(a, b, c):
         """
-        d = temp(a, b, c)
+        temp(a, b, c)
         
         
-        Defined at hermeshd.f90 lines 52-60
+        Defined at hermeshd.f90 lines 52-56
         
         Parameters
         ----------
         a : int
         b : int
-        c : float
-        
-        Returns
-        -------
-        d : int
+        c : int
         
         """
-        d = _hermeshd.f90wrap_temp(a=a, b=b, c=c)
-        return d
+        _hermeshd.f90wrap_temp(a=a, b=b, c=c)
     
     @staticmethod
     def step(q_io, q_1, q_2, t, dt):
@@ -54,7 +49,7 @@ class Hermeshd(f90wrap.runtime.FortranModule):
         step(q_io, q_1, q_2, t, dt)
         
         
-        Defined at hermeshd.f90 lines 66-74
+        Defined at hermeshd.f90 lines 62-70
         
         Parameters
         ----------
@@ -73,7 +68,7 @@ class Hermeshd(f90wrap.runtime.FortranModule):
         setup(q_io, t, dt, t1, t_start, dtout, nout, comm)
         
         
-        Defined at hermeshd.f90 lines 80-126
+        Defined at hermeshd.f90 lines 76-122
         
         Parameters
         ----------
@@ -99,7 +94,7 @@ class Hermeshd(f90wrap.runtime.FortranModule):
         cleanup(t_start)
         
         
-        Defined at hermeshd.f90 lines 132-150
+        Defined at hermeshd.f90 lines 128-146
         
         Parameters
         ----------
@@ -116,12 +111,12 @@ class Hermeshd(f90wrap.runtime.FortranModule):
         _hermeshd.f90wrap_cleanup(t_start=t_start)
     
     @staticmethod
-    def generate_output(q_r, t, dt, t1, nout):
+    def generate_output(q_r, t, dt, t1, dtout, nout):
         """
-        generate_output(q_r, t, dt, t1, nout)
+        generate_output(q_r, t, dt, t1, dtout, nout)
         
         
-        Defined at hermeshd.f90 lines 219-277
+        Defined at hermeshd.f90 lines 215-274
         
         Parameters
         ----------
@@ -129,10 +124,12 @@ class Hermeshd(f90wrap.runtime.FortranModule):
         t : float
         dt : float
         t1 : float
+        dtout : float
         nout : int
         
         """
-        _hermeshd.f90wrap_generate_output(q_r=q_r, t=t, dt=dt, t1=t1, nout=nout)
+        _hermeshd.f90wrap_generate_output(q_r=q_r, t=t, dt=dt, t1=t1, dtout=dtout, \
+            nout=nout)
     
     _dt_array_initialisers = []
     
