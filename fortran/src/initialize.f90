@@ -21,10 +21,12 @@ contains
     !===========================================================================
     ! initializer : perform general setup & variable initialization
     !------------------------------------------------------------
-    subroutine initializer(t, dt, nout)
+    subroutine initializer(t, dt, nout, comm)
         implicit none
         real, intent(out) :: t, dt
         integer, intent(out) :: nout
+
+        integer :: comm
 
         !-------------------------
         ! Create output directory
@@ -38,7 +40,7 @@ contains
 
         !-----------------------------------------
         ! Initialize various parameters
-        call setup_MPI(mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
+        call setup_MPI(comm, mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
         call init_spatial_params(dx,dy,dz, dxi,dyi,dzi, loc_lxd,loc_lyd,loc_lzd)
         ! call set_mxa_mya_mza(mxa, mya, mza)  ! not needed anymore probably
         call init_temporal_params(t, dt, nout)
@@ -220,11 +222,13 @@ contains
 
 
     !===========================================================================
-    subroutine setup_MPI(mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
+    subroutine setup_MPI(comm, mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
         implicit none
         integer, intent(inout) :: mpi_nx, mpi_ny
         integer, intent(out)   :: mpi_nz
         integer, intent(out)   :: mpi_P, mpi_Q, mpi_R
+
+        integer :: comm
 
         integer, dimension(3) :: dims, coords, periods ! only used in init for MPI things
         integer reorder
@@ -238,8 +242,9 @@ contains
         !   * mpi_nz
         !   * mpi_P, mpi_Q, mpi_R
 
-        call MPI_Init ( ierr )
-        call MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierr)
+        ! call MPI_Init ( ierr )
+        ! call MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierr)
+        call MPI_COMM_SIZE(comm, numprocs, ierr)
 
         mpi_nz = numprocs/(mpi_nx*mpi_ny)
 

@@ -24,11 +24,14 @@ contains
 
 
     !===========================================================================
-    subroutine main()
+    subroutine main(comm)
+
+        integer, intent(inout) :: comm
+
         !#############################
         ! I. SETUP
         !-----------------------------
-        call setup(Q_r0, t, dt, t1, t_start, dtout, nout)
+        call setup(Q_r0, t, dt, t1, t_start, dtout, nout, comm)
 
         !#############################
         ! II. SIMULATION
@@ -62,7 +65,7 @@ contains
 
 
     !===========================================================================
-    subroutine setup(Q_io, t, dt, t1, t_start, dtout, nout)
+    subroutine setup(Q_io, t, dt, t1, t_start, dtout, nout, comm)
         use integrator, only: select_integrator, update
         use boundary, only: apply_xlobc, apply_ylobc, apply_zlobc,              &
                             apply_xhibc, apply_yhibc, apply_zhibc,              &
@@ -72,10 +75,13 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
         real, intent(inout) :: t, dt, t1, t_start, dtout
         integer, intent(inout) :: nout
+
+        integer :: comm
+
         !-------------------------------------------------
         ! 1. Initialize general simulation variables
         !-------------------------------------------------
-        call initializer(t, dt, nout)
+        call initializer(t, dt, nout, comm)
 
         t_start = get_clock_time()  ! start timer for wall time
         dtout = tf/ntout  ! TODO: move this to a more sensible place once output scheme is improved!

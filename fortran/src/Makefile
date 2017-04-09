@@ -1,6 +1,11 @@
 #!/usr/bin/make -f
-
 rm = /bin/rm -f
+
+################################################################################
+# Definitions
+#-----------------------------------------------------------------
+
+#--- Fortran compilers -----------
 F90 = ifort
 MPIF90 = mpif90
 
@@ -17,6 +22,8 @@ ifndef $(EXEC)
 endif
 
 RUNDIR = /scratch/sseyler/WORK/PERSEUSHD_testing
+#-----------------------------------------------------------------
+
 
 # NOTE: Seems to work when doing "include 'mpif.h'" in the code
 # MPIVERS = openmpi/1.6.3/intel13.0
@@ -91,7 +98,6 @@ endif
 ################################################################################
 
 
-
 ################################################################################
 # For printing out information
 #-----------------------------------------------------------------
@@ -130,7 +136,9 @@ pyall: wrap f2py pyrun
 
 pyrun:
 	@echo "$(LINE2N) Running $(PYMAIN)... $(LINE1N)"
+	@echo "\n>>> Copying Python files to run directory..."
 	cp $(PYOBJS:%=$(BUILDDIR)/%) $(RUNDIR)
+	@echo "\n>>> Changing to run directory..."
 	cd $(RUNDIR) && mpirun -n $(NPROC) python $(PYMAIN) 2>&1 | tee out.$(NAME).pyrun
 
 f2py: cp-py cp-src
