@@ -1,2 +1,4 @@
 *_mod.mod
 testing
+*.pyc
+build*
