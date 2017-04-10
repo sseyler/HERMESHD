@@ -21,7 +21,10 @@ ifndef $(EXEC)
 	EXEC = perseus
 endif
 
-RUNDIR = /scratch/sseyler/WORK/PERSEUSHD_testing
+ifndef $(RUNDIR)
+	# RUNDIR = /scratch/sseyler/WORK/PERSEUSHD_testing
+	RUNDIR = /scratch/sseyler/WORK/HERMESHD_testing
+endif
 #-----------------------------------------------------------------
 
 
@@ -76,9 +79,10 @@ ifeq ($(VERS),pymkl)
 	WRAPSRC = f90wrap_$(NAME).f90
 
 	PYMAIN    = test_$(NAME).py
+	PYSOD     = test_sod.py
 	PYWRAPSRC = $(NAME).py
 	PYSHARED  = _$(NAME).so
-	PYOBJS    = $(PYMAIN) $(PYWRAPSRC) $(PYSHARED)
+	PYOBJS    = $(PYMAIN) $(PYWRAPSRC) $(PYSHARED) $(PYSOD)
 
 	# PYRUN = $(patsubst %, $(RUNDIR)/%, $(PYOBJS))
 
@@ -135,6 +139,7 @@ cp-src: $(MODSRC) $(SRC) | $(BUILDDIR)
 pyall: wrap f2py pyrun
 
 pyrun: cp-py-run
+	@echo "$(LINE2N) Running $(PYMAIN)... $(LINE1N)"
 	@echo "\n>>> Changing to run directory..."
 	cd $(RUNDIR) && mpirun -n $(NPROC) python $(PYMAIN) 2>&1 | tee out.$(NAME).pyrun
 
@@ -151,16 +156,15 @@ f2py: cp-py-bld cp-src
 
 wrap:
 	@echo $(STAGE1)
-	f90wrap -m $(NAME) $(SRC) --only main setup step cleanup generate_output temp
+	f90wrap -m $(NAME) $(SRC) --only main setup step cleanup generate_output
 	@echo "\nStage 1 completed. $(LINE1N)"
 
 
 cp-py-bld: $(WRAPSRC) | $(BUILDDIR)
 	@echo "\n>>> Copying Python files to build directory..."
-	cp $(WRAPSRC) $(PYWRAPSRC) $(PYMAIN) $(BUILDDIR)
+	cp $(WRAPSRC) $(PYWRAPSRC) $(PYMAIN) $(PYSOD) $(BUILDDIR)
 
 cp-py-run:
-	@echo "$(LINE2N) Running $(PYMAIN)... $(LINE1N)"
 	@echo "\n>>> Copying Python files to run directory..."
 	cp $(PYOBJS:%=$(BUILDDIR)/%) $(RUNDIR)
 

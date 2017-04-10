@@ -8,16 +8,6 @@ subroutine f90wrap_main(comm)
     call main(comm=comm)
 end subroutine f90wrap_main
 
-subroutine f90wrap_temp(a, b, c)
-    use hermeshd, only: temp
-    implicit none
-    
-    integer, intent(inout) :: a
-    integer, intent(inout) :: b
-    integer, intent(inout) :: c
-    call temp(a=a, b=b, c=c)
-end subroutine f90wrap_temp
-
 subroutine f90wrap_step(q_io, q_1, q_2, t, dt, n0, n1, n2, n3, n4, n5, n6, n7, &
     n8, n9, n10, n11, n12, n13, n14)
     use hermeshd, only: step

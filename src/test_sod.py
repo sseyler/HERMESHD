@@ -46,26 +46,25 @@ nx, ny, nz = 50, 1, 1
 nQ, nB = 11, 8
 
 # Field arrays
-Qio = np.empty((nx, ny, nz, nQ, nB), order='F', dtype=float)
-Q1  = np.empty((nx, ny, nz, nQ, nB), order='F', dtype=float)
-Q2  = np.empty((nx, ny, nz, nQ, nB), order='F', dtype=float)
+Qio = np.empty((nx, ny, nz, nQ, nB), order='F', dtype=np.float32)
+Q1  = np.empty((nx, ny, nz, nQ, nB), order='F', dtype=np.float32)
+Q2  = np.empty((nx, ny, nz, nQ, nB), order='F', dtype=np.float32)
 
 # Time variables
-t  = np.array(0.0, dtype=float)  # works w/ np.float32 and None
+t  = np.array(0.0,    dtype=float)  # works w/ np.float32 and None
 tf = np.array(7.0e-4, dtype=float)
-dt = np.array(0.0, dtype=float)
+dt = np.array(0.0,    dtype=float)
 
 # Timing and output variables
 t1      = np.array(0.0, dtype=float)
 t_start = np.array(0.0, dtype=float)
 dtout   = np.array(0.0, dtype=float)
-nout    = np.array(0, dtype=int)  # works w/ np.int32 and None
+nout    = np.array(0,   dtype=int)  # works w/ np.int32 and None
 
 
 ##############################
 # I. SETUP
 #-----------------------------
-# Qio, t, dt, t1, t_start, dtout, nout, fcomm = setup(Qio, t, dt, t1, t_start, dtout, nout, fcomm)
 setup(Qio, t, dt, t1, t_start, dtout, nout, fcomm)
 
 # if rank == 0: print "t = {}   dt = {}   nout = {}".format(t, dt, nout)
