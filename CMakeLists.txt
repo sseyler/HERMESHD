@@ -6,6 +6,9 @@ cmake_minimum_required(VERSION 3.6.2)
 project (test)
 enable_language (Fortran)
 
+
+list(APPEND CMAKE_MODULE_PATH cmake)
+
 # this is where we will place the Fortran module files
 set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/modules)
 

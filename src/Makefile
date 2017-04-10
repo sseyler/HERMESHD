@@ -76,7 +76,7 @@ ifeq ($(VERS),pymkl)
 	EXEC    = hermes
 	NAME    = hermeshd
 	SRC     = $(NAME).f90
-	WRAPSRC = f90wrap_$(NAME).f90
+	F90WRAPSRC = f90wrap_$(NAME).f90
 
 	PYMAIN    = test_$(NAME).py
 	PYSOD     = test_sod.py
@@ -150,7 +150,7 @@ f2py: cp-py-bld cp-src
 
 	@echo $(STAGE3)
 	cd $(BUILDDIR) && f2py-f90wrap --f90exec=$(MPIF90) --opt="-O2"				\
-		--f90flags="-fc=ifort $(F90FLAGS)" -c -m _$(NAME) *.o $(WRAPSRC)				\
+		--f90flags="-fc=ifort $(F90FLAGS)" -c -m _$(NAME) *.o $(F90WRAPSRC)				\
 		-L$(MKLPATH) -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_vml_avx
 	@echo "\nStage 3 completed. $(LINE1N)"
 
@@ -160,9 +160,9 @@ wrap:
 	@echo "\nStage 1 completed. $(LINE1N)"
 
 
-cp-py-bld: $(WRAPSRC) | $(BUILDDIR)
+cp-py-bld: $(F90WRAPSRC) | $(BUILDDIR)
 	@echo "\n>>> Copying Python files to build directory..."
-	cp $(WRAPSRC) $(PYWRAPSRC) $(PYMAIN) $(PYSOD) $(BUILDDIR)
+	cp $(F90WRAPSRC) $(PYWRAPSRC) $(PYMAIN) $(PYSOD) $(BUILDDIR)
 
 cp-py-run:
 	@echo "\n>>> Copying Python files to run directory..."
