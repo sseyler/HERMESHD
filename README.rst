@@ -6,7 +6,7 @@ HERMESHD is a Discontinuous Galerkin (DG) numerical code written in Fortran and 
 
 Note: The original hydrodynamics code, derived from the PERSEUS XMHD code, was written by Charles Seyler; HERMESHD is based on the PERSEUS hydrodynamics derivative and will be adapted to fluctuating hydrodynamics (FH) simulations by Sean Seyler. See Background below!
 
-:Authors:      Sean Seyler (FH and modularized code), Charles Seyler (original code)
+:Authors:      Sean L. Seyler (FH and modularized code), Charles Seyler (original code)
 :Organization: Arizona State University, Cornell University
 :Contact:      slseyler@asu.edu, ces7@cornell.edu
 :Year:         2017
