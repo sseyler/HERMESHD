@@ -9,16 +9,23 @@ enable_language (Fortran)
 # this is where we will place the Fortran module files
 set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/modules)
 
+#-------------------------------------------------------------------------------
 
+
+################################################################################
 # make sure that the default is a RELEASE
+#********************************************
 if (NOT CMAKE_BUILD_TYPE)
   set (CMAKE_BUILD_TYPE RELEASE CACHE STRING
       "Choose the type of build, options are: None Debug Release."
       FORCE)
 endif (NOT CMAKE_BUILD_TYPE)
+#-------------------------------------------------------------------------------
 
 
+################################################################################
 # default installation
+#********************************************
 get_filename_component (default_prefix ".." ABSOLUTE)
 set (CMAKE_INSTALL_PREFIX ${default_prefix} CACHE STRING
       "Choose the installation directory; by default it installs in the NORMA directory."
@@ -26,16 +33,22 @@ set (CMAKE_INSTALL_PREFIX ${default_prefix} CACHE STRING
 
 # FFLAGS depend on the compiler
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
+#-------------------------------------------------------------------------------
 
+
+################################################################################
 # Set compiler-specific flags
-if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
-    set(dialect "-ffree-form -std=f2008 -fimplicit-none")
-    set(bounds "-fbounds-check")
-endif()
+#********************************************
 if(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
-    set(dialect "-stand f08 -free -implicitnone")
+    # set(dialect "-stand f08 -free -implicitnone")
+    set(dialect "")
     set(bounds "-check bounds")
     set(flags "-O2 -xHost -mkl -diag-disable 13003")
+endif()
+if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+    # set(dialect "-ffree-form -std=f2008 -fimplicit-none")
+    set(dialect "-ffree-form -std=f2003 -fimplicit-none")
+    set(bounds "-fbounds-check")
 endif()
 if(CMAKE_Fortran_COMPILER_ID MATCHES "PGI")
     set(dialect "-Mfreeform -Mdclchk -Mstandard -Mallocatable=03")
@@ -44,13 +57,17 @@ endif()
 
 set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG} ${bounds}")
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${dialect} ${flags}")
+#-------------------------------------------------------------------------------
 
 
-
-#
-# Compile.
-#
+################################################################################
+# Compile
+#********************************************
 file(GLOB sources src/*.f90)
+set(default_sources ${sources})
+list(REMOVE_ITEM default_sources ${CMAKE_CURRENT_SOURCE_DIR}/hermeshd.f90)
+list(REMOVE_ITEM default_sources ${CMAKE_CURRENT_SOURCE_DIR}/f90wrap_hermeshd.f90)
+list(REMOVE_ITEM default_sources ${CMAKE_CURRENT_SOURCE_DIR}/spatial.f90)
 
 set (EXECUTABLES "hermes")
 
@@ -58,6 +75,8 @@ add_executable(hermes ${sources})
 
 install (TARGETS ${EXECUTABLES}
          RUNTIME DESTINATION "bin")
+#-------------------------------------------------------------------------------
+
 
 
 

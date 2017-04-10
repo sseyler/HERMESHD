@@ -19,7 +19,7 @@ use random
 use flux
 use output
 
-integer :: nout
+integer :: nout, comm
 
 !###############################################################################
 ! I. SETUP
@@ -28,7 +28,8 @@ integer :: nout
 !-------------------------------------------------
 ! 1. Initialize general simulation variables
 !-------------------------------------------------
-call initializer(t, dt, nout, comm)
+call MPI_Init ( ierr )
+call initializer(t, dt, nout, MPI_COMM_WORLD)
 
 t_start = get_clock_time()  ! start timer for wall time
 dtout = tf/ntout  ! TODO: move this to a more sensible place once output scheme is improved!

@@ -242,7 +242,6 @@ contains
         !   * mpi_nz
         !   * mpi_P, mpi_Q, mpi_R
 
-        ! call MPI_Init ( ierr )
         ! call MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierr)
         call MPI_COMM_SIZE(comm, numprocs, ierr)
 
