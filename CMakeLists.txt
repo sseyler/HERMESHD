@@ -6,14 +6,28 @@ cmake_minimum_required (VERSION 3.6.2)
 project (test)
 enable_language (Fortran)
 
+################################################################################
+# default installation
+#********************************************
+# Location of CMake modules (*.cmake)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-list (APPEND CMAKE_MODULE_PATH cmake)
+# get_filename_component (default_prefix ".." ABSOLUTE)
+# set (default_prefix ${CMAKE_CURRENT_SOURCE_DIR})
+# set (CMAKE_INSTALL_PREFIX ${default_prefix} CACHE STRING
+#       "Choose the installation directory; by default it installs in the current directory."
+#       FORCE)
 
-# this is where we will place the Fortran module files
-set (SCRATCH /scratch/sseyler/WORK/HERMESHD_testing/)
-set (EXECUTABLE_OUTPUT_PATH ${SCRATCH}/bin)
-# set (CMAKE_Fortran_MODULE_DIRECTORY ${SCRATCH}/modules)
+# FFLAGS depend on the compiler
+get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 
+set (SCRATCH "/scratch/sseyler/WORK/HERMESHD_testing/")
+set (CMAKE_INSTALL_PREFIX ${SCRATCH})
+# set (EXECUTABLE_OUTPUT_PATH ${SCRATCH}/bin)
+# set (LIBRARY_OUTPUT_PATH ${SCRATCH}/lib)
+
+# Location to place Fortran module files (*.mod)
+set (CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/modules")
 #-------------------------------------------------------------------------------
 
 
@@ -33,7 +47,6 @@ endif()
 # Include CMake files
 #********************************************
 # these are paths that cmake will search for module files
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH} cmake")
 include(ConfigurePythonWrapping)
 #-------------------------------------------------------------------------------
 
@@ -76,19 +89,6 @@ if (ENABLE_MKL)
 else()
     message(WARNING "Intel MKL is disabled")
 endif()
-#-------------------------------------------------------------------------------
-
-
-################################################################################
-# default installation
-#********************************************
-get_filename_component (default_prefix ".." ABSOLUTE)
-set (CMAKE_INSTALL_PREFIX ${default_prefix} CACHE STRING
-      "Choose the installation directory; by default it installs in the build directory."
-      FORCE)
-
-# FFLAGS depend on the compiler
-get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 #-------------------------------------------------------------------------------
 
 
@@ -147,28 +147,26 @@ if (ENABLE_PYWRAP)
 
     # Compile sources into static library (with -fPIC flag)
     # Used by _${PYWRAP_MOD}.so to generate the Python extension module
-    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${flags} -fPIC")
+    message ("Will compile static library lib${PYWRAP_NAME}.a with the flags: ${CMAKE_Fortran_FLAGS}")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fPIC")  # "-c" flag implied by "add_library"
     add_library(${PYWRAP_NAME} ${module_sources})
+
+    # set (MKL_LIBS "-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_vml_avx")
+    set (MKL_LIBS mkl_intel_lp64 mkl_sequential mkl_core mkl_vml_avx)
 
     # Generates new target _${PYWRAP_NAME} that depends on ${PYWRAP_NAME}
     PYWRAP(
         MOD ${PYWRAP_NAME}
         SRC ${module_sources}
-        EXT_LIBS "-L${MKLPATH} -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_vml_avx"
+        SUBPROGRAMS "main setup step cleanup generate_output"
+        LIBS ${PYWRAP_NAME}
+        EXT_LIBS ${MKL_LIBS}
+        EXT_LIBS_LOC ${MKLPATH}
     )
-
-    # Compilation depends on
-    add_dependencies(_${PYWRAP_NAME} ${PYWRAP_NAME})
-
-    # Generate executable from same static library as used by PYWRAP?
-    # add_executable(${PROG} main.f90)
-    # target_link_libraries(${PROG} ${PYWRAP_NAME})
 
 else()
     message("Normal compilation of executable will take place")
 
-    add_executable(${PROG} default_sources)
+    add_executable(${PROG} ${default_sources})
+    install (TARGETS ${PROG} RUNTIME DESTINATION ${SCRATCH}/bin)
 endif()
-
-# install (TARGETS _${F2PY_ADD_MODULE}.so RUNTIME DESTINATION ${SCRATCH})
-# install (TARGETS ${PYFILES} RUNTIME DESTINATION ${SCRATCH})

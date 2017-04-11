@@ -27,14 +27,15 @@
 # )
 #
 # SRC takes a list of source files: "srcfile1.f90 srcfile2.f90 ..."
-# SUBPROGRAMS takes a list of subprogram names to be wrapped w/ f90wrap: "subprogram1 subprogram2 ..."
-# LIBS takes a list of library names (w/o "lib" preprended): "nameoflib1 nameoflib2 ..."
-# EXT_LIBS should take the explicit form: "-L<path/to/lib> -lextlib1 -lextlib2 ..."
+# SUBPROGRAMS takes a string of names separated by spaces (subprograms to be wrapped w/ f90wrap): "subprogram1 subprogram2 ..."
+# LIBS takes a list of library names (w/o "lib" preprended): nameoflib1 nameoflib2 ...
+# EXT_LIBS takes a list of libraries: extlib1 extlib2 ...
+# EXT_LIBS_LOC takes the path to the external libraries: <path/to/lib>
 #-------------------------------------------------------------------------------
 macro(PYWRAP)
 
     include(CMakeParseArguments)
-    cmake_parse_arguments(PYWRAP "NO_COMPILE" "MOD" "SRC;SUBPROGRAMS;LIBS;EXT_LIBS" ${ARGN})
+    cmake_parse_arguments(PYWRAP "NO_COMPILE" "MOD" "SRC;SUBPROGRAMS;LIBS;EXT_LIBS;EXT_LIBS_LOC" ${ARGN})
 
     find_package(PythonInterp REQUIRED)  # Find the Python interpreter
     find_program(F90WRAP_EXEC NAMES "f90wrap" REQUIRED)  # Get the f90wrap executable
@@ -56,14 +57,52 @@ macro(PYWRAP)
 
 
     #***********************************************************
+    # Parse libraries and their locations
+    #********************************************
+    # if (NOT PYWRAP_LIBS)
+    #     set(libs_list "-l${PYWRAP_MOD}")
+    # else (PYWRAP_LIBS)
+    #     set(libs_list)
+    #     foreach(lib ${PYWRAP_LIBS})
+    #         list(APPEND libs_list -l${lib})
+    #         get_target_property(lib_loc ${lib} LOCATION)
+    #         get_filename_component(lib_path ${lib_loc} PATH)
+    #         find_library(lib_path ${lib})
+    #         message("Found the library path ${lib_loc}")
+    #         message("Found the path ${lib_path}")
+    #     endforeach()
+    # endif()
+
+    if (PYWRAP_EXT_LIBS)
+        if (NOT PYWRAP_EXT_LIBS_LOC)
+            message(WARNING "No path to external libraries specified")
+        endif()
+        set (ext_lib_loc ${PYWRAP_EXT_LIBS_LOC})
+        set (ext_lib_list)
+        foreach (ext_lib ${PYWRAP_EXT_LIBS})
+            list (APPEND ext_lib_list -l${ext_lib})
+            message("Found the external library location: ${ext_lib_loc}")
+            message("Found the external library path: ${ext_lib}")
+        endforeach()
+    endif()
+    #-----------------------------------------------------------
+
+
+    #***********************************************************
     # Print out information
     #********************************************
-    message(STATUS "Building module ${PYWRAP_MOD} from the following sources: ${PYWRAP_SRC}")
+    set (BARE_SRC_NAMES)
+    foreach (PYWRAP_SRC_NAME ${PYWRAP_SRC})
+        get_filename_component(BARE_PYWRAP_SRC ${PYWRAP_SRC_NAME} NAME)
+        list (APPEND BARE_SRC_NAMES ${BARE_PYWRAP_SRC})
+    endforeach()
+    message(STATUS "Building module ${PYWRAP_MOD} from the following sources: \n     ${BARE_SRC_NAMES}")
+
     if (PYWRAP_LIBS)
-        message(STATUS " >>> ${PYWRAP_MOD} will be built from the following libraries: ${PYWRAP_LIBS}")
+        message(STATUS "Building from the following libraries: ${PYWRAP_LIBS}")
     endif()
-    if (PYWRAP_EXT_LIBS)
-        message(STATUS " >>> ${PYWRAP_MOD} will use the following external libraries: ${PYWRAP_EXT_LIBS}")
+    if (PYWRAP_EXT_LIBS AND PYWRAP_EXT_LIBS_LOC)
+        message(STATUS "External libraries will be linked using: \n     -L${ext_lib_loc} ${ext_lib_list}")
     endif()
     #-----------------------------------------------------------
 
@@ -86,40 +125,53 @@ macro(PYWRAP)
     #***********************************************************
     # Compile extension module
     #********************************************
-    if (NOT PYWRAP_LIBS)
-        set(libs_list "-l${PYWRAP_MOD}")
-    # else (PYWRAP_LIBS)
-    #     set(libs_list)
-    #     foreach(lib ${PYWRAP_LIBS})
-    #         list(APPEND libs_list -l${lib})
-    #         get_target_property(lib_loc ${lib} LOCATION)
-    #         get_filename_component(lib_path ${lib_loc} PATH)
-    #         find_library(lib_path ${lib})
-    #         message("Found the library path ${lib_loc}")
-    #         message("Found the path ${lib_path}")
-    #     endforeach()
-    endif()
+    # Use...
 
-    # file(GLOB mod_files ${CMAKE_CURRENT_SOURCE_DIR}/*.mod)
-    if (PYWRAP_NO_COMPILE)
-        set(_depends f90wrap_${PYWRAP_MOD}.f90 )
-    else()
-        set(_depends f90wrap_${PYWRAP_MOD}.f90)
-    endif()
-
+    # EITHER THIS:
+    #*************
+    add_custom_target(f90wrap_${PYWRAP_MOD} ALL DEPENDS f90wrap_${PYWRAP_MOD}.f90)
     add_custom_command(
-        OUTPUT  _${PYWRAP_MOD}.so
+        TARGET  ${PYWRAP_MOD} POST_BUILD
         COMMAND ${F2PY_F90WRAP_EXEC} -m _${PYWRAP_MOD}
                 --f90exec=${CMAKE_Fortran_COMPILER}
                 --opt="-O2"	--f90flags=${CMAKE_Fortran_FLAGS}
-                -c f90wrap_${PYWRAP_MOD}.f90 -L${CMAKE_CURRENT_BINARY_DIR} ${libs_list}
-                ${PYWRAP_EXT_LIBS}
-        DEPENDS ${_depends}
+                -c f90wrap_${PYWRAP_MOD}.f90 -I${CMAKE_Fortran_MODULE_DIRECTORY}
+                -L${CMAKE_CURRENT_BINARY_DIR} -l${PYWRAP_LIBS}  #${libs_list}
+                -L${ext_lib_loc} ${ext_lib_list} #-L${MKLPATH} ${PYWRAP_EXT_LIBS}
+        DEPENDS f90wrap_${PYWRAP_MOD}
         COMMENT "${F2PY_F90WRAP_EXEC}: compiling extension modules..."
     )
+
+    # OR THIS:
+    #*************
+    # if (PYWRAP_NO_COMPILE)
+    #     set(_depends f90wrap_${PYWRAP_MOD}.f90 ${PYWRAP_MOD})
+    # else()
+    #     set(_depends f90wrap_${PYWRAP_MOD}.f90 ${PYWRAP_MOD})
+    # endif()
+    #
+    # add_custom_command(
+    #     OUTPUT  _${PYWRAP_MOD}.so
+    #     COMMAND ${F2PY_F90WRAP_EXEC} --f90exec=${CMAKE_Fortran_COMPILER}
+    #             --opt="-O2"	--f90flags=${CMAKE_Fortran_FLAGS}
+    #             -c -m _${PYWRAP_MOD} f90wrap_${PYWRAP_MOD}.f90
+    #             -I${CMAKE_Fortran_MODULE_DIRECTORY}
+    #             -L${CMAKE_CURRENT_BINARY_DIR} -l${PYWRAP_MOD}
+    #             -L${MKLPATH} ${PYWRAP_EXT_LIBS}
+    #     DEPENDS ${_depends}
+    #     COMMENT "${F2PY_F90WRAP_EXEC}: compiling extension modules..."
+    # )
+    # add_custom_target(_${PYWRAP_MOD} ALL DEPENDS _${PYWRAP_MOD}.so)
+    # add_dependencies(_${PYWRAP_MOD} ${PYWRAP_MOD})
+    # Must do this if ${PYWRAP_MOD} isn't in ${_depends}:
+    #   add_dependencies(_${PYWRAP_MOD} ${PYWRAP_MOD})
+    # Can also make the custom target depend on the ${PYWRAP_MOD} library:
+    #   add_custom_target(_${PYWRAP_MOD} ALL DEPENDS _${PYWRAP_MOD}.so ${PYWRAP_MOD})
     #-----------------------------------------------------------
 
-    add_custom_target(_${PYWRAP_MOD} ALL DEPENDS _${PYWRAP_MOD}.so)
+    # install (FILES _${PYWRAP_MOD}.so DESTINATION ${SCRATCH}/lib)
+    # install (TARGET ${PYWRAP_MOD} LIBRARY DESTINATION ${SCRATCH}/lib)
+    # install (FILES ${PYWRAP_MOD}.py DESTINATION ${SCRATCH})
 
 endmacro(PYWRAP)
 #-------------------------------------------------------------------------------
