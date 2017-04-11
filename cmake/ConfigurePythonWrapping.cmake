@@ -88,7 +88,5 @@ endmacro (compile_extension)
 
 
 file(GLOB sources src/*.f90)
-set(default_sources ${sources})
-list(REMOVE_ITEM default_sources ${CMAKE_CURRENT_SOURCE_DIR}/hermeshd.f90)
-list(REMOVE_ITEM default_sources ${CMAKE_CURRENT_SOURCE_DIR}/f90wrap_hermeshd.f90)
-list(REMOVE_ITEM default_sources ${CMAKE_CURRENT_SOURCE_DIR}/spatial.f90)
+set(module_sources ${sources})
+list(REMOVE_ITEM module_sources ${CMAKE_CURRENT_SOURCE_DIR}/main.f90)

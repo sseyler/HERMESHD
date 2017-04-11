@@ -83,8 +83,9 @@ ifeq ($(VERS),pymkl)
 	PYWRAPSRC = $(NAME).py
 	PYSHARED  = _$(NAME).so
 	PYOBJS    = $(PYMAIN) $(PYWRAPSRC) $(PYSHARED) $(PYSOD)
-
 	# PYRUN = $(patsubst %, $(RUNDIR)/%, $(PYOBJS))
+
+	OBJFILES = $(MODSRC:.f90=.o) $(NAME).o  # Get list of object files to be produced
 
 	# Explicit MKL paths needed when using f2py
 	MKLROOT = /nfs/packages/opt/Linux_x86_64/intel/13.0/mkl
@@ -111,8 +112,8 @@ LINE1N = \n$(LINE1)\n
 LINE2N = \n$(LINE2)\n
 
 STAGE1 = "\n$(LINE2N) Stage 1: generating Python wrappers for $(SRC)... $(LINE1N)"
-STAGE2 = "\n$(LINE2N) Stage 2: generating Fortran module and object files... $(LINE1N)"
-STAGE3 = "\n$(LINE2N) Stage 3: compiling extension module $(PYSHARED)... $(LINE1N)"
+STAGE2 = "\n$(LINE2N) Stage 2: compiling Fortran modules, generating object files... $(LINE1N)"
+STAGE3 = "\n$(LINE2N) Stage 3: building extension module $(PYSHARED)... $(LINE1N)"
 
 
 ################################################################################
@@ -136,29 +137,37 @@ cp-src: $(MODSRC) $(SRC) | $(BUILDDIR)
 #-----------------------------------------------------------------
 # Python recipes
 #-----------------------------------------------------------------
-pyall: wrap f2py pyrun
+pyall: wrap pycompile pybuild
 
 pyrun: cp-py-run
 	@echo "$(LINE2N) Running $(PYMAIN)... $(LINE1N)"
 	@echo "\n>>> Changing to run directory..."
 	cd $(RUNDIR) && mpirun -n $(NPROC) python $(PYMAIN) 2>&1 | tee out.$(NAME).pyrun
 
-f2py: cp-py-bld cp-src
-	@echo $(STAGE2)
-	cd $(BUILDDIR) && $(MPIF90) $(F90FLAGS) -fc=$(F90) -c -fPIC $(MODSRC) $(SRC)
-	@echo "\nStage 2 completed. $(LINE1N)"
-
+pybuild: $(patsubst %, $(BUILDDIR)/%, $(OBJFILES)) $(BUILDDIR)/$(F90WRAPSRC)
 	@echo $(STAGE3)
 	cd $(BUILDDIR) && f2py-f90wrap --f90exec=$(MPIF90) --opt="-O2"				\
-		--f90flags="-fc=ifort $(F90FLAGS)" -c -m _$(NAME) *.o $(F90WRAPSRC)				\
+		--f90flags="-fc=ifort $(F90FLAGS)" -c -m _$(NAME) $(OBJFILES) $(F90WRAPSRC)				\
 		-L$(MKLPATH) -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_vml_avx
 	@echo "\nStage 3 completed. $(LINE1N)"
 
-wrap:
+pybuild-lib: $(patsubst %, $(BUILDDIR)/%, $(OBJFILES)) $(BUILDDIR)/$(F90WRAPSRC)
+	@echo $(STAGE3)
+	cd $(BUILDDIR) && f2py-f90wrap --f90exec=$(MPIF90) --opt="-O2"				\
+		--f90flags="-fc=ifort $(F90FLAGS)" -c -m _$(NAME) $(F90WRAPSRC)				\
+		-L. -lhermeshd -L$(MKLPATH) -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_vml_avx
+	@echo "\nStage 3 completed. $(LINE1N)"
+
+pycompile: cp-py-bld cp-src
+	@echo $(STAGE2)
+	cd $(BUILDDIR) && $(MPIF90) $(F90FLAGS) -fc=$(F90) -c -fPIC $(MODSRC) $(SRC)
+	@echo "\nStage 2 completed. $(LINE1N)"
+	@echo $(OBJFILES)
+
+pywrap:
 	@echo $(STAGE1)
 	f90wrap -m $(NAME) $(SRC) --only main setup step cleanup generate_output
 	@echo "\nStage 1 completed. $(LINE1N)"
-
 
 cp-py-bld: $(F90WRAPSRC) | $(BUILDDIR)
 	@echo "\n>>> Copying Python files to build directory..."
