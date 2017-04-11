@@ -2,15 +2,15 @@
 # CMake project file for hermeshd
 ################################################################################
 
-cmake_minimum_required(VERSION 3.6.2)
+cmake_minimum_required (VERSION 3.6.2)
 project (test)
 enable_language (Fortran)
 
 
-list(APPEND CMAKE_MODULE_PATH cmake)
+list (APPEND CMAKE_MODULE_PATH cmake)
 
 # this is where we will place the Fortran module files
-set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/modules)
+set (CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/modules)
 
 #-------------------------------------------------------------------------------
 
@@ -19,10 +19,51 @@ set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/modules)
 # make sure that the default is a RELEASE
 #********************************************
 if (NOT CMAKE_BUILD_TYPE)
-  set (CMAKE_BUILD_TYPE RELEASE CACHE STRING
-      "Choose the type of build, options are: None Debug Release."
-      FORCE)
-endif (NOT CMAKE_BUILD_TYPE)
+    # set (CMAKE_BUILD_TYPE RELEASE CACHE STRING
+    #     "Choose the type of build, options are: None Debug Release."
+    #     FORCE)
+    set (CMAKE_BUILD_TYPE "None")
+endif()
+#-------------------------------------------------------------------------------
+
+
+################################################################################
+# Include CMake files
+#********************************************
+# these are paths that cmake will search for module files
+# set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH} cmake")
+# include(ConfigurePythonWrapping)
+#-------------------------------------------------------------------------------
+
+
+################################################################################
+# make sure that the default is a RELEASE
+#********************************************
+# Override defaults from the command line with:
+#   cmake -DMAX_BUFFER=2048
+#********************************************
+# set(MAX_BUFFER "1024" CACHE STRING "Max buffer size")
+#
+# # this is passed on to the code we compile
+# add_definitions(-DMAX_BUFFER=${MAX_BUFFER})
+#
+# message(STATUS "Set max buffer to ${MAX_BUFFER}")
+#-------------------------------------------------------------------------------
+
+
+################################################################################
+# MPI: default is ON
+#********************************************
+# Select this option on the command line with:
+#   cmake -DENABLE_MPI=ON
+#********************************************
+# option(ENABLE_MPI "Enable MPI parallelization" ON)
+#
+# if (ENABLE_MPI)
+#     message("MPI is enabled")
+# else()
+#     message("MPI is disabled")
+# endif()
 #-------------------------------------------------------------------------------
 
 
@@ -42,24 +83,24 @@ get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 ################################################################################
 # Set compiler-specific flags
 #********************************************
-if(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
-    # set(dialect "-stand f08 -free -implicitnone")
-    set(dialect "")
+if (CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
+    set(dialect "-stand f08 -free -implicitnone")
     set(bounds "-check bounds")
     set(flags "-O2 -xHost -mkl -diag-disable 13003")
 endif()
-if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
-    # set(dialect "-ffree-form -std=f2008 -fimplicit-none")
-    set(dialect "-ffree-form -std=f2003 -fimplicit-none")
+if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+    set(dialect "-ffree-form -std=f2008 -fimplicit-none")
     set(bounds "-fbounds-check")
 endif()
-if(CMAKE_Fortran_COMPILER_ID MATCHES "PGI")
+if (CMAKE_Fortran_COMPILER_ID MATCHES "PGI")
     set(dialect "-Mfreeform -Mdclchk -Mstandard -Mallocatable=03")
     set(bounds "-C")
 endif()
 
-set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG} ${bounds}")
-set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${dialect} ${flags}")
+
+set(CMAKE_Fortran_FLAGS         "${CMAKE_Fortran_FLAGS} ${flags}")
+set(CMAKE_Fortran_FLAGS_DEBUG   "${CMAKE_Fortran_FLAGS_DEBUG} ${bounds}")
+set(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} ${flags}")
 #-------------------------------------------------------------------------------
 
 
@@ -68,6 +109,8 @@ set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${dialect} ${flags}")
 #********************************************
 file(GLOB sources src/*.f90)
 set(default_sources ${sources})
+
+# NOTE: It will be useful to have separate subdirectories, probably
 list(REMOVE_ITEM default_sources ${CMAKE_CURRENT_SOURCE_DIR}/hermeshd.f90)
 list(REMOVE_ITEM default_sources ${CMAKE_CURRENT_SOURCE_DIR}/f90wrap_hermeshd.f90)
 list(REMOVE_ITEM default_sources ${CMAKE_CURRENT_SOURCE_DIR}/spatial.f90)
