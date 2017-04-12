@@ -125,44 +125,50 @@ macro(PYWRAP)
     #***********************************************************
     # Compile extension module
     #********************************************
-    # Use...
+    # Two choices (see below).
+    # NOTE: The first (1) is preferable because it doesn't create an extra directory
+    #       for the build. For (2), using add_custom_target to create "_${PYWRAP_MOD}"
+    #       ends up generating a separate directory for it. However, using
+    #       add_custom_command with "TARGET" allows the linking done by f2py-f90wrap
+    #       to depend directly on the building of library ${PYWRAP_MOD} (so it
+    #       ends up using the same directory ${PYWRAP_MOD}).
 
-    # EITHER THIS:
+    # (1) EITHER THIS:
     #*************
-    add_custom_target(f90wrap_${PYWRAP_MOD} ALL DEPENDS f90wrap_${PYWRAP_MOD}.f90)
-    add_custom_command(
-        TARGET  ${PYWRAP_MOD} POST_BUILD
-        COMMAND ${F2PY_F90WRAP_EXEC} -m _${PYWRAP_MOD}
-                --f90exec=${CMAKE_Fortran_COMPILER}
-                --opt="-O2"	--f90flags=${CMAKE_Fortran_FLAGS}
-                -c f90wrap_${PYWRAP_MOD}.f90 -I${CMAKE_Fortran_MODULE_DIRECTORY}
-                -L${CMAKE_CURRENT_BINARY_DIR} -l${PYWRAP_LIBS}  #${libs_list}
-                -L${ext_lib_loc} ${ext_lib_list} #-L${MKLPATH} ${PYWRAP_EXT_LIBS}
-        DEPENDS f90wrap_${PYWRAP_MOD}
-        COMMENT "${F2PY_F90WRAP_EXEC}: compiling extension modules..."
-    )
-
-    # OR THIS:
-    #*************
-    # if (PYWRAP_NO_COMPILE)
-    #     set(_depends f90wrap_${PYWRAP_MOD}.f90 ${PYWRAP_MOD})
-    # else()
-    #     set(_depends f90wrap_${PYWRAP_MOD}.f90 ${PYWRAP_MOD})
-    # endif()
-    #
+    # add_custom_target(f90wrap_${PYWRAP_MOD} ALL DEPENDS f90wrap_${PYWRAP_MOD}.f90)
     # add_custom_command(
-    #     OUTPUT  _${PYWRAP_MOD}.so
-    #     COMMAND ${F2PY_F90WRAP_EXEC} --f90exec=${CMAKE_Fortran_COMPILER}
+    #     TARGET  ${PYWRAP_LIBS} POST_BUILD
+    #     COMMAND ${F2PY_F90WRAP_EXEC} -m _${PYWRAP_MOD}
+    #             --f90exec=${CMAKE_Fortran_COMPILER}
     #             --opt="-O2"	--f90flags=${CMAKE_Fortran_FLAGS}
-    #             -c -m _${PYWRAP_MOD} f90wrap_${PYWRAP_MOD}.f90
-    #             -I${CMAKE_Fortran_MODULE_DIRECTORY}
-    #             -L${CMAKE_CURRENT_BINARY_DIR} -l${PYWRAP_MOD}
-    #             -L${MKLPATH} ${PYWRAP_EXT_LIBS}
-    #     DEPENDS ${_depends}
+    #             -c f90wrap_${PYWRAP_MOD}.f90 -I${CMAKE_Fortran_MODULE_DIRECTORY}
+    #             -L${CMAKE_CURRENT_BINARY_DIR} -l${PYWRAP_LIBS}  #${libs_list}
+    #             -L${ext_lib_loc} ${ext_lib_list} #-L${MKLPATH} ${PYWRAP_EXT_LIBS}
+    #     DEPENDS f90wrap_${PYWRAP_MOD}
     #     COMMENT "${F2PY_F90WRAP_EXEC}: compiling extension modules..."
     # )
-    # add_custom_target(_${PYWRAP_MOD} ALL DEPENDS _${PYWRAP_MOD}.so)
-    # add_dependencies(_${PYWRAP_MOD} ${PYWRAP_MOD})
+
+    # (2) OR THIS:
+    #*************
+    if (PYWRAP_NO_COMPILE)
+        set(_depends f90wrap_${PYWRAP_MOD}.f90 ${PYWRAP_MOD})
+    else()
+        set(_depends f90wrap_${PYWRAP_MOD}.f90 ${PYWRAP_MOD})
+    endif()
+
+    add_custom_command(
+        OUTPUT  _${PYWRAP_MOD}.so
+        COMMAND ${F2PY_F90WRAP_EXEC} --f90exec=${CMAKE_Fortran_COMPILER}
+                --opt="-O2"	--f90flags=${CMAKE_Fortran_FLAGS}
+                -c -m _${PYWRAP_MOD} f90wrap_${PYWRAP_MOD}.f90
+                -I${CMAKE_Fortran_MODULE_DIRECTORY}
+                -L${CMAKE_CURRENT_BINARY_DIR} -l${PYWRAP_LIBS}  #${libs_list}
+                -L${ext_lib_loc} ${ext_lib_list} #-L${MKLPATH} ${PYWRAP_EXT_LIBS}
+        DEPENDS ${_depends}
+        COMMENT "${F2PY_F90WRAP_EXEC}: compiling extension modules..."
+    )
+    add_custom_target(_${PYWRAP_MOD} ALL DEPENDS _${PYWRAP_MOD}.so)
+    add_dependencies(_${PYWRAP_MOD} ${PYWRAP_MOD})
     # Must do this if ${PYWRAP_MOD} isn't in ${_depends}:
     #   add_dependencies(_${PYWRAP_MOD} ${PYWRAP_MOD})
     # Can also make the custom target depend on the ${PYWRAP_MOD} library:

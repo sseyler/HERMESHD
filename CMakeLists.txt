@@ -73,22 +73,28 @@ include(ConfigurePythonWrapping)
 #   cmake -DENABLE_MPI=ON
 #********************************************
 # option(ENABLE_MPI "Enable MPI parallelization" ON)
-#
 # if (ENABLE_MPI)
 #     message("MPI is enabled")
 # else()
 #     message("MPI is disabled")
 # endif()
 
-option(ENABLE_MKL "Enable Intel MKL (currently required)" ON)
-if (ENABLE_MKL)
-    message("Intel MKL is enabled")
-    set(MKLROOT /nfs/packages/opt/Linux_x86_64/intel/13.0/mkl)
-    set(MKL_TARGET_ARCH intel64)
-    set(MKLPATH ${MKLROOT}/lib/${MKL_TARGET_ARCH})
-else()
-    message(WARNING "Intel MKL is disabled")
-endif()
+
+option(MKL_PATH "Path to Intel MKL libraries" nfs/packages/opt/Linux_x86_64/intel/13.0/mkl/lib/intel64)
+
+# option(MKL_LIBS "Intel MKL libraries" mkl_intel_lp64 mkl_sequential mkl_core mkl_vml_avx)
+set (MKL_LIBS mkl_intel_lp64 mkl_sequential mkl_core mkl_vml_avx)
+# set (MKL_LIBS "-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_vml_avx")
+
+# option(ENABLE_MKL "Enable Intel MKL (currently required)" ON)
+# if (ENABLE_MKL)
+#     message("Intel MKL is enabled")
+#     set(MKLROOT /nfs/packages/opt/Linux_x86_64/intel/13.0/mkl)
+#     set(MKL_TARGET_ARCH intel64)
+#     set(MKLPATH ${MKLROOT}/lib/${MKL_TARGET_ARCH})
+# else()
+#     message(WARNING "Intel MKL is disabled (currently required)")
+# endif()
 #-------------------------------------------------------------------------------
 
 
@@ -128,45 +134,43 @@ list(REMOVE_ITEM default_sources ${SOURCE_DIR}/hermeshd.f90)
 list(REMOVE_ITEM default_sources ${SOURCE_DIR}/f90wrap_hermeshd.f90)
 list(REMOVE_ITEM default_sources ${SOURCE_DIR}/spatial.f90)
 
-set (PROG "hermeshd")
+set (PROG "hermes")
 
+# Sources for Python module compilation
+set(module_sources ${sources})
+list(REMOVE_ITEM module_sources ${SOURCE_DIR}/main.f90)
+list(REMOVE_ITEM module_sources ${SOURCE_DIR}/spatial.f90)
+list(REMOVE_ITEM module_sources ${SOURCE_DIR}/f90wrap_hermeshd.f90)
+
+set (LIB_NAME "hermeshd")
 #-------------------------------------------------------------------------------
 
+# Compile sources into static library (with -fPIC flag)
+# Used by _${PYWRAP_MOD}.so to generate the Python extension module
+message ("Will compile static library lib${PYWRAP_NAME}.a with the flags: ${CMAKE_Fortran_FLAGS}")
+set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fPIC")  # "-c" flag implied by "add_library"
+add_library(${LIB_NAME} ${module_sources})
 
 option(ENABLE_PYWRAP "Enable Python wrapping and module compilation" OFF)
 if (ENABLE_PYWRAP)
     message("Python module compilation is enabled")
 
-    set (PYWRAP_NAME ${PROG})
-
-    # Sources for Python module compilation
-    set(module_sources ${sources})
-    list(REMOVE_ITEM module_sources ${SOURCE_DIR}/main.f90)
-    list(REMOVE_ITEM module_sources ${SOURCE_DIR}/spatial.f90)
-    list(REMOVE_ITEM module_sources ${SOURCE_DIR}/f90wrap_hermeshd.f90)
-
-    # Compile sources into static library (with -fPIC flag)
-    # Used by _${PYWRAP_MOD}.so to generate the Python extension module
-    message ("Will compile static library lib${PYWRAP_NAME}.a with the flags: ${CMAKE_Fortran_FLAGS}")
-    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fPIC")  # "-c" flag implied by "add_library"
-    add_library(${PYWRAP_NAME} ${module_sources})
-
-    # set (MKL_LIBS "-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_vml_avx")
-    set (MKL_LIBS mkl_intel_lp64 mkl_sequential mkl_core mkl_vml_avx)
+    set(PYMOD_NAME ${LIB_NAME})
 
     # Generates new target _${PYWRAP_NAME} that depends on ${PYWRAP_NAME}
     PYWRAP(
-        MOD ${PYWRAP_NAME}
+        MOD ${PYMOD_NAME}
         SRC ${module_sources}
         SUBPROGRAMS "main setup step cleanup generate_output"
-        LIBS ${PYWRAP_NAME}
+        LIBS ${LIB_NAME}
         EXT_LIBS ${MKL_LIBS}
-        EXT_LIBS_LOC ${MKLPATH}
+        EXT_LIBS_LOC ${MKL_PATH}
     )
-
+    # install (FILES ${PROJECT_BINARY_DIR}/_${PYWRAP_NAME}.so ${PROJECT_BINARY_DIR}/${PYWRAP_NAME}.py DESTINATION lib)
 else()
     message("Normal compilation of executable will take place")
-
-    add_executable(${PROG} ${default_sources})
-    install (TARGETS ${PROG} RUNTIME DESTINATION ${SCRATCH}/bin)
+    # install (TARGETS ${PROG} RUNTIME DESTINATION bin)
 endif()
+
+add_executable(${PROG} ${SOURCE_DIR}/main.f90)
+target_link_libraries(${PROG} ${LIB_NAME})
