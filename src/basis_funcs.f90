@@ -15,6 +15,8 @@ integer, parameter :: nvtk3 = nvtk*nvtk*nvtk
 !===========================================================================
 ! Definitions
 !------------------------------------------------------------
+real dxvtk,dyvtk,dzvtk
+
 real, dimension(nvtk3,nbastot) :: bfvtk, bfvtk_dx, bfvtk_dy, bfvtk_dz
 
 ! TODO: only in init, innerintegral, source_calc
@@ -991,5 +993,36 @@ contains
         ! if (ipass .eq. 0) call exit(-1)
     end subroutine test_basis_3D
     !---------------------------------------------------------------------------
+
+
+    !-----------------------------------------------------------
+    real function xvtk(i)
+        integer i
+        xvtk = loc_lxd + (i - 0.5)*dxvtk
+    end function xvtk
+
+    !-----------------------------------------------------------
+    real function yvtk(j)
+        integer j
+        yvtk = loc_lyd + (j - 0.5)*dyvtk
+    end function yvtk
+
+    !-----------------------------------------------------------
+    real function zvtk(k)
+        integer k
+        zvtk = loc_lzd + (k - 0.5)*dzvtk
+    end function zvtk
+
+    !-----------------------------------------------------------
+    real function rvtk(i,j)
+        integer i,j,k
+        rvtk = sqrt(xvtk(i)**2 + yvtk(j)**2)
+    end function rvtk
+
+    !-----------------------------------------------------------
+    real function thetavtk(i,j)
+        integer i,j
+        thetavtk = atan2(yvtk(j),xvtk(i))
+    end function thetavtk
 
 end module basis_funcs

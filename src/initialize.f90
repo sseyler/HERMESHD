@@ -4,6 +4,8 @@ module initialize
 use input
 use params
 use helpers
+use timestep
+
 use basis_funcs!, only: wgt1d, wgt2d, wgt3d, ibitri, cbasis, set_bfvals_3D
 
 use initialcon
@@ -13,7 +15,6 @@ implicit none
 
 integer, parameter :: iseed = 123456789  ! 1317345*mpi_P + 5438432*mpi_Q + 38472613*mpi_R
 
-real :: cflm
 ! integer :: nout
 
 contains

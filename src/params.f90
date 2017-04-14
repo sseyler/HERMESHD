@@ -152,8 +152,8 @@ module params
     integer kyyz,kzzx,kxxy, kyyzz,kzzxx,kxxyy, kyzxx,kzxyy,kxyzz
     integer kxyyzz,kyzzxx,kzxxyy, kxxyyzz, kxxx,kyyy,kzzz
 
-    ! TODO: only in set_vtk_vals_3D, xvtk/yvtk/zvtk (parameters), output_vtk
-    real dxvtk,dyvtk,dzvtk
+    ! TODO: only in set_vtk_vals_3D, xvtk/yvtk/zvtk (functions), output_vtk
+    ! real dxvtk,dyvtk,dzvtk
     !---------------------------------------------------------------------------
 
 
@@ -244,34 +244,34 @@ contains
         theta = atan2(yc(j),xc(i))
     end function theta
 
-    !-----------------------------------------------------------
-    real function xvtk(i)
-        integer i
-        xvtk = loc_lxd + (i - 0.5)*dxvtk
-    end function xvtk
-
-    !-----------------------------------------------------------
-    real function yvtk(j)
-        integer j
-        yvtk = loc_lyd + (j - 0.5)*dyvtk
-    end function yvtk
-
-    !-----------------------------------------------------------
-    real function zvtk(k)
-        integer k
-        zvtk = loc_lzd + (k - 0.5)*dzvtk
-    end function zvtk
-
-    !-----------------------------------------------------------
-    real function rvtk(i,j)
-        integer i,j,k
-        rvtk = sqrt(xvtk(i)**2 + yvtk(j)**2)
-    end function rvtk
-
-    !-----------------------------------------------------------
-    real function thetavtk(i,j)
-        integer i,j
-        thetavtk = atan2(yvtk(j),xvtk(i))
-    end function thetavtk
+    ! !-----------------------------------------------------------
+    ! real function xvtk(i)
+    !     integer i
+    !     xvtk = loc_lxd + (i - 0.5)*dxvtk
+    ! end function xvtk
+    !
+    ! !-----------------------------------------------------------
+    ! real function yvtk(j)
+    !     integer j
+    !     yvtk = loc_lyd + (j - 0.5)*dyvtk
+    ! end function yvtk
+    !
+    ! !-----------------------------------------------------------
+    ! real function zvtk(k)
+    !     integer k
+    !     zvtk = loc_lzd + (k - 0.5)*dzvtk
+    ! end function zvtk
+    !
+    ! !-----------------------------------------------------------
+    ! real function rvtk(i,j)
+    !     integer i,j,k
+    !     rvtk = sqrt(xvtk(i)**2 + yvtk(j)**2)
+    ! end function rvtk
+    !
+    ! !-----------------------------------------------------------
+    ! real function thetavtk(i,j)
+    !     integer i,j
+    !     thetavtk = atan2(yvtk(j),xvtk(i))
+    ! end function thetavtk
 
 end module params
