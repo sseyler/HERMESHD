@@ -4,6 +4,8 @@ program main
 use input!, only : nx,ny,nz
 use params!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
 use helpers!, only : xc,yc,zc,get_clock_time
+use spatial
+use timestep
 
 use integrator
 use boundary_custom
@@ -13,7 +15,6 @@ use basis_funcs
 
 use initialize
 
-use timestep
 use prepare_step
 use sources
 use random

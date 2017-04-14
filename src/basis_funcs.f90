@@ -5,6 +5,7 @@ module basis_funcs
 ! Parameters
 !------------------------------------------------------------
 use params
+use spatial
 
 integer, parameter :: nvtk  = 1    ! (was 2)
 integer, parameter :: nvtk2 = nvtk*nvtk
@@ -15,8 +16,6 @@ integer, parameter :: nvtk3 = nvtk*nvtk*nvtk
 !===========================================================================
 ! Definitions
 !------------------------------------------------------------
-real dxvtk,dyvtk,dzvtk
-
 real, dimension(nvtk3,nbastot) :: bfvtk, bfvtk_dx, bfvtk_dy, bfvtk_dz
 
 ! TODO: only in init, innerintegral, source_calc
@@ -65,6 +64,15 @@ real, dimension(nbastot,nbastot) :: cell_int,xp_int,xm_int,yp_int,ym_int,zp_int,
 real, dimension(nbastot,nbastot) :: cell_int0,xp_int0,xm_int0,yp_int0,ym_int0,zp_int0,zm_int0
 real, dimension(nbastot) :: cbas_xp,cbas_xm,cbas_yp,cbas_ym,cbas_zp,cbas_zm
 integer, dimension(nbastot) :: ibas_x, ibas_y, ibas_z
+
+integer :: kx,ky,kz
+integer :: kxx,kyy,kzz, kyz,kzx,kxy
+integer :: kxyz, kxxx,kyyy,kzzz, kyzz,kzxx,kxyy, kyyz,kzzx,kxxy
+integer :: kyyzz,kzzxx,kxxyy, kyzxx,kzxyy,kxyzz
+integer :: kxyyzz,kyzzxx,kzxxyy
+integer :: kxxyyzz
+
+real dxvtk,dyvtk,dzvtk ! used by set_vtk_vals_3D, xvtk/yvtk/zvtk (functions), output_vtk
 !===========================================================================
 
 contains

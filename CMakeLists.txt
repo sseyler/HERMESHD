@@ -132,15 +132,15 @@ file(GLOB sources ${SOURCE_DIR}/*.f90)
 set(default_sources ${sources})
 list(REMOVE_ITEM default_sources ${SOURCE_DIR}/hermeshd.f90)
 list(REMOVE_ITEM default_sources ${SOURCE_DIR}/f90wrap_hermeshd.f90)
-list(REMOVE_ITEM default_sources ${SOURCE_DIR}/spatial.f90)
+# list(REMOVE_ITEM default_sources ${SOURCE_DIR}/spatial.f90)
 
 set (PROG "hermes")
 
 # Sources for Python module compilation
 set(module_sources ${sources})
 list(REMOVE_ITEM module_sources ${SOURCE_DIR}/main.f90)
-list(REMOVE_ITEM module_sources ${SOURCE_DIR}/spatial.f90)
 list(REMOVE_ITEM module_sources ${SOURCE_DIR}/f90wrap_hermeshd.f90)
+# list(REMOVE_ITEM module_sources ${SOURCE_DIR}/spatial.f90)
 
 set (LIB_NAME "hermeshd")
 #-------------------------------------------------------------------------------

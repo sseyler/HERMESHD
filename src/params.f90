@@ -148,12 +148,6 @@ module params
     ! integer, parameter :: kyzxx  =21, kzxyy =22, kxyzz =23
     ! integer, parameter :: kxyyzz =24, kyzzxx=25, kzxxyy=26
     ! integer, parameter :: kxxyyzz=27
-    integer kx,ky,kz, kyz,kzx,kxy, kxyz, kxx,kyy,kzz, kyzz,kzxx,kxyy
-    integer kyyz,kzzx,kxxy, kyyzz,kzzxx,kxxyy, kyzxx,kzxyy,kxyzz
-    integer kxyyzz,kyzzxx,kzxxyy, kxxyyzz, kxxx,kyyy,kzzz
-
-    ! TODO: only in set_vtk_vals_3D, xvtk/yvtk/zvtk (functions), output_vtk
-    ! real dxvtk,dyvtk,dzvtk
     !---------------------------------------------------------------------------
 
 
@@ -177,8 +171,8 @@ module params
     !------------------------------------------------------------
     real t1,t2,t_start,t_stop,dtoriginal  ! used for timing (dtoriginal optional)
     real lxd,lxu,lyd,lyu,lzd,lzu  ! used in init + indirectly used by the grid coord functions
-    real loc_lxd,loc_lyd,loc_lzd  ! used directly by the grid coord functions
-    real dz, dy, dx, dxi, dyi, dzi, dVi  ! used throughout + directly by grid coord functions
+
+    
     !===========================================================================
 
 
@@ -209,69 +203,39 @@ contains
     !-----------------------------------------------------------
     !   Return the x coordinate of (the center of) cell i
     !     Note: based on the location of this MPI domain (loc_lxd)
-    real function xc(i)
-        integer i
-        xc = loc_lxd + (i - 0.5)*dx
-    end function xc
-
-    !-----------------------------------------------------------
-    real function yc(j)
-        integer j
-        yc = loc_lyd + (j - 0.5)*dy
-    end function yc
-
-    !-----------------------------------------------------------
-    real function zc(k)
-        integer k
-        zc = loc_lzd + (k - 0.5)*dz
-    end function zc
-
-    !-----------------------------------------------------------
-    real function rz(i,j)
-        integer i,j
-        rz = sqrt(yc(j)**2)
-    end function rz
-
-    !-----------------------------------------------------------
-    real function r(i,j)
-        integer i,j,k
-        r = sqrt(xc(i)**2 + yc(j)**2)
-    end function r
-
-    !-----------------------------------------------------------
-    real function theta(i,j)
-        integer i,j
-        theta = atan2(yc(j),xc(i))
-    end function theta
-
-    ! !-----------------------------------------------------------
-    ! real function xvtk(i)
+    ! real function xc(i)
     !     integer i
-    !     xvtk = loc_lxd + (i - 0.5)*dxvtk
-    ! end function xvtk
+    !     xc = loc_lxd + (i - 0.5)*dx
+    ! end function xc
     !
     ! !-----------------------------------------------------------
-    ! real function yvtk(j)
+    ! real function yc(j)
     !     integer j
-    !     yvtk = loc_lyd + (j - 0.5)*dyvtk
-    ! end function yvtk
+    !     yc = loc_lyd + (j - 0.5)*dy
+    ! end function yc
     !
     ! !-----------------------------------------------------------
-    ! real function zvtk(k)
+    ! real function zc(k)
     !     integer k
-    !     zvtk = loc_lzd + (k - 0.5)*dzvtk
-    ! end function zvtk
+    !     zc = loc_lzd + (k - 0.5)*dz
+    ! end function zc
     !
     ! !-----------------------------------------------------------
-    ! real function rvtk(i,j)
-    !     integer i,j,k
-    !     rvtk = sqrt(xvtk(i)**2 + yvtk(j)**2)
-    ! end function rvtk
-    !
-    ! !-----------------------------------------------------------
-    ! real function thetavtk(i,j)
+    ! real function rz(i,j)
     !     integer i,j
-    !     thetavtk = atan2(yvtk(j),xvtk(i))
-    ! end function thetavtk
+    !     rz = sqrt(yc(j)**2)
+    ! end function rz
+    !
+    ! !-----------------------------------------------------------
+    ! real function r(i,j)
+    !     integer i,j,k
+    !     r = sqrt(xc(i)**2 + yc(j)**2)
+    ! end function r
+    !
+    ! !-----------------------------------------------------------
+    ! real function theta(i,j)
+    !     integer i,j
+    !     theta = atan2(yc(j),xc(i))
+    ! end function theta
 
 end module params

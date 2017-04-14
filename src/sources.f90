@@ -3,6 +3,7 @@ module sources
 
 use params
 use helpers
+use spatial
 use basis_funcs
 
 ! use random  ! TODO: commented to get working w/o MKL

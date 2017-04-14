@@ -4,6 +4,7 @@ module initialize
 use input
 use params
 use helpers
+use spatial
 use timestep
 
 use basis_funcs!, only: wgt1d, wgt2d, wgt3d, ibitri, cbasis, set_bfvals_3D

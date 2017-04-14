@@ -5,6 +5,8 @@ use MKL_VSL_TYPE
 use MKL_VSL
 
 use params
+use spatial
+use timestep
 ! use helpers
 ! use boundary
 

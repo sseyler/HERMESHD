@@ -3,6 +3,8 @@ module initialcon
 
 use params
 use helpers
+use spatial
+! use timestep
 use basis_funcs
 
 use boundary_custom

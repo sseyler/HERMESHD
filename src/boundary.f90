@@ -4,6 +4,9 @@
 module boundary_defs
 
 use params
+use spatial
+
+implicit none
 
     !===========================================================================
     ! ABSTRACT INTERFACE to subroutines for setting BCs
@@ -554,6 +557,7 @@ module boundary_custom
 
     use params
     use helpers
+    use spatial
 
     !===========================================================================
     ! Masking params (for advanced or internal initial/boundary conditions)

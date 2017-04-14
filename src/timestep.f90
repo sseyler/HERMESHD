@@ -1,6 +1,9 @@
 module timestep
 
 use params
+use spatial
+
+implicit none
 
 real :: cflm  ! Initialized in init.f90
 

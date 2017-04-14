@@ -3,6 +3,7 @@ module flux
 
 use params
 use helpers
+use spatial
 use basis_funcs
 
 use boundary
