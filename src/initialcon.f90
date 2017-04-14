@@ -356,7 +356,7 @@ contains
 
         ! NOTE: Qxlow_ext_custom, Qcyl_ext, and QMask should already be initialized!
         ! call add_custom_boundaries(icname)
-        call set_cyl_in_2d_pipe_boundaries(Qmask, ux_amb, dn, pr, Qxlo_ext_def, Qcyl_ext_c)
+        call set_cyl_in_2d_pipe_boundaries(Q_r, Qmask, ux_amb, dn, pr, Qxlo_ext_def, Qcyl_ext_c)
 
     end subroutine pipe_cylinder_2d
     !---------------------------------------------------------------------------

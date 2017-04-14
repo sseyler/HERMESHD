@@ -7,6 +7,8 @@ use basis_funcs
 
 ! use random  ! TODO: commented to get working w/o MKL
 
+real, dimension(nx,ny,nz,nQ,nbasis) :: source_r
+
 contains
 
     subroutine source_calc(Q_ri)

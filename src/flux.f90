@@ -8,6 +8,8 @@ use basis_funcs
 use boundary
 ! use random  ! TODO: commented to get working w/o MKL
 
+real, dimension(nx,ny,nz,nQ,nbasis) :: glflux_r, integral_r
+
 ! Only used by flux_calc (flux_cal) and glflux
 real, dimension(nface,1:nx+1,ny,nz,1:nQ) :: flux_x
 real, dimension(nface,nx,1:ny+1,nz,1:nQ) :: flux_y

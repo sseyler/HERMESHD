@@ -161,7 +161,7 @@ if (ENABLE_PYWRAP)
     PYWRAP(
         MOD ${PYMOD_NAME}
         SRC ${module_sources}
-        SUBPROGRAMS "main setup step cleanup generate_output"
+        SUBPROGRAMS "main setup step cleanup generate_output Q_r0 Q_r1 Q_r2 Q_r3"
         LIBS ${LIB_NAME}
         EXT_LIBS ${MKL_LIBS}
         EXT_LIBS_LOC ${MKL_PATH}

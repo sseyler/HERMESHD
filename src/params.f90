@@ -158,10 +158,10 @@ module params
 
 
     !===========================================================================
-    ! Arrays for field variables, fluxes/inner-integrals, and sources, and time(s)
+    ! Arrays for field variables
     !------------------------------------------------------------
+    ! real, allocatable, dimension(:,:,:,:,:) :: Q_r0, Q_r1, Q_r2, Q_r3
     real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r0, Q_r1, Q_r2, Q_r3
-    real, dimension(nx,ny,nz,nQ,nbasis) :: glflux_r, source_r, integral_r
     !===========================================================================
 
 

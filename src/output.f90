@@ -460,7 +460,8 @@ contains
             do j=1+nb,ny-nb
                 do k=1+nb,nz-nb
                     l=(i-nb)+(j-nb-1)*(nx-2*nb)+(k-nb-1)*(nx-2*nb)*(ny-2*nb)
-                        var_xml_val_x(l)= -2*(Q_r2(i,j,k,my,2)-Q_r2(i,j,k,mx,3))/Q_r2(i,j,k,rh,1)*dxi/t0
+                        var_xml_val_x(l) = -2*(Qin(i,j,k,my,2)-Qin(i,j,k,mx,3))/Qin(i,j,k,rh,1)*dxi/t0
+                        ! var_xml_val_x(l) = -2*(Q_r2(i,j,k,my,2)-Q_r2(i,j,k,mx,3))/Q_r2(i,j,k,rh,1)*dxi/t0
                 enddo
             enddo
         enddo

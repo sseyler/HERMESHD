@@ -647,7 +647,8 @@ contains
     end function cyl_in_2d_pipe_mask
 
 
-    subroutine set_cyl_in_2d_pipe_boundaries(Qmask_i, ux_amb, den, pres, Qxlo_e_c, Qcyl_e_c)
+    subroutine set_cyl_in_2d_pipe_boundaries(Q_i, Qmask_i, ux_amb, den, pres, Qxlo_e_c, Qcyl_e_c)
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_i
         logical, dimension(nx,ny,nz), intent(in) :: Qmask_i
         real, intent(in) :: ux_amb, den, pres
         real, dimension(ny,nz,nface,nQ), intent(out) :: Qxlo_e_c
@@ -662,7 +663,7 @@ contains
         Qcyl_e_c(:,:,:,:) = 0.0
         do ieq = rh,en
             do i4 = 1,nface
-                Qcyl_e_c(:,:,i4,ieq) = Q_r0(:,:,1,i4,ieq)  ! Init to grid values
+                Qcyl_e_c(:,:,i4,ieq) = Q_i(:,:,1,i4,ieq)  ! Init to grid values
                 where ( Qmask_i(:,:,1) )
                     Qcyl_e_c(:,:,i4,ieq) = 0.0             ! Set dens/momenta to 0
                 end where
@@ -688,17 +689,18 @@ contains
     end subroutine set_cyl_in_2d_pipe_boundaries
 
 
-    subroutine apply_cyl_in_2d_pipe_boundaries(Qcyl_e_c, Qcyl_e)
+    subroutine apply_cyl_in_2d_pipe_boundaries(Q_o, Qcyl_e_c, Qcyl_e)
         real, dimension(nx,ny,nface,nQ), intent(in) :: Qcyl_e_c
         real, dimension(nx,ny,nface,nQ), intent(inout) :: Qcyl_e  ! TODO: might wanna change
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_o
 
         do ieq=1,nQ
             where (Qmask(:,:,:))
-                Q_r0(:,:,:,rh,ieq) = 0.0
-                Q_r0(:,:,:,rh,1)   = 1.25
-                Q_r0(:,:,:,mx,ieq) = 0.0
-                Q_r0(:,:,:,my,ieq) = 0.0
-                Q_r0(:,:,:,mz,ieq) = 0.0
+                Q_o(:,:,:,rh,ieq) = 0.0
+                Q_o(:,:,:,rh,1)   = 1.25
+                Q_o(:,:,:,mx,ieq) = 0.0
+                Q_o(:,:,:,my,ieq) = 0.0
+                Q_o(:,:,:,mz,ieq) = 0.0
             end where
         end do
     end subroutine apply_cyl_in_2d_pipe_boundaries
