@@ -65,6 +65,11 @@ real, dimension(nbastot,nbastot) :: cell_int0,xp_int0,xm_int0,yp_int0,ym_int0,zp
 real, dimension(nbastot) :: cbas_xp,cbas_xm,cbas_yp,cbas_ym,cbas_zp,cbas_zm
 integer, dimension(nbastot) :: ibas_x, ibas_y, ibas_z
 
+! Basis function flags
+! TODO: these variables are in:
+!   * initialize.f90 (setup)
+!   * innerintegral
+!   * set_vtk_vals_3D, set_internal_vals_3D, set_face_vals_3D
 integer :: kx,ky,kz
 integer :: kxx,kyy,kzz, kyz,kzx,kxy
 integer :: kxyz, kxxx,kyyy,kzzz, kyzz,kzxx,kxyy, kyyz,kzzx,kxxy

@@ -7,8 +7,17 @@ implicit none
 ! private
 ! public :: grid3D, init_grid3D
 
+!===========================================================================
+! Arrays for field variables
+!------------------------------------------------------------
+! real, allocatable, dimension(:,:,:,:,:) :: Q_r0, Q_r1, Q_r2, Q_r3
+real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r0, Q_r1, Q_r2, Q_r3
+!===========================================================================
+
+real dz,dy,dx, dxi,dyi,dzi, dVi  ! used throughout + directly by grid coord functions
+
+real lxd,lxu,lyd,lyu,lzd,lzu  ! used in init + indirectly used by the grid coord functions
 real loc_lxd,loc_lyd,loc_lzd  ! used directly by the grid coord functions
-real dz, dy, dx, dxi, dyi, dzi, dVi  ! used throughout + directly by grid coord functions
 
 ! type grid3D
 !     real :: lx, ly, ly, dx, dy, dz

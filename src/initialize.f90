@@ -18,6 +18,12 @@ integer, parameter :: iseed = 123456789  ! 1317345*mpi_P + 5438432*mpi_Q + 38472
 
 ! integer :: nout
 
+!===========================================================================
+! Helper variables (initialized here)
+!------------------------------------------------------------
+real t1,t2,t_start,t_stop,dtoriginal  ! used for timing (dtoriginal optional)
+!===========================================================================
+
 contains
 
     !===========================================================================
@@ -483,7 +489,7 @@ contains
         character (5) :: pname1,dname1
         character (30) :: fname2
 
-        nump = iam + 10000
+        nump = irank + 10000
 
         write(pname1,'(i5)')nump
         pname=pname1(2:5)
