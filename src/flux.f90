@@ -7,7 +7,7 @@ use spatial
 use basis_funcs
 
 use boundary
-! use random  ! TODO: commented to get working w/o MKL
+use random
 
 real, dimension(nx,ny,nz,nQ,nbasis) :: glflux_r, integral_r
 
@@ -41,7 +41,7 @@ contains
 
         Spnts_r(:,:,:) = 0.0
         Hpnts_r(:,:) = 0.0
-        ! if (llns) call random_stresses_pnts_r(Spnts_r, npnts)  ! TODO: commented to get working w/o MKL
+        if (llns) call random_stresses_pnts_r(Spnts_r, npnts)  ! TODO: commented to get working w/o MKL
 
         do ife = 1,npnts
             dn   = Qpnts_r(ife,rh)

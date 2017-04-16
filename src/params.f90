@@ -78,8 +78,8 @@ module params
     real, parameter :: cp = aindex/aindm1   ! specific heat at constant pressure
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
-    real, parameter :: L0 = 1.0e0  ! 1.0e-9                 ! length
-    real, parameter :: t0 = 1.0e0  ! 1.0e-12                ! time
+    real, parameter :: L0 = 1.0e-6                          ! length
+    real, parameter :: t0 = 1.0e-6                          ! time
     real, parameter :: n0 = 2.5e25 ! ideal gas              ! number density
 
     ! Derived units
@@ -133,7 +133,7 @@ module params
     !===========================================================================
     ! Time(s)
     !------------------------------------------------------------
-    real t, dt, dtout, sqrt_dVdt_i ! Inv sq-root of (dV*dt), dV = grid cell volume
+    real t, dt, dtout ! Inv sq-root of (dV*dt), dV = grid cell volume
     !===========================================================================
 
 

@@ -1,4 +1,4 @@
-!****** PARAMETERS.F90 *******************************************************************
+!****** PARAMS.F90 *******************************************************************
 
 ! TEST RESULTS SUMMARY USING VARIOUS #s OF BASIS FUNCTIONS & QUADRATURE POINTS
 !
@@ -35,18 +35,16 @@ module params
 
     use input
 
-    use lib_vtk_io
-    use MKL_VSL_TYPE
-    use MKL_VSL
-
+    ! NOTE: "mpif.h" is in /nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include
+    ! include '/nfs/packages/opt/Linux_x86_64/openmpi/1.6.3/intel13.0/include/mpif.h'
     include 'mpif.h'
 
-    integer, parameter :: rh = 1                      ! density
-    integer, parameter :: mx = 2, my = 3, mz = 4      ! vector momentum
-    integer, parameter :: en = 5                      ! scalar energy
-    integer, parameter :: pxx = 6, pyy = 7,  pzz = 8  ! isotropic stress
-    integer, parameter :: pxy = 9, pxz = 10, pyz = 11 ! deviatoric stress
-    integer, parameter :: nQ  = 11                    ! number of field variables
+    integer, parameter :: rh = 1                    ! density
+    integer, parameter :: mx = 2, my = 3,  mz = 4   ! vector momentum
+    integer, parameter :: en = 5                    ! scalar energy
+    integer, parameter :: pxx= 6, pyy= 7,  pzz= 8   ! isotropic stress
+    integer, parameter :: pxy= 9, pxz= 10, pyz= 11  ! deviatoric stress
+    integer, parameter :: nQ = 11                   ! number of field variables
 
     integer, parameter :: nbastot = 30
     integer, parameter :: ngu = 0  ! TODO: only used in output_vtk()
@@ -133,62 +131,9 @@ module params
 
 
     !===========================================================================
-    ! Parameters relating to basis functions & VTK output
-    !------------------------------------------------------------
-    ! Basis function flags
-    ! TODO: these variables are in:
-    !   * initialize.f90 (setup)
-    !   * innerintegral
-    !   * set_vtk_vals_3D, set_internal_vals_3D, set_face_vals_3D
-    ! integer, parameter :: kx     = 2, ky    = 3, kz    = 4
-    ! integer, parameter :: kyz    = 5, kzx   = 6, kxy   = 7
-    ! integer, parameter :: kxyz   = 8
-    ! integer, parameter :: kxx    = 9, kyy   =10, kzz   =11
-    ! integer, parameter :: kyzz   =12, kzxx  =13, kxyy  =14
-    ! integer, parameter :: kyyz   =15, kzzx  =16, kxxy  =17
-    ! integer, parameter :: kyyzz  =18, kzzxx =19, kxxyy =20
-    ! integer, parameter :: kyzxx  =21, kzxyy =22, kxyzz =23
-    ! integer, parameter :: kxyyzz =24, kyzzxx=25, kzxxyy=26
-    ! integer, parameter :: kxxyyzz=27
-    integer kx,ky,kz, kyz,kzx,kxy, kxyz, kxx,kyy,kzz, kyzz,kzxx,kxyy
-    integer kyyz,kzzx,kxxy, kyyzz,kzzxx,kxxyy, kyzxx,kzxyy,kxyzz
-    integer kxyyzz,kyzzxx,kzxxyy, kxxyyzz, kxxx,kyyy,kzzz
-
-    ! TODO: only in output & basis_funcs
-    integer, parameter :: nvtk  = 1    ! (was 2)
-    integer, parameter :: nvtk2 = nvtk*nvtk
-    integer, parameter :: nvtk3 = nvtk*nvtk*nvtk
-
-    ! TODO: only in set_vtk_vals_3D, output_vtk
-    real, dimension(nvtk3,nbastot) :: bfvtk, bfvtk_dx, bfvtk_dy, bfvtk_dz
-
-    ! TODO: only in set_vtk_vals_3D, xvtk/yvtk/zvtk (parameters), output_vtk
-    real dxvtk,dyvtk,dzvtk
-    !---------------------------------------------------------------------------
-
-
-    !===========================================================================
-    ! Arrays for field variables, fluxes/inner-integrals, and sources, and time(s)
-    !------------------------------------------------------------
-    real, dimension(nx,ny,nz,nQ,nbasis) :: Q_r0, Q_r1, Q_r2, Q_r3
-    real, dimension(nx,ny,nz,nQ,nbasis) :: glflux_r, source_r, integral_r
-    !===========================================================================
-
-
-    !===========================================================================
     ! Time(s)
     !------------------------------------------------------------
     real t, dt, dtout, sqrt_dVdt_i ! Inv sq-root of (dV*dt), dV = grid cell volume
-    !===========================================================================
-
-
-    !===========================================================================
-    ! Helper variables (initialized here)
-    !------------------------------------------------------------
-    real t1,t2,t_start,t_stop,dtoriginal  ! used for timing (dtoriginal optional)
-    real lxd,lxu,lyd,lyu,lzd,lzu  ! used in init + indirectly used by the grid coord functions
-    real loc_lxd,loc_lyd,loc_lzd  ! used directly by the grid coord functions
-    real dz, dy, dx, dxi, dyi, dzi, dVi  ! used throughout + directly by grid coord functions
     !===========================================================================
 
 
@@ -215,73 +160,5 @@ module params
     !===========================================================================
 
 contains
-
-    !-----------------------------------------------------------
-    !   Return the x coordinate of (the center of) cell i
-    !     Note: based on the location of this MPI domain (loc_lxd)
-    real function xc(i)
-        integer i
-        xc = loc_lxd + (i - 0.5)*dx
-    end function xc
-
-    !-----------------------------------------------------------
-    real function yc(j)
-        integer j
-        yc = loc_lyd + (j - 0.5)*dy
-    end function yc
-
-    !-----------------------------------------------------------
-    real function zc(k)
-        integer k
-        zc = loc_lzd + (k - 0.5)*dz
-    end function zc
-
-    !-----------------------------------------------------------
-    real function rz(i,j)
-        integer i,j
-        rz = sqrt(yc(j)**2)
-    end function rz
-
-    !-----------------------------------------------------------
-    real function r(i,j)
-        integer i,j,k
-        r = sqrt(xc(i)**2 + yc(j)**2)
-    end function r
-
-    !-----------------------------------------------------------
-    real function theta(i,j)
-        integer i,j
-        theta = atan2(yc(j),xc(i))
-    end function theta
-
-    !-----------------------------------------------------------
-    real function xvtk(i)
-        integer i
-        xvtk = loc_lxd + (i - 0.5)*dxvtk
-    end function xvtk
-
-    !-----------------------------------------------------------
-    real function yvtk(j)
-        integer j
-        yvtk = loc_lyd + (j - 0.5)*dyvtk
-    end function yvtk
-
-    !-----------------------------------------------------------
-    real function zvtk(k)
-        integer k
-        zvtk = loc_lzd + (k - 0.5)*dzvtk
-    end function zvtk
-
-    !-----------------------------------------------------------
-    real function rvtk(i,j)
-        integer i,j,k
-        rvtk = sqrt(xvtk(i)**2 + yvtk(j)**2)
-    end function rvtk
-
-    !-----------------------------------------------------------
-    real function thetavtk(i,j)
-        integer i,j
-        thetavtk = atan2(yvtk(j),xvtk(i))
-    end function thetavtk
 
 end module params

@@ -17,7 +17,7 @@ use initialize
 
 use prepare_step
 use sources
-use random  ! TODO: commented to get working w/o MKL
+use random
 use flux
 use output
 
@@ -46,7 +46,7 @@ contains
         !#############################
         ! III. CLEANUP
         !-----------------------------
-        call cleanup(t_start)
+        if (llns) call cleanup(t_start)
 
     end subroutine main
     !---------------------------------------------------------------------------
@@ -126,7 +126,7 @@ contains
         !-------------------------------------------------
         ! 1. De-allocate system resources for RNG
         !-------------------------------------------------
-        ! call random_cleanup()
+        call random_cleanup()
 
         !-------------------------------------------------
         ! 2. MPI cleanup

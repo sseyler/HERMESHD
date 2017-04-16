@@ -68,6 +68,12 @@ contains
             case(7)
                 call mpi_print(iam, 'Setting up 2D cylinder-in-pipe (periodic)...')
                 call pipe_cylinder_2d(Q_r, 1)
+            case(8)
+                call mpi_print(iam, 'Setting up 2D Landau-Lifschitz Navier-Stokes test...')
+                call pipe_cylinder_2d(Q_r, 0)
+            case(9)
+                call mpi_print(iam, 'Setting up 2D Landau-Lifschitz Navier-Stokes test...')
+                call pipe_cylinder_2d(Q_r, 1)
         end select
 
         ! coll = epsi  ! temporary hack: set coll to epsi to get old behavior
@@ -361,6 +367,56 @@ contains
         call set_cyl_in_2d_pipe_boundaries(Q_r, Qmask, ux_amb, dn, pr, Qxlo_ext_def, Qcyl_ext_c)
 
     end subroutine pipe_cylinder_2d
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
+    ! 2D LLNS test
+    !------------------------------------------------------------
+    ! Set 2D or 3D
+    !   * ver = 0 for 2D test
+    !   * ver = 1 for 3D test
+    !---------------------------------------------------------------------------
+    subroutine test_llns(Q_r, ver)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
+        integer i,j,k, ver
+        real rh_amb,vx_amb,vy_amb,vz_amb,pr_amb,te_amb
+        real dn,vx,vy,vz,te,pr
+
+        rh_amb = 1.0            ! ambient density
+        vx_amb = 0.0            ! ambient x-velocity  1.0/aindex**0.5
+        vy_amb = 0.0
+        select case(ver)
+          case(0)
+            vz_amb = 0.0        ! ambient y-velocity  1.0/aindex**0.5
+          case(1)
+            vz_amb = 0.0        ! ambient y-velocity  1.0/aindex**0.5
+        end select
+        vz_amb = 0.0            ! ambient z-velocity
+        pr_amb = 1.0            ! ambient pressure (atmospheric pressure)
+        te_amb = pr_amb/rh_amb  ! ambient temperature
+
+        do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
+            vx = vx_amb
+            vy = vy_amb
+            vz = vz_amb
+            te = te_amb
+            dn = te**(1./aindm1)  ! OR (1 - delta_T)**(1/(gamma-1)), rh_amb * te**(1./aindm1)
+            pr = dn**aindex  ! use te*dn OR dn**aindex (for ideal gas)
+
+            Q_r(i,j,k,rh,1) = dn
+            Q_r(i,j,k,mx,1) = dn*vx
+            Q_r(i,j,k,my,1) = dn*vy
+            Q_r(i,j,k,mz,1) = dn*vz
+            Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
+        end do
+        end do
+        end do
+
+    end subroutine test_llns
     !---------------------------------------------------------------------------
 
 end module initialcon

@@ -1,4 +1,7 @@
-!***** RANDOM.F90 ************************************************************************
+!***** RANDOM.F90 **************************************************************
+! NOTE: this implementation is slow probably becaues of the dynamic
+!       allocation of the arrays used for random matrices/vectors
+!*******************************************************************************
 module random
 
 use MKL_VSL_TYPE
@@ -7,8 +10,6 @@ use MKL_VSL
 use params
 use spatial
 use timestep
-! use helpers
-! use boundary
 
 !===========================================================================
 ! MKL VSL parameters
@@ -21,6 +22,8 @@ integer, parameter :: vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
 real, parameter :: vsl_mean  = 0.0
 real, parameter :: vsl_sigma = 1.0
 !===========================================================================
+
+real :: dvdti, sqrt_dvdti
 
 
 ! NOTE: It might make sense to use global arrays for stochastic
@@ -37,7 +40,11 @@ contains
 !-------------------------------------------------------------------------------
     subroutine random_init(seed)
         integer, intent(in) :: seed
-        vsl_errcode = vslnewstream(vsl_stream, vsl_brng, seed)
+        vsl_errcode = vslnewstream(vsl_stream, vsl_brng, seed + iam)
+
+        dvi   = (dxi*dyi*dzi) * npg  ! NOTE: taking cell volume to be 1/(# internal quad pts)
+        dvdti = dvi/dt
+        sqrt_dvdti = sqrt(dvdti)
     end subroutine random_init
 !-------------------------------------------------------------------------------
 
@@ -55,10 +62,12 @@ contains
         implicit none
         integer ife,npnts,b,e,vsl_ndim
         real, dimension(npnts,3,3) :: GRMpnts_r
-        real, allocatable :: grn(:)
 
-        vsl_ndim = npnts*3*3
-        allocate(grn(vsl_ndim))
+        real, dimension(9*npnts) :: grn
+        ! real, allocatable :: grn(:)
+
+        vsl_ndim = 9*npnts
+        ! allocate(grn(vsl_ndim))
 
         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
 
@@ -81,10 +90,12 @@ contains
         implicit none
         integer ife,npnts,b,e,vsl_ndim
         real, dimension(npnts,3,3) :: GRMpnts_r
-        real, allocatable :: grn(:)
 
-        vsl_ndim = npnts*6
-        allocate(grn(vsl_ndim))
+        real, dimension(6*npnts) :: grn
+        ! real, allocatable :: grn(:)
+
+        vsl_ndim = 6*npnts
+        ! allocate(grn(vsl_ndim))
 
         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
 
@@ -104,6 +115,7 @@ contains
     end subroutine get_GRM_symmetric
 !-------------------------------------------------------------------------------
 
+
 !-------------------------------------------------------------------------------
     subroutine random_stresses_pnts_r(Spnts_r, npnts)
 
@@ -114,8 +126,8 @@ contains
         real eta_d,zeta_d
         real trG,trGd3,trG_zeta
 
-        eta_d = eta_sd * sqrt_dVdt_i
-        zeta_d = zeta_sd * sqrt_dVdt_i
+        eta_d = eta_sd * sqrt_dvdti
+        zeta_d = zeta_sd * sqrt_dvdti
         call get_GRM(GRMpnts_r, npnts)
 
         ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
@@ -147,6 +159,51 @@ contains
     end subroutine random_stresses_pnts_r
 !-------------------------------------------------------------------------------
 
+
+!-------------------------------------------------------------------------------
+    ! subroutine random_stresses_pnts_r(Spnts_r, npnts)
+    !
+    !     implicit none
+    !     integer ife,npnts
+    !     real, dimension(npnts,3,3) :: GRMpnts_r, Spnts_r
+    !     real Gxx,Gyy,Gzz,Gxy,Gxz,Gyz
+    !     real eta_d,zeta_d
+    !     real trG,trGd3,trG_zeta
+    !
+    !     eta_d = eta_sd * sqrt_dvdti
+    !     zeta_d = zeta_sd * sqrt_dvdti
+    !     call get_GRM_symmetric(GRMpnts_r, npnts)
+    !
+    !     ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
+    !     do ife = 1,npnts
+    !         Gxx = GRMpnts_r(ife,1,1)
+    !         Gyy = GRMpnts_r(ife,2,2)
+    !         Gzz = GRMpnts_r(ife,3,3)
+    !
+    !         Gxy = GRMpnts_r(ife,1,2)
+    !         Gxz = GRMpnts_r(ife,1,3)
+    !         Gyz = GRMpnts_r(ife,2,3)
+    !
+    !         trG = (Gxx + Gyy + Gzz)
+    !         trGd3 = trG/3.0
+    !         trG_zeta = zeta_sd*trG
+    !
+    !         Spnts_r(ife,1,1) = eta_sd*(Gxx - trGd3) + trG_zeta
+    !         Spnts_r(ife,2,2) = eta_sd*(Gyy - trGd3) + trG_zeta
+    !         Spnts_r(ife,3,3) = eta_sd*(Gzz - trGd3) + trG_zeta
+    !
+    !         Spnts_r(ife,1,2) = eta_sd*Gxy
+    !         Spnts_r(ife,1,3) = eta_sd*Gxz
+    !         Spnts_r(ife,2,3) = eta_sd*Gyz
+    !         Spnts_r(ife,2,1) = Spnts_r(ife,1,2)
+    !         Spnts_r(ife,3,1) = Spnts_r(ife,1,3)
+    !         Spnts_r(ife,3,2) = Spnts_r(ife,2,3)
+    !     end do
+    !
+    ! end subroutine random_stresses_pnts_r
+!-------------------------------------------------------------------------------
+
+
 !-------------------------------------------------------------------------------
     subroutine random_heatflux_pnts_r(Hpnts_r, npnts)
 
@@ -159,7 +216,7 @@ contains
         vsl_ndim = npnts*3
         allocate(grn(vsl_ndim))
 
-        kappa_d = kappa_sd * sqrt_dVdt_i
+        kappa_d = kappa_sd * sqrt_dvdti
 
         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
 

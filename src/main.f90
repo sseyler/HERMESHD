@@ -89,7 +89,7 @@ end do
 !-------------------------------------------------
 ! 1. De-allocate system resources for RNG
 !-------------------------------------------------
-call random_cleanup()
+if (llns) call random_cleanup()
 
 !-------------------------------------------------
 ! 2. MPI cleanup

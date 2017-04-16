@@ -10,7 +10,7 @@ use timestep
 use basis_funcs!, only: wgt1d, wgt2d, wgt3d, ibitri, cbasis, set_bfvals_3D
 
 use initialcon
-use random  ! TODO: commented to get working w/o MKL
+use random
 
 implicit none
 
@@ -62,7 +62,7 @@ contains
 
         ! call init_random_seed(iam, iseed)
 
-        call random_init(iseed)  ! initialize MKL random number generator
+        if (llns) call random_init(iseed)  ! initialize MKL random number generator
 
         call print_startup_info
 
