@@ -23,13 +23,16 @@ real, dimension(nfe,nQ) :: fface_x,fface_y,fface_z  ! in CES's code, these are i
 contains
 
 !-------------------------------------------------------------------------------
-    subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts)
+    subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts,i,j,k)
         ! Calculate the flux "fpnts_r" in direction "ixyz" (x, y, or z) at a set of
         ! points corresponding to conserved quantities "Qpnts_r":
         !   ixyz = <1,2,3>: <x,y,z>-direction
         implicit none
+        real, dimension(npnts,nQ), intent(in) :: Qpnts_r
+        real, dimension(npnts,nQ), intent(out) :: fpnts_r
+
+        integer i,j,k
         integer ife,ixyz,npnts
-        real, dimension(npnts,nQ) :: Qpnts_r, fpnts_r
         real dn,M_x,M_y,M_z,Ener, P_xx,P_yy,P_zz,P_xy,P_xz,P_yz
         real dni, vx,vy,vz,smsq, P,P_5,P_10
 
@@ -71,6 +74,7 @@ contains
 
             ! NOTE: may not need all values since ixyz choose flux direction
             ! TODO: can use pxx thru pyz flags to specify the random stresses!
+
             Sxx = Spnts_r(ife,1,1)
             Syy = Spnts_r(ife,2,2)
             Szz = Spnts_r(ife,3,3)
@@ -78,9 +82,34 @@ contains
             Sxz = Spnts_r(ife,1,3)
             Syz = Spnts_r(ife,2,3)
 
-            Qx = Hpnts_r(ife,1)
-            Qy = Hpnts_r(ife,2)
-            Qz = Hpnts_r(ife,3)
+            ! Qx = Hpnts_r(ife,1)
+            ! Qy = Hpnts_r(ife,2)
+            ! Qz = Hpnts_r(ife,3)
+
+            ! if (llns) then
+            !     if (ixyz == 1) then
+            !         Sxx = Sflux_x(ife,i,j,k,1,1)
+            !         Syy = Sflux_x(ife,i,j,k,2,2)
+            !         Szz = Sflux_x(ife,i,j,k,3,3)
+            !         Sxy = Sflux_x(ife,i,j,k,1,2)
+            !         Sxz = Sflux_x(ife,i,j,k,1,3)
+            !         Syz = Sflux_x(ife,i,j,k,2,3)
+            !     else if (ixyz == 2) then
+            !         Sxx = Sflux_y(ife,i,j,k,1,1)
+            !         Syy = Sflux_y(ife,i,j,k,2,2)
+            !         Szz = Sflux_y(ife,i,j,k,3,3)
+            !         Sxy = Sflux_y(ife,i,j,k,1,2)
+            !         Sxz = Sflux_y(ife,i,j,k,1,3)
+            !         Syz = Sflux_y(ife,i,j,k,2,3)
+            !     else if (ixyz == 3) then
+            !         Sxx = Sflux_z(ife,i,j,k,1,1)
+            !         Syy = Sflux_z(ife,i,j,k,2,2)
+            !         Szz = Sflux_z(ife,i,j,k,3,3)
+            !         Sxy = Sflux_z(ife,i,j,k,1,2)
+            !         Sxz = Sflux_z(ife,i,j,k,1,3)
+            !         Syz = Sflux_z(ife,i,j,k,2,3)
+            !     end if
+            ! end if
 
             select case(ixyz)
             case(1)
@@ -240,7 +269,7 @@ contains
                     end do
                 end if
 
-                call flux_calc_pnts_r(Qface_x,fface_x,1,nfe)
+                call flux_calc_pnts_r(Qface_x,fface_x,1,nfe,i,j,k)
 
                 ! if (.not. ihllc) then
                 if (ivis == 2) then
@@ -325,7 +354,7 @@ contains
                     end do
                 end if
 
-                call flux_calc_pnts_r(Qface_y,fface_y,2,nfe)
+                call flux_calc_pnts_r(Qface_y,fface_y,2,nfe,i,j,k)
 
                 ! if (.not. ihllc) then
                 if (ivis == 2) then
@@ -412,7 +441,7 @@ contains
                     end do
                 end if
 
-                call flux_calc_pnts_r(Qface_z,fface_z,3,nfe)
+                call flux_calc_pnts_r(Qface_z,fface_z,3,nfe,i,j,k)
 
                 ! if (.not. ihllc) then
                 if (ivis == 2) then
@@ -671,9 +700,9 @@ contains
                 end do
             end do
 
-            call flux_calc_pnts_r(Qinner,finner_x,1,npg)
-            call flux_calc_pnts_r(Qinner,finner_y,2,npg)
-            call flux_calc_pnts_r(Qinner,finner_z,3,npg)
+            call flux_calc_pnts_r(Qinner,finner_x,1,npg,i,j,k)
+            call flux_calc_pnts_r(Qinner,finner_y,2,npg,i,j,k)
+            call flux_calc_pnts_r(Qinner,finner_z,3,npg,i,j,k)
 
             do ieq = 1,nQ
 
@@ -772,9 +801,9 @@ contains
                 end do
             end do
 
-            call flux_calc_pnts_r(Qinner,finner_x,1,npg)
-            call flux_calc_pnts_r(Qinner,finner_y,2,npg)
-            call flux_calc_pnts_r(Qinner,finner_z,3,npg)
+            call flux_calc_pnts_r(Qinner,finner_x,1,npg,i,j,k)
+            call flux_calc_pnts_r(Qinner,finner_y,2,npg,i,j,k)
+            call flux_calc_pnts_r(Qinner,finner_z,3,npg,i,j,k)
 
             do ieq = 1,nQ
 
@@ -936,6 +965,8 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k,ieq,ir
+
+        ! if (llns) call get_region_Sflux_xyz(GRM_x, GRM_y, GRM_z, Sflux_x, Sflux_y, Sflux_z)
 
         !#########################################################
         ! Step 1: Calculate fluxes for boundaries of each cell
