@@ -87,7 +87,12 @@ contains
         dtout = tf/ntout  ! TODO: move this to a more sensible place once output scheme is improved!
 
         !-------------------------------------------------
-        ! 2. Select and set initial conditions
+        ! 2. Select hydrodynamic model (equations)
+        !-------------------------------------------------
+        call select_hydro_model(ivis, Fpt_x, Fpt_y, Fpt_z)
+
+        !-------------------------------------------------
+        ! 3. Select and set initial conditions
         !-------------------------------------------------
         if (iread == 0) then
             call set_ic(Q_io, icid)
@@ -96,12 +101,12 @@ contains
         endif
 
         !-------------------------------------------------
-        ! 3. Select integration method
+        ! 4. Select integration method
         !-------------------------------------------------
         call select_integrator(iname, update)
 
         !-------------------------------------------------
-        ! 4. Select boundary conditions
+        ! 5. Select boundary conditions
         !-------------------------------------------------
         call select_x_boundaries(xlobc, xhibc, apply_xlobc, apply_xhibc)
         call select_y_boundaries(ylobc, yhibc, apply_ylobc, apply_yhibc)
@@ -110,7 +115,7 @@ contains
         t1 = get_clock_time()
 
         !-------------------------------------------------
-        ! 5. Generate initial output
+        ! 6. Generate initial output
         !-------------------------------------------------
         call output_vtk(Q_io, nout, iam)
 

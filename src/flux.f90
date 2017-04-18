@@ -22,15 +22,14 @@ real, dimension(nfe,nQ) :: fface_x,fface_y,fface_z  ! in CES's code, these are i
 
 contains
 
-!-------------------------------------------------------------------------------
-    subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts,i,j,k)
+    !---------------------------------------------------------------------------
+    subroutine flux_calc_pnts_r_v0(Qpnts_r,fpnts_r,ixyz,npnts,i,j,k)
         ! Calculate the flux "fpnts_r" in direction "ixyz" (x, y, or z) at a set of
         ! points corresponding to conserved quantities "Qpnts_r":
         !   ixyz = <1,2,3>: <x,y,z>-direction
         implicit none
-        real, dimension(npnts,nQ), intent(in) :: Qpnts_r
+        real, dimension(npnts,nQ), intent(in)  :: Qpnts_r
         real, dimension(npnts,nQ), intent(out) :: fpnts_r
-
         integer i,j,k
         integer ife,ixyz,npnts
         real dn,M_x,M_y,M_z,Ener, P_xx,P_yy,P_zz,P_xy,P_xz,P_yz
@@ -39,6 +38,7 @@ contains
         real Spnts_r(npnts,3,3), Hpnts_r(npnts,3)
         real Sxx,Syy,Szz,Sxy,Sxz,Syz, Qx,Qy,Qz
 
+        ! NOTE: "nu" in CES' code is te*rh, which is "colvis" here; "coll" is colvis/vis
         c2d3cv = c2d3*colvis  ! global vars declared in params.f90
         c4d3cv = c4d3*colvis  ! global vars declared in params.f90
 
@@ -222,10 +222,11 @@ contains
 
             end select
         end do
-    end subroutine flux_calc_pnts_r
-!-------------------------------------------------------------------------------
+    end subroutine flux_calc_pnts_r_v0
+    !---------------------------------------------------------------------------
 
-!-------------------------------------------------------------------------------
+
+    !---------------------------------------------------------------------------
     subroutine calc_flux_x(Q_r, flux_x)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
@@ -308,9 +309,9 @@ contains
         end do
 
     end subroutine calc_flux_x
-!-------------------------------------------------------------------------------
+    !---------------------------------------------------------------------------
 
-!-------------------------------------------------------------------------------
+    !---------------------------------------------------------------------------
     subroutine calc_flux_y(Q_r, flux_y)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
@@ -393,9 +394,9 @@ contains
         end do
 
     end subroutine calc_flux_y
-!-------------------------------------------------------------------------------
+    !---------------------------------------------------------------------------
 
-!-------------------------------------------------------------------------------
+    !---------------------------------------------------------------------------
     subroutine calc_flux_z(Q_r, flux_z)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
@@ -480,18 +481,22 @@ contains
         end do
 
     end subroutine calc_flux_z
-!-------------------------------------------------------------------------------
+    !---------------------------------------------------------------------------
 
-!-------------------------------------------------------------------------------
+    !---------------------------------------------------------------------------
     subroutine flux_calc(Q_r)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
+
+        ! NOTE: "nu" in CES' code is te*rh, which is "colvis" here; "coll" is colvis/vis
+        c2d3cv = c2d3*colvis  ! NOTE: globaly defined in params.f90
+        c4d3cv = c4d3*colvis  ! NOTE: globaly defined in params.f90
 
         call calc_flux_x(Q_r, flux_x)
         call calc_flux_y(Q_r, flux_y)
         call calc_flux_z(Q_r, flux_z)
     end subroutine flux_calc
-!-------------------------------------------------------------------------------
+    !---------------------------------------------------------------------------
 
 
 !-------------------------------------------------------------------------------
