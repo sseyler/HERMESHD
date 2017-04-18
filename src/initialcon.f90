@@ -4,8 +4,7 @@ module initialcon
 use params
 use helpers
 use spatial
-! use timestep
-use basis_funcs
+use basis
 
 use boundary_custom
 use boundary
@@ -384,29 +383,20 @@ contains
         real rh_amb,vx_amb,vy_amb,vz_amb,pr_amb,te_amb
         real dn,vx,vy,vz,te,pr
 
-        rh_amb = 1.0            ! ambient density
-        vx_amb = 0.0            ! ambient x-velocity  1.0/aindex**0.5
-        vy_amb = 0.0
-        select case(ver)
-          case(0)
-            vz_amb = 0.0        ! ambient y-velocity  1.0/aindex**0.5
-          case(1)
-            vz_amb = 0.0        ! ambient y-velocity  1.0/aindex**0.5
-        end select
-        vz_amb = 0.0            ! ambient z-velocity
-        pr_amb = 1.0            ! ambient pressure (atmospheric pressure)
-        te_amb = pr_amb/rh_amb  ! ambient temperature
+        dn = 1.0               ! ambient density
+        te = 100*T_floor       ! ambient temperature
+
+        coll   = dn*te/vis  ! global
+        colvis = coll*vis   ! or, dn*te  (also global)
+
+        vx = 0.0               ! ambient x-velocity  1.0/aindex**0.5
+        vy = 0.0
+        vz = 0.0            ! ambient z-velocity
+        pr = te*dn  ! ambient pressure (atmospheric pressure)
 
         do k = 1,nz
         do j = 1,ny
         do i = 1,nx
-            vx = vx_amb
-            vy = vy_amb
-            vz = vz_amb
-            te = te_amb
-            dn = te**(1./aindm1)  ! OR (1 - delta_T)**(1/(gamma-1)), rh_amb * te**(1./aindm1)
-            pr = dn**aindex  ! use te*dn OR dn**aindex (for ideal gas)
-
             Q_r(i,j,k,rh,1) = dn
             Q_r(i,j,k,mx,1) = dn*vx
             Q_r(i,j,k,my,1) = dn*vy

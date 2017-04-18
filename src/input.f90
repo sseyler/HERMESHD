@@ -4,16 +4,16 @@ module input
     ! Physical system dimensions
     real, parameter :: lx = 1.0e0
     real, parameter :: ly = lx
-    real, parameter :: lz = lx/120.
+    real, parameter :: lz = lx
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad  = 2
-    integer, parameter :: nbasis = 8 ! 8
+    integer, parameter :: nbasis = 4
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 20
-    integer, parameter :: ny = 20
-    integer, parameter :: nz = 1
+    integer, parameter :: nx = 30
+    integer, parameter :: ny = 30
+    integer, parameter :: nz = 30
 
     ! Set number of MPI domains per spatial dimension
     integer :: mpi_nx = 4
@@ -41,7 +41,7 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 2.5e-3
+    real, parameter :: tf = 1.0e0
 
     ! Console output frequency
     integer, parameter :: ntout = 200
@@ -55,7 +55,7 @@ module input
     integer, parameter :: ieos = 1
 
     ! Thermodynamic, constitutive, and transport parameters
-    real, parameter :: TK     = 300.0    ! in Kelvin
+    real, parameter :: TK     = 40.0    ! in Kelvin
     real, parameter :: mu     = 18.0     ! AMU per molecule
     real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
     real, parameter :: clt    = 2.0      ! numerical speed of sound
@@ -81,7 +81,7 @@ module input
     integer, parameter :: nstenout = 0     ! total energy density
     integer, parameter :: nstesout = 0     ! entropy density
     integer, parameter :: nstpout  = ntout ! pressure
-    integer, parameter :: nststout = ntout ! stress components
+    integer, parameter :: nststout = 0     ! stress components
     integer, parameter :: nstvrout = 0     ! vorticity
 
     ! Checkpointing

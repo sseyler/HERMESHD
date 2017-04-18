@@ -59,12 +59,12 @@ F90FLAGS = -O2 -xHost -mkl $(MISCFLAGS)
 # Sod Shock Tube 1D for development code
 #********************************************
 SRC      = main.f90
-MODSRC   =  LIB_VTK_IO.f90 mkl_vsl.f90 \
-			input.f90 params.f90 timestep.f90 basis_funcs.f90 helpers.f90 random.f90 \
+MODSRC   =  LIB_VTK_IO.f90 mkl_vsl.f90 input.f90 params.f90 \
+			spatial.f90 timestep.f90 basis.f90 helpers.f90 random.f90 \
 			boundary.f90 initialcon.f90 initialize.f90 prepare_step.f90 \
 			sources.f90 flux.f90 integrator.f90 output.f90
-MODFILES = LIB_VTK_IO.mod mkl_vsl_type.mod mkl_vsl.mod \
-			input.mod params.mod timestep.mod basis_funcs.mod helpers.mod random.mod \
+MODFILES = 	LIB_VTK_IO.mod mkl_vsl_type.mod mkl_vsl.mod input.mod params.mod \
+			spatial.mod timestep.mod basis.mod helpers.mod random.mod \
 			boundary_defs.mod boundary_custom.mod boundary.mod \
 			initialcon.mod initialize.mod prepare_step.mod sources.mod flux.mod \
 			integrator.mod output.mod
@@ -72,6 +72,10 @@ MODFILES = LIB_VTK_IO.mod mkl_vsl_type.mod mkl_vsl.mod \
 #********************************************
 # Sod Shock Tube 1D for development code
 #********************************************
+# ifndef (VERS)
+# 	VERS = pymkl
+# endif
+
 ifeq ($(VERS),pymkl)
 	EXEC    = hermes
 	NAME    = hermeshd

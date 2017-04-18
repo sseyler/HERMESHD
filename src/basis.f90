@@ -1,5 +1,5 @@
-!****** BASIS_FUNCS.F90 ******************************************************************
-module basis_funcs
+!****** BASIS.F90 **************************************************************
+module basis
 
 !===========================================================================
 ! Parameters
@@ -1038,4 +1038,4 @@ contains
         thetavtk = atan2(yvtk(j),xvtk(i))
     end function thetavtk
 
-end module basis_funcs
+end module basis

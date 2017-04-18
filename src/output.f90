@@ -6,7 +6,7 @@ use LIB_VTK_IO
 use params
 use helpers
 use spatial
-use basis_funcs
+use basis
 
 integer(I4P), parameter :: nnx=nx*nvtk, nny=ny*nvtk, nnz=nz*nvtk
 

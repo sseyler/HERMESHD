@@ -124,7 +124,7 @@ contains
     end subroutine calc_rhs
 
     !----------------------------------------------------
-    subroutine advance_time_level(Q_in, Q_out, dt)
+    subroutine advance_time_level_v0(Q_in, Q_out, dt)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_in
         real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
@@ -251,7 +251,7 @@ contains
         end do
         end do
 
-    end subroutine advance_time_level
+    end subroutine advance_time_level_v0
     !---------------------------------------------------------------------------
 
 end module integrator

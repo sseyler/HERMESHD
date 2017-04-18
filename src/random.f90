@@ -105,6 +105,11 @@ contains
         real eta_d,zeta_d
         real trG,trGd3,trG_zeta
 
+        dvdti = npg*(dxi*dyi*dzi)/dt
+        sqrt_dvdti = sqrt(dvdti)
+
+        if (iam == 0) print *,sqrt_dvdti
+
         eta_d = eta_sd * sqrt_dvdti
         zeta_d = zeta_sd * sqrt_dvdti
         call get_region_GRM_xyz(GRM_x, GRM_y, GRM_z)
@@ -121,20 +126,20 @@ contains
                 Gxz = sqrt2i*( GRM_x(ipnt,i,j,k,1,3) + GRM_x(ipnt,i,j,k,3,1) )
                 Gyz = sqrt2i*( GRM_x(ipnt,i,j,k,2,3) + GRM_x(ipnt,i,j,k,3,2) )
 
-                Sflux_x(ipnt,i,j,k,1,2) = eta_sd*Gxy
-                Sflux_x(ipnt,i,j,k,1,3) = eta_sd*Gxz
-                Sflux_x(ipnt,i,j,k,2,3) = eta_sd*Gyz
+                Sflux_x(ipnt,i,j,k,1,2) = eta_d*Gxy
+                Sflux_x(ipnt,i,j,k,1,3) = eta_d*Gxz
+                Sflux_x(ipnt,i,j,k,2,3) = eta_d*Gyz
                 Sflux_x(ipnt,i,j,k,2,1) = Sflux_x(ipnt,i,j,k,1,2)
                 Sflux_x(ipnt,i,j,k,3,1) = Sflux_x(ipnt,i,j,k,1,3)
                 Sflux_x(ipnt,i,j,k,3,2) = Sflux_x(ipnt,i,j,k,2,3)
 
                 trG = (Gxx + Gyy + Gzz)
                 trGd3 = trG/3.0
-                trG_zeta = zeta_sd*trG
+                trG_zeta = zeta_d*trG
 
-                Sflux_x(ipnt,i,j,k,1,1) = eta_sd*(Gxx - trGd3) + trG_zeta
-                Sflux_x(ipnt,i,j,k,2,2) = eta_sd*(Gyy - trGd3) + trG_zeta
-                Sflux_x(ipnt,i,j,k,3,3) = eta_sd*(Gzz - trGd3) + trG_zeta
+                Sflux_x(ipnt,i,j,k,1,1) = eta_d*(Gxx - trGd3) + trG_zeta
+                Sflux_x(ipnt,i,j,k,2,2) = eta_d*(Gyy - trGd3) + trG_zeta
+                Sflux_x(ipnt,i,j,k,3,3) = eta_d*(Gzz - trGd3) + trG_zeta
             enddo
         enddo
         enddo
@@ -152,20 +157,20 @@ contains
                 Gxz = sqrt2i*( GRM_y(ipnt,i,j,k,1,3) + GRM_y(ipnt,i,j,k,3,1) )
                 Gyz = sqrt2i*( GRM_y(ipnt,i,j,k,2,3) + GRM_y(ipnt,i,j,k,3,2) )
 
-                Sflux_y(ipnt,i,j,k,1,2) = eta_sd*Gxy
-                Sflux_y(ipnt,i,j,k,1,3) = eta_sd*Gxz
-                Sflux_y(ipnt,i,j,k,2,3) = eta_sd*Gyz
+                Sflux_y(ipnt,i,j,k,1,2) = eta_d*Gxy
+                Sflux_y(ipnt,i,j,k,1,3) = eta_d*Gxz
+                Sflux_y(ipnt,i,j,k,2,3) = eta_d*Gyz
                 Sflux_y(ipnt,i,j,k,2,1) = Sflux_y(ipnt,i,j,k,1,2)
                 Sflux_y(ipnt,i,j,k,3,1) = Sflux_y(ipnt,i,j,k,1,3)
                 Sflux_y(ipnt,i,j,k,3,2) = Sflux_y(ipnt,i,j,k,2,3)
 
                 trG = (Gxx + Gyy + Gzz)
                 trGd3 = trG/3.0
-                trG_zeta = zeta_sd*trG
+                trG_zeta = zeta_d*trG
 
-                Sflux_y(ipnt,i,j,k,1,1) = eta_sd*(Gxx - trGd3) + trG_zeta
-                Sflux_y(ipnt,i,j,k,2,2) = eta_sd*(Gyy - trGd3) + trG_zeta
-                Sflux_y(ipnt,i,j,k,3,3) = eta_sd*(Gzz - trGd3) + trG_zeta
+                Sflux_y(ipnt,i,j,k,1,1) = eta_d*(Gxx - trGd3) + trG_zeta
+                Sflux_y(ipnt,i,j,k,2,2) = eta_d*(Gyy - trGd3) + trG_zeta
+                Sflux_y(ipnt,i,j,k,3,3) = eta_d*(Gzz - trGd3) + trG_zeta
             enddo
         enddo
         enddo
@@ -183,20 +188,20 @@ contains
                 Gxz = sqrt2i*( GRM_z(ipnt,i,j,k,1,3) + GRM_z(ipnt,i,j,k,3,1) )
                 Gyz = sqrt2i*( GRM_z(ipnt,i,j,k,2,3) + GRM_z(ipnt,i,j,k,3,2) )
 
-                Sflux_z(ipnt,i,j,k,1,2) = eta_sd*Gxy
-                Sflux_z(ipnt,i,j,k,1,3) = eta_sd*Gxz
-                Sflux_z(ipnt,i,j,k,2,3) = eta_sd*Gyz
+                Sflux_z(ipnt,i,j,k,1,2) = eta_d*Gxy
+                Sflux_z(ipnt,i,j,k,1,3) = eta_d*Gxz
+                Sflux_z(ipnt,i,j,k,2,3) = eta_d*Gyz
                 Sflux_z(ipnt,i,j,k,2,1) = Sflux_z(ipnt,i,j,k,1,2)
                 Sflux_z(ipnt,i,j,k,3,1) = Sflux_z(ipnt,i,j,k,1,3)
                 Sflux_z(ipnt,i,j,k,3,2) = Sflux_z(ipnt,i,j,k,2,3)
 
                 trG = (Gxx + Gyy + Gzz)
                 trGd3 = trG/3.0
-                trG_zeta = zeta_sd*trG
+                trG_zeta = zeta_d*trG
 
-                Sflux_z(ipnt,i,j,k,1,1) = eta_sd*(Gxx - trGd3) + trG_zeta
-                Sflux_z(ipnt,i,j,k,2,2) = eta_sd*(Gyy - trGd3) + trG_zeta
-                Sflux_z(ipnt,i,j,k,3,3) = eta_sd*(Gzz - trGd3) + trG_zeta
+                Sflux_z(ipnt,i,j,k,1,1) = eta_d*(Gxx - trGd3) + trG_zeta
+                Sflux_z(ipnt,i,j,k,2,2) = eta_d*(Gyy - trGd3) + trG_zeta
+                Sflux_z(ipnt,i,j,k,3,3) = eta_d*(Gzz - trGd3) + trG_zeta
             enddo
         enddo
         enddo
@@ -207,30 +212,72 @@ contains
 
 
 !-------------------------------------------------------------------------------
-    subroutine get_GRM(GRMpnts_r, npnts)
+    ! subroutine get_GRM(GRMpnts_r, npnts)
+    !
+    !     implicit none
+    !     integer ife,npnts,b,e,vsl_ndim
+    !     real, dimension(npnts,3,3) :: GRMpnts_r
+    !
+    !     real, dimension(9*npnts) :: grn
+    !     ! real, allocatable :: grn(:)
+    !
+    !     vsl_ndim = 9*npnts
+    !     ! allocate(grn(vsl_ndim))
+    !
+    !     vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
+    !
+    !     ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
+    !     do ife = 1,npnts
+    !         e = 9*ife
+    !         b = e - 8
+    !         GRMpnts_r(ife,1,:) = grn(b:b+2)
+    !         GRMpnts_r(ife,2,:) = grn(b+3:b+5)
+    !         GRMpnts_r(ife,3,:) = grn(b+6:e)
+    !     end do
+    !
+    ! end subroutine get_GRM
+!-------------------------------------------------------------------------------
 
-        implicit none
-        integer ife,npnts,b,e,vsl_ndim
-        real, dimension(npnts,3,3) :: GRMpnts_r
-
-        real, dimension(9*npnts) :: grn
-        ! real, allocatable :: grn(:)
-
-        vsl_ndim = 9*npnts
-        ! allocate(grn(vsl_ndim))
-
-        vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
-
-        ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
-        do ife = 1,npnts
-            e = 9*ife
-            b = e - 8
-            GRMpnts_r(ife,1,:) = grn(b:b+2)
-            GRMpnts_r(ife,2,:) = grn(b+3:b+5)
-            GRMpnts_r(ife,3,:) = grn(b+6:e)
-        end do
-
-    end subroutine get_GRM
+!-------------------------------------------------------------------------------
+    ! subroutine random_stresses_pnts_r(Spnts_r, npnts)
+    !     implicit none
+    !     integer ife,npnts
+    !     real, dimension(npnts,3,3) :: GRMpnts_r, Spnts_r
+    !     real Gxx,Gyy,Gzz,Gxy,Gxz,Gyz
+    !     real eta_d,zeta_d
+    !     real trG,trGd3,trG_zeta
+    !
+    !     eta_d = eta_sd * sqrt_dvdti
+    !     zeta_d = zeta_sd * sqrt_dvdti
+    !     call get_GRM(GRMpnts_r, npnts)
+    !
+    !     ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
+    !     do ife = 1,npnts
+    !         Gxx = GRMpnts_r(ife,1,1)
+    !         Gyy = GRMpnts_r(ife,2,2)
+    !         Gzz = GRMpnts_r(ife,3,3)
+    !
+    !         Gxy = sqrt2i*( GRMpnts_r(ife,1,2) + GRMpnts_r(ife,2,1) )
+    !         Gxz = sqrt2i*( GRMpnts_r(ife,1,3) + GRMpnts_r(ife,3,1) )
+    !         Gyz = sqrt2i*( GRMpnts_r(ife,2,3) + GRMpnts_r(ife,3,2) )
+    !
+    !         Spnts_r(ife,1,2) = eta_d*Gxy
+    !         Spnts_r(ife,1,3) = eta_d*Gxz
+    !         Spnts_r(ife,2,3) = eta_d*Gyz
+    !         Spnts_r(ife,2,1) = Spnts_r(ife,1,2)
+    !         Spnts_r(ife,3,1) = Spnts_r(ife,1,3)
+    !         Spnts_r(ife,3,2) = Spnts_r(ife,2,3)
+    !
+    !         trG = (Gxx + Gyy + Gzz)
+    !         trGd3 = trG/3.0
+    !         trG_zeta = zeta_d*trG
+    !
+    !         Spnts_r(ife,1,1) = eta_d*(Gxx - trGd3) + trG_zeta
+    !         Spnts_r(ife,2,2) = eta_d*(Gyy - trGd3) + trG_zeta
+    !         Spnts_r(ife,3,3) = eta_d*(Gzz - trGd3) + trG_zeta
+    !     end do
+    !
+    ! end subroutine random_stresses_pnts_r
 !-------------------------------------------------------------------------------
 
 
@@ -265,50 +312,6 @@ contains
     end subroutine get_GRM_symmetric
 !-------------------------------------------------------------------------------
 
-
-!-------------------------------------------------------------------------------
-    ! subroutine random_stresses_pnts_r(Spnts_r, npnts)
-    !     implicit none
-    !     integer ife,npnts
-    !     real, dimension(npnts,3,3) :: GRMpnts_r, Spnts_r
-    !     real Gxx,Gyy,Gzz,Gxy,Gxz,Gyz
-    !     real eta_d,zeta_d
-    !     real trG,trGd3,trG_zeta
-    !
-    !     eta_d = eta_sd * sqrt_dvdti
-    !     zeta_d = zeta_sd * sqrt_dvdti
-    !     call get_GRM(GRMpnts_r, npnts)
-    !
-    !     ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
-    !     do ife = 1,npnts
-    !         Gxx = GRMpnts_r(ife,1,1)
-    !         Gyy = GRMpnts_r(ife,2,2)
-    !         Gzz = GRMpnts_r(ife,3,3)
-    !
-    !         Gxy = sqrt2i*( GRMpnts_r(ife,1,2) + GRMpnts_r(ife,2,1) )
-    !         Gxz = sqrt2i*( GRMpnts_r(ife,1,3) + GRMpnts_r(ife,3,1) )
-    !         Gyz = sqrt2i*( GRMpnts_r(ife,2,3) + GRMpnts_r(ife,3,2) )
-    !
-    !         Spnts_r(ife,1,2) = eta_sd*Gxy
-    !         Spnts_r(ife,1,3) = eta_sd*Gxz
-    !         Spnts_r(ife,2,3) = eta_sd*Gyz
-    !         Spnts_r(ife,2,1) = Spnts_r(ife,1,2)
-    !         Spnts_r(ife,3,1) = Spnts_r(ife,1,3)
-    !         Spnts_r(ife,3,2) = Spnts_r(ife,2,3)
-    !
-    !         trG = (Gxx + Gyy + Gzz)
-    !         trGd3 = trG/3.0
-    !         trG_zeta = zeta_sd*trG
-    !
-    !         Spnts_r(ife,1,1) = eta_sd*(Gxx - trGd3) + trG_zeta
-    !         Spnts_r(ife,2,2) = eta_sd*(Gyy - trGd3) + trG_zeta
-    !         Spnts_r(ife,3,3) = eta_sd*(Gzz - trGd3) + trG_zeta
-    !     end do
-    !
-    ! end subroutine random_stresses_pnts_r
-!-------------------------------------------------------------------------------
-
-
 !-------------------------------------------------------------------------------
     subroutine random_stresses_pnts_r(Spnts_r, npnts)
 
@@ -319,9 +322,14 @@ contains
         real eta_d,zeta_d
         real trG,trGd3,trG_zeta
 
+        dvdti = npg*(dxi*dyi*dzi)/dt
+        sqrt_dvdti = sqrt(dvdti)
+
+        ! if (iam == 0) print *,sqrt_dvdti
+
         eta_d = eta_sd * sqrt_dvdti
         zeta_d = zeta_sd * sqrt_dvdti
-        call get_GRM_symmetric(GRMpnts_r, npnts)
+        call get_GRM_symmetric(GRMpnts_r, 1)  ! NOTE: using nptns = 1 (FV approach)
 
         ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
         do ife = 1,npnts
@@ -335,15 +343,15 @@ contains
 
             trG = (Gxx + Gyy + Gzz)
             trGd3 = trG/3.0
-            trG_zeta = zeta_sd*trG
+            trG_zeta = zeta_d*trG
 
-            Spnts_r(ife,1,1) = eta_sd*(Gxx - trGd3) + trG_zeta
-            Spnts_r(ife,2,2) = eta_sd*(Gyy - trGd3) + trG_zeta
-            Spnts_r(ife,3,3) = eta_sd*(Gzz - trGd3) + trG_zeta
+            Spnts_r(ife,1,1) = eta_d*(Gxx - trGd3) + trG_zeta
+            Spnts_r(ife,2,2) = eta_d*(Gyy - trGd3) + trG_zeta
+            Spnts_r(ife,3,3) = eta_d*(Gzz - trGd3) + trG_zeta
 
-            Spnts_r(ife,1,2) = eta_sd*Gxy
-            Spnts_r(ife,1,3) = eta_sd*Gxz
-            Spnts_r(ife,2,3) = eta_sd*Gyz
+            Spnts_r(ife,1,2) = eta_d*Gxy
+            Spnts_r(ife,1,3) = eta_d*Gxz
+            Spnts_r(ife,2,3) = eta_d*Gyz
             Spnts_r(ife,2,1) = Spnts_r(ife,1,2)
             Spnts_r(ife,3,1) = Spnts_r(ife,1,3)
             Spnts_r(ife,3,2) = Spnts_r(ife,2,3)

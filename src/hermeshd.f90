@@ -11,7 +11,7 @@ use integrator
 use boundary_custom
 use boundary
 use initialcon
-use basis_funcs
+use basis
 
 use initialize
 
@@ -177,6 +177,7 @@ contains
 
             nout = nout + 1
             if (iam == print_mpi) then
+                print *,''
                 print *, 'nout = ', nout
                 print *, '   t = ',t*100.,'         dt= ',dt
                 t2 = 0!get_clock_time()
@@ -198,7 +199,6 @@ contains
             if (iam == print_mpi) then
                 t2 = 0!get_clock_time()
                 print *, '  >> Output time', (t2-t1), 'seconds'
-                print *, ''
                 t1 = t2
             end if
 

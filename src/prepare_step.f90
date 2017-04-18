@@ -3,7 +3,7 @@ module prepare_step
 
 use params
 use helpers
-use basis_funcs
+use basis
 
 use boundary
 

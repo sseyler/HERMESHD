@@ -79,7 +79,7 @@ module params
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
     real, parameter :: L0 = 1.0e-6                          ! length
-    real, parameter :: t0 = 1.0e-6                          ! time
+    real, parameter :: t0 = 1.0e-9                          ! time
     real, parameter :: n0 = 2.5e25 ! ideal gas              ! number density
 
     ! Derived units
@@ -91,7 +91,7 @@ module params
     ! below which the pressure becomes negative for the MT water EOS.
     ! The DG-based subroutine "limiter" keeps density above rh_mult*rh_min.
     real, parameter :: rh_floor = 5.0e-6     ! 1.0e-1 was old value
-    real, parameter :: T_floor  = (TK*eV_per_K)/te0  ! 0.02585 eV ~ 300 K
+    real, parameter :: T_floor  = 0.01*(TK*eV_per_K)/te0  ! 0.02585 eV ~ 300 K
     real, parameter :: P_floor  = T_floor*rh_floor
 
     ! Murnaghan-Tait EOS
@@ -124,7 +124,7 @@ module params
     real, parameter :: zeta_base  = 0.  ! bulk viscosity---will need to adjust this!
     real, parameter :: kappa_base = 1.e-1
 
-    real, parameter :: eta_sd   = (2.*eta_base*T_base)**0.5  ! stdev of flucs for shear visc terms
+    real, parameter :: eta_sd   = (4.*eta_base*T_base)**0.5  ! stdev of flucs for shear visc terms
     real, parameter :: zeta_sd  = (zeta_base*T_base/3.)**0.5  ! stdev of flucs for bulk visc term
     real, parameter :: kappa_sd = (2.*kappa_base*T_base**2)**0.5
     !===========================================================================
