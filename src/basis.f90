@@ -1009,6 +1009,43 @@ contains
 
 
     !-----------------------------------------------------------
+    ! real function x_edge(i,ipnt)
+    !     integer i,ipnt,ix
+    !     x_edge = xc(i) + bfvals_yp(ipnt,kx)*0.5*dx
+    ! end function x_edge
+
+    !-----------------------------------------------------------
+    ! real function y_edge(j,ipnt)
+    !     integer j,ipnt
+    !     y_edge = yc(j) + bfvals_xp(ipnt,ky)*0.5*dy
+    ! end function y_edge
+
+    !-----------------------------------------------------------
+    ! NOTE: the "bfvals_xp" part can't be right (see x/y_edge)...
+    ! real function z_edge(k,ipnt)
+    !     integer k,ipnt
+    !     z_edge = zc(k) + bfvals_xp(ipnt,kz)*0.5*dz
+    ! end function z_edge
+
+    !-----------------------------------------------------------
+    real function x_int(i,ipnt)
+        integer i,ipnt
+        x_int = xc(i) + bfvals_int(ipnt,kx)*0.5*dx
+    end function x_int
+
+    !-----------------------------------------------------------
+    real function y_int(j,ipnt)
+        integer j,ipnt
+        y_int = yc(j) + bfvals_int(ipnt,ky)*0.5*dy
+    end function y_int
+
+    !-----------------------------------------------------------
+    real function z_int(k,ipnt)
+        integer k,ipnt
+        z_int = zc(k) + bfvals_int(ipnt,kz)*0.5*dz
+    end function z_int
+
+    !-----------------------------------------------------------
     real function xvtk(i)
         integer i
         xvtk = loc_lxd + (i - 0.5)*dxvtk
