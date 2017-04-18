@@ -42,8 +42,8 @@ module params
     integer, parameter :: rh = 1                    ! density
     integer, parameter :: mx = 2, my = 3,  mz = 4   ! vector momentum
     integer, parameter :: en = 5                    ! scalar energy
-    integer, parameter :: pxx= 6, pyy= 7,  pzz= 8   ! isotropic stress
-    integer, parameter :: pxy= 9, pxz= 10, pyz= 11  ! deviatoric stress
+    integer, parameter :: exx= 6, eyy= 7,  ezz= 8   ! isotropic stress
+    integer, parameter :: exy= 9, exz= 10, eyz= 11  ! deviatoric stress
     integer, parameter :: nQ = 11                   ! number of field variables
 
     integer, parameter :: nbastot = 30

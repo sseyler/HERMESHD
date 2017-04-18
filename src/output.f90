@@ -281,14 +281,14 @@ contains
                 do j=1+nb,nny-nb
                     do k=1+nb,nnz-nb
                         l=(i-nb)+(j-nb-1)*(nnx-2*nb)+(k-nb-1)*(nnx-2*nb)*(nny-2*nb)
-                        var_xml_val_x(l)=qvtk(i,j,k,pxx)
-                        var_xml_val_y(l)=qvtk(i,j,k,pyy)
-                        var_xml_val_z(l)=qvtk(i,j,k,pzz)
+                        var_xml_val_x(l)=qvtk(i,j,k,exx)
+                        var_xml_val_y(l)=qvtk(i,j,k,eyy)
+                        var_xml_val_z(l)=qvtk(i,j,k,ezz)
                     enddo
                 enddo
             enddo
             E_IO = VTK_VAR_XML(NC_NN   = nnx*nny*nnz,                               &
-                               varname = 'Isotropic stress',                        &
+                               varname = 'Energy tensor',                        &
                                varX    = var_xml_val_x,                             &
                                varY    = var_xml_val_y,                             &
                                varZ    = var_xml_val_z )

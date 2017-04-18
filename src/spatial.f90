@@ -31,12 +31,12 @@ real loc_lxd,loc_lyd,loc_lzd  ! used directly by the grid coord functions
 !     real, allocatable, dimension(:,:,:,:) :: Qmz
 !     real, allocatable, dimension(:,:,:,:) :: Qen
 !
-!     real, allocatable, dimension(:,:,:,:) :: Qpxx
-!     real, allocatable, dimension(:,:,:,:) :: Qpyy
-!     real, allocatable, dimension(:,:,:,:) :: Qpzz
-!     real, allocatable, dimension(:,:,:,:) :: Qpxy
-!     real, allocatable, dimension(:,:,:,:) :: Qpxz
-!     real, allocatable, dimension(:,:,:,:) :: Qpyz
+!     real, allocatable, dimension(:,:,:,:) :: Qexx
+!     real, allocatable, dimension(:,:,:,:) :: Qeyy
+!     real, allocatable, dimension(:,:,:,:) :: Qezz
+!     real, allocatable, dimension(:,:,:,:) :: Qexy
+!     real, allocatable, dimension(:,:,:,:) :: Qexz
+!     real, allocatable, dimension(:,:,:,:) :: Qeyz
 !
 ! end type grid3D
 
@@ -59,12 +59,12 @@ contains
     !     allocate(grid%Qen(nx,ny,nz,nb))
     !
     !     if (vis) then
-    !         allocate(grid%Qpxx(nx,ny,nz,nb))
-    !         allocate(grid%Qpyy(nx,ny,nz,nb))
-    !         allocate(grid%Qpzz(nx,ny,nz,nb))
-    !         allocate(grid%Qpxy(nx,ny,nz,nb))
-    !         allocate(grid%Qpxz(nx,ny,nz,nb))
-    !         allocate(grid%Qpyz(nx,ny,nz,nb))
+    !         allocate(grid%Qexx(nx,ny,nz,nb))
+    !         allocate(grid%Qeyy(nx,ny,nz,nb))
+    !         allocate(grid%Qezz(nx,ny,nz,nb))
+    !         allocate(grid%Qexy(nx,ny,nz,nb))
+    !         allocate(grid%Qexz(nx,ny,nz,nb))
+    !         allocate(grid%Qeyz(nx,ny,nz,nb))
     !     endif
     !
     !     lxd = -(lx/2.0)
