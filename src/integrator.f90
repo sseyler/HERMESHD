@@ -1,21 +1,21 @@
 !***** INTEGRATOR.F90 ********************************************************************
 module integrator
 
-    use input!, only : nx,ny,nz
-    use params!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
-    use helpers
-    use spatial
-    ! use timestep
+use input!, only : nx,ny,nz
+use params!, only : nQ,nbasis,Q_r0,Q_r1,Q_r2,Q_r3
+use helpers
+use spatial
+! use timestep
 
-    use prepare_step
-    use sources
-    use flux
+use prepare_step
+use sources
+use flux
 
     !===========================================================================
     ! ABSTRACT INTERFACE to subroutine for temporal integration
     !-----------------------------------------------------------------
     abstract interface
-        subroutine update_ptr (Q_io, Q_1, Q_2, dt)
+        subroutine update_ptr(Q_io, Q_1, Q_2, dt)
             use input, only : nx,ny,nz
             use params, only : nQ,nbasis
 
@@ -54,7 +54,7 @@ contains
                 call mpi_print(iam, 'Defaulting to 2nd-order Runga-Kutta (Heun) integration')
                 integrator => RK2
         end select
-    end subroutine
+    end subroutine select_integrator
     !---------------------------------------------------------------------------
 
 
@@ -101,6 +101,7 @@ contains
         call prep_advance(Q_in)
         call calc_rhs(Q_in)
         call advance_time_level(Q_in, Q_out, dt)
+        call check_for_NaNs(Q_out)
     end subroutine euler_step
 
 
@@ -123,6 +124,98 @@ contains
         call source_calc(Q_io)
     end subroutine calc_rhs
 
+
+    !---------------------------------------------------------------------------
+    subroutine advance_time_level(Q_in, Q_out, dt)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_in
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
+        real, intent(inout) :: dt
+
+        integer i,j,k,ieq,ir
+        real fac
+
+        fac = 1.
+        if (ivis == 1) fac = 1./(1. + coll*dt)
+
+        do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
+
+            do ieq = 1,en
+              do ir=1,nbasis
+                Q_out(i,j,k,ieq,ir) = Q_in(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir)
+              end do
+            end do
+
+            do ieq = exx,nQ
+              do ir=1,nbasis
+                Q_out(i,j,k,ieq,ir) = (Q_in(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir))*fac
+              end do
+            end do
+
+        end do
+        end do
+        end do
+
+        if (ivis == 2) call impl_advance_source(Q_out, dt)
+
+    end subroutine advance_time_level
+    !---------------------------------------------------------------------------
+
+
+    !---------------------------------------------------------------------------
+    ! NOTE: may be able to make functions from Qin loop and final loop w/
+    !       0.125*cbasis(...) for re-use by impl_advance_source & source_calc
+    subroutine impl_advance_source(Q_io, dt)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
+        real, intent(inout) :: dt
+
+        real, dimension(npg,nQ) :: source, Qout
+        real, dimension(nQ) :: Qin
+        integer i,j,k,ieq,ipg,ir
+        real dn,dni,vx,vy,vz,P, colldt,fac
+
+        colldt = coll*dt
+        fac = 1./(1. + colldt)
+
+        do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
+            do ipg = 1,npg
+                do ieq = 1,nQ
+                    Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_io(i,j,k,ieq,1:nbasis))
+                end do
+
+                dn = Qin(rh)
+                dni = 1./Qin(rh)
+                vx = Qin(mx)*dni
+                vy = Qin(my)*dni
+                vz = Qin(mz)*dni
+                P  = aindm1*(Qin(en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
+
+                Qout(ipg,exx) = ( Qin(exx) + colldt*(P + dn*vx**2) ) * fac
+                Qout(ipg,eyy) = ( Qin(eyy) + colldt*(P + dn*vy**2) ) * fac
+                Qout(ipg,ezz) = ( Qin(ezz) + colldt*(P + dn*vz**2) ) * fac
+                Qout(ipg,exy) = ( Qin(exy) + colldt*(    dn*vx*vy) ) * fac
+                Qout(ipg,exz) = ( Qin(exz) + colldt*(    dn*vx*vz) ) * fac
+                Qout(ipg,eyz) = ( Qin(eyz) + colldt*(    dn*vy*vz) ) * fac
+            end do
+
+            do ieq=exx,nQ
+                do ir=1,nbasis
+                    Q_io(i,j,k,ieq,ir) = 0.125*cbasis(ir)*sum(wgt3d(1:npg)*bfvals_int(1:npg,ir)*Qout(1:npg,ieq))
+                end do
+            end do
+        end do
+        end do
+        end do
+
+    end subroutine impl_advance_source
+    !---------------------------------------------------------------------------
+
+
     !----------------------------------------------------
     subroutine advance_time_level_v0(Q_in, Q_out, dt)
         implicit none
@@ -130,9 +223,9 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
         real, intent(inout) :: dt
 
-        real P_xx,P_yy,P_zz,P_xy,P_xz,P_yz
-        real glf_pxx,glf_pyy,glf_pzz,glf_pxy,glf_pxz,glf_pyz
-        real src_pxx,src_pyy,src_pzz,src_pxy,src_pxz,src_pyz
+        real E_xx,E_yy,E_zz,E_xy,E_xz,E_yz
+        real glf_exx,glf_eyy,glf_ezz,glf_exy,glf_exz,glf_eyz
+        real src_exx,src_eyy,src_ezz,src_exy,src_exz,src_eyz
         real Q_sum,glf_sum,src_sum,faci
         integer i,j,k,ieq,ir
 
@@ -173,7 +266,7 @@ contains
                     Q_out(i,j,k,1:nQ,ir) =                                      &
                         Q_in(i,j,k,1:nQ,ir) - dt*( glflux_r(i,j,k,1:nQ,ir)      &
                                                  - source_r(i,j,k,1:nQ,ir) )
-                    Q_out(i,j,k,pxx:pyz,ir) = faci * Q_out(i,j,k,pxx:pyz,ir)
+                    Q_out(i,j,k,exx:eyz,ir) = faci * Q_out(i,j,k,exx:eyz,ir)
                 end do
                 end do
                 end do
@@ -185,41 +278,41 @@ contains
                 do k = 1,nz
                 do j = 1,ny
                 do i = 1,nx
-                    P_xx = Q_in(i,j,k,pxx,ir)
-                    P_yy = Q_in(i,j,k,pyy,ir)
-                    P_zz = Q_in(i,j,k,pzz,ir)
-                    P_xy = Q_in(i,j,k,pxy,ir)
-                    P_xz = Q_in(i,j,k,pxz,ir)
-                    P_yz = Q_in(i,j,k,pyz,ir)
+                    E_xx = Q_in(i,j,k,exx,ir)
+                    E_yy = Q_in(i,j,k,eyy,ir)
+                    E_zz = Q_in(i,j,k,ezz,ir)
+                    E_xy = Q_in(i,j,k,exy,ir)
+                    E_xz = Q_in(i,j,k,exz,ir)
+                    E_yz = Q_in(i,j,k,eyz,ir)
 
-                    glf_pxx = glflux_r(i,j,k,pxx,ir)
-                    glf_pyy = glflux_r(i,j,k,pyy,ir)
-                    glf_pzz = glflux_r(i,j,k,pzz,ir)
-                    glf_pxy = glflux_r(i,j,k,pxy,ir)
-                    glf_pxz = glflux_r(i,j,k,pxz,ir)
-                    glf_pyz = glflux_r(i,j,k,pyz,ir)
+                    glf_exx = glflux_r(i,j,k,exx,ir)
+                    glf_eyy = glflux_r(i,j,k,eyy,ir)
+                    glf_ezz = glflux_r(i,j,k,ezz,ir)
+                    glf_exy = glflux_r(i,j,k,exy,ir)
+                    glf_exz = glflux_r(i,j,k,exz,ir)
+                    glf_eyz = glflux_r(i,j,k,eyz,ir)
 
-                    src_pxx = source_r(i,j,k,pxx,ir)
-                    src_pyy = source_r(i,j,k,pyy,ir)
-                    src_pzz = source_r(i,j,k,pzz,ir)
-                    src_pxy = source_r(i,j,k,pxy,ir)
-                    src_pxz = source_r(i,j,k,pxz,ir)
-                    src_pyz = source_r(i,j,k,pyz,ir)
+                    src_exx = source_r(i,j,k,exx,ir)
+                    src_eyy = source_r(i,j,k,eyy,ir)
+                    src_ezz = source_r(i,j,k,ezz,ir)
+                    src_exy = source_r(i,j,k,exy,ir)
+                    src_exz = source_r(i,j,k,exz,ir)
+                    src_eyz = source_r(i,j,k,eyz,ir)
 
-                    Q_sum   = coll*dt*   ( P_xx    + P_yy    + P_zz    )*c1d3
-                    glf_sum = coll*dt**2*( glf_pxx + glf_pyy + glf_pzz )*c1d3
-                    src_sum = coll*dt**2*( src_pxx + src_pyy + src_pzz )*c1d3
+                    Q_sum   = coll*dt*   ( E_xx    + E_yy    + E_zz    )*c1d3
+                    glf_sum = coll*dt**2*( glf_exx + glf_eyy + glf_ezz )*c1d3
+                    src_sum = coll*dt**2*( src_exx + src_eyy + src_ezz )*c1d3
 
-                    Q_out(i,j,k,pxx,ir) = faci * ( P_xx - dt*glf_pxx + dt*src_pxx &
+                    Q_out(i,j,k,exx,ir) = faci * ( E_xx - dt*glf_exx + dt*src_exx &
                                                  + Q_sum -   glf_sum +    src_sum )
 
-                    Q_out(i,j,k,pyy,ir) = faci * ( P_yy - dt*glf_pyy + dt*src_pyy &
+                    Q_out(i,j,k,eyy,ir) = faci * ( E_yy - dt*glf_eyy + dt*src_eyy &
                                                  + Q_sum -   glf_sum +    src_sum )
 
-                    Q_out(i,j,k,pzz,ir) = faci * ( P_zz - dt*glf_pzz + dt*src_pzz &
+                    Q_out(i,j,k,ezz,ir) = faci * ( E_zz - dt*glf_ezz + dt*src_ezz &
                                                  + Q_sum -   glf_sum +    src_sum )
 
-                    do ieq = pxy,nQ
+                    do ieq = exy,nQ
                         Q_out(i,j,k,ieq,ir) = ( Q_in(i,j,k,ieq,ir)              &
                                            - dt*glflux_r(i,j,k,ieq,ir)          &
                                            + dt*source_r(i,j,k,ieq,ir) ) * faci
@@ -231,27 +324,36 @@ contains
 
         end select
 
-        !-----------------------------------------------------------------------
-        ! Check for NaNs; bail out with info.
+    end subroutine advance_time_level_v0
+    !---------------------------------------------------------------------------
+
+
+    !---------------------------------------------------------------------------
+    ! Check for NaNs; bail out with info.
+    !---------------------------------------------------------------------------
+    subroutine check_for_NaNs(Q_io)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
+        integer i,j,k,ieq
+
         do ieq = 1,nQ
         do k = 1,nz
         do j = 1,ny
         do i = 1,nx
-          if ( Q_out(i,j,k,ieq,1) /= Q_out(i,j,k,ieq,1) ) then
-            print *,'------------------------------------------------'
-            print *,'NaN. Bailing out...'
-            write(*,'(A7,I9,A7,I9,A7,I9)')          '   i = ',   i, '   j = ',    j, '   k = ',k
-            write(*,'(A7,ES9.2,A7,ES9.2,A7,ES9.2)') '  xc = ',xc(i),'  yc = ',yc(j), '  zc = ', zc(k)
-            write(*,'(A14,I2,A7,I2)') '    >>> iam = ', iam, ' ieq = ', ieq
-            print *,''
-            call exit(-1)
-          endif
+            if ( Q_io(i,j,k,ieq,1) /= Q_io(i,j,k,ieq,1) ) then
+              print *,'------------------------------------------------'
+              print *,'NaN. Bailing out...'
+              write(*,'(A7,I9,A7,I9,A7,I9)')          '   i = ',   i, '   j = ',    j, '   k = ',k
+              write(*,'(A7,ES9.2,A7,ES9.2,A7,ES9.2)') '  xc = ',xc(i),'  yc = ',yc(j), '  zc = ', zc(k)
+              write(*,'(A14,I2,A7,I2)') '    >>> iam = ', iam, ' ieq = ', ieq
+              print *,''
+              call exit(-1)
+            endif
         end do
         end do
         end do
         end do
-
-    end subroutine advance_time_level_v0
+    end subroutine check_for_NaNs
     !---------------------------------------------------------------------------
 
 end module integrator
