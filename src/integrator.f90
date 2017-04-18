@@ -158,7 +158,7 @@ contains
         end do
         end do
 
-        if (ivis == 2) call impl_advance_source(Q_out, dt)
+        if (ivis == 2) call impl_advance_source(Q_out, Q_out, dt)
 
     end subroutine advance_time_level
     !---------------------------------------------------------------------------
@@ -167,9 +167,10 @@ contains
     !---------------------------------------------------------------------------
     ! NOTE: may be able to make functions from Qin loop and final loop w/
     !       0.125*cbasis(...) for re-use by impl_advance_source & source_calc
-    subroutine impl_advance_source(Q_io, dt)
+    subroutine impl_advance_source(Q_in, Q_out, dt)
         implicit none
-        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_in
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
         real, intent(inout) :: dt
 
         real, dimension(npg,nQ) :: source, Qout
@@ -185,7 +186,7 @@ contains
         do i = 1,nx
             do ipg = 1,npg
                 do ieq = 1,nQ
-                    Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_io(i,j,k,ieq,1:nbasis))
+                    Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_in(i,j,k,ieq,1:nbasis))
                 end do
 
                 dn = Qin(rh)
@@ -205,7 +206,7 @@ contains
 
             do ieq=exx,nQ
                 do ir=1,nbasis
-                    Q_io(i,j,k,ieq,ir) = 0.125*cbasis(ir)*sum(wgt3d(1:npg)*bfvals_int(1:npg,ir)*Qout(1:npg,ieq))
+                    Q_out(i,j,k,ieq,ir) = 0.125*cbasis(ir)*sum(wgt3d(1:npg)*bfvals_int(1:npg,ir)*Qout(1:npg,ieq))
                 end do
             end do
         end do

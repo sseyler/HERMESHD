@@ -39,7 +39,7 @@ dtout = tf/ntout  ! TODO: move this to a more sensible place once output scheme 
 !-------------------------------------------------
 ! 2. Select hydrodynamic model (equations)
 !-------------------------------------------------
-call select_hydro_model(ivis, Fpt_x, Fpt_y, Fpt_z)
+call select_hydro_model(ivis, Fpt_x, Fpt_y, Fpt_z, Fpts_x, Fpts_y, Fpts_z)  ! DEBUG
 
 !-------------------------------------------------
 ! 3. Select and set initial conditions

@@ -63,27 +63,27 @@ contains
     !===========================================================================
     ! Initialize the RNG with a random seed
     !------------------------------------------------------------
-    ! subroutine init_random_seed(mpi_id, iseed)
-    !     implicit none
-    !     integer, intent(in) :: mpi_id
-    !     integer :: i, n, clock, iseed
-    !     integer, dimension(:), allocatable :: seed
-    !
-    !     call random_seed(size = n)
-    !     allocate(seed(n))
-    !
-    !     call system_clock(count=clock)
-    !
-    !     if (iseed == 0) then
-    !         seed =  clock*(mpi_id+1) + 37 * (/ (i - 1, i = 1, n) /)
-    !     else
-    !         seed =  iseed*(mpi_id+1)
-    !     endif
-    !     call random_seed(put = seed)
-    !
-    !     ! print *,seed(1)
-    !     deallocate(seed)
-    ! end subroutine init_random_seed
+    subroutine init_random_seed(mpi_id, iseed)
+        implicit none
+        integer, intent(in) :: mpi_id
+        integer :: i, n, clock, iseed
+        integer, dimension(:), allocatable :: seed
+
+        call random_seed(size = n)
+        allocate(seed(n))
+
+        call system_clock(count=clock)
+
+        if (iseed == 0) then
+            seed =  clock*(mpi_id+1) + 37 * (/ (i - 1, i = 1, n) /)
+        else
+            seed =  iseed*(mpi_id+1)
+        endif
+        call random_seed(put = seed)
+
+        ! print *,seed(1)
+        deallocate(seed)
+    end subroutine init_random_seed
     !---------------------------------------------------------------------------
 
 end module helpers

@@ -23,7 +23,7 @@ real, dimension(nfe,nQ) :: fface_x,fface_y,fface_z  ! in CES's code, these are i
 contains
 
     !---------------------------------------------------------------------------
-    subroutine flux_calc_pnts_r_v0(Qpnts_r,fpnts_r,ixyz,npnts,i,j,k)
+    subroutine flux_calc_pnts_r(Qpnts_r,fpnts_r,ixyz,npnts,i,j,k)
         ! Calculate the flux "fpnts_r" in direction "ixyz" (x, y, or z) at a set of
         ! points corresponding to conserved quantities "Qpnts_r":
         !   ixyz = <1,2,3>: <x,y,z>-direction
@@ -222,6 +222,185 @@ contains
 
             end select
         end do
+    end subroutine flux_calc_pnts_r
+    !---------------------------------------------------------------------------
+
+
+    !---------------------------------------------------------------------------
+    subroutine flux_calc_pnts_r_v0(Qpnts_r,fpnts_r,ixyz,npnts)
+        ! Calculate the flux "fpnts_r" in direction "ixyz" (x, y, or z) at a set of
+        ! points corresponding to conserved quantities "Qpnts_r":
+        !   ixyz = <1,2,3>: <x,y,z>-direction
+        implicit none
+        real, dimension(npnts,nQ), intent(in)  :: Qpnts_r
+        real, dimension(npnts,nQ), intent(out) :: fpnts_r
+        integer i,j,k
+        integer ife,ixyz,npnts
+        real dn,M_x,M_y,M_z,Ener, P_xx,P_yy,P_zz,P_xy,P_xz,P_yz
+        real dni, vx,vy,vz,smsq, P,P_5,P_10
+
+        real Spnts_r(npnts,3,3), Hpnts_r(npnts,3)
+        real Sxx,Syy,Szz,Sxy,Sxz,Syz, Qx,Qy,Qz
+
+        ! NOTE: "nu" in CES' code is te*rh, which is "colvis" here; "coll" is colvis/vis
+        c2d3cv = c2d3*colvis  ! global vars declared in params.f90
+        c4d3cv = c4d3*colvis  ! global vars declared in params.f90
+
+        Spnts_r(:,:,:) = 0.0
+        Hpnts_r(:,:) = 0.0
+        if (llns) call random_stresses_pnts_r(Spnts_r, npnts)  ! TODO: commented to get working w/o MKL
+
+        do ife = 1,npnts
+            dn   = Qpnts_r(ife,rh)
+            M_x  = Qpnts_r(ife,mx)
+            M_y  = Qpnts_r(ife,my)
+            M_z  = Qpnts_r(ife,mz)
+            Ener = Qpnts_r(ife,en)
+            P_xx = Qpnts_r(ife,pxx)
+            P_yy = Qpnts_r(ife,pyy)
+            P_zz = Qpnts_r(ife,pzz)
+            P_xy = Qpnts_r(ife,pxy)
+            P_xz = Qpnts_r(ife,pxz)
+            P_yz = Qpnts_r(ife,pyz)
+
+            dni = 1./dn
+            vx = M_x*dni
+            vy = M_y*dni
+            vz = M_z*dni
+            smsq = M_x**2 + M_y**2 + M_z**2
+
+            P = aindm1*( Ener - 0.5*dni*smsq )
+            P_10 = c1d3 * ( P_xx + P_yy + P_zz - dni*smsq )
+            if (ieos == 2) P = P_1*(dn**7.2 - 1.) + P_base + P
+            if (P < P_floor) P = P_floor
+            if (P_10 < P_floor) P_10 = P_floor
+            P_5 = P
+
+            ! NOTE: may not need all values since ixyz choose flux direction
+            ! TODO: can use pxx thru pyz flags to specify the random stresses!
+
+            Sxx = Spnts_r(ife,1,1)
+            Syy = Spnts_r(ife,2,2)
+            Szz = Spnts_r(ife,3,3)
+            Sxy = Spnts_r(ife,1,2)
+            Sxz = Spnts_r(ife,1,3)
+            Syz = Spnts_r(ife,2,3)
+
+            ! Qx = Hpnts_r(ife,1)
+            ! Qy = Hpnts_r(ife,2)
+            ! Qz = Hpnts_r(ife,3)
+
+            select case(ixyz)
+            case(1)
+                fpnts_r(ife,rh) = M_x
+
+                if (ivis == 0 .or. ivis == 1) then
+                    fpnts_r(ife,mx) = M_x*vx + P + P_xx - Sxx
+                    fpnts_r(ife,my) = M_y*vx     + P_xy - Sxy
+                    fpnts_r(ife,mz) = M_z*vx     + P_xz - Sxz
+                end if
+                if ( ivis == 2 ) then
+                    fpnts_r(ife,mx) = P_xx - P_10 + P_5
+                    fpnts_r(ife,my) = P_xy
+                    fpnts_r(ife,mz) = P_xz
+                end if
+
+                fpnts_r(ife,en) = (Ener + P)*vx                                 &
+                                + (P_xx-Sxx)*vx + (P_xy-Sxy)*vy + (P_xz-Sxz)*vz
+
+                if (ivis == 0 .or. ivis == 1) then
+                    fpnts_r(ife,pxx) =  c4d3cv*vx
+                    fpnts_r(ife,pyy) = -c2d3cv*vx
+                    fpnts_r(ife,pzz) = -c2d3cv*vx
+
+                    fpnts_r(ife,pxy) = colvis*vy
+                    fpnts_r(ife,pxz) = colvis*vz
+                    fpnts_r(ife,pyz) = 0
+                end if
+                if ( ivis == 2 ) then
+                    fpnts_r(ife,pxx) =   vx*(3*P_xx - 2*vx*M_x)                                       ! term 1
+                    fpnts_r(ife,pyy) = 2*vy*(  P_xy -   vy*M_x) + vx*P_yy                               ! term 4
+                    fpnts_r(ife,pzz) = 2*vz*(  P_xz -   vz*M_x) + vx*P_zz                               ! term 7
+
+                    fpnts_r(ife,pxy) = 2*vx*(P_xy - vy*M_x) + vy*P_xx                               ! term 10
+                    fpnts_r(ife,pxz) = 2*vx*(P_xz - vz*M_x) + vz*P_xx                               ! term 13
+                    fpnts_r(ife,pyz) = vx*P_yz + vy*P_xz + vz*P_xy - 2*vy*vz*M_x
+                end if
+
+            case(2)
+                fpnts_r(ife,rh) = M_y
+
+                if (ivis == 0 .or. ivis == 1) then
+                    fpnts_r(ife,mx) = M_x*vy     + P_xy - Sxy
+                    fpnts_r(ife,my) = M_y*vy + P + P_yy - Syy
+                    fpnts_r(ife,mz) = M_z*vy     + P_yz - Syz
+                end if
+                if ( ivis == 2 ) then
+                    fpnts_r(ife,mx) = P_xy
+                    fpnts_r(ife,my) = P_yy - P_10 + P_5
+                    fpnts_r(ife,mz) = P_yz
+                end if
+
+                fpnts_r(ife,en) = (Ener + P)*vy                                 &
+                                + (P_yy-Syy)*vy + (P_xy-Sxy)*vx + (P_yz-Syz)*vz
+
+                if (ivis == 0 .or. ivis == 1) then
+                    fpnts_r(ife,pxx) = -c2d3cv*vy
+                    fpnts_r(ife,pyy) =  c4d3cv*vy
+                    fpnts_r(ife,pzz) = -c2d3cv*vy
+
+                    fpnts_r(ife,pxy) = colvis*vx
+                    fpnts_r(ife,pxz) = 0
+                    fpnts_r(ife,pyz) = colvis*vz
+                end if
+                if ( ivis == 2 ) then
+                    fpnts_r(ife,pxx) = 2*vx*(  P_xy -   vx*M_y) + vy*P_xx                            ! term 2
+                    fpnts_r(ife,pyy) =   vy*(3*P_yy - 2*vy*M_y)                                    ! term 5
+                    fpnts_r(ife,pzz) = 2*vz*(  P_yz -   vz*M_y) + vy*P_zz                            ! term 8
+
+                    fpnts_r(ife,pxy) = 2*vy*(P_xy - vx*M_y) + vx*P_yy                            ! term 11
+                    fpnts_r(ife,pxz) = vx*P_yz + vy*P_xz + vz*P_xy - 2*vx*vz*M_y                 ! term 14
+                    fpnts_r(ife,pyz) = 2*vy*(P_yz - vz*M_y) + vz*P_yy
+                end if
+
+            case(3)
+                fpnts_r(ife,rh) = M_z
+
+                if (ivis == 0 .or. ivis == 1) then
+                    fpnts_r(ife,mx) = M_x*vz     + P_xz - Sxz
+                    fpnts_r(ife,my) = M_y*vz     + P_yz - Syz
+                    fpnts_r(ife,mz) = M_z*vz + P + P_zz - Szz
+                end if
+                if ( ivis == 2 ) then
+                    fpnts_r(ife,mx) = P_xz
+                    fpnts_r(ife,my) = P_yz
+                    fpnts_r(ife,mz) = P_zz - P_10 + P_5
+                end if
+
+                fpnts_r(ife,en) = (Ener + P)*vz                                 &
+                                + (P_zz-Szz)*vz + (P_xz-Sxz)*vx + (P_yz-Syz)*vy
+
+                if (ivis == 0 .or. ivis == 1) then
+                    fpnts_r(ife,pxx) = -c2d3cv*vz
+                    fpnts_r(ife,pyy) = -c2d3cv*vz
+                    fpnts_r(ife,pzz) =  c4d3cv*vz
+
+                    fpnts_r(ife,pxy) = 0
+                    fpnts_r(ife,pxz) = colvis*vx
+                    fpnts_r(ife,pyz) = colvis*vy
+                end if
+                if ( ivis == 2 ) then
+                    fpnts_r(ife,pxx) = 2*vx*(  P_xz -   vx*M_z) + vz*P_xx                               ! term 3
+                    fpnts_r(ife,pyy) = 2*vy*(  P_yz -   vy*M_z) + vz*P_yy                               ! term 6
+                    fpnts_r(ife,pzz) =   vz*(3*P_zz - 2*vz*M_z)                                       ! term 9
+
+                    fpnts_r(ife,pxy) = vx*P_yz + vy*P_xz + vz*P_xy - 2*vx*vy*M_z                    ! term 12
+                    fpnts_r(ife,pxz) = 2*vz*(P_xz - vx*M_z) + vx*P_zz                               ! term 15
+                    fpnts_r(ife,pyz) = 2*vz*(P_yz - vy*M_z) + vy*P_zz
+                end if
+
+            end select
+        end do
     end subroutine flux_calc_pnts_r_v0
     !---------------------------------------------------------------------------
 
@@ -272,19 +451,15 @@ contains
 
                 call flux_calc_pnts_r(Qface_x,fface_x,1,nfe,i,j,k)
 
-                ! if (.not. ihllc) then
-                if (ivis == 2) then
-                    do i4=1,nfe
-                        do ieq=1,nQ
-                            qvin(ieq) = Qface_x(i4,ieq)
-                        end do
-                        cwavex(i4) = cfcal(qvin,1)
+                do i4=1,nfe
+                    do ieq=1,nQ
+                        qvin(ieq) = Qface_x(i4,ieq)
                     end do
-
-                    do i4=1,nface
-                        cfrx(i4,1:nQ) = max(cwavex(i4),cwavex(i4+nface))
-                    end do
-                end if
+                    cwavex(i4) = cfcal(qvin,1)
+                end do
+                do i4=1,nface
+                    cfrx(i4,1:nQ) = max(cwavex(i4),cwavex(i4+nface))
+                end do
 
                 do ieq = 1,nQ
                     do i4=1,nface
@@ -357,19 +532,15 @@ contains
 
                 call flux_calc_pnts_r(Qface_y,fface_y,2,nfe,i,j,k)
 
-                ! if (.not. ihllc) then
-                if (ivis == 2) then
-                    do i4=1,nfe
-                        do ieq=1,nQ
-                            qvin(ieq) = Qface_y(i4,ieq)
-                        end do
-                        cwavey(i4) = cfcal(qvin,2)
+                do i4=1,nfe
+                    do ieq=1,nQ
+                        qvin(ieq) = Qface_y(i4,ieq)
                     end do
-
-                    do i4=1,nface
-                        cfry(i4,1:nQ) = max(cwavey(i4),cwavey(i4+nface))
-                    end do
-                end if
+                    cwavey(i4) = cfcal(qvin,2)
+                end do
+                do i4=1,nface
+                    cfry(i4,1:nQ) = max(cwavey(i4),cwavey(i4+nface))
+                end do
 
                 do ieq = 1,nQ
                     do i4=1,nface
@@ -444,19 +615,15 @@ contains
 
                 call flux_calc_pnts_r(Qface_z,fface_z,3,nfe,i,j,k)
 
-                ! if (.not. ihllc) then
-                if (ivis == 2) then
-                    do i4=1,nfe
-                        do ieq=1,nQ
-                            qvin(ieq) = Qface_z(i4,ieq)
-                        end do
-                        cwavez(i4) = cfcal(qvin,3)
+                do i4=1,nfe
+                    do ieq=1,nQ
+                        qvin(ieq) = Qface_z(i4,ieq)
                     end do
-
-                    do i4=1,nface
-                        cfrz(i4,1:nQ) = max(cwavez(i4),cwavez(i4+nface))
-                    end do
-                end if
+                    cwavez(i4) = cfcal(qvin,3)
+                end do
+                do i4=1,nface
+                    cfrz(i4,1:nQ) = max(cwavez(i4),cwavez(i4+nface))
+                end do
 
                 do ieq = 1,nQ
                     do i4=1,nface

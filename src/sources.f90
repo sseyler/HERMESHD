@@ -37,44 +37,44 @@ contains
                 source(ipg,rh:en) = 0
 
                 select case (ivis)
-                case(-1)  ! NOTE: explicitly solving the linearized 10-moment equations
-                    source(ipg,exx) = -coll*Qin(exx)
-                    source(ipg,eyy) = -coll*Qin(eyy)
-                    source(ipg,ezz) = -coll*Qin(ezz)
-                    source(ipg,exy) = -coll*Qin(exy)
-                    source(ipg,exz) = -coll*Qin(exz)
-                    source(ipg,eyz) = -coll*Qin(eyz)
-                case(1)  ! NOTE: solving the linearized 10-moment equations
-                    source(ipg,exx) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
-                    source(ipg,eyy) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
-                    source(ipg,ezz) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
-                    source(ipg,exy) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
-                    source(ipg,exz) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
-                    source(ipg,eyz) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
-                case(2) ! NOTE: solving the full (nonlinear) 10-moment equations
-                    source(ipg,exx) = 0
-                    source(ipg,eyy) = 0
-                    source(ipg,ezz) = 0
-                    source(ipg,exy) = 0
-                    source(ipg,exz) = 0
-                    source(ipg,eyz) = 0
-                case(3) ! NOTE: solving the full (nonlinear) 10-moment equations the OLD way
-                    dn = Qin(rh)
-                    dni = 1./dn
-                    vx = Qin(mx)*dni
-                    vy = Qin(my)*dni
-                    vz = Qin(mz)*dni
-                    vx2 = vx**2
-                    vy2 = vy**2
-                    vz2 = vz**2
-                    colldn = coll*dn
-
-                    source(ipg,exx) = colldn*(2*vx2 - vy2 - vz2)*c1d3
-                    source(ipg,eyy) = colldn*(2*vy2 - vz2 - vx2)*c1d3
-                    source(ipg,ezz) = colldn*(2*vz2 - vx2 - vy2)*c1d3
-                    source(ipg,exy) = colldn*vx*vy
-                    source(ipg,exz) = colldn*vx*vz
-                    source(ipg,eyz) = colldn*vy*vz
+                    case(-1)  ! NOTE: explicitly solving the linearized 10-moment equations
+                        source(ipg,exx) = -coll*Qin(exx)
+                        source(ipg,eyy) = -coll*Qin(eyy)
+                        source(ipg,ezz) = -coll*Qin(ezz)
+                        source(ipg,exy) = -coll*Qin(exy)
+                        source(ipg,exz) = -coll*Qin(exz)
+                        source(ipg,eyz) = -coll*Qin(eyz)
+                    case(1)  ! NOTE: solving the linearized 10-moment equations
+                        source(ipg,exx) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
+                        source(ipg,eyy) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
+                        source(ipg,ezz) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
+                        source(ipg,exy) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
+                        source(ipg,exz) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
+                        source(ipg,eyz) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
+                    case(2) ! NOTE: solving the full (nonlinear) 10-moment equations
+                        source(ipg,exx) = 0
+                        source(ipg,eyy) = 0
+                        source(ipg,ezz) = 0
+                        source(ipg,exy) = 0
+                        source(ipg,exz) = 0
+                        source(ipg,eyz) = 0
+                    ! case(3) ! NOTE: solving the full (nonlinear) 10-moment equations the OLD way
+                    !     dn = Qin(rh)
+                    !     dni = 1./dn
+                    !     vx = Qin(mx)*dni
+                    !     vy = Qin(my)*dni
+                    !     vz = Qin(mz)*dni
+                    !     vx2 = vx**2
+                    !     vy2 = vy**2
+                    !     vz2 = vz**2
+                    !     colldn = coll*dn
+                    !
+                    !     source(ipg,exx) = colldn*(2*vx2 - vy2 - vz2)*c1d3
+                    !     source(ipg,eyy) = colldn*(2*vy2 - vz2 - vx2)*c1d3
+                    !     source(ipg,ezz) = colldn*(2*vz2 - vx2 - vy2)*c1d3
+                    !     source(ipg,exy) = colldn*vx*vy
+                    !     source(ipg,exz) = colldn*vx*vz
+                    !     source(ipg,eyz) = colldn*vy*vz
                 end select
 
             end do

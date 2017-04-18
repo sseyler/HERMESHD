@@ -2,18 +2,18 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 1.0e0
+    real, parameter :: lx = 3.0e2
     real, parameter :: ly = lx
-    real, parameter :: lz = lx
+    real, parameter :: lz = lx/200.
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad  = 2
-    integer, parameter :: nbasis = 4
+    integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 30
-    integer, parameter :: ny = 30
-    integer, parameter :: nz = 30
+    integer, parameter :: nx = 20
+    integer, parameter :: ny = 20
+    integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
     integer :: mpi_nx = 4
@@ -26,11 +26,11 @@ module input
     character(*), parameter :: iname = 'heun'
 
     ! Fluctuating hydrodynamics
-    logical, parameter :: llns = .true.
+    logical, parameter :: llns = .false.
 
     ! Initial conditions
     ! character(*), parameter :: icname = ''
-    integer, parameter :: icid = 8
+    integer, parameter :: icid = 0
 
     ! Boundary conditions
     character(*), parameter :: xlobc = 'periodic'
@@ -41,7 +41,7 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 1.0e0
+    real, parameter :: tf = 1.0e3
 
     ! Console output frequency
     integer, parameter :: ntout = 200
@@ -56,7 +56,7 @@ module input
 
     ! Thermodynamic, constitutive, and transport parameters
     real, parameter :: TK     = 40.0    ! in Kelvin
-    real, parameter :: mu     = 18.0     ! AMU per molecule
+    real, parameter :: mu     = 22.0     ! AMU per molecule
     real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
     real, parameter :: clt    = 2.0      ! numerical speed of sound
 
@@ -65,12 +65,12 @@ module input
     !   * 1 for semi-implicit integration of stress terms
     !   * 2 for full 10-moment formulation (NOTE: not finished!)
     integer, parameter :: ivis = 1
-    real, parameter    :: vis  = 1.e-3   ! dynamic viscosity
+    real, parameter    :: vis  = 1.e-4   ! dynamic viscosity
     real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_llns_1"
+    character (*), parameter :: outname = "test_newflux_22"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density
