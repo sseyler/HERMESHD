@@ -81,14 +81,14 @@ real dxvtk,dyvtk,dzvtk ! used by set_vtk_vals_3D, xvtk/yvtk/zvtk (functions), ou
 !===========================================================================
 
 contains
-
+    !---------------------------------------------------------------------------
     subroutine set_bfvals_3D
         ! Defines local basis function values and weights for 1, 2, or 3-point Gaussian quadrature.
         ! Basis functions are evaluated in cell interior and on cell faces.
         implicit none
 
         call set_vtk_vals_3D()    ! Define basis function values on a 3D grid INTERNAL to the cell.
-        call set_internal_vals_3D()     ! Define basis function values at quadrature points INTERNAL to cell.
+        call set_internal_vals_3D()  ! Define basis function values at quadrature points INTERNAL to cell.
         call set_face_vals_3D()   ! Define local basis function values at quadrature points on a cell face.
         call set_weights_3D()     ! Define weights for integral approximation using Gaussian quadrature.
 
@@ -99,8 +99,25 @@ contains
     	end if
 
     end subroutine set_bfvals_3D
+    !---------------------------------------------------------------------------
 
-!----------------------------------------------------------
+
+    !---------------------------------------------------------------------------
+    subroutine set_bfvals_2D
+        ! Defines local basis function values and weights for 1, 2, or 3-point Gaussian quadrature.
+        ! Basis functions are evaluated in cell interior and on cell edges.
+           implicit none
+
+        call set_vtk_vals_2D()      ! Define basis function values on a 2D grid INTERNAL to the cell.
+        call set_internal_vals_2D() ! Define basis function values at quadrature points INTERNAL to cell.
+        call set_edge_vals_2D()     ! Define local basis function values at quadrature points on a cell edge.
+        call set_weights_2D()       ! Define weights for integral approximation using Gaussian quadrature.
+
+    end subroutine set_bfvals_2D
+    !---------------------------------------------------------------------------
+
+
+    !---------------------------------------------------------------------------
     subroutine set_vtk_vals_3D
         ! Define basis function values on a rectangular 3D grid INTERNAL to the cell.
         ! For use in output_vtk().
@@ -112,18 +129,18 @@ contains
         dyvtk = 1./(nvtk*dyi)
         dzvtk = 1./(nvtk*dzi)
 
-        if (nvtk .eq. 1) xgrid(1) = 0.
+        if (nvtk == 1) xgrid(1) = 0.
 
-        if (nvtk .eq. 2) then
+        if (nvtk == 2) then
             xgrid(1) = -0.5
             xgrid(2) = 0.5
         end if
-        if (nvtk .eq. 3) then
+        if (nvtk == 3) then
             xgrid(1) = -2./3.
             xgrid(2) = 0.
             xgrid(3) = 2./3.
         end if
-        if (nvtk .eq. 4) then
+        if (nvtk == 4) then
             xgrid(1) = -3./4.
             xgrid(2) = -1./4.
             xgrid(3) = 1./4.
@@ -291,23 +308,23 @@ contains
         xq4m = sqrt(525. - 70.*sqrt(30.))/35.
 
 
-        if (iquad .eq. 2) then
+        if (iquad == 2) then
             xquad(1) = -c1dsq3
             xquad(2) = c1dsq3
         end if
-        if (iquad .eq. 3) then
+        if (iquad == 3) then
             xquad(1) = -c15d5
             xquad(2) = 0.
             xquad(3) = c15d5
         end if
-        if (iquad .eq. 4) then
+        if (iquad == 4) then
             xquad(1) = -xq4p
             xquad(2) = -xq4m
             xquad(3) = xq4m
             xquad(4) = xq4p
         end if
 
-        if (iquad .eq. 1) then            ! 2-point Gaussian quadrature
+        if (iquad == 1) then            ! 2-point Gaussian quadrature
             bfvals_int(1,1) = 1.        ! basis function = 1
             bfvals_int(1,kx) = 0.        ! basis function = x
             bfvals_int(1,ky) = 0.        ! basis function = y
@@ -315,7 +332,7 @@ contains
         end if
 
 
-        if (iquad .gt. 1) then
+        if (iquad > 1) then
             bfvals_int(1:npg,1) = 1.        ! basis function = 1
             do i=1,nedge
                 bfvals_int((i-1)*nedge+1:i*nedge,ky) = xquad(i)        ! basis function = y
@@ -373,16 +390,16 @@ contains
         xq4p = sqrt(525. + 70.*sqrt(30.))/35.
         xq4m = sqrt(525. - 70.*sqrt(30.))/35.
 
-        if (iquad .eq. 2) then
+        if (iquad == 2) then
             xquad(1) = -c1dsq3
             xquad(2) = c1dsq3
         end if
-        if (iquad .eq. 3) then
+        if (iquad == 3) then
             xquad(1) = -c15d5
             xquad(2) = 0.
             xquad(3) = c15d5
         end if
-        if (iquad .eq. 4) then
+        if (iquad == 4) then
             xquad(1) = -xq4p
             xquad(2) = -xq4m
             xquad(3) = xq4m
@@ -403,12 +420,12 @@ contains
         ! bfvals_rsp(,kxy):  xy-values on positive rs-face
 
         bfvals_zp(1:nface,1) = 1.
-        if (iquad .eq. 1) then
+        if (iquad == 1) then
             bfvals_zp(1,kx) = 0.
             bfvals_zp(1,ky) = 0.
         end if
 
-        if (iquad .gt. 1) then
+        if (iquad > 1) then
             do i=1,nedge
                 bfvals_zp((i-1)*nedge+1:i*nedge,kx) = xquad(1:nedge)
                 bfvals_zp((i-1)*nedge+1:i*nedge,ky) = xquad(i)
@@ -593,18 +610,18 @@ contains
         ! Define weights for integral approximation using Gaussian quadrature.
 
         ! Define weights for 1-D integration
-        if (iquad .eq. 1) then        ! 1-point quadrature
+        if (iquad == 1) then        ! 1-point quadrature
             wgt1d(1) = 2.
         end if
-        if (iquad .eq. 2) then        ! 2-point quadrature
+        if (iquad == 2) then        ! 2-point quadrature
             wgt1d(1:2) = 1.
         end if
-        if (iquad .eq. 3) then        ! 3-point quadrature
+        if (iquad == 3) then        ! 3-point quadrature
             wgt1d(1) = 5./9.
             wgt1d(2) = 8./9.
             wgt1d(3) = 5./9.
         end if
-        if (iquad .eq. 4) then        ! 4-point quadrature
+        if (iquad == 4) then        ! 4-point quadrature
             wgt1d(1) = wq4m
             wgt1d(2) = wq4p
             wgt1d(3) = wq4p
@@ -612,28 +629,28 @@ contains
         end if
 
         ! Define weights for 2-D integration
-        if (iquad .eq. 1) then        ! 1-point quadrature
+        if (iquad == 1) then        ! 1-point quadrature
             wgt2d(1) = 4.
         end if
-        if (iquad .eq. 2) then        ! 2-point quadrature
+        if (iquad == 2) then        ! 2-point quadrature
             wgt2d(1:4) = 1.
         end if
 
-        if (iquad .ge. 3) then
+        if (iquad >= 3) then
             do i= 1,nedge
                 wgt2d((i-1)*nedge+1:i*nedge) = wgt1d(1:nedge)*wgt1d(i)
             end do
         end if
 
         ! Define weights for 3-D integration
-        if (iquad .eq. 1) then        ! 1-point quadrature
+        if (iquad == 1) then        ! 1-point quadrature
             wgt3d(1) = 8.
         end if
-        if (iquad .eq. 2) then        ! 2-point quadrature
+        if (iquad == 2) then        ! 2-point quadrature
             wgt3d(1:8) = 1.
         end if
 
-        if (iquad .ge. 3) then
+        if (iquad >= 3) then
             do i= 1,nedge
                 wgt3d((i-1)*nface+1:i*nface) = wgt2d(1:nface)*wgt1d(i)
             end do
@@ -886,51 +903,51 @@ contains
 
         do jr=1,nbasis
             do ir=1,nbasis
-                if (ir .ne. jr) cell_int0(ir,jr) = 0.
-                if (ir .eq. jr) cell_int0(ir,jr) = 1.
+                if (ir /= jr) cell_int0(ir,jr) = 0.
+                if (ir == jr) cell_int0(ir,jr) = 1.
                 ix1 = 0
                 iy1 = 0
                 iz1 = 0
 
-                if (ibas_x(ir) .eq. 1 .and. ibas_x(jr) .eq. 1) ix1 = 1
-                if (ibas_x(ir) .eq. ky .and. ibas_x(jr) .eq. ky) ix1 = 1
-                if (ibas_x(ir) .eq. kyy .and. ibas_x(jr) .eq. kyy) ix1 = 1
-                if (ibas_x(ir) .eq. kz .and. ibas_x(jr) .eq. kz) ix1 = 1
-                if (ibas_x(ir) .eq. kzz .and. ibas_x(jr) .eq. kzz) ix1 = 1
-                if (ibas_x(ir) .eq. kyz .and. ibas_x(jr) .eq. kyz) ix1 = 1
-                if (ibas_x(ir) .eq. kyyz .and. ibas_x(jr) .eq. kyyz) ix1 = 1
-                if (ibas_x(ir) .eq. kyzz .and. ibas_x(jr) .eq. kyzz) ix1 = 1
-                if (ibas_x(ir) .eq. kyyzz .and. ibas_x(jr) .eq. kyyzz) ix1 = 1
+                if (ibas_x(ir) == 1 .and. ibas_x(jr) == 1) ix1 = 1
+                if (ibas_x(ir) == ky .and. ibas_x(jr) == ky) ix1 = 1
+                if (ibas_x(ir) == kyy .and. ibas_x(jr) == kyy) ix1 = 1
+                if (ibas_x(ir) == kz .and. ibas_x(jr) == kz) ix1 = 1
+                if (ibas_x(ir) == kzz .and. ibas_x(jr) == kzz) ix1 = 1
+                if (ibas_x(ir) == kyz .and. ibas_x(jr) == kyz) ix1 = 1
+                if (ibas_x(ir) == kyyz .and. ibas_x(jr) == kyyz) ix1 = 1
+                if (ibas_x(ir) == kyzz .and. ibas_x(jr) == kyzz) ix1 = 1
+                if (ibas_x(ir) == kyyzz .and. ibas_x(jr) == kyyzz) ix1 = 1
 
-                if (ibas_y(ir) .eq. 1 .and. ibas_y(jr) .eq. 1) iy1 = 1
-                if (ibas_y(ir) .eq. kx .and. ibas_y(jr) .eq. kx) iy1 = 1
-                if (ibas_y(ir) .eq. kxx .and. ibas_y(jr) .eq. kxx) iy1 = 1
-                if (ibas_y(ir) .eq. kz .and. ibas_y(jr) .eq. kz) iy1 = 1
-                if (ibas_y(ir) .eq. kzz .and. ibas_y(jr) .eq. kzz) iy1 = 1
-                if (ibas_y(ir) .eq. kzx .and. ibas_y(jr) .eq. kzx) iy1 = 1
-                if (ibas_y(ir) .eq. kzxx .and. ibas_y(jr) .eq. kzxx) iy1 = 1
-                if (ibas_y(ir) .eq. kzzx .and. ibas_y(jr) .eq. kzzx) iy1 = 1
-                if (ibas_y(ir) .eq. kzzxx .and. ibas_y(jr) .eq. kzzxx) iy1 = 1
+                if (ibas_y(ir) == 1 .and. ibas_y(jr) == 1) iy1 = 1
+                if (ibas_y(ir) == kx .and. ibas_y(jr) == kx) iy1 = 1
+                if (ibas_y(ir) == kxx .and. ibas_y(jr) == kxx) iy1 = 1
+                if (ibas_y(ir) == kz .and. ibas_y(jr) == kz) iy1 = 1
+                if (ibas_y(ir) == kzz .and. ibas_y(jr) == kzz) iy1 = 1
+                if (ibas_y(ir) == kzx .and. ibas_y(jr) == kzx) iy1 = 1
+                if (ibas_y(ir) == kzxx .and. ibas_y(jr) == kzxx) iy1 = 1
+                if (ibas_y(ir) == kzzx .and. ibas_y(jr) == kzzx) iy1 = 1
+                if (ibas_y(ir) == kzzxx .and. ibas_y(jr) == kzzxx) iy1 = 1
 
-                if (ibas_z(ir) .eq. 1 .and. ibas_z(jr) .eq. 1) iz1 = 1
-                if (ibas_z(ir) .eq. kx .and. ibas_z(jr) .eq. kx) iz1 = 1
-                if (ibas_z(ir) .eq. kxx .and. ibas_z(jr) .eq. kxx) iz1 = 1
-                if (ibas_z(ir) .eq. ky .and. ibas_z(jr) .eq. ky) iz1 = 1
-                if (ibas_z(ir) .eq. kyy .and. ibas_z(jr) .eq. kyy) iz1 = 1
-                if (ibas_z(ir) .eq. kxy .and. ibas_z(jr) .eq. kxy) iz1 = 1
-                if (ibas_z(ir) .eq. kxxy .and. ibas_z(jr) .eq. kxxy) iz1 = 1
-                if (ibas_z(ir) .eq. kxyy .and. ibas_z(jr) .eq. kxyy) iz1 = 1
-                if (ibas_z(ir) .eq. kxxyy .and. ibas_z(jr) .eq. kxxyy) iz1 = 1
+                if (ibas_z(ir) == 1 .and. ibas_z(jr) == 1) iz1 = 1
+                if (ibas_z(ir) == kx .and. ibas_z(jr) == kx) iz1 = 1
+                if (ibas_z(ir) == kxx .and. ibas_z(jr) == kxx) iz1 = 1
+                if (ibas_z(ir) == ky .and. ibas_z(jr) == ky) iz1 = 1
+                if (ibas_z(ir) == kyy .and. ibas_z(jr) == kyy) iz1 = 1
+                if (ibas_z(ir) == kxy .and. ibas_z(jr) == kxy) iz1 = 1
+                if (ibas_z(ir) == kxxy .and. ibas_z(jr) == kxxy) iz1 = 1
+                if (ibas_z(ir) == kxyy .and. ibas_z(jr) == kxyy) iz1 = 1
+                if (ibas_z(ir) == kxxyy .and. ibas_z(jr) == kxxyy) iz1 = 1
 
-                if (ix1 .eq. 1) then
+                if (ix1 == 1) then
                     xp_int0(ir,jr) = 1.  !0.5*3.
                     xm_int0(ir,jr) = 1.  !0.5*3.
                 end if
-                if (iy1 .eq. 1) then
+                if (iy1 == 1) then
                     yp_int0(ir,jr) = 1.  !0.5*3.
                     ym_int0(ir,jr) = 1.  !0.5*3.
                 end if
-                if (iz1 .eq. 1) then
+                if (iz1 == 1) then
                     zp_int0(ir,jr) = 1.  !0.5*3.
                     zm_int0(ir,jr) = 1.  !0.5*3.
                 end if
@@ -963,38 +980,38 @@ contains
 
                 epsm = 1.e-5
 
-         !     if (iam .eq. print_mpi) then
-            if (abs(cell_int(ir,jr) - cell_int0(ir,jr)) .gt. epsm) then
+         !     if (iam == print_mpi) then
+            if (abs(cell_int(ir,jr) - cell_int0(ir,jr)) > epsm) then
                 print *,'incorrect cell integral: bases',ir,jr
                 print *,'computed value: ',cell_int(ir,jr),'  expected value: ',cell_int0(ir,jr)
                 ipass = 0
             end if
-                if (abs(xp_int(ir,jr) - xp_int0(ir,jr)) .gt. epsm) then
+                if (abs(xp_int(ir,jr) - xp_int0(ir,jr)) > epsm) then
                 print *,'incorrect +x-face integral: bases',ir,jr
                 print *,'computed value: ',xp_int(ir,jr),'  expected value: ',xp_int0(ir,jr)
                 ipass = 0
             end if
-                if (abs(xm_int(ir,jr) - xm_int0(ir,jr)) .gt. epsm) then
+                if (abs(xm_int(ir,jr) - xm_int0(ir,jr)) > epsm) then
                 print *,'incorrect -x-face integral: bases',ir,jr
                 print *,'computed value: ',xm_int(ir,jr),'  expected value: ',xm_int0(ir,jr)
                 ipass = 0
             end if
-                if (abs(yp_int(ir,jr) - yp_int0(ir,jr)) .gt. epsm) then
+                if (abs(yp_int(ir,jr) - yp_int0(ir,jr)) > epsm) then
                 print *,'incorrect +y-face integral: bases',ir,jr
                 print *,'computed value: ',yp_int(ir,jr),'  expected value: ',yp_int0(ir,jr)
                 ipass = 0
             end if
-                if (abs(ym_int(ir,jr) - ym_int0(ir,jr)) .gt. epsm) then
+                if (abs(ym_int(ir,jr) - ym_int0(ir,jr)) > epsm) then
                 print *,'incorrect -y-face integral: bases',ir,jr
                 print *,'computed value: ',ym_int(ir,jr),'  expected value: ',ym_int0(ir,jr)
                 ipass = 0
             end if
-                if (abs(zp_int(ir,jr) - zp_int0(ir,jr)) .gt. epsm) then
+                if (abs(zp_int(ir,jr) - zp_int0(ir,jr)) > epsm) then
                 print *,'incorrect +z-face integral: bases',ir,jr
                 print *,'computed value: ',zp_int(ir,jr),'  expected value: ',zp_int0(ir,jr)
                 ipass = 0
             end if
-                if (abs(zm_int(ir,jr) - zm_int0(ir,jr)) .gt. epsm) then
+                if (abs(zm_int(ir,jr) - zm_int0(ir,jr)) > epsm) then
                 print *,'incorrect -z-face integral: bases',ir,jr
                 print *,'computed value: ',zm_int(ir,jr),'  expected value: ',zm_int0(ir,jr)
                 ipass = 0
@@ -1003,8 +1020,321 @@ contains
            end do
         end do
 
-        ! if (ipass .eq. 0) call exit(-1)
+        ! if (ipass == 0) call exit(-1)
     end subroutine test_basis_3D
+    !---------------------------------------------------------------------------
+
+
+    !---------------------------------------------------------------------------
+    subroutine set_vtk_vals_2D
+    ! Define basis function values on a rectangular 3D grid INTERNAL to the cell.
+    ! For use in output_vtk().
+        implicit none
+        integer ixyz,i,igrid
+
+        dxvtk = 1./(nvtk*dxi)
+        dyvtk = 1./(nvtk*dyi)
+
+        if (nvtk == 1) xgrid(1) = 0.
+
+        if (nvtk == 2) then
+            xgrid(1) = -0.5
+            xgrid(2) = 0.5
+        end if
+        if (nvtk == 3) then
+            xgrid(1) = -2./3.
+            xgrid(2) = 0.
+            xgrid(3) = 2./3.
+        end if
+        if (nvtk == 4) then
+            xgrid(1) = -3./4.
+            xgrid(2) = -1./4.
+            xgrid(3) = 1./4.
+            xgrid(4) = 3./4.
+        end if
+
+        bfvtk(1,1) = 1.        ! basis function = 1
+        bfvtk(1,kx) = 0.       ! basis function = x
+        bfvtk(1,ky) = 0.       ! basis function = y
+
+        bfvtk(1:nvtk2,1) = 1.        ! basis function = 1
+        do i=1,nvtk
+            bfvtk((i-1)*nvtk+1:i*nvtk,kx) = xgrid(i)        ! basis function = y
+            bfvtk((i-1)*nvtk+1:i*nvtk,ky) = xgrid(1:nvtk)    ! basis function = z
+        end do
+
+        bfvtk(1:nvtk2,kxx) = 1.5*bfvtk(1:nvtk2,kx)**2 - 0.5    ! basis function = P_2(x)
+        bfvtk(1:nvtk2,kxxx) = 2.5*bfvtk(1:nvtk2,kx)**3 - 1.5*bfvtk(1:nvtk2,kx)   ! basis function = P3(x)
+        bfvtk(1:nvtk2,kyy) = 1.5*bfvtk(1:nvtk2,ky)**2 - 0.5    ! basis function = P_2(y)
+        bfvtk(1:nvtk2,kyyy) = 2.5*bfvtk(1:nvtk2,ky)**3 - 1.5*bfvtk(1:nvtk2,ky)   ! basis function = P3(y)
+
+        bfvtk(1:nvtk2,kxy) = bfvtk(1:nvtk2,kx)*bfvtk(1:nvtk2,ky)        ! basis function = xy
+        bfvtk(1:nvtk2,kxxy) = bfvtk(1:nvtk2,kxx)*bfvtk(1:nvtk2,ky)     ! basis function = P2(x)y
+        bfvtk(1:nvtk2,kxyy) = bfvtk(1:nvtk2,kx)*bfvtk(1:nvtk2,kyy)     ! basis function = P2(y)x
+        bfvtk(1:nvtk2,kxxyy) = bfvtk(1:nvtk2,kxx)*bfvtk(1:nvtk2,kyy)     ! basis function = P2(x)P_2(y)
+
+        do igrid=1,nvtk2
+            bfvtk_dx(igrid,1) = 0.
+            bfvtk_dx(igrid,kx) = 1.
+            bfvtk_dx(igrid,ky) = 0.
+            bfvtk_dx(igrid,kxx) = 3.*bfvtk(igrid,kx)
+            bfvtk_dx(igrid,kyy) = 0.
+            bfvtk_dx(igrid,kxy) = bfvtk(igrid,ky)
+            bfvtk_dx(igrid,kxxx) = 7.5*bfvtk(igrid,kx)**2 - 1.5
+            bfvtk_dx(igrid,kyyy) = 0.
+            bfvtk_dx(igrid,kxxy) = 3.*bfvtk(igrid,kx)*bfvtk(igrid,ky)
+            bfvtk_dx(igrid,kxyy) = bfvtk(igrid,kyy)
+            bfvtk_dx(igrid,kxxyy) = 3.*bfvtk(igrid,kx)*bfvtk(igrid,kyy)
+
+            bfvtk_dy(igrid,1) = 0.
+            bfvtk_dy(igrid,ky) = 1.
+            bfvtk_dy(igrid,kx) = 0.
+            bfvtk_dy(igrid,kyy) = 3.*bfvtk(igrid,ky)
+            bfvtk_dy(igrid,kxx) = 0.
+            bfvtk_dy(igrid,kxy) = bfvtk(igrid,kx)
+            bfvtk_dy(igrid,kyyy) = 7.5*bfvtk(igrid,ky)**2 - 1.5
+            bfvtk_dy(igrid,kxxx) = 0.
+            bfvtk_dy(igrid,kxxy) = bfvtk(igrid,kxx)
+            bfvtk_dy(igrid,kxyy) = 3.*bfvtk(igrid,ky)*bfvtk(igrid,kx)
+            bfvtk_dy(igrid,kxxyy) = 3.*bfvtk(igrid,kxx)*bfvtk(igrid,ky)
+        end do
+
+    end subroutine set_vtk_vals_2D
+    !---------------------------------------------------------------------------
+
+
+    !---------------------------------------------------------------------------
+    subroutine set_internal_vals_2D
+    ! Define basis function values at quadrature points INTERNAL to cell.
+        implicit none
+        integer ixyz, i
+        real c15d5,c1dsq3,xq4p,xq4m,xquad(20)
+
+        c15d5 = sqrt(15.)/5.
+        c1dsq3 = 1./sqrt(3.)
+
+        xq4p = sqrt(525. + 70.*sqrt(30.))/35.
+        xq4m = sqrt(525. - 70.*sqrt(30.))/35.
+
+        if (iquad == 2) then
+            xquad(1) = -c1dsq3
+            xquad(2) = c1dsq3
+        end if
+        if (iquad == 3) then
+            xquad(1) = -c15d5
+            xquad(2) = 0.
+            xquad(3) = c15d5
+        end if
+        if (iquad == 4) then
+            xquad(1) = -xq4p
+            xquad(2) = -xq4m
+            xquad(3) = xq4m
+            xquad(4) = xq4p
+        end if
+
+        if (iquad == 1) then            ! 2-point Gaussian quadrature
+            bfvals_int(1,1) = 1.        ! basis function = 1
+            bfvals_int(1,kx) = 0.        ! basis function = x
+            bfvals_int(1,ky) = 0.        ! basis function = y
+        end if
+
+        if (iquad > 1) then
+            bfvals_int(1:npg,1) = 1.        ! basis function = 1
+            do i=1,nedge
+                bfvals_int((i-1)*nedge+1:i*nedge,ky) = xquad(1:nedge)    ! basis function = y
+                bfvals_int((i-1)*nedge+1:i*nedge,kx) = xquad(i)        ! basis function = x
+            end do
+        end if
+
+        bfvals_int(1:npg,kxx) = 1.5*bfvals_int(1:npg,kx)**2 - 0.5    ! basis function = P_2(x)
+        bfvals_int(1:npg,kxxx) = 2.5*bfvals_int(1:npg,kx)**3 - 1.5*bfvals_int(1:npg,kx)   ! basis function = P_3(x)
+        bfvals_int(1:npg,kyy) = 1.5*bfvals_int(1:npg,ky)**2 - 0.5    ! basis function = P_2(y)
+        bfvals_int(1:npg,kyyy) = 2.5*bfvals_int(1:npg,ky)**3 - 1.5*bfvals_int(1:npg,ky)   ! basis function = P_3(y)
+
+        bfvals_int(1:npg,kxy) = bfvals_int(1:npg,kx)*bfvals_int(1:npg,ky)        ! basis function = xy
+        bfvals_int(1:npg,kxxy) = bfvals_int(1:npg,kxx)*bfvals_int(1:npg,ky)     ! basis function = P_2(x)y
+        bfvals_int(1:npg,kxyy) = bfvals_int(1:npg,kx)*bfvals_int(1:npg,kyy)     ! basis function = P_2(y)x
+        bfvals_int(1:npg,kxxyy) = bfvals_int(1:npg,kxx)*bfvals_int(1:npg,kyy)     ! basis function = P_2(x)P_2(y)
+
+    end subroutine set_internal_vals_2D
+    !---------------------------------------------------------------------------
+
+
+    !---------------------------------------------------------------------------
+    subroutine set_edge_vals_2D
+    ! Define local basis function values at quadrature points on a cell edge.
+    ! Used in flux_cal() and prepare_exchange() for interpolating from cell center onto cell edge.
+    ! Also used in glflux().
+        implicit none
+        integer ixyz,i
+        real c15d5,c1dsq3,xquad(20),xq4p,xq4m
+
+        c15d5 = sqrt(15.)/5.
+        c1dsq3 = 1./sqrt(3.)
+
+        xq4p = sqrt(525. + 70.*sqrt(30.))/35.
+        xq4m = sqrt(525. - 70.*sqrt(30.))/35.
+
+        if (iquad == 2) then
+            xquad(1) = -c1dsq3
+            xquad(2) = c1dsq3
+        end if
+        if (iquad == 3) then
+            xquad(1) = -c15d5
+            xquad(2) = 0.
+            xquad(3) = c15d5
+        end if
+        if (iquad == 4) then
+            xquad(1) = -xq4p
+            xquad(2) = -xq4m
+            xquad(3) = xq4m
+            xquad(4) = xq4p
+        end if
+
+        ! bfvals_rp:  positive r-edge
+        ! bfvals_rm:  negative r-edge
+        ! bfvals_rp(,1):  value=1 on positive r-edge
+        ! bfvals_rp(,kx):  x-values on positive r-edge
+        ! bfvals_rp(,ky):  y-values on positive r-edge
+        ! bfvals_rp(,kxx):  P_2(x)-values on positive r-edge
+        ! bfvals_rp(,kyy):  P_2(y)-values on positive r-edge
+        ! bfvals_rp(,kxy):  xy-values on positive r-edge
+
+        bfvals_xp(1:nedge,1) = 1.
+        bfvals_yp(1:nedge,1) = 1.
+        if (iquad == 1) then
+            bfvals_yp(1,kx) = 0.
+            bfvals_yp(1,ky) = 0.
+        end if
+
+        if (iquad > 1) then
+            do i=1,nedge
+                bfvals_yp(1:nedge,kx) = xquad(1:nedge)
+                bfvals_yp(1:nedge,ky) = 1.
+                bfvals_xp(1:nedge,ky) = xquad(1:nedge)
+                bfvals_xp(1:nedge,kx) = 1.
+            end do
+        end if
+
+        bfvals_xp(1:nedge,kxx) = 1.5*bfvals_xp(1:nedge,kx)**2 - 0.5
+        bfvals_xp(1:nedge,kyy) = 1.5*bfvals_xp(1:nedge,ky)**2 - 0.5
+        bfvals_xp(1:nedge,kxy) = bfvals_xp(1:nedge,kx)*bfvals_xp(1:nedge,ky)     ! basis function = xy
+
+        bfvals_yp(1:nedge,kxx) = 1.5*bfvals_yp(1:nedge,kx)**2 - 0.5
+        bfvals_yp(1:nedge,kyy) = 1.5*bfvals_yp(1:nedge,ky)**2 - 0.5
+        bfvals_yp(1:nedge,kxy) = bfvals_yp(1:nedge,kx)*bfvals_yp(1:nedge,ky)     ! basis function = xy
+
+        bfvals_xp(1:nedge,kxxx) = 2.5*bfvals_xp(1:nedge,kx)**3 - 1.5*bfvals_xp(1:nedge,kx)
+        bfvals_xp(1:nedge,kyyy) = 2.5*bfvals_xp(1:nedge,ky)**3 - 1.5*bfvals_xp(1:nedge,ky)
+        bfvals_xp(1:nedge,kxxy) = bfvals_xp(1:nedge,kxx)*bfvals_xp(1:nedge,ky)     ! basis function = P_2(x)y
+        bfvals_xp(1:nedge,kxyy) = bfvals_xp(1:nedge,kx)*bfvals_xp(1:nedge,kyy)     ! basis function = P_2(y)x
+        bfvals_xp(1:nedge,kxxyy) = bfvals_xp(1:nedge,kxx)*bfvals_xp(1:nedge,kyy)     ! basis function = P_2(x)P_2(y)
+
+        bfvals_yp(1:nedge,kxxx) = 2.5*bfvals_yp(1:nedge,kx)**3 - 1.5*bfvals_yp(1:nedge,kx)
+        bfvals_yp(1:nedge,kyyy) = 2.5*bfvals_yp(1:nedge,ky)**3 - 1.5*bfvals_yp(1:nedge,ky)
+        bfvals_yp(1:nedge,kxxy) = bfvals_yp(1:nedge,kxx)*bfvals_yp(1:nedge,ky)     ! basis function = P_2(x)y
+        bfvals_yp(1:nedge,kxyy) = bfvals_yp(1:nedge,kx)*bfvals_yp(1:nedge,kyy)     ! basis function = P_2(y)x
+        bfvals_yp(1:nedge,kxxyy) = bfvals_yp(1:nedge,kxx)*bfvals_yp(1:nedge,kyy)     ! basis function = P_2(x)P_2(y)
+
+        bfvals_xm = bfvals_xp
+        bfvals_xm(1:nedge,kx) = -bfvals_xp(1:nedge,kx)
+        bfvals_xm(1:nedge,kxy) = -bfvals_xp(1:nedge,kxy)
+        bfvals_xm(1:nedge,kxyy) = -bfvals_xp(1:nedge,kxyy)
+        bfvals_xm(1:nedge,kxxx) = -bfvals_xp(1:nedge,kxxx)
+
+        bfvals_ym = bfvals_yp
+        bfvals_ym(1:nedge,ky) = -bfvals_yp(1:nedge,ky)
+        bfvals_ym(1:nedge,kxy) = -bfvals_yp(1:nedge,kxy)
+        bfvals_ym(1:nedge,kxxy) = -bfvals_yp(1:nedge,kxxy)
+        bfvals_ym(1:nedge,kyyy) = -bfvals_yp(1:nedge,kyyy)
+
+        ! Organize local basis values on faces into 1-D vectors.
+        ! Used in limiter() and max_lim().
+
+        bf_edges(1:nslim,1) = 1.        ! basis function = 1
+
+        do ixyz=kx,ky
+            bf_edges(1:nedge,ixyz) = bfvals_xm(1:nedge,ixyz)        ! basis function = x,y
+            bf_edges(nedge+1:2*nedge,ixyz) = bfvals_xp(1:nedge,ixyz)        ! basis function = x,y
+            bf_edges(2*nedge+1:3*nedge,ixyz) = bfvals_ym(1:nedge,ixyz)        ! basis function = x,y
+            bf_edges(3*nedge+1:4*nedge,ixyz) = bfvals_yp(1:nedge,ixyz)        ! basis function = x,y
+            bf_edges(4*nedge+1:nslim,ixyz) = bfvals_int(1:npg,ixyz)        ! basis function = x,y
+        end do
+
+        bf_edges(1:nslim,kxy) = bf_edges(1:nslim,kx)*bf_edges(1:nslim,ky)     ! basis function = xy
+
+        do i=0,1
+            bf_edges(1:nslim,kxx+i) = 1.5*bf_edges(1:nslim,kx+i)**2 - 0.5    ! basis function = P_2(s)
+            bf_edges(1:nslim,kxxx+i) = 2.5*bf_edges(1:nslim,kx+i)**3 - 1.5*bf_edges(1:nslim,kx+i) ! basis function = P_3(s)
+        end do
+
+        bf_edges(1:nslim,kxxy) = bf_edges(1:nslim,kxx)*bf_edges(1:nslim,ky)     ! basis function = P_2(x)y
+        bf_edges(1:nslim,kxyy) = bf_edges(1:nslim,kx)*bf_edges(1:nslim,kyy)     ! basis function = P_2(y)x
+        bf_edges(1:nslim,kxxyy) = bf_edges(1:nslim,kxx)*bf_edges(1:nslim,kyy)     ! basis function = P_2(x)P_2(y)
+
+    end subroutine set_edge_vals_2D
+    !---------------------------------------------------------------------------
+
+
+    !---------------------------------------------------------------------------
+    subroutine set_weights_2D
+        implicit none
+        integer i,nedge2
+        real wq4p,wq4m
+
+        wq4p = (18. + sqrt(30.))/36.
+        wq4m = (18. - sqrt(30.))/36.
+
+        ! Define weights for integral approximation using Gaussian quadrature.
+
+        ! Define weights for 1-D integration
+        if (iquad == 1) then        ! 1-point quadrature
+            wgt1d(1) = 2.
+        end if
+        if (iquad == 2) then        ! 2-point quadrature
+            wgt1d(1:2) = 1.
+        end if
+        if (iquad == 3) then        ! 3-point quadrature
+            wgt1d(1) = 5./9.
+            wgt1d(2) = 8./9.
+            wgt1d(3) = 5./9.
+        end if
+        if (iquad == 4) then        ! 4-point quadrature
+            wgt1d(1) = wq4m
+            wgt1d(2) = wq4p
+            wgt1d(3) = wq4p
+            wgt1d(4) = wq4m
+        end if
+
+        !  Define weights for 2-D integration
+        if (iquad == 1) then        ! 1-point quadrature
+            wgt2d(1) = 4.
+        end if
+        if (iquad == 2) then        ! 2-point quadrature
+            wgt2d(1:4) = 1.
+        end if
+        if (iquad >= 3) then
+            do i= 1,nedge
+                wgt2d((i-1)*nedge+1:i*nedge) = wgt1d(1:nedge)*wgt1d(i)
+            end do
+        end if
+
+        ! Define weights for 3-D integration
+        nedge2 = nedge*nedge
+
+        if (iquad == 1) then        ! 1-point quadrature
+            wgt3d(1) = 8.
+        end if
+        if (iquad == 2) then        ! 2-point quadrature
+            wgt3d(1:8) = 1.
+        end if
+        if (iquad >= 3) then
+            do i= 1,nedge
+                wgt3d((i-1)*nedge2+1:i*nedge2) = wgt2d(1:nedge2)*wgt1d(i)
+            end do
+        end if
+
+    end subroutine set_weights_2D
     !---------------------------------------------------------------------------
 
 

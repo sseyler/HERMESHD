@@ -41,7 +41,7 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 5.0e3
+    real, parameter :: tf = 1.0e3
 
     ! Console output frequency
     integer, parameter :: ntout = 200

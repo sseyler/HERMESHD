@@ -437,67 +437,67 @@ contains
     !---------------------------------------------------------------------------
     ! Get field var values at a cell face in body (not boundary) of spatial region
     !---------------------------------------------------------------------------
-    ! function Qface_body(Q_ijk, bfv_r)
-    !     real, dimension(nQ,nbasis), intent(in)    :: Q_ijk
-    !     real, dimension(nface,nbasis), intent(in) :: bfv_r
-    !     real, dimension(nface,nQ) :: Qface_body
-    !     integer ieq,ipnt
-    !
-    !     do ieq = 1,nQ
-    !         do ipnt=1,nface
-    !             Qface_body(ipnt,ieq) = sum(bfv_r(ipnt,1:nbasis)*Q_ijk(ieq,1:nbasis))
-    !         end do
-    !     end do
-    ! end function Qface_body
-    ! !---------------------------------------------------------------------------
-    !
-    ! !---------------------------------------------------------------------------
-    ! ! Get field var values at a cell face at the edge (boundary) of spatial region
-    ! !---------------------------------------------------------------------------
-    ! function Qface_edge(Q_bc_ext)
-    !     real, dimension(nface,nQ), intent(in)  :: Q_bc_ext
-    !     real, dimension(nface,nQ) :: Qface_edge
-    !     integer ieq,ipnt
-    !
-    !     do ieq = 1,nQ
-    !         do ipnt=1,nface
-    !             Qface_edge(ipnt,ieq) = Q_bc_ext(ipnt,ieq)
-    !         end do
-    !     end do
-    ! end function Qface_edge
-    !---------------------------------------------------------------------------
-
-    !---------------------------------------------------------------------------
-    ! Get field var values at a cell face in body (not boundary) of spatial region
-    !---------------------------------------------------------------------------
-    subroutine Qface_body(Q_ijk, bfv_r, Qface)
+    function Qface_body(Q_ijk, bfv_r)
         real, dimension(nQ,nbasis), intent(in)    :: Q_ijk
         real, dimension(nface,nbasis), intent(in) :: bfv_r
-        real, dimension(nface,nQ), intent(out)    :: Qface
+        real, dimension(nface,nQ) :: Qface_body
         integer ieq,ipnt
 
         do ieq = 1,nQ
             do ipnt=1,nface
-                Qface(ipnt,ieq) = sum(bfv_r(ipnt,1:nbasis)*Q_ijk(ieq,1:nbasis))
+                Qface_body(ipnt,ieq) = sum(bfv_r(ipnt,1:nbasis)*Q_ijk(ieq,1:nbasis))
             end do
         end do
-    end subroutine Qface_body
+    end function Qface_body
     !---------------------------------------------------------------------------
 
     !---------------------------------------------------------------------------
     ! Get field var values at a cell face at the edge (boundary) of spatial region
     !---------------------------------------------------------------------------
-    subroutine Qface_edge(Q_bc_ext, Qface)
+    function Qface_edge(Q_bc_ext)
         real, dimension(nface,nQ), intent(in)  :: Q_bc_ext
-        real, dimension(nface,nQ), intent(out) :: Qface
+        real, dimension(nface,nQ) :: Qface_edge
         integer ieq,ipnt
 
         do ieq = 1,nQ
             do ipnt=1,nface
-                Qface(ipnt,ieq) = Q_bc_ext(ipnt,ieq)
+                Qface_edge(ipnt,ieq) = Q_bc_ext(ipnt,ieq)
             end do
         end do
-    end subroutine Qface_edge
+    end function Qface_edge
+    !---------------------------------------------------------------------------
+
+    !---------------------------------------------------------------------------
+    ! Get field var values at a cell face in body (not boundary) of spatial region
+    !---------------------------------------------------------------------------
+    ! subroutine Qface_body(Q_ijk, bfv_r, Qface)
+    !     real, dimension(nQ,nbasis), intent(in)    :: Q_ijk
+    !     real, dimension(nface,nbasis), intent(in) :: bfv_r
+    !     real, dimension(nface,nQ), intent(out)    :: Qface
+    !     integer ieq,ipnt
+    !
+    !     do ieq = 1,nQ
+    !         do ipnt=1,nface
+    !             Qface(ipnt,ieq) = sum(bfv_r(ipnt,1:nbasis)*Q_ijk(ieq,1:nbasis))
+    !         end do
+    !     end do
+    ! end subroutine Qface_body
+    ! !---------------------------------------------------------------------------
+    !
+    ! !---------------------------------------------------------------------------
+    ! ! Get field var values at a cell face at the edge (boundary) of spatial region
+    ! !---------------------------------------------------------------------------
+    ! subroutine Qface_edge(Q_bc_ext, Qface)
+    !     real, dimension(nface,nQ), intent(in)  :: Q_bc_ext
+    !     real, dimension(nface,nQ), intent(out) :: Qface
+    !     integer ieq,ipnt
+    !
+    !     do ieq = 1,nQ
+    !         do ipnt=1,nface
+    !             Qface(ipnt,ieq) = Q_bc_ext(ipnt,ieq)
+    !         end do
+    !     end do
+    ! end subroutine Qface_edge
     !---------------------------------------------------------------------------
 
 
@@ -519,21 +519,20 @@ contains
             iback = i-1
 
             !--- get Qface_x --------------------------
-            ! if (i > 1)     Qface_x(1:nface,    1:nQ) = Qface_body( Q_r(iback,j,k,1:nQ,:), bfvals_xp(1:nface,:) )
-            ! if (i == 1)    Qface_x(1:nface,    1:nQ) = Qface_edge( Qxlo_ext(j,k,1:nface,:) )
-            ! if (i <  nx+1) Qface_x(nface+1:nfe,1:nQ) = Qface_body( Q_r(i,    j,k,1:nQ,:), bfvals_xm(1:nface,:) )
-            ! if (i == nx+1) Qface_x(nface+1:nfe,1:nQ) = Qface_edge( Qxhi_ext(j,k,1:nface,:) )
-            if (i > 1)     call Qface_body( Q_r(iback,j,k,:,:), bfvals_xp, Qface_x(1:nface,    :) )
-            if (i == 1)    call Qface_edge( Qxlo_ext(j,k,1:nface,:),       Qface_x(1:nface,    :) )
-            if (i <  nx+1) call Qface_body( Q_r(i,    j,k,:,:), bfvals_xm, Qface_x(nface+1:nfe,:) )
-            if (i == nx+1) call Qface_edge( Qxhi_ext(j,k,1:nface,:),       Qface_x(nface+1:nfe,:) )
+            if (i > 1)     Qface_x(1:nface,    1:nQ) = Qface_body( Q_r(iback,j,k,1:nQ,:), bfvals_xp(1:nface,:) )
+            if (i == 1)    Qface_x(1:nface,    1:nQ) = Qface_edge( Qxlo_ext(j,k,1:nface,:) )
+            if (i <  nx+1) Qface_x(nface+1:nfe,1:nQ) = Qface_body( Q_r(i,j,k,1:nQ,:),     bfvals_xm(1:nface,:) )
+            if (i == nx+1) Qface_x(nface+1:nfe,1:nQ) = Qface_edge( Qxhi_ext(j,k,1:nface,:) )
+            ! if (i > 1)     call Qface_body( Q_r(iback,j,k,:,:), bfvals_xp, Qface_x(1:nface,    :) )
+            ! if (i == 1)    call Qface_edge( Qxlo_ext(j,k,1:nface,:),       Qface_x(1:nface,    :) )
+            ! if (i <  nx+1) call Qface_body( Q_r(i,    j,k,:,:), bfvals_xm, Qface_x(nface+1:nfe,:) )
+            ! if (i == nx+1) call Qface_edge( Qxhi_ext(j,k,1:nface,:),       Qface_x(nface+1:nfe,:) )
 
             !--- get Fface_x --------------------------
-            do ife = 1,nfe
-                Fface_x(ife,:) = Fpt_x( Qface_x(ife,:) )
-            end do
-            ! call Fpts_x(Qface_x, Fface_x, nfe)
-            ! call Fpts_x_1(Qface_x, Fface_x, nfe)
+            ! do ife = 1,nfe
+            !     Fface_x(ife,:) = Fpt_x( Qface_x(ife,:) )
+            ! end do
+            call Fpts_x(Qface_x, Fface_x, nfe)
             ! call flux_calc_pnts_r_v0(Qface_x,Fface_x,1,nfe)
             ! if (iam==1 .and. j==ny) then
             !     if (sum(Fface_x(1:nface,mx)) /= sum(Fface_x1(1:nface,mx))) then
@@ -597,27 +596,21 @@ contains
         jleft = j-1
         do i=1,nx
             !--- get Qface_y --------------------------
-            ! if (j > 1)     Qface_y(1:nface,    1:nQ) = Qface_body( Q_r(i,jleft,k,1:nQ,:), bfvals_yp(1:nface,:) )
-            ! if (j == 1)    Qface_y(1:nface,    1:nQ) = Qface_edge( Qylo_ext(i,k,1:nface,:) )
-            ! if (j <  ny+1) Qface_y(nface+1:nfe,1:nQ) = Qface_body( Q_r(i,j,    k,1:nQ,:), bfvals_ym(1:nface,:) )
-            ! if (j == ny+1) Qface_y(nface+1:nfe,1:nQ) = Qface_edge( Qyhi_ext(i,k,1:nface,:) )
-            if (j > 1)     call Qface_body( Q_r(i,jleft,k,:,:), bfvals_yp, Qface_y(1:nface,    :) )
-            if (j == 1)    call Qface_edge( Qylo_ext(i,k,1:nface,:),       Qface_y(1:nface,    :) )
-            if (j <  ny+1) call Qface_body( Q_r(i,j,    k,:,:), bfvals_ym, Qface_y(nface+1:nfe,:) )
-            if (j == ny+1) call Qface_edge( Qyhi_ext(i,k,1:nface,:),       Qface_y(nface+1:nfe,:) )
+            if (j > 1)     Qface_y(1:nface,    1:nQ) = Qface_body( Q_r(i,jleft,k,1:nQ,:), bfvals_yp(1:nface,:) )
+            if (j == 1)    Qface_y(1:nface,    1:nQ) = Qface_edge( Qylo_ext(i,k,1:nface,:) )
+            if (j <  ny+1) Qface_y(nface+1:nfe,1:nQ) = Qface_body( Q_r(i,j,k,1:nQ,:),     bfvals_ym(1:nface,:) )
+            if (j == ny+1) Qface_y(nface+1:nfe,1:nQ) = Qface_edge( Qyhi_ext(i,k,1:nface,:) )
+            ! if (j > 1)     call Qface_body( Q_r(i,jleft,k,:,:), bfvals_yp, Qface_y(1:nface,    :) )
+            ! if (j == 1)    call Qface_edge( Qylo_ext(i,k,1:nface,:),       Qface_y(1:nface,    :) )
+            ! if (j <  ny+1) call Qface_body( Q_r(i,j,    k,:,:), bfvals_ym, Qface_y(nface+1:nfe,:) )
+            ! if (j == ny+1) call Qface_edge( Qyhi_ext(i,k,1:nface,:),       Qface_y(nface+1:nfe,:) )
 
             !--- get Fface_y --------------------------
-            do ife = 1,nfe
-                Fface_y(ife,:) = Fpt_y(Qface_y(ife,:))
-            end do
-            ! call Fpts_y(Qface_y, Fface_y, nfe)
-            ! call Fpts_y_1(Qface_y, Fface_y, nfe)
+            ! do ife = 1,nfe
+            !     Fface_y(ife,:) = Fpt_y(Qface_y(ife,:))
+            ! end do
+            call Fpts_y(Qface_y, Fface_y, nfe)
             ! call flux_calc_pnts_r_v0(Qface_y,Fface_y,2,nfe)
-            ! if (iam==1 .and. j==ny) then
-            !     if (sum(Fface_y(1:nface,mx)) /= sum(Fface_y1(1:nface,mx))) then
-            !         write(*,'(A12,I1,A13,2ES16.9)') 'Fface_y: i=',i,'delta_mx/my=,sum(Fface_y(1:nface,mx))-sum(Fface_y1(1:nface,mx)),sum(Fface_y(1:nface,my))-sum(Fface_y1(1:nface,my))
-            !     end if
-            ! end if
 
             !--- get cfry -----------------------------
             do i4=1,nfe
@@ -674,21 +667,20 @@ contains
         do j=1,ny
         do i=1,nx
             !--- get Qface_z --------------------------
-            ! if (k > 1)     Qface_z(1:nface,    1:nQ) = Qface_body( Q_r(i,j,kdown,1:nQ,:), bfvals_zp(1:nface,:) )
-            ! if (k == 1)    Qface_z(1:nface,    1:nQ) = Qface_edge( Qzlo_ext(i,j,1:nface,:) )
-            ! if (k <  nz+1) Qface_z(nface+1:nfe,1:nQ) = Qface_body( Q_r(i,j,k,    1:nQ,:), bfvals_zm(1:nface,:) )
-            ! if (k == nz+1) Qface_z(nface+1:nfe,1:nQ) = Qface_edge( Qzhi_ext(i,j,1:nface,:) )
-            if (k > 1)     call Qface_body( Q_r(i,j,kdown,:,:), bfvals_zp, Qface_z(1:nface,    :) )
-            if (k == 1)    call Qface_edge( Qzlo_ext(i,j,1:nface,:),       Qface_z(1:nface,    :) )
-            if (k <  nz+1) call Qface_body( Q_r(i,j,k,    :,:), bfvals_zm, Qface_z(nface+1:nfe,:) )
-            if (k == nz+1) call Qface_edge( Qzhi_ext(i,j,1:nface,:),       Qface_z(nface+1:nfe,:) )
+            if (k > 1)     Qface_z(1:nface,    1:nQ) = Qface_body( Q_r(i,j,kdown,1:nQ,:), bfvals_zp(1:nface,:) )
+            if (k == 1)    Qface_z(1:nface,    1:nQ) = Qface_edge( Qzlo_ext(i,j,1:nface,:) )
+            if (k <  nz+1) Qface_z(nface+1:nfe,1:nQ) = Qface_body( Q_r(i,j,k,1:nQ,:),     bfvals_zm(1:nface,:) )
+            if (k == nz+1) Qface_z(nface+1:nfe,1:nQ) = Qface_edge( Qzhi_ext(i,j,1:nface,:) )
+            ! if (k > 1)     call Qface_body( Q_r(i,j,kdown,:,:), bfvals_zp, Qface_z(1:nface,    :) )
+            ! if (k == 1)    call Qface_edge( Qzlo_ext(i,j,1:nface,:),       Qface_z(1:nface,    :) )
+            ! if (k <  nz+1) call Qface_body( Q_r(i,j,k,    :,:), bfvals_zm, Qface_z(nface+1:nfe,:) )
+            ! if (k == nz+1) call Qface_edge( Qzhi_ext(i,j,1:nface,:),       Qface_z(nface+1:nfe,:) )
 
             !--- get Fface_z --------------------------
-            do ife = 1,nfe
-                Fface_z(ife,:) = Fpt_z(Qface_z(ife,:))
-            end do
-            ! call Fpts_z(Qface_z, Fface_z, nfe)
-            ! call Fpts_z_1(Qface_z, Fface_z, nfe)
+            ! do ife = 1,nfe
+            !     Fface_z(ife,:) = Fpt_z(Qface_z(ife,:))
+            ! end do
+            call Fpts_z(Qface_z, Fface_z, nfe)
             ! call flux_calc_pnts_r_v0(Qface_z,Fface_z,3,nfe)
 
             !--- get cfrz -----------------------------
@@ -961,9 +953,6 @@ contains
             call Fpts_x(Qinner, finner_x, npg)
             call Fpts_y(Qinner, finner_y, npg)
             call Fpts_z(Qinner, finner_z, npg)
-            ! call Fpts_x_1(Qinner, finner_x, npg)
-            ! call Fpts_y_1(Qinner, finner_y, npg)
-            ! call Fpts_z_1(Qinner, finner_z, npg)
             ! call flux_calc_pnts_r_v0(Qinner,finner_x,1,npg)
             ! call flux_calc_pnts_r_v0(Qinner,finner_y,2,npg)
             ! call flux_calc_pnts_r_v0(Qinner,finner_z,3,npg)
@@ -984,7 +973,6 @@ contains
                 int_r(kx,ieq) = 0.25*cbasis(kx)*dxi*sum1
                 int_r(ky,ieq) = 0.25*cbasis(ky)*dyi*sum2
                 int_r(kz,ieq) = 0.25*cbasis(kz)*dzi*sum3
-
 
                 if ( nbasis > 4 ) then
 

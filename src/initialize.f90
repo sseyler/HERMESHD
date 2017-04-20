@@ -42,7 +42,7 @@ contains
 
         !-----------------------------------------
         ! Initialize grid sizes and local lengths
-        ibitri = set_ibitri(iquad, nbasis)
+        ibitri = set_ibitri_3D(iquad, nbasis)
         cbasis = set_cbasis_3D(ibitri)
         cflm = set_cflm(iquad, ibitri)
 
@@ -58,7 +58,7 @@ contains
         ! Evaluate local cell values of basis functions on cell interior and faces
         call set_bfvals_3D  ! This is done for 1, 2, or 3 point Gaussian quadrature
 
-        call init_bf_weights(bval_int_wgt, wgtbf_xmp, wgtbf_ymp, wgtbf_zmp)
+        call init_bf_weights_3D(bval_int_wgt, wgtbf_xmp, wgtbf_ymp, wgtbf_zmp)
 
         ! call init_random_seed(iam, iseed)
 
@@ -93,23 +93,39 @@ contains
 
 
     !===========================================================================
-    integer function set_ibitri(iquad, nbasis)
+    integer function set_ibitri_3D(iquad, nbasis)
         implicit none
         integer, intent(in) :: iquad, nbasis
 
-        if (iquad == 2 .and. nbasis == 4 ) set_ibitri = 0
-        if (iquad == 3 .and. nbasis == 10) set_ibitri = 0
-        if (iquad == 4 .and. nbasis == 20) set_ibitri = 0
-        if (iquad == 2 .and. nbasis == 8 ) set_ibitri = 1
-        if (iquad == 3 .and. nbasis == 27) set_ibitri = 1
-        if (iquad == 4 .and. nbasis == 64) set_ibitri = 1
+        if (iquad == 2 .and. nbasis == 4 ) set_ibitri_3D = 0
+        if (iquad == 3 .and. nbasis == 10) set_ibitri_3D = 0
+        if (iquad == 4 .and. nbasis == 20) set_ibitri_3D = 0
+        if (iquad == 2 .and. nbasis == 8 ) set_ibitri_3D = 1
+        if (iquad == 3 .and. nbasis == 27) set_ibitri_3D = 1
+        if (iquad == 4 .and. nbasis == 64) set_ibitri_3D = 1
         return
-    end function set_ibitri
+    end function set_ibitri_3D
     !---------------------------------------------------------------------------
 
 
     !===========================================================================
-    real function set_cflm(iquad, ibitri)
+    integer function set_ibitri_2D(iquad, nbasis)
+        implicit none
+        integer, intent(in) :: iquad, nbasis
+
+        if (iquad == 2 .and. nbasis == 3 ) set_ibitri_2D = 0
+        if (iquad == 3 .and. nbasis == 6 ) set_ibitri_2D = 0
+        if (iquad == 4 .and. nbasis == 20) set_ibitri_2D = 0
+        if (iquad == 2 .and. nbasis == 4 ) set_ibitri_2D = 1
+        if (iquad == 3 .and. nbasis == 9 ) set_ibitri_2D = 1
+        if (iquad == 4 .and. nbasis == 16) set_ibitri_2D = 1
+        return
+    end function set_ibitri_2D
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
+    real function set_cflm_3D(iquad, ibitri)
         implicit none
         integer, intent(in) :: iquad, ibitri
 
@@ -118,20 +134,41 @@ contains
         ! if (nbasis == 64) cflm = 0.08  ! nbasis = 20  0.1  is unstable for hydro
         select case (ibitri)
             case (0)
-        	    if (iquad == 2) set_cflm = 0.14
-        	    if (iquad == 3) set_cflm = 0.08
-        	    if (iquad == 4) set_cflm = 0.05
+        	    if (iquad == 2) set_cflm_3D = 0.14
+        	    if (iquad == 3) set_cflm_3D = 0.08
+        	    if (iquad == 4) set_cflm_3D = 0.05
         	case (1)  ! coefficients for basis functions {P2(x)P2(y)P2(z)}
-        	    if (iquad == 2) set_cflm = 0.14
-        	    if (iquad == 3) set_cflm = 0.08
-        	    if (iquad == 4) set_cflm = 0.05
+        	    if (iquad == 2) set_cflm_3D = 0.14
+        	    if (iquad == 3) set_cflm_3D = 0.08
+        	    if (iquad == 4) set_cflm_3D = 0.05
         end select
         return
-    end function set_cflm
+    end function set_cflm_3D
     !---------------------------------------------------------------------------
 
+
     !===========================================================================
-    subroutine set_basis_function_flags(ibitri)
+    real function set_cflm_2D(iquad, ibitri)
+        implicit none
+        integer, intent(in) :: iquad, ibitri
+
+        select case (ibitri)
+            case (0)
+                if (iquad == 2) set_cflm_2D = 0.14
+                if (iquad == 3) set_cflm_2D = 0.09
+                if (iquad == 4) set_cflm_2D = 0.05
+            case (1)  ! coefficients for basis functions {P2(x)P2(y)P2(z)}
+                if (iquad == 2) set_cflm_2D = 0.14
+                if (iquad == 3) set_cflm_2D = 0.07
+                if (iquad == 4) set_cflm_2D = 0.05
+        end select
+        return
+    end function set_cflm_2D
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
+    subroutine set_3D_basis_function_flags(ibitri)
         implicit none
         integer, intent(in) :: ibitri
         integer klim
@@ -199,7 +236,45 @@ contains
             kzzz = klim + 13
             klim = kzzz
         end if
-    end subroutine set_basis_function_flags
+    end subroutine set_3D_basis_function_flags
+    !---------------------------------------------------------------------------
+
+    !===========================================================================
+    subroutine set_2D_basis_function_flags(ibitri)
+        implicit none
+        integer, intent(in) :: ibitri
+        integer klim
+        ! Using bi/tri elements:
+            ! iquad=2, nbasis=8:  { 1,x,y,z, yz,zx,xy, xyz }
+            ! iquad=3, nbasis=27: { 1,x,y,z, yz,zx,xy, xyz, P2(x),P2(y),P2(z),
+            !     yP2(z), zP2(x), xP2(y), P2(y)z, P2(z)x, P2(x)y,
+            !     P2(y)P2(z), P2(z)P2(x), P2(x)P2(y), yzP2(x),zxP2(y),xyP2(z),
+            !     xP2(y)P2(z),yP2(z)P2(x),zP2(x)P2(y), P2(x)P2(y)P2(z) }
+        ! Not using bi/tri elements:
+            ! iquad=2, nbasis=4:  { 1,x,y,z }
+            ! iquad=3, nbasis=10: { 1,x,y,z, yz,zx,xy, P2(x),P2(y),P2(z) }
+            ! iquad=4, nbasis=20: { 1,x,y,z, yz,zx,xy, P2(x),P2(y),P2(z), xyz,
+            !     yP2(z), zP2(x), xP2(y), P2(y)z, P2(z)x, P2(x)y,
+            !     P3(x), P3(y), P3(z) }
+        kx = 2
+        ky = 3
+        kxy = 4
+        kxx = 5
+        kyy = 6
+        kxxy = 7
+        kxyy = 8
+
+        if (ibitri == 1) then
+            kxxyy = 9
+            kxxx = 10
+            kyyy = 11
+        end if
+        if (ibitri == 0) then
+            kxxx = 9
+            kyyy = 10
+            kxxyy = 11
+        end if
+    end subroutine set_2D_basis_function_flags
     !---------------------------------------------------------------------------
 
 
@@ -210,7 +285,7 @@ contains
         real, dimension(nbastot) :: set_cbasis_3D
         real, dimension(nbastot) :: cbasis
 
-        call set_basis_function_flags(ibitri)
+        call set_3D_basis_function_flags(ibitri)
         cbasis(1)             = 1.   ! basis func coeff   {1}
         cbasis(kx:kz)         = 3.   ! basis funcs coeffs {x,y,z}
         cbasis(kyz:kxy)       = 9.   ! basis funcs coeffs {yz,zx,xy}
@@ -226,6 +301,27 @@ contains
         set_cbasis_3D(:) = cbasis(:)
         return
     end function set_cbasis_3D
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
+    function set_cbasis_2D(ibitri)
+        implicit none
+        integer, intent(in) :: ibitri
+        real, dimension(nbastot) :: set_cbasis_2D
+        real, dimension(nbastot) :: cbasis
+
+        call set_2D_basis_function_flags(ibitri)
+        cbasis(1)         = 1.   ! coefficient for basis function {1}
+        cbasis(kx:ky)     = 3.   ! coefficients for basis functions {x,y}
+        cbasis(kxy)       = 9.   ! coefficients for basis functions {yz,zx,xy}
+        cbasis(kxx:kyy)   = 5.   ! coefficients for basis functions {P_2(x),P_2(y)}
+        cbasis(kxxy:kxyy) = 15.  ! coefficients for basis functions {P2(x)y,P2(y)x}
+        cbasis(kxxyy)     = 25.  ! coefficient for basis functions P2(x)P2(y)
+        cbasis(kxxx:kyyy) = 7.   ! coefficients for basis functions {P3(x),P3(y)}
+        set_cbasis_2D(:)  = cbasis(:)
+        return
+    end function set_cbasis_2D
     !---------------------------------------------------------------------------
 
 
@@ -355,7 +451,7 @@ contains
 
 
     !===========================================================================
-    subroutine init_bf_weights(bval_int_wgt, wgtbf_xmp, wgtbf_ymp, wgtbf_zmp)
+    subroutine init_bf_weights_3D(bval_int_wgt, wgtbf_xmp, wgtbf_ymp, wgtbf_zmp)
         implicit none
         real, dimension(npg,nbastot), intent(out) :: bval_int_wgt
         real, dimension(nface,2,nbastot), intent(out) :: wgtbf_xmp, wgtbf_ymp, wgtbf_zmp
@@ -394,7 +490,7 @@ contains
             wgtbf_ymp(1:nface,2,ir) =  0.25*cbasis(ir)*dyi*wgtbfvals_yp(1:nface,ir)
             wgtbf_zmp(1:nface,2,ir) =  0.25*cbasis(ir)*dzi*wgtbfvals_zp(1:nface,ir)
         end do
-    end subroutine init_bf_weights
+    end subroutine init_bf_weights_3D
     !---------------------------------------------------------------------------
 
 
