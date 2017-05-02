@@ -44,7 +44,7 @@ contains
         ! Initialize grid sizes and local lengths
         ibitri = set_ibitri_3D(iquad, nbasis)
         cbasis = set_cbasis_3D(ibitri)
-        cflm = set_cflm(iquad, ibitri)
+        cflm   = set_cflm_3D(iquad, ibitri)
 
         !-----------------------------------------
         ! Initialize various parameters
@@ -418,16 +418,16 @@ contains
         lzd = -(lz/2.0)
         lzu =  (lz/2.0)
 
-        dxi = (nx*mpi_nx)/(lxu-lxd)
-        dyi = (ny*mpi_ny)/(lyu-lyd)
-        dzi = (nz*mpi_nz)/(lzu-lzd)
+        dxi = (nx*mpi_nx)/lx
+        dyi = (ny*mpi_ny)/ly
+        dzi = (nz*mpi_nz)/lz
         dx = 1./dxi
         dy = 1./dyi
         dz = 1./dzi
 
-        loc_lxd = lxd + (mpi_P-1)*(lxu-lxd)/mpi_nx
-        loc_lyd = lyd + (mpi_Q-1)*(lyu-lyd)/mpi_ny
-        loc_lzd = lzd + (mpi_R-1)*(lzu-lzd)/mpi_nz
+        loc_lxd = lxd + (mpi_P-1)*lx/mpi_nx
+        loc_lyd = lyd + (mpi_Q-1)*ly/mpi_ny
+        loc_lzd = lzd + (mpi_R-1)*lz/mpi_nz
     end subroutine init_spatial_params
     !---------------------------------------------------------------------------
 

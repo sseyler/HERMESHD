@@ -8,11 +8,11 @@ module input
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad  = 2
-    integer, parameter :: nbasis = 8
+    integer, parameter :: nbasis = 4
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 20
-    integer, parameter :: ny = 20
+    integer, parameter :: nx = 30
+    integer, parameter :: ny = 30
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
@@ -41,7 +41,7 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 5.0e3
+    real, parameter :: tf = 1.0e2
 
     ! Console output frequency
     integer, parameter :: ntout = 200
@@ -55,7 +55,7 @@ module input
     integer, parameter :: ieos = 1
 
     ! Thermodynamic, constitutive, and transport parameters
-    real, parameter :: TK     = 40.0    ! in Kelvin
+    real, parameter :: TK     = 30.0     ! in Kelvin
     real, parameter :: mu     = 22.0     ! AMU per molecule
     real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
     real, parameter :: clt    = 2.0      ! numerical speed of sound
@@ -65,12 +65,12 @@ module input
     !   * 1 for semi-implicit integration of stress terms
     !   * 2 for full 10-moment formulation (NOTE: not finished!)
     integer, parameter :: ivis = 1
-    real, parameter    :: vis  = 1.e-4   ! dynamic viscosity
-    real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
+    real, parameter    :: eta  = 1.e-5   ! dynamic viscosity
+    real, parameter    :: zeta = 1.e-5   ! bulk viscosity
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_newflux_22"
+    character (*), parameter :: outname = "biophest_hdjet_00"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density

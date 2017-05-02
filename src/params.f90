@@ -54,12 +54,18 @@ module params
     !   > ipoly+1 --> an exact Gaussian quadrature for Legendre poly used
     ! Thus there are only two cases of iquad for a given nbasis. Both give similar
     ! results although iquad = ipoly + 1 is formally more accurate.
-    integer, parameter :: nedge = iquad
-    integer, parameter :: nface = iquad*iquad    ! # of quadrature points per cell face
-    integer, parameter :: npg   = nface*iquad    ! # of internal points per cell
-    integer, parameter :: nfe   = 2*nface        ! # of cell face quad points per direction
-    integer, parameter :: npge  = 6*nface        ! total # of cell face quad points
-    integer, parameter :: nslim = npg + 6*nface  ! total # of quad points per cell
+    ! 3D stuff
+    integer, parameter :: nedge = iquad          ! # of edge points per
+    integer, parameter :: nface = iquad*iquad    ! # of quadrature points per 3D cell face
+    integer, parameter :: npg   = nface*iquad    ! # of internal points per 3D cell
+    integer, parameter :: nfe   = 2*nface        ! # of 3D cell face quad points per direction
+    integer, parameter :: npge  = 6*nface        ! total # of 3D cell face quad points
+    integer, parameter :: nslim = npg + 6*nface  ! total # of quad points per 3D cell
+
+    ! 2D stuff
+    ! integer, parameter :: npg   = nedge*iquad    ! # of internal points per 2D cell
+    ! integer, parameter :: nfe   = 2*nedge        ! # of 2D cell edge quad points per direction
+    ! integer, parameter :: nslim = npg + 4*nedge  ! total # of quad points per 2D cell
     !---------------------------------------------------------------------------
 
 
@@ -78,9 +84,9 @@ module params
     real, parameter :: cp = aindex/aindm1   ! specific heat at constant pressure
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
-    real, parameter :: L0 = 1.0e4                  ! length
-    real, parameter :: t0 = 1.0e2                  ! time
-    real, parameter :: n0 = 6.0e18                 ! number density
+    real, parameter :: L0 = 1.0e-9                 ! length
+    real, parameter :: t0 = 1.0e-10                 ! time
+    real, parameter :: n0 = 3.3e28                 ! number density
 
     ! Derived units
     real, parameter :: v0  = L0/t0                 ! velocity
@@ -90,8 +96,8 @@ module params
     ! rh_min is a min density to be used for ideal gas EOS, rh_min is min density
     ! below which the pressure becomes negative for the MT water EOS.
     ! The DG-based subroutine "limiter" keeps density above rh_mult*rh_min.
-    real, parameter :: rh_floor = 5.0e-6     ! 1.0e-1 was old value
-    real, parameter :: T_floor  = 0.01/te0  ! 0.02585 eV ~ 300 K
+    real, parameter :: rh_floor = 5.0e-6           ! 1.0e-1 was old value
+    real, parameter :: T_floor  = 0.5*TK*eV_per_K/te0  ! 0.3*0.02585e-1/te0  ! 0.02585 eV ~ 300 K
     real, parameter :: P_floor  = T_floor*rh_floor
 
     ! Murnaghan-Tait EOS
@@ -111,20 +117,21 @@ module params
     !------------------------------------------------------------
     ! NOTE: New way of handling relaxation system:
     !   coll -- plays same role as epsi (from old approach)
-    !   colvis = coll*vis = density*temp  (vis is dynamic viscosity, e.g. eta)
-    real :: coll, colvis    ! values set in set_ic
-    real :: c2d3cv, c4d3cv  ! probably want to set in set_ic (not currently used)
+    !   coleta = coll*eta = density*temp  (eta is dynamic viscosity, or sometimes mu)
+    real :: nu, nueta, c2d3ne, c4d3ne
+    real :: coll, coleta   ! values set in set_ic
+    real :: c2d3cv, c4d3cv ! probably want to set in set_ic (not currently used)
 
     ! NOTE: Old way of handling relaxation system
-    real, parameter :: nu = epsi*vis
-    real, parameter :: c2d3nu=c2d3*nu, c4d3nu=c4d3*nu
-
+    ! real, parameter :: nu = epsi*eta
+    ! real, parameter :: c2d3nu=c2d3*nu, c4d3nu=c4d3*nu
+    real, parameter :: gr         = 0 !9.807e3*t0**2/L0  ! DEBUG: gravitational accel
     real, parameter :: T_base     = TK*eV_per_K/te0 ! te*eV_per_K/te0  ! temp (isothermal)
-    real, parameter :: eta_base   = vis    ! dynamic viscosity
-    real, parameter :: zeta_base  = 0.  ! bulk viscosity---will need to adjust this!
+    real, parameter :: eta_base   = eta     ! dynamic viscosity
+    real, parameter :: zeta_base  = zeta    ! bulk viscosity---will need to adjust this!
     real, parameter :: kappa_base = 1.e-1
 
-    real, parameter :: eta_sd   = (4.*eta_base*T_base)**0.5  ! stdev of flucs for shear visc terms
+    real, parameter :: eta_sd   = (2.*eta_base*T_base)**0.5  ! stdev of flucs for shear visc terms
     real, parameter :: zeta_sd  = (zeta_base*T_base/3.)**0.5  ! stdev of flucs for bulk visc term
     real, parameter :: kappa_sd = (2.*kappa_base*T_base**2)**0.5
     !===========================================================================

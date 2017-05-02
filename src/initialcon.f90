@@ -24,13 +24,11 @@ contains
         ! character(*), intent(in) :: name
         integer i,j,k,id
 
-        ! te_fluid = T_floor
-        ! rh_fluid = 1.0
-        ! coll = rh_fluid*te_fluid/vis
-        ! colvis = coll*vis  ! or, dn*te
         if (ivis == 0) then
             coll = 0
-            colvis = 0
+            coleta = 0
+            nu = 0
+            nueta = 0
         end if
 
         Q_r(:,:,:,:,:)  = 0.0
@@ -69,13 +67,17 @@ contains
                 call pipe_cylinder_2d(Q_r, 1)
             case(8)
                 call mpi_print(iam, 'Setting up 2D Landau-Lifschitz Navier-Stokes test...')
-                call pipe_cylinder_2d(Q_r, 0)
+                call test_llns(Q_r, 0)
             case(9)
                 call mpi_print(iam, 'Setting up 2D Landau-Lifschitz Navier-Stokes test...')
-                call pipe_cylinder_2d(Q_r, 1)
+                call test_llns(Q_r, 1)
+            case(10)
+                call mpi_print(iam, 'Setting up 2D Landau-Lifschitz Navier-Stokes test...')
+                call test_llns(Q_r, 2)
+            case(11)
+                call mpi_print(iam, 'Setting up 2D turbulence test...')
+                call turbulence_2d(Q_r)
         end select
-
-        ! coll = epsi  ! temporary hack: set coll to epsi to get old behavior
     end subroutine set_ic
     !---------------------------------------------------------------------------
 
@@ -87,20 +89,22 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k
-        real dn,vx,vy,vz,te,pr,smx,smy,smz,rand_num,rnum,beta,beta2,beta3
+        real dn,vx,vy,vz,te,pr,dni,smx,smy,smz,rand_num,rnum,beta,beta2,beta3
 
         call init_random_seed(iam, 123456789)
 
         dn = 1.0
-        te = T_floor
+        te = T_base
         pr = te*dn
 
-        coll   = dn*te/vis  ! global
-        colvis = coll*vis   ! or, dn*te  (also global)
+        dni = 1.0/dn
 
-        beta  = 1.0e0   ! jet strength
-        beta2 = 1.0e-4  ! y-momentum perturbation strength
-        beta3 = 1.0e-3  ! pressure perturbation strength
+        nu    = pr/eta  ! global
+        nueta = pr      ! pr = nu*eta  (also global)
+
+        beta  = 1.0e1   ! jet strength
+        beta2 = 1.0e-3  ! y-momentum perturbation strength
+        beta3 = 1.0e-2  ! pressure perturbation strength
 
         do k = 1,nz
         do j = 1,ny
@@ -111,22 +115,22 @@ contains
             smx = beta*dn/cosh(20*yc(j)/lyu)
             smy = beta2*rnum/cosh(20*yc(j)/lyu)**2
             smz = 0
-            vx = Q_r(i,j,k,mx,1)/dn
-            vy = Q_r(i,j,k,my,1)/dn
-            vz = Q_r(i,j,k,mz,1)/dn
+            vx = Q_r(i,j,k,mx,1)*dni
+            vy = Q_r(i,j,k,my,1)*dni
+            vz = Q_r(i,j,k,mz,1)*dni
 
             Q_r(i,j,k,rh,1) = dn
             Q_r(i,j,k,mx,1) = smx
             Q_r(i,j,k,my,1) = smy
             Q_r(i,j,k,mz,1) = smz
-            Q_r(i,j,k,en,1) = (1 + beta3*rnum)*pr/aindm1 + 0.5*(smx**2 + smy**2 + smz**2)/dn
+            Q_r(i,j,k,en,1) = (1 + beta3*rnum)*pr/aindm1 + 0.5*dni*(smx**2 + smy**2 + smz**2)
 
-            Q_r(i,j,k,exx,1) = pr + dn*vx**2
-            Q_r(i,j,k,eyy,1) = pr + dn*vy**2
-            Q_r(i,j,k,ezz,1) = pr + dn*vz**2
-            Q_r(i,j,k,exy,1) = dn*vx*vy
-            Q_r(i,j,k,exz,1) = dn*vx*vz
-            Q_r(i,j,k,eyz,1) = dn*vy*vz
+            ! Q_r(i,j,k,exx,1) = pr + dn*vx**2
+            ! Q_r(i,j,k,eyy,1) = pr + dn*vy**2
+            ! Q_r(i,j,k,ezz,1) = pr + dn*vz**2
+            ! Q_r(i,j,k,exy,1) = dn*vx*vy
+            ! Q_r(i,j,k,exz,1) = dn*vx*vz
+            ! Q_r(i,j,k,eyz,1) = dn*vy*vz
         end do
         end do
         end do
@@ -168,7 +172,7 @@ contains
         pr_amb = 1.0            ! ambient pressure (atmospheric pressure)
         te_amb = pr_amb/rh_amb  ! ambient temperature
 
-        xctr = 0.0              ! vortex center in x-directionrh_fluid*te/vis
+        xctr = 0.0              ! vortex center in x-directionrh_fluid*te/eta
         yctr = 0.0              ! vortex center in y-direction
         zctr = 0.0              ! vortex center in z-direction
 
@@ -275,8 +279,8 @@ contains
         te = T_floor
         pr = dn*te  ! 1.0*P_base  ! can be adjusted to get stable results
 
-        coll   = dn*te/vis  ! global (CES' nu = rh_fluid*T_floor)
-        colvis = coll*vis   ! or, dn*te  (also global)
+        nu    = pr/eta  ! global (CES' nu = rh_fluid*T_floor)
+        nueta = pr      ! pr = nu*eta  (also global)
 
         vx = 0.0
         vy = 0.0
@@ -327,13 +331,12 @@ contains
         dn = 1.0
         te = T_floor
         pr = dn*te  ! 1.0*P_base  ! can be adjusted to get stable results
-
-        coll   = dn*te/vis  ! global
-        colvis = coll*vis   ! or, dn*te  (also global)
-
         vx = 0.0
         vy = 0.0
         vz = 0.0
+
+        nu    = pr/eta  ! global
+        nueta = pr      ! pr = nu*eta  (also global)
 
         xp0 = lxd              ! set zero-value of x-coordinate to left of domain
         yp0 = lyd              ! set zero-value of y-coordinate to bottom of domain
@@ -393,23 +396,51 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k, ver
-        real rh_amb,vx_amb,vy_amb,vz_amb,pr_amb,te_amb
-        real dn,vx,vy,vz,te,pr
+        real dn,vx,vy,vz,te,pr, rho,y1d4,y3d4,xp,yp,x0,y0, rand_num,rnum,beta
 
-        dn = 1.0               ! ambient density
-        te = 100*T_floor       ! ambient temperature
+        call init_random_seed(iam, 123456789)
 
-        coll   = dn*te/vis  ! global
-        colvis = coll*vis   ! or, dn*te  (also global)
-
-        vx = 0.0               ! ambient x-velocity  1.0/aindex**0.5
+        rho = 1.0          ! ambient density
+        te = T_floor       ! ambient temperature
+        vx = 0.0           ! ambient x-velocity  1.0/aindex**0.5
         vy = 0.0
         vz = 0.0            ! ambient z-velocity
-        pr = te*dn  ! ambient pressure (atmospheric pressure)
+        nu    = rho*te/eta  ! global
+        nueta = rho*te      ! pr = nu*eta  (also global)
+
+        beta = 0.0e-2
+        x0 = 0
+        y0 = lyd + 0.3*ly
+        y1d4 = lyd + 0.25*ly
+        y3d4 = lyd + 0.75*ly
 
         do k = 1,nz
         do j = 1,ny
         do i = 1,nx
+            call random_number(rand_num)
+            rnum = 0 !(rand_num - 0.5)
+
+            xp = xc(i)
+            yp = yc(j)
+            if (ver == 0) then
+                dn = rho
+            else if (ver == 1) then
+                dn = 0.25*rho*(yp - lyd)/ly + rho*(lyu - yp)/ly
+                ! if (yp <= y0) then
+                !     dn = 1.0*(rho + beta*rnum)
+                ! else
+                !     dn = 0.25*(rho + beta*rnum)
+                ! end if
+            else if (ver == 2) then
+                if (yp <= y1d4 .or. yp > y3d4) then
+                    dn = 1.0*(rho + beta*rnum)
+                else
+                    dn = 0.5*(rho + beta*rnum)
+                end if
+            end if
+
+            pr = dn*te - dn*gr*(yp - lyd)  ! maintain hydrostatic pressure
+
             Q_r(i,j,k,rh,1) = dn
             Q_r(i,j,k,mx,1) = dn*vx
             Q_r(i,j,k,my,1) = dn*vy
@@ -420,6 +451,127 @@ contains
         end do
 
     end subroutine test_llns
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
+    ! 2D LLNS test
+    !------------------------------------------------------------
+    ! Set 2D or 3D
+    !   * ver = 0 for 2D test
+    !   * ver = 1 for 3D test
+    !---------------------------------------------------------------------------
+    subroutine turbulence_2d(Q_r)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
+        integer i,j,k
+        real dn,vx,vy,vz,te,pr, rand_num,rnum,beta
+
+        call init_random_seed(iam, 123456789)
+
+        dn = 1.0          ! ambient density
+        te = T_floor       ! ambient temperature
+        pr = dn*te
+        vz = 0.0            ! ambient z-velocity
+        nu    = dn*te/eta  ! global
+        nueta = pr      ! pr = nu*eta  (also global)
+
+        beta = 1.0e-1
+
+        do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
+            call random_number(rand_num)
+            rnum = (rand_num - 0.5)
+            vx = beta*rnum
+
+            call random_number(rand_num)
+            rnum = (rand_num - 0.5)
+            vy = beta*rnum
+
+            Q_r(i,j,k,rh,1) = dn
+            Q_r(i,j,k,mx,1) = dn*vx
+            Q_r(i,j,k,my,1) = dn*vy
+            Q_r(i,j,k,mz,1) = dn*vz
+            Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
+
+            Q_r(i,j,k,exx,1) = pr + dn*vx**2
+            Q_r(i,j,k,eyy,1) = pr + dn*vy**2
+            Q_r(i,j,k,ezz,1) = pr + dn*vz**2
+            Q_r(i,j,k,exy,1) = dn*vx*vy
+            Q_r(i,j,k,exz,1) = dn*vx*vz
+            Q_r(i,j,k,eyz,1) = dn*vy*vz
+        end do
+        end do
+        end do
+
+    end subroutine turbulence_2d
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
+    ! Rayleigh-Taylor instability test
+    !------------------------------------------------------------
+    ! Set 2D or 3D
+    !   * ver = 0 for 2D test
+    !   * ver = 1 for 3D test
+    !---------------------------------------------------------------------------
+    subroutine rayleigh_taylor(Q_r, ver)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
+        integer i,j,k, ver
+        real dn,vx,vy,vz,te,pr, rho,y0,y1d3,y2d3,yp, rand_num,rnum,beta
+
+        call init_random_seed(iam, 123456789)
+
+        rho = 1.0          ! ambient density
+        te = T_floor       ! ambient temperature
+        vx = 0.0           ! ambient x-velocity  1.0/aindex**0.5
+        vy = 0.0
+        vz = 0.0            ! ambient z-velocity
+        nu    = rho*te/eta  ! global
+        nueta = rho*te      ! pr = nu*eta  (also global)
+
+        beta = 1.0e-2
+        y0 = 0                ! zero-value of y-coordinate
+        y1d3 = lyd + c1d3*ly
+        y2d3 = lyd + c2d3*ly
+
+        do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
+            call random_number(rand_num)
+            rnum = (rand_num - 0.5)
+
+            yp = yc(j)
+            if (ver == 0) then
+                dn = rho
+            else if (ver == 1) then
+                if (yp <= y0) then
+                    dn = 1.0*(rho + beta*rnum)
+                else
+                    dn = 0.5*(rho + beta*rnum)
+                end if
+            else if (ver == 2) then
+                if (yp <= y1d3 .or. yp > y2d3) then
+                    dn = 1.0*(rho + beta*rnum)
+                else
+                    dn = 0.25*(rho + beta*rnum)
+                end if
+            end if
+
+            pr = dn*te - dn*gr*(yp - lyd)  ! maintain hydrostatic pressure
+
+            Q_r(i,j,k,rh,1) = dn
+            Q_r(i,j,k,mx,1) = dn*vx
+            Q_r(i,j,k,my,1) = dn*vy
+            Q_r(i,j,k,mz,1) = dn*vz
+            Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
+        end do
+        end do
+        end do
+
+    end subroutine rayleigh_taylor
     !---------------------------------------------------------------------------
 
 end module initialcon

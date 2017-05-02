@@ -253,11 +253,6 @@ contains
         real, dimension(nface) :: dn_i,dni_i, mx_i,my_i,mz_i,vx_i, Ener_i,Ener_e,P_i
         real mflowrate_out, mflowrate_net
 
-        ! Qxlo_e(i,k,1:nface,:) = Qxlo_i(i,k,1:nface,:)
-        ! if (minval(Qxlo_e(i,k,1:nface,my)) < 0.0) then
-        !     Qxlo_e(i,k,1:nface,my) = 0.0
-        ! end if
-
         do k = 1,nz
         do j = 1,ny
             where(Qxhi_e(j,k,:,mx) > 0.0) Qxhi_e(j,k,:,mx) = -Qxhi_i(j,k,:,mx)
@@ -290,10 +285,8 @@ contains
         integer i,k
         do k = 1,nz
         do i = 1,nx
-            Qylo_e(i,k,1:nface,:) = Qylo_i(i,k,1:nface,:)
-            if (maxval(Qylo_e(i,k,1:nface,my)) > 0.0) then
-                Qylo_e(i,k,1:nface,my) = 0.0
-            end if
+            Qylo_e(i,k,1:nface,mx:nQ) = Qylo_i(i,k,1:nface,mx:nQ)
+            where(Qylo_e(i,k,:,my) > 0.0) Qylo_e(i,k,:,my) = -Qylo_i(i,k,:,my)
         enddo
         enddo
     end subroutine ylobc_outflow
@@ -304,10 +297,8 @@ contains
         integer i,k
         do k = 1,nz
         do i = 1,nx
-            Qyhi_e(i,k,1:nface,:) = Qyhi_i(i,k,1:nface,:)
-            if (minval(Qyhi_e(i,k,1:nface,my)) < 0.0) then
-                Qyhi_e(i,k,1:nface,my) = 0.0
-            end if
+            Qyhi_e(i,k,1:nface,mx:nQ) = Qyhi_i(i,k,1:nface,mx:nQ)
+            where(Qyhi_e(i,k,:,my) < 0.0) Qyhi_e(i,k,:,my) = -Qyhi_i(i,k,:,my)
         enddo
         enddo
     end subroutine yhibc_outflow

@@ -18,7 +18,7 @@ contains
 
         real, dimension(npg,nQ) :: source
         real, dimension(nQ) :: Qin
-        real dn,dni, vx,vy,vz,vx2,vy2,vz2, pr,te, colldn
+        real dn,dni, vx,vy,vz,vx2,vy2,vz2, pr,te, nudn
         integer i,j,k,ieq,ipg,ir
 
         source_r(:,:,:,:,:) = 0.0
@@ -34,16 +34,20 @@ contains
                     Qin(ieq) = sum(bfvals_int(ipg,1:nbasis)*Q_io(i,j,k,ieq,1:nbasis))
                 end do
 
-                source(ipg,rh:en) = 0
+                source(ipg,rh) = 0
+                source(ipg,mx) = 0
+                source(ipg,my) = 0 !-Qin(rh)*gr  ! DEBUG
+                source(ipg,mz) = 0
+                source(ipg,en) = 0
 
                 select case (ivis)
                     case(-1)  ! NOTE: explicitly solving the linearized 10-moment equations
-                        source(ipg,exx) = -coll*Qin(exx)
-                        source(ipg,eyy) = -coll*Qin(eyy)
-                        source(ipg,ezz) = -coll*Qin(ezz)
-                        source(ipg,exy) = -coll*Qin(exy)
-                        source(ipg,exz) = -coll*Qin(exz)
-                        source(ipg,eyz) = -coll*Qin(eyz)
+                        source(ipg,exx) = -nu*Qin(exx)
+                        source(ipg,eyy) = -nu*Qin(eyy)
+                        source(ipg,ezz) = -nu*Qin(ezz)
+                        source(ipg,exy) = -nu*Qin(exy)
+                        source(ipg,exz) = -nu*Qin(exz)
+                        source(ipg,eyz) = -nu*Qin(eyz)
                     case(1)  ! NOTE: solving the linearized 10-moment equations
                         source(ipg,exx) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
                         source(ipg,eyy) = 0  ! impl. solv w/ sources at next tstep in advance_time_level_gl
@@ -67,14 +71,14 @@ contains
                     !     vx2 = vx**2
                     !     vy2 = vy**2
                     !     vz2 = vz**2
-                    !     colldn = coll*dn
+                    !     nudn = nu*dn
                     !
-                    !     source(ipg,exx) = colldn*(2*vx2 - vy2 - vz2)*c1d3
-                    !     source(ipg,eyy) = colldn*(2*vy2 - vz2 - vx2)*c1d3
-                    !     source(ipg,ezz) = colldn*(2*vz2 - vx2 - vy2)*c1d3
-                    !     source(ipg,exy) = colldn*vx*vy
-                    !     source(ipg,exz) = colldn*vx*vz
-                    !     source(ipg,eyz) = colldn*vy*vz
+                    !     source(ipg,exx) = nudn*(2*vx2 - vy2 - vz2)*c1d3
+                    !     source(ipg,eyy) = nudn*(2*vy2 - vz2 - vx2)*c1d3
+                    !     source(ipg,ezz) = nudn*(2*vz2 - vx2 - vy2)*c1d3
+                    !     source(ipg,exy) = nudn*vx*vy
+                    !     source(ipg,exz) = nudn*vx*vz
+                    !     source(ipg,eyz) = nudn*vy*vz
                 end select
 
             end do

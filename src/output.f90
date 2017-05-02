@@ -309,6 +309,19 @@ contains
                                var     = var_xml_val_x)
         end if
 
+        !------------------------------------------------------------
+        ! if (nstsfout /= 0) then
+        !     do i=1+mil*ngu,nx-miu*ngu
+    	! 		do j=1+mjl*ngu,ny-mju*ngu
+    	! 			l=(i-mil*ngu)+(j-mjl*ngu-1)*(nx-(miu+mil)*ngu)
+    	! 			var_xml_val_x(l)=Qin(i,j,en)
+    	! 		enddo
+    	! 	enddo
+    	! 	E_IO = VTK_VAR_XML(NC_NN   = nnx*nny, &
+    	! 	                   varname = 'Stream Function',                    &
+    	! 	                   var     = var_xml_val_x)
+        ! end if
+
 
         E_IO = VTK_DAT_XML(var_location     = 'cell', &
                            var_block_action = 'Close')

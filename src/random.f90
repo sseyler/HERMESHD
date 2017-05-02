@@ -23,26 +23,33 @@ real, parameter :: vsl_mean  = 0.0
 real, parameter :: vsl_sigma = 1.0
 !===========================================================================
 
+integer, parameter :: npts_llns = 1  !npg ! number of stochastic sampling points per cell face
 real :: dvdti, sqrt_dvdti
 
 
 ! NOTE: It might make sense to use global arrays for stochastic
 !   stuff at some point, especially if in separate module
-real :: GRM_x(nfe, 1:nx+1, ny,     nz,     3,3)
-real :: GRM_y(nfe, nx,     1:ny+1, nz,     3,3)
-real :: GRM_z(nfe, nx,     ny,     1:nz+1, 3,3)
-real :: Sflux_x(nfe, 1:nx+1, ny,     nz,     3,3)
-real :: Sflux_y(nfe, nx,     1:ny+1, nz,     3,3)
-real :: Sflux_z(nfe, nx,     ny,     1:nz+1, 3,3)
+real :: GRM_x(npts_llns, 1:nx+1, ny,     nz,     3,3)
+real :: GRM_y(npts_llns, nx,     1:ny+1, nz,     3,3)
+real :: GRM_z(npts_llns, nx,     ny,     1:nz+1, 3,3)
+real :: Sflux_x(npts_llns, 1:nx+1, ny,     nz,     3,3)
+real :: Sflux_y(npts_llns, nx,     1:ny+1, nz,     3,3)
+real :: Sflux_z(npts_llns, nx,     ny,     1:nz+1, 3,3)
 
 contains
 
 !-------------------------------------------------------------------------------
     subroutine random_init(seed)
-        integer, intent(in) :: seed
-        vsl_errcode = vslnewstream(vsl_stream, vsl_brng, seed + iam)
+        ! integer, intent(in) :: npts
+        integer, optional, intent(in) :: seed
 
-        dvi   = (dxi*dyi*dzi) * npg  ! NOTE: taking cell volume to be 1/(# internal quad pts)
+        if (present(seed)) then
+            vsl_errcode = vslnewstream(vsl_stream, vsl_brng, seed + iam)
+        else
+            vsl_errcode = vslnewstream(vsl_stream, vsl_brng, iam)
+        end if
+
+        dvi   = (dxi*dyi*dzi) * npts_llns !npg  ! NOTE: taking cell volume to be 1/(# internal quad pts)
         dvdti = dvi/dt
         sqrt_dvdti = sqrt(dvdti)
     end subroutine random_init
@@ -51,39 +58,37 @@ contains
 
 !-------------------------------------------------------------------------------
     subroutine random_cleanup()
-        vsl_errcode = vsldeletestream( vsl_stream )
+        vsl_errcode = vsldeletestream(vsl_stream)
     end subroutine random_cleanup
 !-------------------------------------------------------------------------------
-
-
 
 
 !-------------------------------------------------------------------------------
     subroutine get_region_GRM_xyz(GRM_x, GRM_y, GRM_z)
         implicit none
 
-        real, dimension(nfe, 1:nx+1, ny,     nz,     3,3), intent(out) :: GRM_x
-        real, dimension(nfe, nx,     1:ny+1, nz,     3,3), intent(out) :: GRM_y
-        real, dimension(nfe, nx,     ny,     1:nz+1, 3,3), intent(out) :: GRM_z
+        real, dimension(npts_llns, 1:nx+1, ny,     nz,     3,3), intent(out) :: GRM_x
+        real, dimension(npts_llns, nx,     1:ny+1, nz,     3,3), intent(out) :: GRM_y
+        real, dimension(npts_llns, nx,     ny,     1:nz+1, 3,3), intent(out) :: GRM_z
         real, allocatable :: grn(:)
         integer vsl_ndim
 
-        vsl_ndim = nfe * (nx+1) * ny     * nz     * 9
+        vsl_ndim = npts_llns * (nx+1) * ny     * nz     * 9
         allocate(grn(vsl_ndim))
         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
-        GRM_x = reshape( grn, (/ nfe, (nx+1), ny, nz, 3, 3 /) )
+        GRM_x = reshape( grn, (/ npts_llns, (nx+1), ny, nz, 3, 3 /) )
         deallocate(grn)
 
-        vsl_ndim = nfe * nx     * (ny+1) * nz     * 9
+        vsl_ndim = npts_llns * nx     * (ny+1) * nz     * 9
         allocate(grn(vsl_ndim))
         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
-        GRM_y = reshape( grn, (/ nfe, nx, (ny+1), nz, 3, 3 /) )
+        GRM_y = reshape( grn, (/ npts_llns, nx, (ny+1), nz, 3, 3 /) )
         deallocate(grn)
 
-        vsl_ndim = nfe * nx     * ny     * (nz+1) * 9
+        vsl_ndim = npts_llns * nx     * ny     * (nz+1) * 9
         allocate(grn(vsl_ndim))
         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
-        GRM_z = reshape( grn, (/ nfe, nx, ny, (nz+1), 3, 3 /) )
+        GRM_z = reshape( grn, (/ npts_llns, nx, ny, (nz+1), 3, 3 /) )
         deallocate(grn)
 
     end subroutine get_region_GRM_xyz
@@ -91,33 +96,33 @@ contains
 
 
 !-------------------------------------------------------------------------------
-    subroutine get_region_Sflux_xyz(GRM_x, GRM_y, GRM_z, Sflux_x, Sflux_y, Sflux_z)
+    subroutine get_region_Sflux_xyz(Sflux_x, Sflux_y, Sflux_z)
         implicit none
-        real, dimension(nfe, 1:nx+1, ny,     nz,     3,3), intent(inout) :: GRM_x
-        real, dimension(nfe, nx,     1:ny+1, nz,     3,3), intent(inout) :: GRM_y
-        real, dimension(nfe, nx,     ny,     1:nz+1, 3,3), intent(inout) :: GRM_z
-        real, dimension(nfe, 1:nx+1, ny,     nz,     3,3), intent(out) :: Sflux_x
-        real, dimension(nfe, nx,     1:ny+1, nz,     3,3), intent(out) :: Sflux_y
-        real, dimension(nfe, nx,     ny,     1:nz+1, 3,3), intent(out) :: Sflux_z
+        real, dimension(npts_llns, 1:nx+1, ny,     nz,     3,3), intent(out) :: Sflux_x
+        real, dimension(npts_llns, nx,     1:ny+1, nz,     3,3), intent(out) :: Sflux_y
+        real, dimension(npts_llns, nx,     ny,     1:nz+1, 3,3), intent(out) :: Sflux_z
+
+        real, dimension(npts_llns, 1:nx+1, ny,     nz,     3,3) :: GRM_x
+        real, dimension(npts_llns, nx,     1:ny+1, nz,     3,3) :: GRM_y
+        real, dimension(npts_llns, nx,     ny,     1:nz+1, 3,3) :: GRM_z
 
         integer i,j,k,ipnt
         real Gxx,Gyy,Gzz,Gxy,Gxz,Gyz
         real eta_d,zeta_d
         real trG,trGd3,trG_zeta
 
-        dvdti = npg*(dxi*dyi*dzi)/dt
+        dvdti = npts_llns*(dxi*dyi*dzi)/dt
         sqrt_dvdti = sqrt(dvdti)
 
-        if (iam == 0) print *,sqrt_dvdti
-
         eta_d = eta_sd * sqrt_dvdti
+        ! if (iam == 0) print *,eta_d
         zeta_d = zeta_sd * sqrt_dvdti
         call get_region_GRM_xyz(GRM_x, GRM_y, GRM_z)
 
         do k=1,nz
         do j=1,ny
         do i=1,nx+1
-            do ipnt=1,nfe
+            do ipnt=1,npts_llns
                 Gxx = GRM_x(ipnt,i,j,k,1,1)
                 Gyy = GRM_x(ipnt,i,j,k,2,2)
                 Gzz = GRM_x(ipnt,i,j,k,3,3)
@@ -148,7 +153,7 @@ contains
         do k=1,nz
         do j=1,ny+1
         do i=1,nx
-            do ipnt=1,nfe
+            do ipnt=1,npts_llns
                 Gxx = GRM_y(ipnt,i,j,k,1,1)
                 Gyy = GRM_y(ipnt,i,j,k,2,2)
                 Gzz = GRM_y(ipnt,i,j,k,3,3)
@@ -179,7 +184,7 @@ contains
         do k=1,nz+1
         do j=1,ny
         do i=1,nx
-            do ipnt=1,nfe
+            do ipnt=1,npts_llns
                 Gxx = GRM_z(ipnt,i,j,k,1,1)
                 Gyy = GRM_z(ipnt,i,j,k,2,2)
                 Gzz = GRM_z(ipnt,i,j,k,3,3)
@@ -212,22 +217,21 @@ contains
 
 
 !-------------------------------------------------------------------------------
-    ! subroutine get_GRM(GRMpnts_r, npnts)
-    !
+    ! subroutine get_GRM(GRMpnts_r)
     !     implicit none
-    !     integer ife,npnts,b,e,vsl_ndim
-    !     real, dimension(npnts,3,3) :: GRMpnts_r
+    !     integer ife,b,e,vsl_ndim
+    !     real, dimension(npts_llns,3,3) :: GRMpnts_r
     !
-    !     real, dimension(9*npnts) :: grn
+    !     real, dimension(9*npts_llns) :: grn
     !     ! real, allocatable :: grn(:)
     !
-    !     vsl_ndim = 9*npnts
+    !     vsl_ndim = 9*npts_llns
     !     ! allocate(grn(vsl_ndim))
     !
     !     vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
     !
     !     ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
-    !     do ife = 1,npnts
+    !     do ife = 1,npts_llns
     !         e = 9*ife
     !         b = e - 8
     !         GRMpnts_r(ife,1,:) = grn(b:b+2)
@@ -239,20 +243,20 @@ contains
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
-    ! subroutine random_stresses_pnts_r(Spnts_r, npnts)
+    ! subroutine random_stresses_pnts_r(Spnts_r)
     !     implicit none
-    !     integer ife,npnts
-    !     real, dimension(npnts,3,3) :: GRMpnts_r, Spnts_r
+    !     integer ife
+    !     real, dimension(npts_llns,3,3) :: GRMpnts_r, Spnts_r
     !     real Gxx,Gyy,Gzz,Gxy,Gxz,Gyz
     !     real eta_d,zeta_d
     !     real trG,trGd3,trG_zeta
     !
     !     eta_d = eta_sd * sqrt_dvdti
     !     zeta_d = zeta_sd * sqrt_dvdti
-    !     call get_GRM(GRMpnts_r, npnts)
+    !     call get_GRM(GRMpnts_r)
     !
     !     ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
-    !     do ife = 1,npnts
+    !     do ife = 1,npts_llns
     !         Gxx = GRMpnts_r(ife,1,1)
     !         Gyy = GRMpnts_r(ife,2,2)
     !         Gzz = GRMpnts_r(ife,3,3)
@@ -282,22 +286,20 @@ contains
 
 
 !-------------------------------------------------------------------------------
-    subroutine get_GRM_symmetric(GRMpnts_r, npnts)
-
+    subroutine get_GRM_symmetric(GRMpnts_r)
         implicit none
-        integer ife,npnts,b,e,vsl_ndim
-        real, dimension(npnts,3,3) :: GRMpnts_r
-
-        real, dimension(6*npnts) :: grn
+        real, dimension(npts_llns,3,3), intent(out) :: GRMpnts_r
+        integer ife,b,e,vsl_ndim
+        real, dimension(6*npts_llns) :: grn
         ! real, allocatable :: grn(:)
 
-        vsl_ndim = 6*npnts
+        vsl_ndim = 6*npts_llns
         ! allocate(grn(vsl_ndim))
 
         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
 
         ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
-        do ife = 1,npnts
+        do ife = 1,npts_llns
             e = 6*ife
             b = e - 5
             GRMpnts_r(ife,1,1:3) = grn(b:b+2)
@@ -313,26 +315,23 @@ contains
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
-    subroutine random_stresses_pnts_r(Spnts_r, npnts)
-
+    subroutine random_stresses_pnts_r(Spnts_r)
         implicit none
-        integer ife,npnts
-        real, dimension(npnts,3,3) :: GRMpnts_r, Spnts_r
-        real Gxx,Gyy,Gzz,Gxy,Gxz,Gyz
-        real eta_d,zeta_d
-        real trG,trGd3,trG_zeta
+        real, dimension(npts_llns,3,3), intent(out) :: Spnts_r
+        real, dimension(npts_llns,3,3) :: GRMpnts_r
+        integer ife
+        real Gxx,Gyy,Gzz,Gxy,Gxz,Gyz, eta_d,zeta_d, trG,trGd3,trG_zeta
 
         dvdti = npg*(dxi*dyi*dzi)/dt
         sqrt_dvdti = sqrt(dvdti)
 
         ! if (iam == 0) print *,sqrt_dvdti
-
         eta_d = eta_sd * sqrt_dvdti
         zeta_d = zeta_sd * sqrt_dvdti
-        call get_GRM_symmetric(GRMpnts_r, 1)  ! NOTE: using nptns = 1 (FV approach)
+        call get_GRM_symmetric(GRMpnts_r)  ! NOTE: using nptns = 1 (FV approach)
 
         ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
-        do ife = 1,npnts
+        do ife = 1,npts_llns
             Gxx = GRMpnts_r(ife,1,1)
             Gyy = GRMpnts_r(ife,2,2)
             Gzz = GRMpnts_r(ife,3,3)
@@ -362,15 +361,15 @@ contains
 
 
 !-------------------------------------------------------------------------------
-    subroutine random_heatflux_pnts_r(Hpnts_r, npnts)
-
+    subroutine random_heatflux_pnts_r(Hpnts_r)
         implicit none
-        integer ife,npnts,b,e,vsl_ndim
-        real, dimension(npnts,3) :: GRVpnts_r, Hpnts_r
+        real, dimension(npts_llns,3), intent(out) :: Hpnts_r
+        real, dimension(npts_llns,3) :: GRVpnts_r
+        integer ife,b,e,vsl_ndim
         real Gx,Gy,Gz,kappa_d
         real, allocatable :: grn(:)
 
-        vsl_ndim = npnts*3
+        vsl_ndim = npts_llns*3
         allocate(grn(vsl_ndim))
 
         kappa_d = kappa_sd * sqrt_dvdti
@@ -378,7 +377,7 @@ contains
         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
 
         ! NOTE: There's probably a better way to do a reshape (w/o using Fortran 2003/8)
-        do ife = 1,npnts
+        do ife = 1,npts_llns
             e = 3*ife
             b = e - 2
             GRVpnts_r(ife,1:3) = grn(b:e)

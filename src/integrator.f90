@@ -136,7 +136,7 @@ contains
         real fac
 
         fac = 1.
-        if (ivis == 1) fac = 1./(1. + coll*dt)
+        if (ivis == 1) fac = 1./(1. + nu*dt)
 
         do k = 1,nz
         do j = 1,ny
@@ -144,13 +144,13 @@ contains
 
             do ieq = 1,en
               do ir=1,nbasis
-                Q_out(i,j,k,ieq,ir) = Q_in(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir)
+                Q_out(i,j,k,ieq,ir) = Q_in(i,j,k,ieq,ir) - dt*(glflux_r(i,j,k,ieq,ir) - source_r(i,j,k,ieq,ir))
               end do
             end do
 
             do ieq = exx,nQ
               do ir=1,nbasis
-                Q_out(i,j,k,ieq,ir) = (Q_in(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir))*fac
+                Q_out(i,j,k,ieq,ir) = (Q_in(i,j,k,ieq,ir) - dt*(glflux_r(i,j,k,ieq,ir) - source_r(i,j,k,ieq,ir)))*fac
               end do
             end do
 
@@ -176,10 +176,10 @@ contains
         real, dimension(npg,nQ) :: source, Qout
         real, dimension(nQ) :: Qin
         integer i,j,k,ieq,ipg,ir
-        real dn,dni,vx,vy,vz,P, colldt,fac
+        real dn,dni,vx,vy,vz,P, nudt,fac
 
-        colldt = coll*dt
-        fac = 1./(1. + colldt)
+        nudt = nu*dt
+        fac = 1./(1. + nudt)
 
         do k = 1,nz
         do j = 1,ny
@@ -196,12 +196,12 @@ contains
                 vz = Qin(mz)*dni
                 P  = aindm1*(Qin(en) - 0.5*dn*(vx**2 + vy**2 + vz**2))
 
-                Qout(ipg,exx) = ( Qin(exx) + colldt*(P + dn*vx**2) ) * fac
-                Qout(ipg,eyy) = ( Qin(eyy) + colldt*(P + dn*vy**2) ) * fac
-                Qout(ipg,ezz) = ( Qin(ezz) + colldt*(P + dn*vz**2) ) * fac
-                Qout(ipg,exy) = ( Qin(exy) + colldt*(    dn*vx*vy) ) * fac
-                Qout(ipg,exz) = ( Qin(exz) + colldt*(    dn*vx*vz) ) * fac
-                Qout(ipg,eyz) = ( Qin(eyz) + colldt*(    dn*vy*vz) ) * fac
+                Qout(ipg,exx) = ( Qin(exx) + nudt*(P + dn*vx**2) ) * fac
+                Qout(ipg,eyy) = ( Qin(eyy) + nudt*(P + dn*vy**2) ) * fac
+                Qout(ipg,ezz) = ( Qin(ezz) + nudt*(P + dn*vz**2) ) * fac
+                Qout(ipg,exy) = ( Qin(exy) + nudt*(    dn*vx*vy) ) * fac
+                Qout(ipg,exz) = ( Qin(exz) + nudt*(    dn*vx*vz) ) * fac
+                Qout(ipg,eyz) = ( Qin(eyz) + nudt*(    dn*vy*vz) ) * fac
             end do
 
             do ieq=exx,nQ
@@ -230,7 +230,7 @@ contains
         real Q_sum,glf_sum,src_sum,faci
         integer i,j,k,ieq,ir
 
-        faci = 1./(1. + dt*coll)  ! need to ensure a value is given to coll!
+        faci = 1./(1. + dt*nu)  ! need to ensure a value is given to nu!
 
         select case(ivis)
         !-----------------------------------------------------------------------
@@ -300,9 +300,9 @@ contains
                     src_exz = source_r(i,j,k,exz,ir)
                     src_eyz = source_r(i,j,k,eyz,ir)
 
-                    Q_sum   = coll*dt*   ( E_xx    + E_yy    + E_zz    )*c1d3
-                    glf_sum = coll*dt**2*( glf_exx + glf_eyy + glf_ezz )*c1d3
-                    src_sum = coll*dt**2*( src_exx + src_eyy + src_ezz )*c1d3
+                    Q_sum   = nu*dt*   ( E_xx    + E_yy    + E_zz    )*c1d3
+                    glf_sum = nu*dt**2*( glf_exx + glf_eyy + glf_ezz )*c1d3
+                    src_sum = nu*dt**2*( src_exx + src_eyy + src_ezz )*c1d3
 
                     Q_out(i,j,k,exx,ir) = faci * ( E_xx - dt*glf_exx + dt*src_exx &
                                                  + Q_sum -   glf_sum +    src_sum )

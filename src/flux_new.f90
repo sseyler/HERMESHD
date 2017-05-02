@@ -74,17 +74,17 @@ contains
         select case (ivis)
             case (0)
                 call mpi_print(iam, 'ivis = 0: Selected Euler equations (inviscid fluid)')
-                flux_x_pt => Fpt_x_0
-                flux_y_pt => Fpt_y_0
-                flux_z_pt => Fpt_z_0
+                ! flux_x_pt => Fpt_x_0
+                ! flux_y_pt => Fpt_y_0
+                ! flux_z_pt => Fpt_z_0
                 ! flux_x_pts => Fpts_x_0 ! DEBUG
                 ! flux_y_pts => Fpts_y_0 ! DEBUG
                 ! flux_z_pts => Fpts_z_0 ! DEBUG
             case (1)
                 call mpi_print(iam, 'ivis = 1: Selected linearized 10-moment equations')
-                flux_x_pt => Fpt_x_1
-                flux_y_pt => Fpt_y_1
-                flux_z_pt => Fpt_z_1
+                ! flux_x_pt => Fpt_x_1
+                ! flux_y_pt => Fpt_y_1
+                ! flux_z_pt => Fpt_z_1
                 flux_x_pts => Fpts_x_1 ! DEBUG
                 flux_y_pts => Fpts_y_1 ! DEBUG
                 flux_z_pts => Fpts_z_1 ! DEBUG
@@ -100,9 +100,9 @@ contains
                 call exit(-1)
             case default
                 call mpi_print(iam, 'ivis not set: Defaulting to Euler equations (inviscid fluid)')
-                flux_x_pt => Fpt_x_0
-                flux_y_pt => Fpt_y_0
-                flux_z_pt => Fpt_z_0
+                ! flux_x_pt => Fpt_x_0
+                ! flux_y_pt => Fpt_y_0
+                ! flux_z_pt => Fpt_z_0
                 ! flux_x_pts => Fpts_x_0 ! DEBUG
                 ! flux_y_pts => Fpts_y_0 ! DEBUG
                 ! flux_z_pts => Fpts_z_0 ! DEBUG
@@ -114,196 +114,187 @@ contains
     !===========================================================================
     ! Euler equation (inviscid) fluxes
     !---------------------------------------------------------------------------
-    function Fpt_x_0(Qpt)
-        ! WARNING: the stochastic terms have been excluded here!!!
-        real, dimension(nQ), intent(in)  :: Qpt
-        real, dimension(nQ) :: Fpt_x_0
-        real :: dn,m_x,m_y,m_z,Ener,dni,vx,vy,vz,P
-
-        dn  = Qpt(rh)
-        m_x = Qpt(mx)
-        m_y = Qpt(my)
-        m_z = Qpt(mz)
-        Ener = Qpt(en)
-        dni = 1./dn
-        vx = m_x*dni
-        vy = m_y*dni
-        vz = m_z*dni
-        P  = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
-
-        Fpt_x_0(rh) = m_x
-        Fpt_x_0(mx) = m_x*vx + P
-        Fpt_x_0(my) = m_y*vx
-        Fpt_x_0(mz) = m_z*vx
-        Fpt_x_0(en) = (Ener + P)*vx
-    end function Fpt_x_0
+    ! function Fpt_x_0(Qpt)
+    !     ! WARNING: the stochastic terms have been excluded here!!!
+    !     real, dimension(nQ), intent(in)  :: Qpt
+    !     real, dimension(nQ) :: Fpt_x_0
+    !     real :: dn,m_x,m_y,m_z,Ener,dni,vx,vy,vz,P
+    !
+    !     dn  = Qpt(rh)
+    !     m_x = Qpt(mx)
+    !     m_y = Qpt(my)
+    !     m_z = Qpt(mz)
+    !     Ener = Qpt(en)
+    !     dni = 1./dn
+    !     vx = m_x*dni
+    !     vy = m_y*dni
+    !     vz = m_z*dni
+    !     P  = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
+    !
+    !     Fpt_x_0(rh) = m_x
+    !     Fpt_x_0(mx) = m_x*vx + P
+    !     Fpt_x_0(my) = m_y*vx
+    !     Fpt_x_0(mz) = m_z*vx
+    !     Fpt_x_0(en) = (Ener + P)*vx
+    ! end function Fpt_x_0
     !---------------------------------------------------------------------------
-    function Fpt_y_0(Qpt)
-        ! WARNING: the stochastic terms have been excluded here!!!
-        real, dimension(nQ), intent(in)  :: Qpt
-        real, dimension(nQ) :: Fpt_y_0
-        real :: dn,m_x,m_y,m_z,Ener,dni,vx,vy,vz,P
-
-        dn  = Qpt(rh)
-        m_x = Qpt(mx)
-        m_y = Qpt(my)
-        m_z = Qpt(mz)
-        Ener = Qpt(en)
-        dni = 1./dn
-        vx = m_x*dni
-        vy = m_y*dni
-        vz = m_z*dni
-        P  = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
-
-        Fpt_y_0(rh) = m_y
-        Fpt_y_0(mx) = m_x*vy
-        Fpt_y_0(my) = m_y*vy + P
-        Fpt_y_0(mz) = m_z*vy
-        Fpt_y_0(en) = (Ener + P)*vy
-    end function Fpt_y_0
+    ! function Fpt_y_0(Qpt)
+    !     ! WARNING: the stochastic terms have been excluded here!!!
+    !     real, dimension(nQ), intent(in)  :: Qpt
+    !     real, dimension(nQ) :: Fpt_y_0
+    !     real :: dn,m_x,m_y,m_z,Ener,dni,vx,vy,vz,P
+    !
+    !     dn  = Qpt(rh)
+    !     m_x = Qpt(mx)
+    !     m_y = Qpt(my)
+    !     m_z = Qpt(mz)
+    !     Ener = Qpt(en)
+    !     dni = 1./dn
+    !     vx = m_x*dni
+    !     vy = m_y*dni
+    !     vz = m_z*dni
+    !     P  = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
+    !
+    !     Fpt_y_0(rh) = m_y
+    !     Fpt_y_0(mx) = m_x*vy
+    !     Fpt_y_0(my) = m_y*vy + P
+    !     Fpt_y_0(mz) = m_z*vy
+    !     Fpt_y_0(en) = (Ener + P)*vy
+    ! end function Fpt_y_0
     !---------------------------------------------------------------------------
-    function Fpt_z_0(Qpt)
-        ! WARNING: the stochastic terms have been excluded here!!!
-        real, dimension(nQ), intent(in)  :: Qpt
-        real, dimension(nQ) :: Fpt_z_0
-        real :: dn,m_x,m_y,m_z,Ener,dni,vx,vy,vz,P
-
-        dn  = Qpt(rh)
-        m_x = Qpt(mx)
-        m_y = Qpt(my)
-        m_z = Qpt(mz)
-        Ener = Qpt(en)
-        dni = 1./dn
-        vx = m_x*dni
-        vy = m_y*dni
-        vz = m_z*dni
-        P  = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
-
-        Fpt_z_0(rh) = m_z
-        Fpt_z_0(mx) = m_x*vz
-        Fpt_z_0(my) = m_y*vz
-        Fpt_z_0(mz) = m_z*vz + P
-        Fpt_z_0(en) = (Ener + P)*vz
-    end function Fpt_z_0
+    ! function Fpt_z_0(Qpt)
+    !     ! WARNING: the stochastic terms have been excluded here!!!
+    !     real, dimension(nQ), intent(in)  :: Qpt
+    !     real, dimension(nQ) :: Fpt_z_0
+    !     real :: dn,m_x,m_y,m_z,Ener,dni,vx,vy,vz,P
+    !
+    !     dn  = Qpt(rh)
+    !     m_x = Qpt(mx)
+    !     m_y = Qpt(my)
+    !     m_z = Qpt(mz)
+    !     Ener = Qpt(en)
+    !     dni = 1./dn
+    !     vx = m_x*dni
+    !     vy = m_y*dni
+    !     vz = m_z*dni
+    !     P  = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
+    !
+    !     Fpt_z_0(rh) = m_z
+    !     Fpt_z_0(mx) = m_x*vz
+    !     Fpt_z_0(my) = m_y*vz
+    !     Fpt_z_0(mz) = m_z*vz + P
+    !     Fpt_z_0(en) = (Ener + P)*vz
+    ! end function Fpt_z_0
     !---------------------------------------------------------------------------
 
 
     !===========================================================================
     ! Linearized 10-moment fluxes
     !---------------------------------------------------------------------------
-    function Fpt_x_1(Qpt)
-        ! WARNING: the stochastic terms have been excluded here!!!
-        real, dimension(nQ), intent(in)  :: Qpt
-        real, dimension(nQ) :: Fpt_x_1
-        real :: dn,m_x,m_y,m_z,Ener,E_xx,E_xy,E_xz, dni,vx,vy,vz,P,P_xx,P_xy,P_xz
-
-        dn  = Qpt(rh)
-        m_x = Qpt(mx)
-        m_y = Qpt(my)
-        m_z = Qpt(mz)
-        Ener = Qpt(en)
-        E_xx = Qpt(exx)
-        E_xy = Qpt(exy)
-        E_xz = Qpt(exz)
-
-        dni = 1./dn
-        vx = m_x*dni
-        vy = m_y*dni
-        vz = m_z*dni
-        P    = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
-        P_xx = E_xx - dn*vx**2
-        P_xy = E_xy - dn*vx*vy
-        P_xz = E_xz - dn*vx*vz
-
-        Fpt_x_1(rh)  = m_x
-        Fpt_x_1(mx)  = m_x*vx + P + E_xx
-        Fpt_x_1(my)  = m_y*vx     + E_xy
-        Fpt_x_1(mz)  = m_z*vx     + E_xz
-        Fpt_x_1(en)  = (Ener + P_xx)*vx + P_xy*vy + P_xz*vz
-
-        Fpt_x_1(exx) =  c4d3cv*vx
-        Fpt_x_1(eyy) = -c2d3cv*vx
-        Fpt_x_1(ezz) = -c2d3cv*vx
-        Fpt_x_1(exy) =  colvis*vy
-        Fpt_x_1(exz) =  colvis*vz
-        Fpt_x_1(eyz) =  0
-    end function Fpt_x_1
+    ! function Fpt_x_1(Qpt)
+    !     ! WARNING: the stochastic terms have been excluded here!!!
+    !     real, dimension(nQ), intent(in)  :: Qpt
+    !     real, dimension(nQ) :: Fpt_x_1
+    !     real :: dn,m_x,m_y,m_z,Ener,E_xx,E_xy,E_xz, dni,vx,vy,vz,P,P_xx,P_xy,P_xz
+    !
+    !     dn  = Qpt(rh)
+    !     m_x = Qpt(mx)
+    !     m_y = Qpt(my)
+    !     m_z = Qpt(mz)
+    !     Ener = Qpt(en)
+    !     E_xx = Qpt(exx)
+    !     E_xy = Qpt(exy)
+    !     E_xz = Qpt(exz)
+    !
+    !     dni = 1./dn
+    !     vx = m_x*dni
+    !     vy = m_y*dni
+    !     vz = m_z*dni
+    !     P  = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
+    !
+    !     Fpt_x_1(rh)  = m_x
+    !     Fpt_x_1(mx)  = m_x*vx + E_xx + P
+    !     Fpt_x_1(my)  = m_x*vy + E_xy
+    !     Fpt_x_1(mz)  = m_x*vz + E_xz
+    !     Fpt_x_1(en)  = (Ener + P + E_xx)*vx + E_xy*vy + E_xz*vz
+    !
+    !     Fpt_x_1(exx) =  c4d3ne*vx
+    !     Fpt_x_1(eyy) = -c2d3ne*vx
+    !     Fpt_x_1(ezz) = -c2d3ne*vx
+    !     Fpt_x_1(exy) =  nueta*vy
+    !     Fpt_x_1(exz) =  nueta*vz
+    !     Fpt_x_1(eyz) =  0
+    ! end function Fpt_x_1
     !---------------------------------------------------------------------------
-    function Fpt_y_1(Qpt)
-        ! WARNING: the stochastic terms have been excluded here!!!
-        real, dimension(nQ), intent(in)  :: Qpt
-        real, dimension(nQ) :: Fpt_y_1
-        real :: dn,m_x,m_y,m_z,Ener,E_xy,E_yy,E_yz, dni,vx,vy,vz,P,P_xy,P_yy,P_yz
-
-        dn  = Qpt(rh)
-        m_x = Qpt(mx)
-        m_y = Qpt(my)
-        m_z = Qpt(mz)
-        Ener = Qpt(en)
-        E_xy = Qpt(exy)
-        E_yy = Qpt(eyy)
-        E_yz = Qpt(eyz)
-
-        dni = 1./dn
-        vx = m_x*dni
-        vy = m_y*dni
-        vz = m_z*dni
-        P    = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
-        P_xy = E_xy - dn*vx*vy
-        P_yy = E_yy - dn*vy**2
-        P_yz = E_yz - dn*vy*vz
-
-        Fpt_y_1(rh)  = m_y
-        Fpt_y_1(mx)  = m_x*vy     + E_xy
-        Fpt_y_1(my)  = m_y*vy + P + E_yy
-        Fpt_y_1(mz)  = m_z*vy     + E_yz
-        Fpt_y_1(en)  = (Ener + P_yy)*vy + P_xy*vx + P_yz*vz
-
-        Fpt_y_1(exx) = -c2d3cv*vy
-        Fpt_y_1(eyy) =  c4d3cv*vy
-        Fpt_y_1(ezz) = -c2d3cv*vy
-        Fpt_y_1(exy) =  colvis*vx
-        Fpt_y_1(exz) =  0
-        Fpt_y_1(eyz) =  colvis*vz
-    end function Fpt_y_1
+    ! function Fpt_y_1(Qpt)
+    !     ! WARNING: the stochastic terms have been excluded here!!!
+    !     real, dimension(nQ), intent(in)  :: Qpt
+    !     real, dimension(nQ) :: Fpt_y_1
+    !     real :: dn,m_x,m_y,m_z,Ener,E_xy,E_yy,E_yz, dni,vx,vy,vz,P,P_xy,P_yy,P_yz
+    !
+    !     dn  = Qpt(rh)
+    !     m_x = Qpt(mx)
+    !     m_y = Qpt(my)
+    !     m_z = Qpt(mz)
+    !     Ener = Qpt(en)
+    !     E_xy = Qpt(exy)
+    !     E_yy = Qpt(eyy)
+    !     E_yz = Qpt(eyz)
+    !
+    !     dni = 1./dn
+    !     vx = m_x*dni
+    !     vy = m_y*dni
+    !     vz = m_z*dni
+    !     P  = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
+    !
+    !     Fpt_y_1(rh)  = m_y
+    !     Fpt_y_1(mx)  = m_x*vy + E_xy
+    !     Fpt_y_1(my)  = m_y*vy + E_yy + P
+    !     Fpt_y_1(mz)  = m_y*vz + E_yz
+    !     Fpt_y_1(en)  = (Ener + P + E_yy)*vy + E_xy*vx + E_yz*vz
+    !
+    !     Fpt_y_1(exx) = -c2d3ne*vy
+    !     Fpt_y_1(eyy) =  c4d3ne*vy
+    !     Fpt_y_1(ezz) = -c2d3ne*vy
+    !     Fpt_y_1(exy) =  nueta*vx
+    !     Fpt_y_1(exz) =  0
+    !     Fpt_y_1(eyz) =  nueta*vz
+    ! end function Fpt_y_1
     !---------------------------------------------------------------------------
-    function Fpt_z_1(Qpt)
-        ! WARNING: the stochastic terms have been excluded here!!!
-        real, dimension(nQ), intent(in)  :: Qpt
-        real, dimension(nQ) :: Fpt_z_1
-        real :: dn,m_x,m_y,m_z,Ener,E_xz,E_yz,E_zz, dni,vx,vy,vz,P,P_xz,P_yz,P_zz
-
-        dn  = Qpt(rh)
-        m_x = Qpt(mx)
-        m_y = Qpt(my)
-        m_z = Qpt(mz)
-        Ener = Qpt(en)
-        E_xz = Qpt(exz)
-        E_yz = Qpt(eyz)
-        E_zz = Qpt(ezz)
-
-        dni = 1./dn
-        vx = m_x*dni
-        vy = m_y*dni
-        vz = m_z*dni
-        P    = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
-        P_xz = E_xz - dn*vx*vz
-        P_yz = E_yz - dn*vy*vz
-        P_zz = E_zz - dn*vz**2
-
-        Fpt_z_1(rh)  = m_z
-        Fpt_z_1(mx)  = m_x*vz     + E_xz
-        Fpt_z_1(my)  = m_y*vz     + E_yz
-        Fpt_z_1(mz)  = m_z*vz + P + E_zz
-        Fpt_z_1(en)  = (Ener + P_zz)*vz + P_xz*vx + P_yz*vy
-
-        Fpt_z_1(exx) = -c2d3cv*vz
-        Fpt_z_1(eyy) = -c2d3cv*vz
-        Fpt_z_1(ezz) =  c4d3cv*vz
-        Fpt_z_1(exy) =  0
-        Fpt_z_1(exz) =  colvis*vx
-        Fpt_z_1(eyz) =  colvis*vy
-    end function Fpt_z_1
+    ! function Fpt_z_1(Qpt)
+    !     ! WARNING: the stochastic terms have been excluded here!!!
+    !     real, dimension(nQ), intent(in)  :: Qpt
+    !     real, dimension(nQ) :: Fpt_z_1
+    !     real :: dn,m_x,m_y,m_z,Ener,E_xz,E_yz,E_zz, dni,vx,vy,vz,P,P_xz,P_yz,P_zz
+    !
+    !     dn  = Qpt(rh)
+    !     m_x = Qpt(mx)
+    !     m_y = Qpt(my)
+    !     m_z = Qpt(mz)
+    !     Ener = Qpt(en)
+    !     E_xz = Qpt(exz)
+    !     E_yz = Qpt(eyz)
+    !     E_zz = Qpt(ezz)
+    !
+    !     dni = 1./dn
+    !     vx = m_x*dni
+    !     vy = m_y*dni
+    !     vz = m_z*dni
+    !     P  = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
+    !
+    !     Fpt_z_1(rh)  = m_z
+    !     Fpt_z_1(mx)  = m_x*vz + E_xz
+    !     Fpt_z_1(my)  = m_y*vz + E_yz
+    !     Fpt_z_1(mz)  = m_z*vz + E_zz + P
+    !     Fpt_z_1(en)  = (Ener + P + E_zz)*vz + E_xz*vx + E_yz*vy
+    !
+    !     Fpt_z_1(exx) = -c2d3ne*vz
+    !     Fpt_z_1(eyy) = -c2d3ne*vz
+    !     Fpt_z_1(ezz) =  c4d3ne*vz
+    !     Fpt_z_1(exy) =  0
+    !     Fpt_z_1(exz) =  nueta*vx
+    !     Fpt_z_1(eyz) =  nueta*vy
+    ! end function Fpt_z_1
     !---------------------------------------------------------------------------
 
 
@@ -316,6 +307,11 @@ contains
         real, dimension(npts,nQ), intent(in)  :: Qpts
         real, dimension(npts,nQ), intent(out)  :: Fpts
         real :: dn,m_x,m_y,m_z,Ener,E_xx,E_xy,E_xz, dni,vx,vy,vz,P,P_xx,P_xy,P_xz
+        ! real :: S_xx,S_xy,S_xz
+
+        ! S_xx = Sflux_x(npts_llns,1,1)
+        ! S_xy = Sflux_x(npts_llns,1,2)
+        ! S_xz = Sflux_x(npts_llns,1,3)
 
         do ife = 1,npts
             dn  = Qpts(ife,rh)
@@ -331,22 +327,19 @@ contains
             vx = m_x*dni
             vy = m_y*dni
             vz = m_z*dni
-            P    = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
-            P_xx = E_xx - dn*vx**2
-            P_xy = E_xy - dn*vx*vy
-            P_xz = E_xz - dn*vx*vz
+            P  = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
 
             Fpts(ife,rh)  = m_x
-            Fpts(ife,mx)  = m_x*vx + P + E_xx
-            Fpts(ife,my)  = m_y*vx     + E_xy
-            Fpts(ife,mz)  = m_z*vx     + E_xz
-            Fpts(ife,en)  = (Ener + P_xx)*vx + P_xy*vy + P_xz*vz
+            Fpts(ife,mx)  = m_x*vx + E_xx + P
+            Fpts(ife,my)  = m_x*vy + E_xy
+            Fpts(ife,mz)  = m_x*vz + E_xz
+            Fpts(ife,en)  = (Ener + P + E_xx)*vx + E_xy*vy + E_xz*vz
 
-            Fpts(ife,exx) =  c4d3cv*vx
-            Fpts(ife,eyy) = -c2d3cv*vx
-            Fpts(ife,ezz) = -c2d3cv*vx
-            Fpts(ife,exy) =  colvis*vy
-            Fpts(ife,exz) =  colvis*vz
+            Fpts(ife,exx) =  c4d3ne*vx
+            Fpts(ife,eyy) = -c2d3ne*vx
+            Fpts(ife,ezz) = -c2d3ne*vx
+            Fpts(ife,exy) =  nueta*vy
+            Fpts(ife,exz) =  nueta*vz
             Fpts(ife,eyz) =  0
         end do
     end subroutine Fpts_x_1
@@ -357,6 +350,11 @@ contains
         real, dimension(npts,nQ), intent(in)  :: Qpts
         real, dimension(npts,nQ), intent(out)  :: Fpts
         real :: dn,m_x,m_y,m_z,Ener,E_xy,E_yy,E_yz, dni,vx,vy,vz,P,P_xy,P_yy,P_yz
+        ! real :: S_xy,S_yy,S_yz
+        !
+        ! S_xy = Sflux_y(npts_llns,1,2)
+        ! S_yy = Sflux_y(npts_llns,2,2)
+        ! S_yz = Sflux_y(npts_llns,2,3)
 
         do ife = 1,npts
             dn  = Qpts(ife,rh)
@@ -372,23 +370,20 @@ contains
             vx = m_x*dni
             vy = m_y*dni
             vz = m_z*dni
-            P    = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
-            P_xy = E_xy - dn*vx*vy
-            P_yy = E_yy - dn*vy**2
-            P_yz = E_yz - dn*vy*vz
+            P  = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
 
             Fpts(ife,rh)  = m_y
-            Fpts(ife,mx)  = m_x*vy     + E_xy
-            Fpts(ife,my)  = m_y*vy + P + E_yy
-            Fpts(ife,mz)  = m_z*vy     + E_yz
-            Fpts(ife,en)  = (Ener + P_yy)*vy + P_xy*vx + P_yz*vz
+            Fpts(ife,mx)  = m_x*vy + E_xy
+            Fpts(ife,my)  = m_y*vy + E_yy + P
+            Fpts(ife,mz)  = m_y*vz + E_yz
+            Fpts(ife,en)  = (Ener + P + E_yy)*vy + E_yz*vz + E_xy*vx
 
-            Fpts(ife,exx) = -c2d3cv*vy
-            Fpts(ife,eyy) =  c4d3cv*vy
-            Fpts(ife,ezz) = -c2d3cv*vy
-            Fpts(ife,exy) =  colvis*vx
+            Fpts(ife,exx) = -c2d3ne*vy
+            Fpts(ife,eyy) =  c4d3ne*vy
+            Fpts(ife,ezz) = -c2d3ne*vy
+            Fpts(ife,exy) =  nueta*vx
             Fpts(ife,exz) =  0
-            Fpts(ife,eyz) =  colvis*vz
+            Fpts(ife,eyz) =  nueta*vz
         end do
     end subroutine Fpts_y_1
     !---------------------------------------------------------------------------
@@ -398,6 +393,11 @@ contains
         real, dimension(npts,nQ), intent(in)  :: Qpts
         real, dimension(npts,nQ), intent(out)  :: Fpts
         real :: dn,m_x,m_y,m_z,Ener,E_xz,E_yz,E_zz, dni,vx,vy,vz,P,P_xz,P_yz,P_zz
+        ! real :: S_xz,S_yz,S_zz
+        !
+        ! S_xz = Sflux_z(npts_llns,1,3)
+        ! S_yz = Sflux_z(npts_llns,2,3)
+        ! S_zz = Sflux_z(npts_llns,3,3)
 
         do ife = 1,npts
             dn  = Qpts(ife,rh)
@@ -413,26 +413,114 @@ contains
             vx = m_x*dni
             vy = m_y*dni
             vz = m_z*dni
-            P    = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
-            P_xz = E_xz - dn*vx*vz
-            P_yz = E_yz - dn*vy*vz
-            P_zz = E_zz - dn*vz**2
+            P  = aindm1 * ( Ener - 0.5*dn*(vx**2 + vy**2 + vz**2) )
 
             Fpts(ife,rh)  = m_z
-            Fpts(ife,mx)  = m_x*vz     + E_xz
-            Fpts(ife,my)  = m_y*vz     + E_yz
-            Fpts(ife,mz)  = m_z*vz + P + E_zz
-            Fpts(ife,en)  = (Ener + P_zz)*vz + P_xz*vx + P_yz*vy
+            Fpts(ife,mx)  = m_x*vz + E_xz
+            Fpts(ife,my)  = m_y*vz + E_yz
+            Fpts(ife,mz)  = m_z*vz + E_zz + P
+            Fpts(ife,en)  = (Ener + P + E_zz)*vz + E_xz*vx + E_yz*vy
 
-            Fpts(ife,exx) = -c2d3cv*vz
-            Fpts(ife,eyy) = -c2d3cv*vz
-            Fpts(ife,ezz) =  c4d3cv*vz
+            Fpts(ife,exx) = -c2d3ne*vz
+            Fpts(ife,eyy) = -c2d3ne*vz
+            Fpts(ife,ezz) =  c4d3ne*vz
             Fpts(ife,exy) =  0
-            Fpts(ife,exz) =  colvis*vx
-            Fpts(ife,eyz) =  colvis*vy
+            Fpts(ife,exz) =  nueta*vx
+            Fpts(ife,eyz) =  nueta*vy
         end do
     end subroutine Fpts_z_1
     !---------------------------------------------------------------------------
+
+
+    !---------------------------------------------------------------------------
+    subroutine Spts_x_1(Qpts, Spts, i, j, k, npts)
+        ! DEBUG
+        integer, intent(in) :: i,j,k,npts
+        real, dimension(npts,nQ), intent(in)  :: Qpts
+        real, dimension(npts,nQ), intent(out)  :: Spts
+        real :: dn,m_x,m_y,m_z, dni,vx,vy,vz, S_xx,S_xy,S_xz
+
+        S_xx = Sflux_x(npts_llns,i,j,k,1,1)
+        S_xy = Sflux_x(npts_llns,i,j,k,1,2)
+        S_xz = Sflux_x(npts_llns,i,j,k,1,3)
+
+        do ife = 1,npts
+            dn  = Qpts(ife,rh)
+            m_x = Qpts(ife,mx)
+            m_y = Qpts(ife,my)
+            m_z = Qpts(ife,mz)
+            dni = 1./dn
+            vx = m_x*dni
+            vy = m_y*dni
+            vz = m_z*dni
+
+            Spts(ife,rh) = 0
+            Spts(ife,mx) = S_xx
+            Spts(ife,my) = S_xy
+            Spts(ife,mz) = S_xz
+            Spts(ife,en) = S_xx*vx + S_xy*vy + S_xz*vz
+        end do
+    end subroutine Spts_x_1
+    !---------------------------------------------------------------------------
+    subroutine Spts_y_1(Qpts, Spts, i, j, k, npts)
+        ! DEBUG
+        integer, intent(in) :: i,j,k,npts
+        real, dimension(npts,nQ), intent(in)  :: Qpts
+        real, dimension(npts,nQ), intent(out)  :: Spts
+        real :: dn,m_x,m_y,m_z, dni,vx,vy,vz, S_xy,S_yy,S_yz
+
+        S_xy = Sflux_y(npts_llns,i,j,k,1,2)
+        S_yy = Sflux_y(npts_llns,i,j,k,2,2)
+        S_yz = Sflux_y(npts_llns,i,j,k,2,3)
+
+        do ife = 1,npts
+            dn  = Qpts(ife,rh)
+            m_x = Qpts(ife,mx)
+            m_y = Qpts(ife,my)
+            m_z = Qpts(ife,mz)
+            dni = 1./dn
+            vx = m_x*dni
+            vy = m_y*dni
+            vz = m_z*dni
+
+            Spts(ife,rh) = 0
+            Spts(ife,mx) = S_xy
+            Spts(ife,my) = S_yy
+            Spts(ife,mz) = S_yz
+            Spts(ife,en) = S_yy*vy + S_yz*vz + S_xy*vx
+        end do
+    end subroutine Spts_y_1
+    !---------------------------------------------------------------------------
+    subroutine Spts_z_1(Qpts, Spts, i, j, k, npts)
+        ! DEBUG
+        integer, intent(in) :: i,j,k,npts
+        real, dimension(npts,nQ), intent(in)  :: Qpts
+        real, dimension(npts,nQ), intent(out)  :: Spts
+        real :: dn,m_x,m_y,m_z, dni,vx,vy,vz ,S_xz,S_yz,S_zz
+
+        S_xz = Sflux_z(npts_llns,i,j,k,1,3)
+        S_yz = Sflux_z(npts_llns,i,j,k,2,3)
+        S_zz = Sflux_z(npts_llns,i,j,k,3,3)
+
+        do ife = 1,npts
+            dn  = Qpts(ife,rh)
+            m_x = Qpts(ife,mx)
+            m_y = Qpts(ife,my)
+            m_z = Qpts(ife,mz)
+            dni = 1./dn
+            vx = m_x*dni
+            vy = m_y*dni
+            vz = m_z*dni
+
+            Spts(ife,rh) = 0
+            Spts(ife,mx) = S_xz
+            Spts(ife,my) = S_yz
+            Spts(ife,mz) = S_zz
+            Spts(ife,en) = S_zz*vz + S_xz*vx + S_yz*vy
+        end do
+    end subroutine Spts_z_1
+    !---------------------------------------------------------------------------
+
 
     !---------------------------------------------------------------------------
     ! Get field var values at a cell face in body (not boundary) of spatial region
@@ -467,73 +555,38 @@ contains
     end function Qface_edge
     !---------------------------------------------------------------------------
 
-    !---------------------------------------------------------------------------
-    ! Get field var values at a cell face in body (not boundary) of spatial region
-    !---------------------------------------------------------------------------
-    ! subroutine Qface_body(Q_ijk, bfv_r, Qface)
-    !     real, dimension(nQ,nbasis), intent(in)    :: Q_ijk
-    !     real, dimension(nface,nbasis), intent(in) :: bfv_r
-    !     real, dimension(nface,nQ), intent(out)    :: Qface
-    !     integer ieq,ipnt
-    !
-    !     do ieq = 1,nQ
-    !         do ipnt=1,nface
-    !             Qface(ipnt,ieq) = sum(bfv_r(ipnt,1:nbasis)*Q_ijk(ieq,1:nbasis))
-    !         end do
-    !     end do
-    ! end subroutine Qface_body
-    ! !---------------------------------------------------------------------------
-    !
-    ! !---------------------------------------------------------------------------
-    ! ! Get field var values at a cell face at the edge (boundary) of spatial region
-    ! !---------------------------------------------------------------------------
-    ! subroutine Qface_edge(Q_bc_ext, Qface)
-    !     real, dimension(nface,nQ), intent(in)  :: Q_bc_ext
-    !     real, dimension(nface,nQ), intent(out) :: Qface
-    !     integer ieq,ipnt
-    !
-    !     do ieq = 1,nQ
-    !         do ipnt=1,nface
-    !             Qface(ipnt,ieq) = Q_bc_ext(ipnt,ieq)
-    !         end do
-    !     end do
-    ! end subroutine Qface_edge
-    !---------------------------------------------------------------------------
-
 
     !---------------------------------------------------------------------------
     subroutine calc_flux_x(Q_r, flux_x)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx+1,ny,nz,nQ), intent(out) :: flux_x
-        real, dimension(nfe,nQ) :: Qface_x,Fface_x,Fface_x1
+        real, dimension(nfe,nQ) :: Qface_x,Fface_x,Sface_x,Fface_x1
         real, dimension(nface,nQ) :: cfrx
 
         integer i,j,k,ieq,iback,i4,i4p,ipnt,ife
         real cwavex(nfe),fhllc_x(nface,5),qvin(nQ)
+
+        Sface_x(:,:) = 0
 
         do k=1,nz
         !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(iback,Qface_x,qvin) FIRSTPRIVATE(Fface_x,cfrx,cwavex,fhllc_x)
         do j=1,ny
         do i=1,nx+1
             iback = i-1
-
             !--- get Qface_x --------------------------
             if (i > 1)     Qface_x(1:nface,    1:nQ) = Qface_body( Q_r(iback,j,k,1:nQ,:), bfvals_xp(1:nface,:) )
             if (i == 1)    Qface_x(1:nface,    1:nQ) = Qface_edge( Qxlo_ext(j,k,1:nface,:) )
             if (i <  nx+1) Qface_x(nface+1:nfe,1:nQ) = Qface_body( Q_r(i,j,k,1:nQ,:),     bfvals_xm(1:nface,:) )
             if (i == nx+1) Qface_x(nface+1:nfe,1:nQ) = Qface_edge( Qxhi_ext(j,k,1:nface,:) )
-            ! if (i > 1)     call Qface_body( Q_r(iback,j,k,:,:), bfvals_xp, Qface_x(1:nface,    :) )
-            ! if (i == 1)    call Qface_edge( Qxlo_ext(j,k,1:nface,:),       Qface_x(1:nface,    :) )
-            ! if (i <  nx+1) call Qface_body( Q_r(i,    j,k,:,:), bfvals_xm, Qface_x(nface+1:nfe,:) )
-            ! if (i == nx+1) call Qface_edge( Qxhi_ext(j,k,1:nface,:),       Qface_x(nface+1:nfe,:) )
 
             !--- get Fface_x --------------------------
             ! do ife = 1,nfe
             !     Fface_x(ife,:) = Fpt_x( Qface_x(ife,:) )
             ! end do
             call Fpts_x(Qface_x, Fface_x, nfe)
-            ! call flux_calc_pnts_r_v0(Qface_x,Fface_x,1,nfe)
+            if (llns) call Spts_x_1(Qface_x, Sface_x, i,j,k,nfe)
+            Fface_x = Fface_x - Sface_x
             ! if (iam==1 .and. j==ny) then
             !     if (sum(Fface_x(1:nface,mx)) /= sum(Fface_x1(1:nface,mx))) then
             !         write(*,'(A12,I2,A13,ES10.3,A2,ES10.3)') 'Fface_x: i=',i,'delta_mx/my=',sum(Fface_x(1:nface,mx))-sum(Fface_x1(1:nface,mx)),' ',sum(Fface_x(1:nface,my))-sum(Fface_x1(1:nface,my))
@@ -584,11 +637,13 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny+1,nz,nQ), intent(out) :: flux_y
-        real, dimension(nfe,nQ) :: Qface_y,Fface_y,Fface_y1
+        real, dimension(nfe,nQ) :: Qface_y,Fface_y,Sface_y,Fface_y1
         real, dimension(nface,nQ) :: cfry
 
         integer i,j,k,ieq,jleft,i4,i4p,ipnt,ife
         real cwavey(nfe),fhllc_y(nface,5),qvin(nQ)
+
+        Sface_y(:,:) = 0
 
         do k=1,nz
         !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(jleft,Qface_y,qvin) FIRSTPRIVATE(Fface_y,cfry,cwavey,fhllc_y)
@@ -600,17 +655,14 @@ contains
             if (j == 1)    Qface_y(1:nface,    1:nQ) = Qface_edge( Qylo_ext(i,k,1:nface,:) )
             if (j <  ny+1) Qface_y(nface+1:nfe,1:nQ) = Qface_body( Q_r(i,j,k,1:nQ,:),     bfvals_ym(1:nface,:) )
             if (j == ny+1) Qface_y(nface+1:nfe,1:nQ) = Qface_edge( Qyhi_ext(i,k,1:nface,:) )
-            ! if (j > 1)     call Qface_body( Q_r(i,jleft,k,:,:), bfvals_yp, Qface_y(1:nface,    :) )
-            ! if (j == 1)    call Qface_edge( Qylo_ext(i,k,1:nface,:),       Qface_y(1:nface,    :) )
-            ! if (j <  ny+1) call Qface_body( Q_r(i,j,    k,:,:), bfvals_ym, Qface_y(nface+1:nfe,:) )
-            ! if (j == ny+1) call Qface_edge( Qyhi_ext(i,k,1:nface,:),       Qface_y(nface+1:nfe,:) )
 
             !--- get Fface_y --------------------------
             ! do ife = 1,nfe
             !     Fface_y(ife,:) = Fpt_y(Qface_y(ife,:))
             ! end do
             call Fpts_y(Qface_y, Fface_y, nfe)
-            ! call flux_calc_pnts_r_v0(Qface_y,Fface_y,2,nfe)
+            if (llns) call Spts_y_1(Qface_y, Sface_y, i,j,k,nfe)
+            Fface_y = Fface_y - Sface_y
 
             !--- get cfry -----------------------------
             do i4=1,nfe
@@ -655,11 +707,13 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, dimension(nface,nx,ny,nz+1,nQ), intent(out) :: flux_z
-        real, dimension(nfe,nQ) :: Qface_z,Fface_z,Fface_z1
+        real, dimension(nfe,nQ) :: Qface_z,Fface_z,Sface_z,Fface_z1
         real, dimension(nface,nQ) :: cfrz
 
         integer i,j,k,ieq,kdown,i4,i4p,ipnt,ife
         real cwavez(nfe),fhllc_z(nface,5),qvin(nQ)
+
+        Sface_z(:,:) = 0
 
         do k=1,nz+1
         kdown = k-1
@@ -671,17 +725,14 @@ contains
             if (k == 1)    Qface_z(1:nface,    1:nQ) = Qface_edge( Qzlo_ext(i,j,1:nface,:) )
             if (k <  nz+1) Qface_z(nface+1:nfe,1:nQ) = Qface_body( Q_r(i,j,k,1:nQ,:),     bfvals_zm(1:nface,:) )
             if (k == nz+1) Qface_z(nface+1:nfe,1:nQ) = Qface_edge( Qzhi_ext(i,j,1:nface,:) )
-            ! if (k > 1)     call Qface_body( Q_r(i,j,kdown,:,:), bfvals_zp, Qface_z(1:nface,    :) )
-            ! if (k == 1)    call Qface_edge( Qzlo_ext(i,j,1:nface,:),       Qface_z(1:nface,    :) )
-            ! if (k <  nz+1) call Qface_body( Q_r(i,j,k,    :,:), bfvals_zm, Qface_z(nface+1:nfe,:) )
-            ! if (k == nz+1) call Qface_edge( Qzhi_ext(i,j,1:nface,:),       Qface_z(nface+1:nfe,:) )
 
             !--- get Fface_z --------------------------
             ! do ife = 1,nfe
             !     Fface_z(ife,:) = Fpt_z(Qface_z(ife,:))
             ! end do
             call Fpts_z(Qface_z, Fface_z, nfe)
-            ! call flux_calc_pnts_r_v0(Qface_z,Fface_z,3,nfe)
+            if (llns) call Spts_z_1(Qface_z, Sface_z, i,j,k,nfe)
+            Fface_z = Fface_z - Sface_z
 
             !--- get cfrz -----------------------------
             do i4=1,nfe
@@ -726,9 +777,9 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
 
-        ! NOTE: "nu" in CES' code is te*rh, which is "colvis" here; "coll" is colvis/vis
-        c2d3cv = c2d3*colvis  ! NOTE: globaly defined in params.f90
-        c4d3cv = c4d3*colvis  ! NOTE: globaly defined in params.f90
+        ! NOTE: "nu" in CES' code is te*rh, which is "nueta" here; "coll" is nueta/vis
+        c2d3ne = c2d3*nueta  ! NOTE: globaly defined in params.f90
+        c4d3ne = c4d3*nueta  ! NOTE: globaly defined in params.f90
 
         call calc_flux_x(Q_r, flux_x)
         call calc_flux_y(Q_r, flux_y)
@@ -1119,15 +1170,15 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k,ieq,ir
 
-        ! if (llns) call get_region_Sflux_xyz(GRM_x, GRM_y, GRM_z, Sflux_x, Sflux_y, Sflux_z)
+        if (llns) call get_region_Sflux_xyz(Sflux_x, Sflux_y, Sflux_z)
 
         !#########################################################
         ! Step 1: Calculate fluxes for boundaries of each cell
         !   --> flux_x, flux_y, flux_z  (used only in flux.f90)
         !---------------------------------------------------------
-        ! NOTE: "nu" in CES' code is te*rh, which is "colvis" here; "coll" is colvis/vis
-        c2d3cv = c2d3*colvis  ! NOTE: globaly defined in params.f90
-        c4d3cv = c4d3*colvis  ! NOTE: globaly defined in params.f90
+        ! NOTE: "nu" in CES' code is te*rh, which is "nueta" here; "coll" is nueta/eta
+        c2d3ne = c2d3*nueta  ! NOTE: globaly defined in params.f90
+        c4d3ne = c4d3*nueta  ! NOTE: globaly defined in params.f90
         ! call flux_calc(Q_r)
         call calc_flux_x(Q_r, flux_x)
         call calc_flux_y(Q_r, flux_y)
@@ -1312,6 +1363,39 @@ contains
 !-------------------------------------------------------------------------------
 
 
+    !---------------------------------------------------------------------------
+    ! Get field var values at a cell face in body (not boundary) of spatial region
+    !---------------------------------------------------------------------------
+    ! subroutine Qface_body(Q_ijk, bfv_r, Qface)
+    !     real, dimension(nQ,nbasis), intent(in)    :: Q_ijk
+    !     real, dimension(nface,nbasis), intent(in) :: bfv_r
+    !     real, dimension(nface,nQ), intent(out)    :: Qface
+    !     integer ieq,ipnt
+    !
+    !     do ieq = 1,nQ
+    !         do ipnt=1,nface
+    !             Qface(ipnt,ieq) = sum(bfv_r(ipnt,1:nbasis)*Q_ijk(ieq,1:nbasis))
+    !         end do
+    !     end do
+    ! end subroutine Qface_body
+    ! !---------------------------------------------------------------------------
+    !
+    ! !---------------------------------------------------------------------------
+    ! ! Get field var values at a cell face at the edge (boundary) of spatial region
+    ! !---------------------------------------------------------------------------
+    ! subroutine Qface_edge(Q_bc_ext, Qface)
+    !     real, dimension(nface,nQ), intent(in)  :: Q_bc_ext
+    !     real, dimension(nface,nQ), intent(out) :: Qface
+    !     integer ieq,ipnt
+    !
+    !     do ieq = 1,nQ
+    !         do ipnt=1,nface
+    !             Qface(ipnt,ieq) = Q_bc_ext(ipnt,ieq)
+    !         end do
+    !     end do
+    ! end subroutine Qface_edge
+    !---------------------------------------------------------------------------
+
 
     !---------------------------------------------------------------------------
     subroutine flux_calc_pnts_r_v0(Qpnts_r,fpnts_r,ixyz,npnts)
@@ -1330,13 +1414,13 @@ contains
         real Spnts_r(npnts,3,3), Hpnts_r(npnts,3)
         real Sxx,Syy,Szz,Sxy,Sxz,Syz, Qx,Qy,Qz
 
-        ! NOTE: "nu" in CES' code is te*rh, which is "colvis" here; "coll" is colvis/vis
-        c2d3cv = c2d3*colvis  ! global vars declared in params.f90
-        c4d3cv = c4d3*colvis  ! global vars declared in params.f90
+        ! NOTE: "nu" in CES' code is te*rh, which is "nueta" here; "coll" is nueta/eta
+        c2d3ne = c2d3*nueta  ! global vars declared in params.f90
+        c4d3ne = c4d3*nueta  ! global vars declared in params.f90
 
         Spnts_r(:,:,:) = 0.0
         Hpnts_r(:,:) = 0.0
-        if (llns) call random_stresses_pnts_r(Spnts_r, npnts)  ! TODO: commented to get working w/o MKL
+        if (llns) call random_stresses_pnts_r(Spnts_r)  ! TODO: commented to get working w/o MKL
 
         do ife = 1,npnts
             dn   = Qpnts_r(ife,rh)
@@ -1402,12 +1486,12 @@ contains
                                 + (P_xx-Sxx)*vx + (P_xy-Sxy)*vy + (P_xz-Sxz)*vz
 
                 if (ivis == 0 .or. ivis == 1) then
-                    fpnts_r(ife,exx) =  c4d3cv*vx
-                    fpnts_r(ife,eyy) = -c2d3cv*vx
-                    fpnts_r(ife,ezz) = -c2d3cv*vx
+                    fpnts_r(ife,exx) =  c4d3ne*vx
+                    fpnts_r(ife,eyy) = -c2d3ne*vx
+                    fpnts_r(ife,ezz) = -c2d3ne*vx
 
-                    fpnts_r(ife,exy) = colvis*vy
-                    fpnts_r(ife,exz) = colvis*vz
+                    fpnts_r(ife,exy) = nueta*vy
+                    fpnts_r(ife,exz) = nueta*vz
                     fpnts_r(ife,eyz) = 0
                 end if
                 if ( ivis == 2 ) then
@@ -1438,13 +1522,13 @@ contains
                                 + (P_yy-Syy)*vy + (P_xy-Sxy)*vx + (P_yz-Syz)*vz
 
                 if (ivis == 0 .or. ivis == 1) then
-                    fpnts_r(ife,exx) = -c2d3cv*vy
-                    fpnts_r(ife,eyy) =  c4d3cv*vy
-                    fpnts_r(ife,ezz) = -c2d3cv*vy
+                    fpnts_r(ife,exx) = -c2d3ne*vy
+                    fpnts_r(ife,eyy) =  c4d3ne*vy
+                    fpnts_r(ife,ezz) = -c2d3ne*vy
 
-                    fpnts_r(ife,exy) = colvis*vx
+                    fpnts_r(ife,exy) = nueta*vx
                     fpnts_r(ife,exz) = 0
-                    fpnts_r(ife,eyz) = colvis*vz
+                    fpnts_r(ife,eyz) = nueta*vz
                 end if
                 if ( ivis == 2 ) then
                     fpnts_r(ife,exx) = 2*vx*(  E_xy -   vx*M_y) + vy*E_xx                            ! term 2
@@ -1474,13 +1558,13 @@ contains
                                 + (P_zz-Szz)*vz + (P_xz-Sxz)*vx + (P_yz-Syz)*vy
 
                 if (ivis == 0 .or. ivis == 1) then
-                    fpnts_r(ife,exx) = -c2d3cv*vz
-                    fpnts_r(ife,eyy) = -c2d3cv*vz
-                    fpnts_r(ife,ezz) =  c4d3cv*vz
+                    fpnts_r(ife,exx) = -c2d3ne*vz
+                    fpnts_r(ife,eyy) = -c2d3ne*vz
+                    fpnts_r(ife,ezz) =  c4d3ne*vz
 
                     fpnts_r(ife,exy) = 0
-                    fpnts_r(ife,exz) = colvis*vx
-                    fpnts_r(ife,eyz) = colvis*vy
+                    fpnts_r(ife,exz) = nueta*vx
+                    fpnts_r(ife,eyz) = nueta*vy
                 end if
                 if ( ivis == 2 ) then
                     fpnts_r(ife,exx) = 2*vx*(  E_xz -   vx*M_z) + vz*E_xx                               ! term 3
