@@ -1,12 +1,14 @@
 #!/usr/bin/python
+from mpi4py import MPI
 
 import os, sys, getopt
 import numpy as np
 from lammps import lammps
 
-# LAMMPS simulation variables HACK: must match input script...
-# bname  = lmp.extract_variable("bname", None, None)  # base name of simulation files
-# datdir = lmp.extract_variable("datdir", None, None) # name of output data directory
+comm = MPI.COMM_WORLD
+iam = comm.Get_rank()
+
+
 bname  = "lj_pylmp_hac"  # base name of simulation files
 datdir = "data/{}_test".format(bname)    # name of output data directory
 
@@ -20,11 +22,12 @@ tstep  = 10.0      # timestep in fs
 nsteps = 10000     # number of timesteps
 nout   = 100      # output frequency
 
+mass = 39.948
 La = 6.0       # lattice spacing in A
 L  = 34.68     #78.45  # length of single box dimension in A
 Lx = L*1.50
-Ly = L*0.833
-Lz = L*0.833
+Ly = L
+Lz = L
 
 x  = 1.0/La
 y  = 1.0/La
@@ -62,9 +65,6 @@ uz_r_file = "{}/uz.rbuffer".format(datdir)
 te_l_file = "{}/te.lbuffer".format(datdir)
 te_r_file = "{}/te.rbuffer".format(datdir)
 
-# rh_test_file = "{}/rh.test".format(datdir)
-# count_left_file = "{}/count.left".format(datdir)
-
 
 def setup(lmp):
     print_mpi("Setting up simulation...\n")
@@ -78,13 +78,14 @@ def setup(lmp):
     lmp.command("dimension    3")
     lmp.command("boundary     f p p")
     lmp.command("atom_style   atomic")
+    lmp.command("atom_modify  map hash")
     lmp.command("lattice      fcc {}".format(La))
 
     lmp.command("region mybox block 0 {} 0 {} 0 {}".format(xx, yy, zz))
     lmp.command("create_box   1 mybox")
     lmp.command("create_atoms 1 region mybox units box")
 
-    lmp.command("mass         1 39.948")
+    lmp.command("mass  1 {}".format(mass))
 
     lmp.command("pair_style  lj/cut {}".format(ljcut))
     lmp.command("pair_coeff  1 1 {} {} {}".format(lje, ljs, ljcut))
@@ -225,21 +226,95 @@ def xyz_to_pdb(xyzfile):
 
 
 def print_mpi(msg, iam=iam, print_id=0):
-    if (iam == print_id): print msg
+    if (iam == print_id): print(msg)
 
 
-# if __name__ == "__main__":
-#
-#     lmp = lammps()  # initialize LAMMPS instance
-#
-#     lmp = setup(lmp)
-#
-#     lmp = setup_wall(lmp)
-#
-#     # lmp = minimize(lmp)
-#
-#     lmp = equilibrate(lmp)
-#
-#     lmp = setup_buffer(lmp)
-#
-#     lmp = run(lmp)
+
+def add_position(x_md, atom_ids, dx, dy, dz):
+    for aid in atom_ids:
+        x_md[aid][0] += dx
+        x_md[aid][1] += dy
+        x_md[aid][2] += dz
+
+def add_velocity(v_md, atom_ids, dvx, dvy, dvz):
+    for aid in atom_ids:
+        v_md[aid][0] += dvx
+        v_md[aid][1] += dvy
+        v_md[aid][2] += dvz
+
+def add_force(f_md, atom_ids, dfx, dfy, dfz):
+    for aid in atom_ids:
+        f_md[aid][0] += dfx
+        f_md[aid][1] += dfy
+        f_md[aid][2] += dfz
+
+
+if __name__ == "__main__":
+    # from ctypes import *
+
+    lmp = lammps()
+    lmp = setup(lmp)
+    lmp = setup_wall(lmp)
+
+    natoms = lmp.get_natoms()
+    # natoms = lmp.extract_global("natoms",0)
+
+    x_md = lmp.extract_atom("x", 3)  # Pointer to underlying array in LAMMPS
+    v_md = lmp.extract_atom("v", 3)
+    f_md = lmp.extract_atom("f", 3)
+
+    print_mpi('>>> x_md[0][0]: {}'.format(x_md[0][0]))
+    print_mpi('>>> x_md[0][1]: {}'.format(x_md[0][1]))
+    print_mpi('>>> x_md[0][2]: {}'.format(x_md[0][2]))
+
+
+    ### Run #######################
+    lmp = run_lammps(lmp, 10)
+
+    print_mpi('>>> x_md[0][0]: {}'.format(x_md[0][0]))
+    print_mpi('>>> x_md[0][1]: {}'.format(x_md[0][1]))
+    print_mpi('>>> x_md[0][2]: {}'.format(x_md[0][2]))
+
+    epsilon = 0.5
+    add_position(x_md, [0], epsilon, epsilon, epsilon)
+
+    print_mpi('>>> x_md[0][0]: {}'.format(x_md[0][0]))
+    print_mpi('>>> x_md[0][1]: {}'.format(x_md[0][1]))
+    print_mpi('>>> x_md[0][2]: {}'.format(x_md[0][2]))
+
+
+
+
+
+
+
+    # f_md = lmp.gather_atoms("f", 1, 3)
+    # print('>>> ', len(f_md))
+    # print("Global coords from gather_atoms =",f_md[0],f_md[1],f_md[31])
+
+    # natoms = lmp.get_natoms()
+    # n3 = 3*natoms
+    # x = (n3*c_double)()
+    # x[0] = x coord of atom with ID 1
+    # x[1] = y coord of atom with ID 1
+    # x[2] = z coord of atom with ID 1
+    # x[3] = x coord of atom with ID 2
+    # print('>>> ', x[1296])
+    # x_md = np.asarray(x)
+    # print('>>> ', x_md[1296])
+    #
+    #
+    # x_md = lmp.gather_atoms("x", 1, 3)
+    # print('>>> Global number of atomic coordinates: ', len(x_md))
+    #
+    # x_md = lmp.gather_atoms("x", 1, 3)
+    # print('>>> Global number of atomic coordinates: ', type(x_md))
+    #
+    # x_md = lmp.gather_atoms("x", 1, 3)
+    # print('>>> x_md[0]: ', x_md[0])
+    # x_md = lmp.gather_atoms("x", 1, 3)
+    # print('>>> x_md[0,1]: ', x_md[0][1])
+    # x_md = lmp.gather_atoms("x", 1, 3)
+    # print('>>> x_md[1296]: ', x_md[1296])
+    # x_md = lmp.gather_atoms("x", 1, 3)
+    # print('>>> x_md[3888]: ', x_md[3888])

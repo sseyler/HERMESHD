@@ -2,13 +2,13 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 3.0e2
-    real, parameter :: ly = lx
-    real, parameter :: lz = lx/200.
+    real, parameter :: lx = 1.5*3.468e1
+    real, parameter :: ly = 3.468e1
+    real, parameter :: lz = 3.468e1
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad  = 2
-    integer, parameter :: nbasis = 4
+    integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
     integer, parameter :: nx = 30
@@ -17,7 +17,7 @@ module input
 
     ! Set number of MPI domains per spatial dimension
     integer :: mpi_nx = 4
-    integer :: mpi_ny = 4
+    integer :: mpi_ny = 2
 
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK

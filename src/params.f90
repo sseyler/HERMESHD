@@ -85,7 +85,7 @@ module params
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
     real, parameter :: L0 = 1.0e-9                 ! length
-    real, parameter :: t0 = 1.0e-10                 ! time
+    real, parameter :: t0 = 1.0e-12                ! time
     real, parameter :: n0 = 3.3e28                 ! number density
 
     ! Derived units

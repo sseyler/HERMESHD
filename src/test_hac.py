@@ -56,4 +56,10 @@ if __name__ == "__main__":
         run_hermes()
 
 
+        f_hd = get_hd_forces()
+        f_md = lmp.gather_atoms("f", 1, 3)
+        f_md += f_hd
+        lmp.scatter_atoms("f", 1, 3, f_md)
+
+
     cleanup(t_start)
