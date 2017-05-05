@@ -14,24 +14,13 @@ iam = comm.Get_rank()
 bname  = "lj_pylmp_hac"  # base name of simulation files
 datdir = "data/{}_test".format(bname)    # name of output data directory
 
-### Vars #######################
-eta = 2.084e-3  # in Poise (= 0.1 Pascal-seconds = 0.1 Pa s = g/cm/s)
-g = 45.5  # lattice geometry factor (from Giupponi, et al. JCP 2007)
-dx = 10.0  # HD cell size in Angstroms
-zeta_bare = 1.0  # bare friction coefficient
-zeta_eff = 1./zeta_bare + 1/(g*eta*dx)
-
 te_init = 30.0
 te_sim  = 94.4
 pr_init = 1.0
 pr_sim  = 1.0
 
-dt_md  = 10.0      # timestep in fs
-n_md = 10
-t_md = n_md*dt_md
-
-################################
 nmin   = 200      # number of emin steps
+dt_md  = 10.0      # timestep in fs
 nsteps = 10000     # number of timesteps
 nout   = 100      # output frequency
 
@@ -41,7 +30,7 @@ L  = 34.68     #78.45  # length of single box dimension in A
 Lx = L*(5.0/3.0)
 Ly = L
 Lz = L
-################################
+
 x  = 1.0/La
 y  = 1.0/La
 z  = 1.0/La
@@ -59,7 +48,6 @@ rlo = rhi - bdx
 lje = 0.23748
 ljs = 3.4
 ljcut = 12.0
-################################
 
 # frequencies for taking averages for buffer region particles
 neve, nrep, nfre = 2, 5, 10   # avg over every 2 steps, 5 times (over 10 total steps)
@@ -108,14 +96,12 @@ def setup(lmp):
 
 def create_box(lmp):
     lmp.command("dimension    3")
-    lmp.command("boundary     f p p")
+    lmp.command("boundary     p p p")
     lmp.command("atom_style   atomic")
     lmp.command("atom_modify  map hash")
     lmp.command("lattice      fcc {}".format(La))
-
-    lmp.command("region rid_wall block {} {} {} {} {} {} units box".format(-0.25*ljs, Lx+0.25*ljs, 0.0, Ly, 0.0, Lz))
     lmp.command("region mybox block 0 {} 0 {} 0 {}".format(xx, yy, zz))
-    lmp.command("create_box   1 rid_wall")
+    lmp.command("create_box   1 mybox")
     return lmp
 
 
@@ -156,8 +142,8 @@ def setup_buffer(lmp):
 
 
 def setup_wall(lmp):
-    lmp.command("fix wall_xlo all wall/lj126 xlo {} {} {} {} units box".format(-0.25*ljs, 0.25*lje, 0.5*ljs, 1.0*ljs))
-    lmp.command("fix wall_xhi all wall/lj126 xhi {} {} {} {} units box".format(Lx+0.25*ljs, 0.25*lje, 0.5*ljs, 1.0*ljs))
+    lmp.command("fix wall_xlo all wall/lj1043 xlo {} {} {} {} units box".format(-0.5*ljs, 0.25*lje, 0.5*ljs, 1.5*ljs))
+    lmp.command("fix wall_xhi all wall/lj1043 xhi {} {} {} {} units box".format(Lx+0.5*ljs, 0.25*lje, 0.5*ljs, 1.5*ljs))
     return lmp
 
 
@@ -254,110 +240,124 @@ def print_mpi(msg, iam=iam, print_id=0):
 
 
 
-def add_positions(x_md, atom_ids, dx, dy, dz):
+def add_position(x_md, atom_ids, dx, dy, dz):
     for aid in atom_ids:
-        add_position(x_md, aid, dx, dy, dz)
+        x_md[aid][0] += dx
+        x_md[aid][1] += dy
+        x_md[aid][2] += dz
 
-def add_velocities(v_md, atom_ids, dvx, dvy, dvz):
+def add_velocity(v_md, atom_ids, dvx, dvy, dvz):
     for aid in atom_ids:
-        add_force(v_md, aid, dvx, dvy, dvz)
+        v_md[aid][0] += dvx
+        v_md[aid][1] += dvy
+        v_md[aid][2] += dvz
 
-def add_forces(f_md, atom_ids, dfx, dfy, dfz):
+def add_force(f_md, atom_ids, dfx, dfy, dfz):
     for aid in atom_ids:
-        add_force(f_md, aid, dfx, dfy, dfz)
-
-
-def add_position(x_md, aid, dxx, dxy, dxz):
-    x_md[aid][0] += dx
-    x_md[aid][1] += dy
-    x_md[aid][2] += dz
-
-def add_velocity(v_md, aid, dvx, dvy, dvz):
-    v_md[aid][0] += dvx
-    v_md[aid][1] += dvy
-    v_md[aid][2] += dvz
-
-def add_force(f_md, aid, dfx, dfy, dfz):
-    f_md[aid][0] += dfx
-    f_md[aid][1] += dfy
-    f_md[aid][2] += dfz
-
-
-
-def fluid_force_v0(f_md, v_md, u_f, atom_ids, zeta=zeta_bare, temp=te_sim):
-    # 8.3144598e-3  # gas constant in kJ/mol
-    kT_lmp_units = 1.9872036e-3 * temp  # gas constant in kcal/mol
-    sigma = np.sqrt(2*kT_lmp_units*zeta)
-    fs = np.random.normal( loc=0.0, scale=sigma, size=(len(atom_ids), 3) )
-    for i, aid in enumerate(atom_ids):
-        f_md[aid][0] += -zeta*(v_md[aid][0] - u_f[0]) + fs[i,0]
-        f_md[aid][1] += -zeta*(v_md[aid][1] - u_f[1]) + fs[i,1]
-        f_md[aid][2] += -zeta*(v_md[aid][2] - u_f[2]) + fs[i,2]
-
-
-# Return a list of atom ids for atoms in buffer defined by blo to bhi (x-direction for now)
-def get_buffer_atomids(x_md, atom_ids, xlo, xhi):#, ylo, yhi, zlo, zhi):
-    return [aid for aid in atom_ids if x_md[aid][0] >= xlo and x_md[aid][0] < xhi]
-
+        f_md[aid][0] += dfx
+        f_md[aid][1] += dfy
+        f_md[aid][2] += dfz
 
 
 if __name__ == "__main__":
     # from ctypes import *
+
+    n_md = 10
+    t_md = n_md*dt_md
 
     lmp = lammps()
     lmp = setup(lmp)
     # lmp = setup_wall(lmp)
     lmp = setup_buffer(lmp)
     lmp = init_velocities(lmp)
+
     # lmp = minimize(lmp)
     lmp = equilibrate(lmp, te_init, te_init)
-    ################################
 
     lmp.command("dump     run all dcd {} {}/md_{}.dcd".format(n_md, datdir, bname))
     lmp.command("dump_modify run pbc yes")
 
-    natoms = lmp.get_natoms()  # lmp.extract_global("natoms",0)
-    local_atom_ids = range(natoms)
+    natoms = lmp.get_natoms()
+    # natoms = lmp.extract_global("natoms",0)
 
-    # Pointers to pos/vel/force arrays in LAMMPS for atoms local to THIS proc
-    x_md = lmp.extract_atom("x", 3)
+    x_md = lmp.extract_atom("x", 3)  # Pointer to underlying array in LAMMPS
     v_md = lmp.extract_atom("v", 3)
     f_md = lmp.extract_atom("f", 3)
+
     print_mpi('>>> v_md[0]: {:7.5f} {:7.5f} {:7.5f}'.format(v_md[0][0], v_md[0][1], v_md[0][2]))
 
     ### Run #######################
+    eta = 2.084e-3  # in Poise (= 0.1 Pascal-seconds = 0.1 Pa s = g/cm/s)
+    g = 45.5  # lattice geometry factor (from Giupponi, et al. JCP 2007)
+    dx = 10.0  # HD cell size in Angstroms
+    zeta_bare = 0.50  # bare friction coefficient
+    zeta_eff = 1./zeta_bare + 1/(g*eta*dx)
+    atom_ids = range(natoms)
 
-    # lmp.command("region  rid_left  block {} {} {} {} {} {} units box".format(0.0, Lx/5, 0.0, Ly, 0.0, Lz))
-    # lmp.command("region  rid_right block {} {} {} {} {} {} units box".format(4*Lx/5, Lx, 0.0, Ly, 0.0, Lz))
-    # #
-    # # lmp.command("fix df all addforce {} {} {}".format())
-    # lmp.command("group left_buf  dynamic all region rid_left  every {}".format(n_md))
-    # lmp.command("group right_buf dynamic all region rid_right every {}".format(n_md))
+    lmp.command("region  rid_left  block {} {} {} {} {} {} units box".format(0.0, Lx/5, 0.0, Ly, 0.0, Lz))
+    lmp.command("region  rid_right block {} {} {} {} {} {} units box".format(4*Lx/5, Lx, 0.0, Ly, 0.0, Lz))
     #
-    # lmp.command("fix lange_left  left_buf  langevin {} {} {} 12345".format(te_sim, te_sim, mass/zeta_bare))
-    # lmp.command("fix lange_right right_buf langevin {} {} {} 12345".format(te_sim, te_sim, mass/zeta_bare))
+    # lmp.command("fix df all addforce {} {} {}".format())
+    lmp.command("group left_buf  dynamic all region rid_left  every {}".format(n_md))
+    lmp.command("group right_buf dynamic all region rid_right every {}".format(n_md))
 
-    u_lbuf = np.array([0.0, 0.0, 0.0])
-    u_rbuf = np.array([0.0, 1.0, 0.0])
+    lmp.command("fix lange_left  left_buf  langevin {} {} {} 12345".format(te_sim, te_sim, mass/zeta_bare))
+    lmp.command("fix lange_right right_buf langevin {} {} {} 12345".format(te_sim, te_sim, mass/zeta_bare))
 
-    for i in xrange(10000):
-        lmp = run_lammps(lmp, 1)
+    # lmp.command("variable forcex atom fx")
+    # fx_md = lmp.extract_variable("forcex", "left_buf", 1)
+    # fy_md = lmp.extract_variable("fy", "left_buf", 1)
+    # fz_md = lmp.extract_variable("fz", "left_buf", 1)
 
-        # x_md = lmp.extract_atom("x", 3)
-        left_buf_atomids = get_buffer_atomids(x_md, local_atom_ids, llo, lhi)
-        right_buf_atomids = get_buffer_atomids(x_md, local_atom_ids, rlo, rhi)
-        # print '>>> left_buf_atomids for rank {}: '.format(iam), left_buf_atomids
-        # print '>>> right_buf_atomids for rank {}: '.format(iam), right_buf_atomids
+    for i in xrange(10):
+        # lmp.command("variable fx equal $forcex")
+        # fx_md = lmp.extract_variable("forcex", "left_buf", 1)
+        # print_mpi(">>> Force on 1 atom via extract_variable: {}".format(len(fx_md)))
+        lmp = run_lammps(lmp, 2000)
 
-        if left_buf_atomids:
-            # v_md = lmp.extract_atom("v", 3)
-            # f_md = lmp.extract_atom("f", 3)
-            fluid_force_v0(f_md, v_md, u_lbuf, left_buf_atomids, zeta=zeta_bare, temp=te_sim)
-        if right_buf_atomids:
-            avgforce = np.mean([f_md[i][1] for i in right_buf_atomids])
-            print '>>> avgforce before: {}'.format(avgforce)
-            # v_md = lmp.extract_atom("v", 3)
-            # f_md = lmp.extract_atom("f", 3)
-            fluid_force_v0(f_md, v_md, u_rbuf, right_buf_atomids, zeta=zeta_bare, temp=te_sim)
-            avgforce = np.mean([f_md[i][1] for i in right_buf_atomids])
-            print '>>> avgforce after: {}'.format(avgforce)
+        # print_mpi('>>> v_md[0]: {}'.format(v_md[0][0]))
+        # print_mpi('>>> v_md[0][1]: {}'.format(v_md[0][1]))
+        # print_mpi('>>> v_md[0][2]: {}'.format(v_md[0][2]))
+
+        # add_velocity(v_md, atom_ids, 0, epsilon, 0)
+
+        # print_mpi('>>> v_md[0][0]: {}'.format(v_md[0][0]))
+        # print_mpi('>>> v_md[0][1]: {}'.format(v_md[0][1]))
+        # print_mpi('>>> v_md[0][2]: {}'.format(v_md[0][2]))
+
+
+
+
+
+
+
+    # f_md = lmp.gather_atoms("f", 1, 3)
+    # print('>>> ', len(f_md))
+    # print("Global coords from gather_atoms =",f_md[0],f_md[1],f_md[31])
+
+    # natoms = lmp.get_natoms()
+    # n3 = 3*natoms
+    # x = (n3*c_double)()
+    # x[0] = x coord of atom with ID 1
+    # x[1] = y coord of atom with ID 1
+    # x[2] = z coord of atom with ID 1
+    # x[3] = x coord of atom with ID 2
+    # print('>>> ', x[1296])
+    # x_md = np.asarray(x)
+    # print('>>> ', x_md[1296])
+    #
+    #
+    # x_md = lmp.gather_atoms("x", 1, 3)
+    # print('>>> Global number of atomic coordinates: ', len(x_md))
+    #
+    # x_md = lmp.gather_atoms("x", 1, 3)
+    # print('>>> Global number of atomic coordinates: ', type(x_md))
+    #
+    # x_md = lmp.gather_atoms("x", 1, 3)
+    # print('>>> x_md[0]: ', x_md[0])
+    # x_md = lmp.gather_atoms("x", 1, 3)
+    # print('>>> x_md[0,1]: ', x_md[0][1])
+    # x_md = lmp.gather_atoms("x", 1, 3)
+    # print('>>> x_md[1296]: ', x_md[1296])
+    # x_md = lmp.gather_atoms("x", 1, 3)
+    # print('>>> x_md[3888]: ', x_md[3888])
