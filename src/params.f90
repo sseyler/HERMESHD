@@ -84,9 +84,9 @@ module params
     real, parameter :: cp = aindex/aindm1   ! specific heat at constant pressure
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
-    real, parameter :: L0 = 1.0e-9                 ! length
+    real, parameter :: L0 = 1.0e-10                ! length
     real, parameter :: t0 = 1.0e-12                ! time
-    real, parameter :: n0 = 3.3e28                 ! number density
+    real, parameter :: n0 = 2.0e28                 ! number density Argon @ ~94K
 
     ! Derived units
     real, parameter :: v0  = L0/t0                 ! velocity
@@ -96,8 +96,8 @@ module params
     ! rh_min is a min density to be used for ideal gas EOS, rh_min is min density
     ! below which the pressure becomes negative for the MT water EOS.
     ! The DG-based subroutine "limiter" keeps density above rh_mult*rh_min.
-    real, parameter :: rh_floor = 5.0e-6           ! 1.0e-1 was old value
-    real, parameter :: T_floor  = 0.5*TK*eV_per_K/te0  ! 0.3*0.02585e-1/te0  ! 0.02585 eV ~ 300 K
+    real, parameter :: rh_floor = 1.0e-6           ! 1.0e-1 was old value
+    real, parameter :: T_floor  = 0.1*TK*eV_per_K/te0  ! 0.3*0.02585e-1/te0  ! 0.02585 eV ~ 300 K
     real, parameter :: P_floor  = T_floor*rh_floor
 
     ! Murnaghan-Tait EOS

@@ -2,18 +2,28 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 1.5*3.468e1
-    real, parameter :: ly = 3.468e1
-    real, parameter :: lz = 3.468e1
+    real, parameter :: Lbox = 3.0e1
+    real, parameter :: lxd = (6./3.)*Lbox/2. - (6./3.)*Lbox/6.
+    real, parameter :: lyd = -Lbox/2.
+    real, parameter :: lzd = -Lbox/2.
+    real, parameter :: lxu =  lxd + (6./3.)*Lbox  !1.5*3.468e1
+    real, parameter :: lyu = -lyd  !3.468e1
+    real, parameter :: lzu = -lzd  !3.468e1
+    real, parameter :: lx = lxu-lxd
+    real, parameter :: ly = lyu-lyd
+    real, parameter :: lz = lzu-lzd
+
+    real, parameter :: vy_max = 1.0e0 !0.2
+    real, parameter :: vy_min = vy_max*0.4 !0.1*4./9.
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad  = 2
     integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 30
-    integer, parameter :: ny = 30
-    integer, parameter :: nz = 1
+    integer, parameter :: nx = 10
+    integer, parameter :: ny = 10
+    integer, parameter :: nz = 10
 
     ! Set number of MPI domains per spatial dimension
     integer :: mpi_nx = 4
@@ -26,15 +36,15 @@ module input
     character(*), parameter :: iname = 'heun'
 
     ! Fluctuating hydrodynamics
-    logical, parameter :: llns = .false.
+    logical, parameter :: llns = .true.
 
     ! Initial conditions
     ! character(*), parameter :: icname = ''
-    integer, parameter :: icid = 0
+    integer, parameter :: icid = 10
 
     ! Boundary conditions
-    character(*), parameter :: xlobc = 'periodic'
-    character(*), parameter :: xhibc = 'periodic'
+    character(*), parameter :: xlobc = 'mwall'
+    character(*), parameter :: xhibc = 'mwall'
     character(*), parameter :: ylobc = 'periodic'
     character(*), parameter :: yhibc = 'periodic'
     character(*), parameter :: zlobc = 'periodic'
@@ -44,7 +54,7 @@ module input
     real, parameter :: tf = 1.0e2
 
     ! Console output frequency
-    integer, parameter :: ntout = 200
+    integer, parameter :: ntout = 100
 
     ! Riemann solver
     logical, parameter :: ihllc = .true.
@@ -55,8 +65,8 @@ module input
     integer, parameter :: ieos = 1
 
     ! Thermodynamic, constitutive, and transport parameters
-    real, parameter :: TK     = 30.0     ! in Kelvin
-    real, parameter :: mu     = 22.0     ! AMU per molecule
+    real, parameter :: TK     = 94.4     ! in Kelvin
+    real, parameter :: mu     = 39.948   ! AMU per molecule
     real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
     real, parameter :: clt    = 2.0      ! numerical speed of sound
 
@@ -65,12 +75,12 @@ module input
     !   * 1 for semi-implicit integration of stress terms
     !   * 2 for full 10-moment formulation (NOTE: not finished!)
     integer, parameter :: ivis = 1
-    real, parameter    :: eta  = 1.e-5   ! dynamic viscosity
-    real, parameter    :: zeta = 1.e-5   ! bulk viscosity
+    real, parameter    :: eta  = 1.0e-3   ! dynamic viscosity
+    real, parameter    :: zeta = 1.0e-3   ! bulk viscosity
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "biophest_hdjet_00"
+    character (*), parameter :: outname = "test_hac"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density

@@ -411,12 +411,12 @@ contains
         !   * dx,dy,dz, dxi,dyi,dzi
         !   * loc_lxd, loc_lyd, loc_lzd
 
-        lxd = -(lx/2.0)
-        lxu =  (lx/2.0)
-        lyd = -(ly/2.0)
-        lyu =  (ly/2.0)
-        lzd = -(lz/2.0)
-        lzu =  (lz/2.0)
+        ! lxd = -(lx/2.0)
+        ! lxu =  (lx/2.0)
+        ! lyd = -(ly/2.0)
+        ! lyu =  (ly/2.0)
+        ! lzd = -(lz/2.0)
+        ! lzu =  (lz/2.0)
 
         dxi = (nx*mpi_nx)/lx
         dyi = (ny*mpi_ny)/ly

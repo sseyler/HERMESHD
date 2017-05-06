@@ -152,6 +152,37 @@ contains
 
 
     !===========================================================================
+    ! MOVING WALL BC subroutine
+    !------------------------------------------------------------
+    subroutine xlobc_mwall(Qxlo_i, Qxlo_e)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxlo_i
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxlo_e
+        integer j,k
+        do k = 1,nz
+        do j = 1,ny
+            Qxlo_e(j,k,1:nface,:) = Qxlo_i(j,k,1:nface,:)
+            Qxlo_e(j,k,1:nface,mx) = 0.0
+            Qxlo_e(j,k,1:nface,my) = vy_min
+        end do
+        end do
+    end subroutine xlobc_mwall
+    !--------------------------------------------------------
+    subroutine xhibc_mwall(Qxhi_i, Qxhi_e)
+        real, dimension(ny,nz,nface,nQ), intent(in) :: Qxhi_i
+        real, dimension(ny,nz,nface,nQ), intent(inout) :: Qxhi_e
+        integer j,k
+        do k = 1,nz
+        do j = 1,ny
+            Qxhi_e(j,k,1:nface,:) = Qxhi_i(j,k,1:nface,:)
+            Qxhi_e(j,k,1:nface,mx) = 0.0
+            Qxhi_e(j,k,1:nface,my) = vy_max
+        end do
+        end do
+    end subroutine xhibc_mwall
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
     ! WALL BC subroutine
     !------------------------------------------------------------
     subroutine xlobc_wall(Qxlo_i, Qxlo_e)
@@ -746,14 +777,6 @@ contains
         real ux_scale
         if ( mpi_P == 1 ) then
             call apply_xlobc(Qxlo_int, Qxlo_ext)
-            ! if ( t < 0.1*tf ) then
-            !     ux_scale = 10.0*t/tf + 0.001
-            ! else
-            !     ux_scale = 1.0 + 0.001
-            ! end if
-            ! Qxlo_ext_scale(:,:,:,:) = ux_scale*Qxlo_ext_def(:,:,:,:)
-            ! call x_bc_inflow(Qxlo_int, Qxlo_ext_scale, Qxlo_ext)
-            ! call x_bc_inflow(Qxlo_int, Qxlo_ext_def, Qxlo_ext)
         end if
         if ( mpi_P == mpi_nx ) then
             call apply_xhibc(Qxhi_int, Qxhi_ext)
@@ -772,10 +795,6 @@ contains
         if ( mpi_R == mpi_nz ) then
             call apply_zhibc(Qzhi_int, Qzhi_ext)
         end if
-
-        ! if (mpi_P == 1) print *,'X velocity:'
-        ! if (mpi_P == 1) print *,Qxlo_ext(:,1,1,mx)/Qxlo_ext(:,1,1,rh)
-        ! if (mpi_P == 1) print *,''
     end subroutine apply_boundaries
     !---------------------------------------------------------------------------
 
@@ -794,6 +813,8 @@ contains
                 xlobc_ptr => xlobc_outflow
             case ('wall')
                 xlobc_ptr => xlobc_wall
+            case ('mwall')
+                xlobc_ptr => xlobc_mwall
             case ('noslip')
                 xlobc_ptr => xlobc_noslip
             case default
@@ -806,6 +827,8 @@ contains
                 xhibc_ptr => xhibc_outflow
             case ('wall')
                 xhibc_ptr => xhibc_wall
+            case ('mwall')
+                xhibc_ptr => xhibc_mwall
             case ('noslip')
                 xhibc_ptr => xhibc_noslip
             case default

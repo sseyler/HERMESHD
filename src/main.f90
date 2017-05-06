@@ -77,7 +77,7 @@ call output_vtk(Q_r0, nout, iam)
 !----------------------------------------------------------------
 do while( t < tf )
 
-    dt = get_min_dt(Q_r0)
+    dt = 1.0e-2 !get_min_dt(Q_r0)
     call update(Q_r0, Q_r1, Q_r2, dt)
     t = t + dt
 

@@ -459,54 +459,26 @@ contains
     !------------------------------------------------------------
     !
     !---------------------------------------------------------------------------
-    subroutine test_hac(Q_r, ver)
+    subroutine test_hac(Q_r)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
-        integer i,j,k, ver
-        real dn,vx,vy,vz,te,pr, rho,y1d4,y3d4,xp,yp,x0,y0, rand_num,rnum,beta
+        integer i,j,k
+        real dn,vx,vy,vz,te,pr
 
         call init_random_seed(iam, 123456789)
 
-        rho = 1.0          ! ambient density
-        te = T_floor       ! ambient temperature
+        dn = 1.0          ! ambient density
+        te = T_base       ! ambient temperature
         vx = 0.0           ! ambient x-velocity  1.0/aindex**0.5
-        vy = 0.0
         vz = 0.0            ! ambient z-velocity
-        nu    = rho*te/eta  ! global
-        nueta = rho*te      ! pr = nu*eta  (also global)
-
-        beta = 0.0e-2
-        x0 = 0
-        y0 = lyd + 0.3*ly
-        y1d4 = lyd + 0.25*ly
-        y3d4 = lyd + 0.75*ly
+        nu    = dn*te/eta  ! global
+        nueta = dn*te      ! pr = nu*eta  (also global)
 
         do k = 1,nz
         do j = 1,ny
         do i = 1,nx
-            call random_number(rand_num)
-            rnum = 0 !(rand_num - 0.5)
-
-            xp = xc(i)
-            yp = yc(j)
-            if (ver == 0) then
-                dn = rho
-            else if (ver == 1) then
-                dn = 0.25*rho*(yp - lyd)/ly + rho*(lyu - yp)/ly
-                ! if (yp <= y0) then
-                !     dn = 1.0*(rho + beta*rnum)
-                ! else
-                !     dn = 0.25*(rho + beta*rnum)
-                ! end if
-            else if (ver == 2) then
-                if (yp <= y1d4 .or. yp > y3d4) then
-                    dn = 1.0*(rho + beta*rnum)
-                else
-                    dn = 0.5*(rho + beta*rnum)
-                end if
-            end if
-
-            pr = dn*te - dn*gr*(yp - lyd)  ! maintain hydrostatic pressure
+            vy = vy_min + (vy_max - vy_min)/lx * (xc(i) - lxd)
+            pr = dn*te
 
             Q_r(i,j,k,rh,1) = dn
             Q_r(i,j,k,mx,1) = dn*vx
