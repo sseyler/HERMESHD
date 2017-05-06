@@ -22,7 +22,7 @@ dx = 10.0  # HD cell size in Angstroms
 zeta_bare = 1.0  # bare friction coefficient
 zeta_eff = 1./zeta_bare + 1/(g*eta*dx)
 
-te_init = 50.0
+te_init = 30.0
 te_sim  = 94.4
 pr_init = 1.0
 pr_sim  = 1.0
@@ -38,38 +38,28 @@ nout   = 100      # output frequency
 
 mass = 39.948
 La = 6.0       # lattice spacing in A
-L  = 30.0    #34.68     #78.45  # length of single box dimension in A
+L  = 34.68     #78.45  # length of single box dimension in A
 Lx = L*(5.0/3.0)
-Ly = Lz = L
-
-Lxu = Lx/2.0
-Lyu = Ly/2.0
-Lzu = Lz/2.0
-Lxd = -Lx/2.0
-Lyd = -Ly/2.0
-Lzd = -Lz/2.0
-
-xxu = Lxu/La
-yyu = Lyu/La
-zzu = Lzu/La
-xxd = Lxd/La
-yyd = Lyd/La
-zzd = Lzd/La
+Ly = L
+Lz = L
+################################
+x  = 1.0/La
+y  = 1.0/La
+z  = 1.0/La
+xx = Lx*x
+yy = Ly*y
+zz = Lz*z
 
 bdx = Lx/5.0  # buffer dx (width of each buffer slab)
 # x-direction
-lb_lo = Lxd
-lb_hi = Lxd + bdx
-rb_lo = Lxu - bdx
-rb_hi = Lxu
+llo = 0.0
+lhi = llo + bdx
+rhi = Lx
+rlo = rhi - bdx
 
-LJe = 0.23748
-LJs = 3.4
-LJc = 12.0
-
-LJWe = 0.5*LJe
-LJWs = 1.0*LJs
-LJWc = 3.0*LJc
+lje = 0.23748
+ljs = 3.4
+ljcut = 12.0
 ################################
 
 # frequencies for taking averages for buffer region particles
@@ -77,8 +67,6 @@ neve, nrep, nfre = 2, 5, 10   # avg over every 2 steps, 5 times (over 10 total s
 
 # Output files of particles in buffer region for
 #  DENSITY
-rh_s_file = "{}/rh.sim".format(datdir)
-
 rh_l_file = "{}/rh.lbuffer".format(datdir)
 rh_r_file = "{}/rh.rbuffer".format(datdir)
 #  VELOCITY
@@ -103,12 +91,14 @@ def setup(lmp):
     lmp.command("newton on")
 
     lmp = create_box(lmp)
+    lmp = init_positions(lmp)
 
-    lmp.command("pair_style  lj/cut {}".format(LJc))
-    lmp.command("pair_coeff  1 1 {} {} {}".format(LJe, LJs, LJc))
+    lmp.command("pair_style  lj/cut {}".format(ljcut))
+    lmp.command("pair_coeff  1 1 {} {} {}".format(lje, ljs, ljcut))
     lmp.command("pair_modify shift yes")
     lmp.command("neighbor     3.0 bin")
     lmp.command("neigh_modify delay 0 every 20 check no")
+
     lmp.command("thermo_style multi")
 
     # WARN: LAMMPS claims the system must be init before write_dump can be used...
@@ -124,50 +114,51 @@ def create_box(lmp):
     lmp.command("atom_modify  map hash")
     lmp.command("lattice      fcc {}".format(La))
 
-    lmp.command("region simreg block {} {} {} {} {} {} units box".format(Lxd-LJWs,Lxu+LJWs,Lyd,Lyu,Lzd,Lzu))
-    lmp.command("region latreg block {} {} {} {} {} {} units lattice".format(xxd,xxu,yyd,yyu,zzd, zzu))
-    lmp.command("create_box   1 simreg")
-    lmp.command("create_atoms 1 region latreg units box")
+    lmp.command("region rid_wall block {} {} {} {} {} {} units box".format(-0.25*ljs, Lx+0.25*ljs, 0.0, Ly, 0.0, Lz))
+    lmp.command("region mybox block 0 {} 0 {} 0 {}".format(xx, yy, zz))
+    lmp.command("create_box   1 rid_wall")
+    return lmp
+
+
+def init_positions(lmp):
+    lmp.command("create_atoms 1 region mybox units box")
     lmp.command("mass  1 {}".format(mass))
     return lmp
 
 
 def init_velocities(lmp):
-    lmp.command("velocity all create {} 87287 loop geom".format(te_init))
+    lmp.command("velocity all create {} 87287 loop geom".format(0.1*te_sim))
     return lmp
 
 
 def setup_buffer(lmp):
     # STEP 1: Define a "chunk" of atoms with an implicit buffer region
-    lmp.command("compute cid_left  all chunk/atom bin/1d x {} {} discard yes bound x {} {} units box".format(lb_lo, bdx, lb_lo, lb_hi))
-    lmp.command("compute cid_right all chunk/atom bin/1d x {} {} discard yes bound x {} {} units box".format(rb_lo, bdx, rb_lo, rb_hi))
-    # STEP 2a: Use the pre-defined "chunk" from step 1 to compute an average DENSITY
+    lmp.command("compute cid_left  all chunk/atom bin/1d x {} {} discard yes bound x 0.0 0.2 units reduced".format("lower", 0.2))
+    lmp.command("compute cid_right all chunk/atom bin/1d x {} {} discard yes bound x 0.8 1.0 units reduced".format(0.8, 0.2))
+
+    # STEP 2: Use the pre-defined "chunk" from step 1 to compute an average
+    # DENSITY
     lmp.command("fix rh_left  all ave/chunk {} {} {} cid_left  density/mass norm sample ave one file {}".format(neve, nrep, nfre, rh_l_file))
     lmp.command("fix rh_right all ave/chunk {} {} {} cid_right density/mass norm sample ave one file {}".format(neve, nrep, nfre, rh_r_file))
-    # STEP 2b: Use the pre-defined "chunk" from step 1 to compute average VELOCITIES
+    # VELOCITIES
     lmp.command("fix ux_left  all ave/chunk {} {} {} cid_left  vx norm sample ave one file {}".format(neve, nrep, nfre, ux_l_file))
     lmp.command("fix ux_right all ave/chunk {} {} {} cid_right vx norm sample ave one file {}".format(neve, nrep, nfre, ux_r_file))
     lmp.command("fix uy_left  all ave/chunk {} {} {} cid_left  vy norm sample ave one file {}".format(neve, nrep, nfre, uy_l_file))
     lmp.command("fix uy_right all ave/chunk {} {} {} cid_right vy norm sample ave one file {}".format(neve, nrep, nfre, uy_r_file))
     lmp.command("fix uz_left  all ave/chunk {} {} {} cid_left  vz norm sample ave one file {}".format(neve, nrep, nfre, uz_l_file))
     lmp.command("fix uz_right all ave/chunk {} {} {} cid_right vz norm sample ave one file {}".format(neve, nrep, nfre, uz_r_file))
-    # STEP 2c: Use the pre-defined "chunk" from step 1 to compute an average TEMPERATURE (OR PRESSURE)
+    # TEMPERATURE (OR PRESSURE)
     lmp.command("compute te_left_t  all temp/chunk cid_left  temp com yes")
     lmp.command("compute te_right_t all temp/chunk cid_right temp com yes")
     lmp.command("fix te_left  all ave/time {} {} {} c_te_left_t  ave one file {}".format(neve, nrep, nfre, te_l_file))
     lmp.command("fix te_right all ave/time {} {} {} c_te_right_t ave one file {}".format(neve, nrep, nfre, te_r_file))
-    return lmp
 
-
-def setup_md_region(lmp):
-    lmp.command("compute cid_sim all chunk/atom bin/1d x {} {} discard yes bound x {} {} units box".format(lb_hi, 3*bdx, lb_hi, rb_lo))
-    lmp.command("fix rh_sim  all ave/chunk {} {} {} cid_sim density/mass norm sample ave one file {}".format(neve, nrep, nfre, rh_s_file))
     return lmp
 
 
 def setup_wall(lmp):
-    lmp.command("fix wall_xlo all wall/lj126 xlo {} {} {} {} units box".format(Lxd-LJWs, LJWe, LJWs, LJWc))
-    lmp.command("fix wall_xhi all wall/lj126 xhi {} {} {} {} units box".format(Lxu+LJWs, LJWe, LJWs, LJWc))
+    lmp.command("fix wall_xlo all wall/lj126 xlo {} {} {} {} units box".format(-0.25*ljs, 0.1*lje, 0.5*ljs, 1.0*ljs))
+    lmp.command("fix wall_xhi all wall/lj126 xhi {} {} {} {} units box".format(Lx+0.25*ljs, 0.1*lje, 0.5*ljs, 1.0*ljs))
     return lmp
 
 
@@ -185,6 +176,7 @@ def minimize(lmp, style='cg'):
     lmp.command("minimize   0.0 0.0 {} {}".format(nmin, 100*nmin))
     lmp.command("write_dump all xyz {}/em_{}.xyz".format(datdir, bname))
     xyz_to_pdb("{}/em_{}.xyz".format(datdir, bname))
+
     lmp.command("undump emin")
     return lmp
 
@@ -199,8 +191,22 @@ def equilibrate(lmp, te_i, te_f):
     lmp.command("run      10000")
     lmp.command("write_dump all xyz {}/eq1_{}.xyz".format(datdir, bname))
     xyz_to_pdb("{}/eq1_{}.xyz".format(datdir, bname))
+
     lmp.command("unfix 1")
     lmp.command("undump eq1")
+
+    # print_mpi(">>> NVT equilibration for 10000 steps...")
+    # lmp.command("thermo   100")
+    # lmp.command("timestep 5.0")
+    # lmp.command("fix      1 all nvt temp {} {} 100.0 tchain 1".format(te_f, te_f))
+    # lmp.command("dump     eq2 all dcd {} {}/eq2_{}.dcd".format(100, datdir, bname))
+    #
+    # lmp.command("run      10000")
+    # lmp.command("write_dump all xyz {}/eq2_{}.xyz".format(datdir, bname))
+    # xyz_to_pdb("{}/eq2_{}.xyz".format(datdir, bname))
+    #
+    # lmp.command("unfix 1")
+    # lmp.command("undump eq2")
     return lmp
 
 
@@ -209,6 +215,7 @@ def run_lammps(lmp, nstep, dt=dt_md, nout=nout):
     lmp.command("thermo   {}".format(nout))
     lmp.command("timestep {}".format(dt))
     lmp.command("fix      1 all nve")
+    # lmp.command("dump     run all dcd {} {}/md_{}.dcd".format(nout, datdir, bname))
 
     lmp.command("run      {}".format(nstep))
     # lmp.command("write_dump all xyz {}/md_{}.xyz".format(datdir, bname))
@@ -239,7 +246,7 @@ def read(argv):
 def xyz_to_pdb(xyzfile):
     import MDAnalysis as mda
     u = mda.Universe(xyzfile)
-    u.dimensions = np.array([Lx+2*LJWs, Ly, Lz, 90.00, 90.00, 90.00])
+    u.dimensions = np.array([Lx, Ly, Lz, 90.00, 90.00, 90.00])
     u.atoms.write(os.path.splitext(xyzfile)[0] + '.pdb')
 
 
@@ -247,24 +254,67 @@ def print_mpi(msg, iam=iam, print_id=0):
     if (iam == print_id): print(msg)
 
 
+
+def add_positions(x_md, atom_ids, dx, dy, dz):
+    for aid in atom_ids:
+        add_position(x_md, aid, dx, dy, dz)
+
+def add_velocities(v_md, atom_ids, dvx, dvy, dvz):
+    for aid in atom_ids:
+        add_force(v_md, aid, dvx, dvy, dvz)
+
+def add_forces(f_md, atom_ids, dfx, dfy, dfz):
+    for aid in atom_ids:
+        add_force(f_md, aid, dfx, dfy, dfz)
+
+def add_position(x_md, aid, dxx, dxy, dxz):
+    x_md[aid][0] += dx
+    x_md[aid][1] += dy
+    x_md[aid][2] += dz
+
+def add_velocity(v_md, aid, dvx, dvy, dvz):
+    v_md[aid][0] += dvx
+    v_md[aid][1] += dvy
+    v_md[aid][2] += dvz
+
+def add_force(f_md, aid, dfx, dfy, dfz):
+    f_md[aid][0] += dfx
+    f_md[aid][1] += dfy
+    f_md[aid][2] += dfz
+
+def fluid_force_v0(f_md, v_md, u_f, atom_ids, zeta=zeta_bare, temp=te_sim):
+    # 8.3144598e-3  # gas constant in kJ/mol
+    kT_lmp_units = 1.9872036e-3 * temp  # gas constant in kcal/mol
+    sigma = np.sqrt(2*kT_lmp_units*zeta)
+    fs = np.random.normal( loc=0.0, scale=sigma, size=(len(atom_ids), 3) )
+    for i, aid in enumerate(atom_ids):
+        f_md[aid][0] += -zeta*(v_md[aid][0] - u_f[0]) + fs[i,0]
+        f_md[aid][1] += -zeta*(v_md[aid][1] - u_f[1]) + fs[i,1]
+        f_md[aid][2] += -zeta*(v_md[aid][2] - u_f[2]) + fs[i,2]
+
+# Return a list of atom ids for atoms in buffer defined by blo to bhi (x-direction for now)
+def get_buffer_atomids(x_md, atom_ids, xlo, xhi):#, ylo, yhi, zlo, zhi):
+    return [aid for aid in atom_ids if x_md[aid][0] >= xlo and x_md[aid][0] < xhi]
+
+
 if __name__ == "__main__":
+    # from ctypes import *
+
     lmp = lammps()
     lmp = setup(lmp)
-    lmp = setup_wall(lmp)
+    # lmp = setup_wall(lmp)
     lmp = setup_buffer(lmp)
-    lmp = setup_md_region(lmp)
     lmp = init_velocities(lmp)
     # lmp = minimize(lmp)
-    lmp = equilibrate(lmp, te_init, te_sim)
-
+    lmp = equilibrate(lmp, te_init, te_init)
     ################################
+
     lmp.command("dump     run all dcd {} {}/md_{}.dcd".format(n_md, datdir, bname))
     lmp.command("dump_modify run pbc yes")
 
-    lmp.command("variable dt equal {}".format(dt_md))
-    lmp.command("variable zeta  equal {}".format(0.1))
+    lmp.command("variable zeta  equal {}".format(zeta_bare))
     lmp.command("variable kt    equal {}".format(1.9872036e-3*te_sim))  # gas constant in kcal/mol
-    lmp.command("variable sigma equal sqrt(2*v_kt*v_zeta/v_dt)")
+    lmp.command("variable sigma equal sqrt(2*v_kt*v_zeta)")
     lmp.command("variable ux equal 0.0")
     lmp.command("variable uy equal 0.01")
     lmp.command("variable uz equal 0.0")
@@ -272,13 +322,47 @@ if __name__ == "__main__":
     lmp.command("variable hfy atom \"-v_zeta*(vy - v_uy) + normal(0.0, v_sigma, {})\"".format(seed))
     lmp.command("variable hfz atom \"-v_zeta*(vz - v_uz) + normal(0.0, v_sigma, {})\"".format(seed))
 
+    # natoms = lmp.get_natoms()  # lmp.extract_global("natoms",0)
+    # local_atom_ids = range(natoms)
+
+    # Pointers to pos/vel/force arrays in LAMMPS for atoms local to THIS proc
+    # x_md = lmp.extract_atom("x", 3)
+    # v_md = lmp.extract_atom("v", 3)
+    # f_md = lmp.extract_atom("f", 3)
+    # print_mpi('>>> v_md[0]: {:7.5f} {:7.5f} {:7.5f}'.format(v_md[0][0], v_md[0][1], v_md[0][2]))
+
     ### Run #######################
-    lmp.command("region  rid_left  block {} {} {} {} {} {} units box".format(lb_lo, lb_hi, Lyd, Lyu, Lzd, Lzu))
-    lmp.command("region  rid_right block {} {} {} {} {} {} units box".format(rb_lo, rb_hi, Lyd, Lyu, Lzd, Lzu))
+
+    lmp.command("region  rid_left  block {} {} {} {} {} {} units box".format(0.0,  Lx/5, 0.0, Ly, 0.0, Lz))
+    lmp.command("region  rid_right block {} {} {} {} {} {} units box".format(4*Lx/5, Lx, 0.0, Ly, 0.0, Lz))
     # lmp.command("group lbuff dynamic all region rid_left  every {}".format(n_md))
     # lmp.command("group rbuff dynamic all region rid_right every {}".format(n_md))
+    # lmp.command("fix lange_left  lbuff  langevin {} {} {} 12345".format(te_sim, te_sim, mass/zeta_bare))
+    # lmp.command("fix lange_right rbuff langevin {} {} {} 12345".format(te_sim, te_sim, mass/zeta_bare))
+
     # lmp.command("fix hf_left  lbuff addforce v_hfx v_hfy v_hfz every 1 region rid_left")
     lmp.command("fix hf_right all addforce v_hfx v_hfy v_hfz every 1 region rid_right")
 
+    u_lbuf = np.array([0.0, 0.0, 0.0])
+    u_rbuf = np.array([0.0, 0.1, 0.0])
+
     for i in xrange(1):
         lmp = run_lammps(lmp, 10000, dt=dt_md, nout=100)
+
+        # lbuff_atomids = get_buffer_atomids(x_md, local_atom_ids, llo, lhi)
+        # rbuff_atomids = get_buffer_atomids(x_md, local_atom_ids, rlo, rhi)
+        # print '>>> lbuff_atomids for rank {}: '.format(iam), lbuff_atomids
+        # print '>>> rbuff_atomids for rank {}: '.format(iam), rbuff_atomids
+
+        # if lbuff_atomids:
+        #     # v_md = lmp.extract_atom("v", 3)
+        #     # f_md = lmp.extract_atom("f", 3)
+        #     fluid_force_v0(f_md, v_md, u_lbuf, lbuff_atomids, zeta=zeta_bare, temp=te_sim)
+        # if rbuff_atomids:
+        #     avgforce = np.mean([f_md[i][1] for i in rbuff_atomids])
+        #     print '>>> avgforce before: {}'.format(avgforce)
+        #     # v_md = lmp.extract_atom("v", 3)
+        #     # f_md = lmp.extract_atom("f", 3)
+        #     fluid_force_v0(f_md, v_md, u_rbuf, rbuff_atomids, zeta=zeta_bare, temp=te_sim)
+        #     avgforce = np.mean([f_md[i][1] for i in rbuff_atomids])
+        #     print '>>> avgforce after: {}'.format(avgforce)

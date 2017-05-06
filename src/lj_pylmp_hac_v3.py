@@ -12,7 +12,7 @@ iam = comm.Get_rank()
 
 seed = 12345
 
-bname  = "lj_pylmp_hac"  # base name of simulation files
+bname  = "lj_pylmp_hac_v3"  # base name of simulation files
 datdir = "data/{}_test".format(bname)    # name of output data directory
 
 ### Vars #######################
@@ -248,6 +248,8 @@ def print_mpi(msg, iam=iam, print_id=0):
 
 
 if __name__ == "__main__":
+    # from ctypes import *
+
     lmp = lammps()
     lmp = setup(lmp)
     lmp = setup_wall(lmp)
@@ -266,7 +268,7 @@ if __name__ == "__main__":
     lmp.command("variable kt    equal {}".format(1.9872036e-3*te_sim))  # gas constant in kcal/mol
     lmp.command("variable sigma equal sqrt(2*v_kt*v_zeta/v_dt)")
     lmp.command("variable ux equal 0.0")
-    lmp.command("variable uy equal 0.01")
+    lmp.command("variable uy equal 0.1")
     lmp.command("variable uz equal 0.0")
     lmp.command("variable hfx atom \"-v_zeta*(vx - v_ux) + normal(0.0, v_sigma, {})\"".format(seed))
     lmp.command("variable hfy atom \"-v_zeta*(vy - v_uy) + normal(0.0, v_sigma, {})\"".format(seed))
