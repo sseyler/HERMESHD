@@ -29,7 +29,7 @@ fcomm = MPI.COMM_WORLD.py2f()
 dt_md = 10.0    # from lj_pylmp_hac  in fs
 dt_hd = 1.0e-2  # In ps
 
-nstep_md = 10000
+nstep_md = 100
 nstep_hd = n_md/(dt_hd*1e3/dt_md)
 #------------------------------------------------------------------------------
 
@@ -70,17 +70,18 @@ if __name__ == "__main__":
     lmp.command("variable zc atom z ")
 
     ### HERMESHD ################################
-    setup(Qio, t, dt, t1, t_start, dtout, nout, fcomm)
+    dt = np.array(1.0e-2, dtype=float)
+    hermeshd.hermeshd.setup(Qio, t, dt, t1, t_start, dtout, nout, fcomm)
     dt_hd = np.array(dt_hd, dtype=float)
 
     for step in xrange(nstep_md):
         # LAMMPS
-        lmp = run_lammps(lmp, 1, dt=dt_md, nout=100)
+        lmp = run_lammps(lmp, 10, dt=dt_md, nout=100)
 
         # HERMES
-        run_hermes(1, Qio, Q1, Q2, t, dt_hd, dtout, nout)
+        run_hermes(10, Qio, Q1, Q2, t, dt_hd, t1, dtout, nout)
         # Get velocities in buffer from Qio
         # Set velocity variables using the LAMMPS command
 
 
-    cleanup(t_start)
+    hermeshd.hermeshd.cleanup(t_start)

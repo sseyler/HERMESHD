@@ -1,13 +1,20 @@
 #!/usr/bin/python
 
 from mpi4py import MPI
+import numpy as np
+
+import hermeshd
 
 # Alias the Fortran subroutines
-main = hermeshd.hermeshd.main
-setup = hermeshd.hermeshd.setup
-step = hermeshd.hermeshd.step
-generate_output = hermeshd.hermeshd.generate_output
-cleanup = hermeshd.hermeshd.cleanup
+# main = hermeshd.hermeshd.main
+# setup = hermeshd.hermeshd.setup
+# step = hermeshd.hermeshd.step
+# generate_output = hermeshd.hermeshd.generate_output
+# cleanup = hermeshd.hermeshd.cleanup
+
+xc = hermeshd.spatial.xc
+yc = hermeshd.spatial.yc
+zc = hermeshd.spatial.zc
 
 # Instantiate some global parameters
 nx, ny, nz = 5, 5, 5
@@ -31,5 +38,5 @@ nout    = np.array(0,   dtype=int)  # works w/ np.int32 and None
 
 def run_hermes(nstep_hd, Qio, Q1, Q2, t, dt, t1, dtout, nout):
     for i in xrange(nstep_hd):
-        step(Qio, Q1, Q2, t, dt)
-        generate_output(Qio, t, dt, t1, dtout, nout)
+        hermeshd.hermeshd.step(Qio, Q1, Q2, t, dt)
+        hermeshd.hermeshd.generate_output(Qio, t, dt, t1, dtout, nout)
