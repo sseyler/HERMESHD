@@ -77,7 +77,7 @@ call output_vtk(Q_r0, nout, iam)
 !----------------------------------------------------------------
 do while( t < tf )
 
-    dt = 1.0e-2 !get_min_dt(Q_r0)
+    dt = 0.01 !get_min_dt(Q_r0)  WARNING, this is a HACK
     call update(Q_r0, Q_r1, Q_r2, dt)
     t = t + dt
 
@@ -146,7 +146,7 @@ contains
             nout = nout + 1
             if (iam == print_mpi) then
                 print *, 'nout = ', nout
-                print *, '   t = ',t*100.,'         dt= ',dt
+                print *, '   t = ',t,'         dt= ',dt
                 t2 = get_clock_time()
                 print *, '  >> Iteration time', (t2-t1), 'seconds'
                 t1 = t2

@@ -12,9 +12,10 @@ real, dimension(nx,ny,nz,nQ,nbasis) :: source_r
 
 contains
 
-    subroutine source_calc(Q_io)
+    subroutine source_calc(Q_io, dt)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
+        real, intent(inout) :: dt
 
         real, dimension(npg,nQ) :: source
         real, dimension(nQ) :: Qin

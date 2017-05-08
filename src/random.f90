@@ -7,6 +7,7 @@ module random
 use MKL_VSL_TYPE
 use MKL_VSL
 
+use helpers
 use params
 use spatial
 use timestep
@@ -96,11 +97,13 @@ contains
 
 
 !-------------------------------------------------------------------------------
-    subroutine get_region_Sflux_xyz(Sflux_x, Sflux_y, Sflux_z)
+    subroutine get_region_Sflux_xyz(Sflux_x, Sflux_y, Sflux_z, dt)
         implicit none
         real, dimension(npts_llns, 1:nx+1, ny,     nz,     3,3), intent(out) :: Sflux_x
         real, dimension(npts_llns, nx,     1:ny+1, nz,     3,3), intent(out) :: Sflux_y
         real, dimension(npts_llns, nx,     ny,     1:nz+1, 3,3), intent(out) :: Sflux_z
+
+        real, intent(inout) :: dt
 
         real, dimension(npts_llns, 1:nx+1, ny,     nz,     3,3) :: GRM_x
         real, dimension(npts_llns, nx,     1:ny+1, nz,     3,3) :: GRM_y
@@ -148,7 +151,7 @@ contains
             enddo
         enddo
         enddo
-        end do
+        enddo
 
         do k=1,nz
         do j=1,ny+1
@@ -179,7 +182,7 @@ contains
             enddo
         enddo
         enddo
-        end do
+        enddo
 
         do k=1,nz+1
         do j=1,ny
@@ -210,7 +213,7 @@ contains
             enddo
         enddo
         enddo
-        end do
+        enddo
 
     end subroutine get_region_Sflux_xyz
 !-------------------------------------------------------------------------------

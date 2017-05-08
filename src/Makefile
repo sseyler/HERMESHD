@@ -73,20 +73,19 @@ MODFILES = 	LIB_VTK_IO.mod mkl_vsl_type.mod mkl_vsl.mod input.mod params.mod \
 # Sod Shock Tube 1D for development code
 #********************************************
 # ifndef (VERS)
-# 	VERS = pymkl
+# 	VERS = py
 # endif
 
-ifeq ($(VERS),pymkl)
+ifeq ($(VERS),py)
 	EXEC    = hermes
 	NAME    = hermeshd
 	SRC     = $(NAME).f90
 	F90WRAPSRC = f90wrap_$(NAME).f90
 
 	PYMAIN    = test_$(NAME).py
-	PYSOD     = test_sod.py
 	PYWRAPSRC = $(NAME).py
 	PYSHARED  = _$(NAME).so
-	PYOBJS    = $(PYMAIN) $(PYWRAPSRC) $(PYSHARED) $(PYSOD)
+	PYOBJS    = $(PYMAIN) $(PYWRAPSRC) $(PYSHARED)
 	# PYRUN = $(patsubst %, $(RUNDIR)/%, $(PYOBJS))
 
 	OBJFILES = $(MODSRC:.f90=.o) $(NAME).o  # Get list of object files to be produced
@@ -138,10 +137,12 @@ cp-src: $(MODSRC) $(SRC) | $(BUILDDIR)
 	cp $(MODSRC) $(SRC) $(BUILDDIR)
 
 
-#-----------------------------------------------------------------
+################################################################################
 # Python recipes
 #-----------------------------------------------------------------
-pyall: wrap pycompile pybuild
+pyall: pywrap pycompile pybuild
+
+pyall-hac: pywrap-hac pycompile-hac pybuild-hac
 
 pyrun: cp-py-run
 	@echo "$(LINE2N) Running $(PYMAIN)... $(LINE1N)"
@@ -151,7 +152,7 @@ pyrun: cp-py-run
 pybuild: $(patsubst %, $(BUILDDIR)/%, $(OBJFILES)) $(BUILDDIR)/$(F90WRAPSRC)
 	@echo $(STAGE3)
 	cd $(BUILDDIR) && f2py-f90wrap --f90exec=$(MPIF90) --opt="-O2"				\
-		--f90flags="-fc=ifort $(F90FLAGS)" -c -m _$(NAME) $(OBJFILES) $(F90WRAPSRC)				\
+		--f90flags="-fc=$(F90) $(F90FLAGS)" -c -m _$(NAME) $(OBJFILES) $(F90WRAPSRC)			\
 		-L$(MKLPATH) -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_vml_avx
 	@echo "\nStage 3 completed. $(LINE1N)"
 
@@ -162,7 +163,20 @@ pybuild-lib: $(patsubst %, $(BUILDDIR)/%, $(OBJFILES)) $(BUILDDIR)/$(F90WRAPSRC)
 		-L. -lhermeshd -L$(MKLPATH) -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_vml_avx
 	@echo "\nStage 3 completed. $(LINE1N)"
 
+pybuild-hac: $(patsubst %, $(BUILDDIR)/%, $(OBJFILES)) $(BUILDDIR)/$(F90WRAPSRC) $(BUILDDIR)/f90wrap_spatial.f90
+	@echo $(STAGE3)
+	cd $(BUILDDIR) && f2py-f90wrap --f90exec=$(MPIF90) --opt="-O2"				\
+		--f90flags="-fc=$(F90) $(F90FLAGS)" -c -m _$(NAME) $(OBJFILES) $(F90WRAPSRC) f90wrap_spatial.f90			\
+		-L$(MKLPATH) -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_vml_avx
+	@echo "\nStage 3 completed. $(LINE1N)"
+
 pycompile: cp-py-bld cp-src
+	@echo $(STAGE2)
+	cd $(BUILDDIR) && $(MPIF90) $(F90FLAGS) -fc=$(F90) -c -fPIC $(MODSRC) $(SRC)
+	@echo "\nStage 2 completed. $(LINE1N)"
+	@echo $(OBJFILES)
+
+pycompile-hac: cp-py-bld-hac cp-src
 	@echo $(STAGE2)
 	cd $(BUILDDIR) && $(MPIF90) $(F90FLAGS) -fc=$(F90) -c -fPIC $(MODSRC) $(SRC)
 	@echo "\nStage 2 completed. $(LINE1N)"
@@ -173,9 +187,18 @@ pywrap:
 	f90wrap -m $(NAME) $(SRC) --only main setup step cleanup generate_output
 	@echo "\nStage 1 completed. $(LINE1N)"
 
+pywrap-hac:
+	@echo $(STAGE1)
+	f90wrap -m $(NAME) $(SRC) spatial.f90 --only main setup step cleanup generate_output xc yc zc
+	@echo "\nStage 1 completed. $(LINE1N)"
+
 cp-py-bld: $(F90WRAPSRC) | $(BUILDDIR)
 	@echo "\n>>> Copying Python files to build directory..."
-	cp $(F90WRAPSRC) $(PYWRAPSRC) $(PYMAIN) $(PYSOD) $(BUILDDIR)
+	cp $(F90WRAPSRC) $(PYWRAPSRC) $(PYMAIN) $(BUILDDIR)
+
+cp-py-bld-hac: $(F90WRAPSRC) | $(BUILDDIR)
+	@echo "\n>>> Copying Python files to build directory..."
+	cp $(F90WRAPSRC) f90wrap_spatial.f90 $(PYWRAPSRC) $(PYMAIN) $(BUILDDIR)
 
 cp-py-run:
 	@echo "\n>>> Copying Python files to run directory..."

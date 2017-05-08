@@ -31,7 +31,8 @@ contains
     !------------------------------------------------------------
     subroutine initializer(t, dt, nout, comm)
         implicit none
-        real, intent(out) :: t, dt
+        real, intent(out) :: t
+        real, intent(inout) :: dt
         integer, intent(out) :: nout
 
         integer :: comm
@@ -367,13 +368,13 @@ contains
         end if
         reorder = 1
 
-        call MPI_CART_CREATE(MPI_COMM_WORLD, 3, dims, periods, reorder,cartcomm, ierr)
-        call MPI_COMM_RANK (cartcomm, iam, ierr )
+        call MPI_CART_CREATE(comm, 3, dims, periods, reorder, cartcomm, ierr)
+        call MPI_COMM_RANK(cartcomm, iam, ierr )
         call MPI_CART_COORDS(cartcomm, iam, 3, coords, ierr)
 
-        call MPI_CART_SHIFT(cartcomm, 0, 1, nbrs(WEST), nbrs(EAST), ierr)
+        call MPI_CART_SHIFT(cartcomm, 0, 1, nbrs(WEST),  nbrs(EAST),  ierr)
         call MPI_CART_SHIFT(cartcomm, 1, 1, nbrs(SOUTH), nbrs(NORTH), ierr)
-        call MPI_CART_SHIFT(cartcomm, 2, 1, nbrs(DOWN), nbrs(UP), ierr)
+        call MPI_CART_SHIFT(cartcomm, 2, 1, nbrs(DOWN),  nbrs(UP),    ierr)
 
         mpi_P = coords(1) + 1
         mpi_Q = coords(2) + 1
@@ -411,6 +412,7 @@ contains
         !   * dx,dy,dz, dxi,dyi,dzi
         !   * loc_lxd, loc_lyd, loc_lzd
 
+        ! WARNING: this is only uncommented for testing the Couette flow hybrid sim
         ! lxd = -(lx/2.0)
         ! lxu =  (lx/2.0)
         ! lyd = -(ly/2.0)
@@ -435,7 +437,8 @@ contains
     !===========================================================================
     subroutine init_temporal_params(t, dt, nout)
         implicit none
-        real, intent(out) :: t, dt
+        real, intent(out) :: t
+        real, intent(inout) :: dt
         integer, intent(out) :: nout
         ! NOTE: USES the following global parameters
         !   * dx (set by init_spatial_params)
@@ -444,7 +447,7 @@ contains
         ! NOTE: SETS the following global parameters
         !   * t, dt, nout
         t = 0.0
-        dt = cflm*dx/clt
+        if (dt == 0) dt = cflm*dx/clt
         nout = 0
     end subroutine init_temporal_params
     !---------------------------------------------------------------------------

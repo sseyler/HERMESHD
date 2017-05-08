@@ -6,7 +6,7 @@ import numpy as np
 from mpi4py import MPI
 
 from lammps import lammps
-from lj_pylmp_hac import *
+from lj_lammps_hac import *
 
 import hermeshd
 from lj_hermes_hac import *
@@ -65,8 +65,11 @@ if __name__ == "__main__":
     lmp.command("region  rid_right block {} {} {} {} {} {} units box".format(rb_lo, rb_hi, Lyd, Lyu, Lzd, Lzu))
     lmp.command("fix hf_right all addforce v_hfx v_hfy v_hfz every 1 region rid_right")
 
+    lmp.command("variable xc atom x ")
+    lmp.command("variable yc atom y ")
+    lmp.command("variable zc atom z ")
+
     ### HERMESHD ################################
-    dt = np.array(0.0, dtype=float)  # temp var to initialize HERMESHD
     setup(Qio, t, dt, t1, t_start, dtout, nout, fcomm)
     dt_hd = np.array(dt_hd, dtype=float)
 

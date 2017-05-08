@@ -29,6 +29,7 @@ contains
     subroutine main(comm)
 
         integer, intent(inout) :: comm
+        integer :: nout
 
         !#############################
         ! I. SETUP
@@ -46,7 +47,7 @@ contains
         !#############################
         ! III. CLEANUP
         !-----------------------------
-        if (llns) call cleanup(t_start)
+        call cleanup(t_start)
 
     end subroutine main
     !---------------------------------------------------------------------------
@@ -59,7 +60,7 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2
         real, intent(inout) :: t, dt
 
-        dt = 1.0e-2 !get_min_dt(Q_r0)
+        dt = 0.01 !get_min_dt(Q_r0)  WARNING, this is a HACK
         call update(Q_io, Q_1, Q_2, dt)
         t = t + dt
     end subroutine step
@@ -82,6 +83,7 @@ contains
         ! 1. Initialize general simulation variables
         !-------------------------------------------------
         call initializer(t, dt, nout, comm)
+        if (iam == 0) print *,'dt before initializer ',dt
 
         t_start = get_clock_time()  ! start timer for wall time
         dtout = tf/ntout  ! TODO: move this to a more sensible place once output scheme is improved!
@@ -89,7 +91,7 @@ contains
         !-------------------------------------------------
         ! 2. Select hydrodynamic model (equations)
         !-------------------------------------------------
-        call select_hydro_model(ivis, Fpt_x, Fpt_y, Fpt_z)
+        call select_hydro_model(ivis, Fpt_x, Fpt_y, Fpt_z, Fpts_x, Fpts_y, Fpts_z)  ! DEBUG
 
         !-------------------------------------------------
         ! 3. Select and set initial conditions
@@ -118,6 +120,7 @@ contains
         ! 6. Generate initial output
         !-------------------------------------------------
         call output_vtk(Q_io, nout, iam)
+        if (iam == 0) print *,'dt end of setup ',dt
 
     end subroutine setup
     !---------------------------------------------------------------------------
@@ -131,12 +134,12 @@ contains
         !-------------------------------------------------
         ! 1. De-allocate system resources for RNG
         !-------------------------------------------------
-        call random_cleanup()
+        if (llns) call random_cleanup()
 
         !-------------------------------------------------
         ! 2. MPI cleanup
         !-------------------------------------------------
-        call MPI_Finalize(ierr)
+        ! call MPI_Finalize(ierr)
 
         !-------------------------------------------------
         ! 3. Report simulation wall time
@@ -184,7 +187,7 @@ contains
             if (iam == print_mpi) then
                 print *,''
                 print *, 'nout = ', nout
-                print *, '   t = ',t*100.,'         dt= ',dt
+                print *, '   t = ',t,'         dt= ',dt
                 t2 = 0!get_clock_time()
                 print *, '  >> Iteration time', (t2-t1), 'seconds'
                 t1 = t2

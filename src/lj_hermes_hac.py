@@ -1,4 +1,6 @@
+#!/usr/bin/python
 
+from mpi4py import MPI
 
 # Alias the Fortran subroutines
 main = hermeshd.hermeshd.main
@@ -8,7 +10,7 @@ generate_output = hermeshd.hermeshd.generate_output
 cleanup = hermeshd.hermeshd.cleanup
 
 # Instantiate some global parameters
-nx, ny, nz = 50, 1, 1
+nx, ny, nz = 5, 5, 5
 nQ, nB = 11, 8
 
 # Field arrays

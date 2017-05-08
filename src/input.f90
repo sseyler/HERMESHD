@@ -3,7 +3,7 @@ module input
 
     ! Physical system dimensions
     real, parameter :: Lbox = 3.0e1
-    real, parameter :: lxd = (6./3.)*Lbox/2. - (6./3.)*Lbox/6.
+    real, parameter :: lxd = (5./3.)*Lbox/2. - (5./3.)*Lbox/5.
     real, parameter :: lyd = -Lbox/2.
     real, parameter :: lzd = -Lbox/2.
     real, parameter :: lxu =  lxd + (6./3.)*Lbox  !1.5*3.468e1
@@ -13,7 +13,7 @@ module input
     real, parameter :: ly = lyu-lyd
     real, parameter :: lz = lzu-lzd
 
-    real, parameter :: vy_max = 1.0e0 !0.2
+    real, parameter :: vy_max = 5.0e-1 !0.2
     real, parameter :: vy_min = vy_max*0.4 !0.1*4./9.
 
     ! Number of Gaussian quadrature points per spatial dimension
@@ -21,9 +21,9 @@ module input
     integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 10
-    integer, parameter :: ny = 10
-    integer, parameter :: nz = 10
+    integer, parameter :: nx = 5
+    integer, parameter :: ny = 5
+    integer, parameter :: nz = 5
 
     ! Set number of MPI domains per spatial dimension
     integer :: mpi_nx = 4
@@ -75,12 +75,12 @@ module input
     !   * 1 for semi-implicit integration of stress terms
     !   * 2 for full 10-moment formulation (NOTE: not finished!)
     integer, parameter :: ivis = 1
-    real, parameter    :: eta  = 1.0e-3   ! dynamic viscosity
-    real, parameter    :: zeta = 1.0e-3   ! bulk viscosity
+    real, parameter    :: eta  = 5.474e-3   ! dynamic viscosity
+    real, parameter    :: zeta = 1.823e-3   ! bulk viscosity
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_hac"
+    character (*), parameter :: outname = "test_hac_pytemp"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density

@@ -1165,12 +1165,13 @@ contains
 
 
 !-------------------------------------------------------------------------------
-    subroutine glflux(Q_r)
+    subroutine glflux(Q_r, dt)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
+        real, intent(inout) :: dt
         integer i,j,k,ieq,ir
 
-        if (llns) call get_region_Sflux_xyz(Sflux_x, Sflux_y, Sflux_z)
+        if (llns) call get_region_Sflux_xyz(Sflux_x, Sflux_y, Sflux_z, dt)
 
         !#########################################################
         ! Step 1: Calculate fluxes for boundaries of each cell

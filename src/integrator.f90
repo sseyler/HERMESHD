@@ -99,7 +99,7 @@ contains
         real, intent(inout) :: dt
 
         call prep_advance(Q_in)
-        call calc_rhs(Q_in)
+        call calc_rhs(Q_in, dt)
         call advance_time_level(Q_in, Q_out, dt)
         call check_for_NaNs(Q_out)
     end subroutine euler_step
@@ -116,12 +116,13 @@ contains
     end subroutine prep_advance
 
     !----------------------------------------------------
-    subroutine calc_rhs(Q_io)
+    subroutine calc_rhs(Q_io, dt)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
+        real, intent(inout) :: dt
 
-        call glflux(Q_io)
-        call source_calc(Q_io)
+        call glflux(Q_io, dt)
+        call source_calc(Q_io, dt)
     end subroutine calc_rhs
 
 
