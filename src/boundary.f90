@@ -180,6 +180,32 @@ contains
         end do
     end subroutine xhibc_mwall
     !---------------------------------------------------------------------------
+    subroutine zlobc_mwall(Qzlo_i, Qzlo_e)
+        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzlo_i
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzlo_e
+        integer i,j
+        do j = 1,ny
+        do i = 1,nx
+            Qzlo_e(i,j,1:nface,:) = Qzlo_i(i,j,1:nface,:)
+            Qzlo_e(i,j,1:nface,mz) = 0.0
+            Qzlo_e(i,j,1:nface,my) = vy_min
+        end do
+        end do
+    end subroutine zlobc_mwall
+    !--------------------------------------------------------
+    subroutine zhibc_mwall(Qzhi_i, Qzhi_e)
+        real, dimension(nx,ny,nface,nQ), intent(in) :: Qzhi_i
+        real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzhi_e
+        integer i,j
+        do j = 1,ny
+        do i = 1,nx
+            Qzhi_e(i,j,1:nface,:) = Qzhi_i(i,j,1:nface,:)
+            Qzhi_e(i,j,1:nface,mz) = 0.0
+            Qzhi_e(i,j,1:nface,my) = vy_max
+        end do
+        end do
+    end subroutine zhibc_mwall
+    !---------------------------------------------------------------------------
 
 
     !===========================================================================
@@ -879,6 +905,8 @@ contains
                 zlobc_ptr => zlobc_outflow
             case ('wall')
                 zlobc_ptr => zlobc_wall
+            case ('mwall')
+                zlobc_ptr => zlobc_mwall
             case ('noslip')
                 zlobc_ptr => zlobc_noslip
             case default
@@ -891,6 +919,8 @@ contains
                 zhibc_ptr => zhibc_outflow
             case ('wall')
                 zhibc_ptr => zhibc_wall
+            case ('mwall')
+                zhibc_ptr => zhibc_mwall
             case ('noslip')
                 zhibc_ptr => zhibc_noslip
             case default

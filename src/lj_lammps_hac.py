@@ -37,16 +37,20 @@ nsteps = 10000     # number of timesteps
 nout   = 100      # output frequency
 
 mass = 39.948
-La = 6.0       # lattice spacing in A
-L  = 30.0    #34.68     #78.45  # length of single box dimension in A
-Lx = L*(5.0/3.0)
-Ly = Lz = L
+La  = 6.0          # lattice spacing in A
+bdz = 10.0         # buffer dz (height of each reservoir)
+a   = bdz/1.0      # grid cell dimensions in A
+dx  = dy = dz = a  # grid cell dimensions in A
 
-Lxu = Lx/2.0
-Lyu = Ly/2.0
-Lzu = Lz/2.0
+L  = 30.0                # length of single box dimension in A  # 34.68 or 78.45
+Lz = (4./3.)*L + 2*bdz   # z direction length is 4*L/3 + total height of top/bottom reservoirs
+Lx = Ly = L
+
+Lxu =  Lx/2.0
 Lxd = -Lx/2.0
+Lyu =  Ly/2.0
 Lyd = -Ly/2.0
+Lzu =  Lz/2.0
 Lzd = -Lz/2.0
 
 xxu = Lxu/La
@@ -56,20 +60,19 @@ xxd = Lxd/La
 yyd = Lyd/La
 zzd = Lzd/La
 
-bdx = Lx/5.0  # buffer dx (width of each buffer slab)
 # x-direction
-lb_lo = Lxd
-lb_hi = Lxd + bdx
-rb_lo = Lxu - bdx
-rb_hi = Lxu
+bb_lo = Lzd
+bb_hi = Lzd + bdz
+tb_lo = Lzu - bdz
+tb_hi = Lzu
 
 LJe = 0.23748
 LJs = 3.4
 LJc = 12.0
 
-LJWe = 0.5*LJe
-LJWs = 1.0*LJs
-LJWc = 3.0*LJc
+LJWe = 0.75*LJe
+LJWs = 0.75*LJs
+LJWc = bdz
 ################################
 
 # frequencies for taking averages for buffer region particles
@@ -78,19 +81,20 @@ neve, nrep, nfre = 2, 5, 10   # avg over every 2 steps, 5 times (over 10 total s
 # Output files of particles in buffer region for
 #  DENSITY
 rh_s_file = "{}/rh.sim".format(datdir)
+grid_file = "{}/grid.sim".format(datdir)
 
-rh_l_file = "{}/rh.lbuffer".format(datdir)
-rh_r_file = "{}/rh.rbuffer".format(datdir)
+rh_b_file = "{}/rh.bbuffer".format(datdir)
+rh_t_file = "{}/rh.tbuffer".format(datdir)
 #  VELOCITY
-ux_l_file = "{}/ux.lbuffer".format(datdir)
-ux_r_file = "{}/ux.rbuffer".format(datdir)
-uy_l_file = "{}/uy.lbuffer".format(datdir)
-uy_r_file = "{}/uy.rbuffer".format(datdir)
-uz_l_file = "{}/uz.lbuffer".format(datdir)
-uz_r_file = "{}/uz.rbuffer".format(datdir)
+ux_b_file = "{}/ux.bbuffer".format(datdir)
+ux_t_file = "{}/ux.tbuffer".format(datdir)
+uy_b_file = "{}/uy.bbuffer".format(datdir)
+uy_t_file = "{}/uy.tbuffer".format(datdir)
+uz_b_file = "{}/uz.bbuffer".format(datdir)
+uz_t_file = "{}/uz.tbuffer".format(datdir)
 #  TEMPERATURE
-te_l_file = "{}/te.lbuffer".format(datdir)
-te_r_file = "{}/te.rbuffer".format(datdir)
+te_b_file = "{}/te.bbuffer".format(datdir)
+te_t_file = "{}/te.tbuffer".format(datdir)
 
 
 def setup(lmp):
@@ -119,13 +123,13 @@ def setup(lmp):
 
 def create_box(lmp):
     lmp.command("dimension    3")
-    lmp.command("boundary     f p p")
+    lmp.command("boundary     p p f")
     lmp.command("atom_style   atomic")
     lmp.command("atom_modify  map hash")
     lmp.command("lattice      fcc {}".format(La))
 
-    lmp.command("region simreg block {} {} {} {} {} {} units box".format(Lxd-LJWs,Lxu+LJWs,Lyd,Lyu,Lzd,Lzu))
-    lmp.command("region latreg block {} {} {} {} {} {} units lattice".format(xxd,xxu,yyd,yyu,zzd, zzu))
+    lmp.command("region simreg block {} {} {} {} {} {} units box".format(Lxd,Lxu,Lyd,Lyu,Lzd,Lzu))
+    lmp.command("region latreg block {} {} {} {} {} {} units lattice".format(xxd,xxu,yyd,yyu,zzd+LJWs/La*1.5,zzu-LJWs/La*1.5))
     lmp.command("create_box   1 simreg")
     lmp.command("create_atoms 1 region latreg units box")
     lmp.command("mass  1 {}".format(mass))
@@ -139,35 +143,35 @@ def init_velocities(lmp):
 
 def setup_buffer(lmp):
     # STEP 1: Define a "chunk" of atoms with an implicit buffer region
-    lmp.command("compute cid_left  all chunk/atom bin/1d x {} {} discard yes bound x {} {} units box".format(lb_lo, bdx, lb_lo, lb_hi))
-    lmp.command("compute cid_right all chunk/atom bin/1d x {} {} discard yes bound x {} {} units box".format(rb_lo, bdx, rb_lo, rb_hi))
+    lmp.command("compute cid_bot all chunk/atom bin/1d z {} {} discard yes bound z {} {} units box".format(bb_lo, bdz, bb_lo, bb_hi))
+    lmp.command("compute cid_top all chunk/atom bin/1d z {} {} discard yes bound z {} {} units box".format(tb_lo, bdz, tb_lo, tb_hi))
     # STEP 2a: Use the pre-defined "chunk" from step 1 to compute an average DENSITY
-    lmp.command("fix rh_left  all ave/chunk {} {} {} cid_left  density/mass norm sample ave one file {}".format(neve, nrep, nfre, rh_l_file))
-    lmp.command("fix rh_right all ave/chunk {} {} {} cid_right density/mass norm sample ave one file {}".format(neve, nrep, nfre, rh_r_file))
+    lmp.command("fix rh_bot all ave/chunk {} {} {} cid_bot density/mass norm sample ave one file {}".format(neve, nrep, nfre, rh_b_file))
+    lmp.command("fix rh_top all ave/chunk {} {} {} cid_top density/mass norm sample ave one file {}".format(neve, nrep, nfre, rh_t_file))
     # STEP 2b: Use the pre-defined "chunk" from step 1 to compute average VELOCITIES
-    lmp.command("fix ux_left  all ave/chunk {} {} {} cid_left  vx norm sample ave one file {}".format(neve, nrep, nfre, ux_l_file))
-    lmp.command("fix ux_right all ave/chunk {} {} {} cid_right vx norm sample ave one file {}".format(neve, nrep, nfre, ux_r_file))
-    lmp.command("fix uy_left  all ave/chunk {} {} {} cid_left  vy norm sample ave one file {}".format(neve, nrep, nfre, uy_l_file))
-    lmp.command("fix uy_right all ave/chunk {} {} {} cid_right vy norm sample ave one file {}".format(neve, nrep, nfre, uy_r_file))
-    lmp.command("fix uz_left  all ave/chunk {} {} {} cid_left  vz norm sample ave one file {}".format(neve, nrep, nfre, uz_l_file))
-    lmp.command("fix uz_right all ave/chunk {} {} {} cid_right vz norm sample ave one file {}".format(neve, nrep, nfre, uz_r_file))
+    lmp.command("fix ux_bot all ave/chunk {} {} {} cid_bot vx norm sample ave one file {}".format(neve, nrep, nfre, ux_b_file))
+    lmp.command("fix ux_top all ave/chunk {} {} {} cid_top vx norm sample ave one file {}".format(neve, nrep, nfre, ux_t_file))
+    lmp.command("fix uy_bot all ave/chunk {} {} {} cid_bot vy norm sample ave one file {}".format(neve, nrep, nfre, uy_b_file))
+    lmp.command("fix uy_top all ave/chunk {} {} {} cid_top vy norm sample ave one file {}".format(neve, nrep, nfre, uy_t_file))
+    lmp.command("fix uz_bot all ave/chunk {} {} {} cid_bot vz norm sample ave one file {}".format(neve, nrep, nfre, uz_b_file))
+    lmp.command("fix uz_top all ave/chunk {} {} {} cid_top vz norm sample ave one file {}".format(neve, nrep, nfre, uz_t_file))
     # STEP 2c: Use the pre-defined "chunk" from step 1 to compute an average TEMPERATURE (OR PRESSURE)
-    lmp.command("compute te_left_t  all temp/chunk cid_left  temp com yes")
-    lmp.command("compute te_right_t all temp/chunk cid_right temp com yes")
-    lmp.command("fix te_left  all ave/time {} {} {} c_te_left_t  ave one file {}".format(neve, nrep, nfre, te_l_file))
-    lmp.command("fix te_right all ave/time {} {} {} c_te_right_t ave one file {}".format(neve, nrep, nfre, te_r_file))
+    lmp.command("compute te_bot_t all temp/chunk cid_bot temp com yes")
+    lmp.command("compute te_top_t all temp/chunk cid_top temp com yes")
+    lmp.command("fix te_bot all ave/time {} {} {} c_te_bot_t ave one file {}".format(neve, nrep, nfre, te_b_file))
+    lmp.command("fix te_top all ave/time {} {} {} c_te_top_t ave one file {}".format(neve, nrep, nfre, te_t_file))
     return lmp
 
 
 def setup_md_region(lmp):
-    lmp.command("compute cid_sim all chunk/atom bin/1d x {} {} discard yes bound x {} {} units box".format(lb_hi, 3*bdx, lb_hi, rb_lo))
+    lmp.command("compute cid_sim all chunk/atom bin/1d z {} {} discard yes bound z {} {} units box".format(bb_hi, 4*bdz, bb_hi, tb_lo))
     lmp.command("fix rh_sim  all ave/chunk {} {} {} cid_sim density/mass norm sample ave one file {}".format(neve, nrep, nfre, rh_s_file))
     return lmp
 
 
 def setup_wall(lmp):
-    lmp.command("fix wall_xlo all wall/lj126 xlo {} {} {} {} units box".format(Lxd-LJWs, LJWe, LJWs, LJWc))
-    lmp.command("fix wall_xhi all wall/lj126 xhi {} {} {} {} units box".format(Lxu+LJWs, LJWe, LJWs, LJWc))
+    lmp.command("fix wall_zlo all wall/lj126 zlo {} {} {} {} units box".format(Lzd, LJWe, LJWs, LJWc))
+    lmp.command("fix wall_zhi all wall/lj126 zhi {} {} {} {} units box".format(Lzu, LJWe, LJWs, LJWc))
     return lmp
 
 
@@ -239,7 +243,7 @@ def read(argv):
 def xyz_to_pdb(xyzfile):
     import MDAnalysis as mda
     u = mda.Universe(xyzfile)
-    u.dimensions = np.array([Lx+2*LJWs, Ly, Lz, 90.00, 90.00, 90.00])
+    u.dimensions = np.array([Lx, Ly, Lz, 90.00, 90.00, 90.00])
     u.atoms.write(os.path.splitext(xyzfile)[0] + '.pdb')
 
 
@@ -273,12 +277,16 @@ if __name__ == "__main__":
     lmp.command("variable hfz atom \"-v_zeta*(vz - v_uz) + normal(0.0, v_sigma, {})\"".format(seed))
 
     ### Run #######################
-    lmp.command("region  rid_left  block {} {} {} {} {} {} units box".format(lb_lo, lb_hi, Lyd, Lyu, Lzd, Lzu))
-    lmp.command("region  rid_right block {} {} {} {} {} {} units box".format(rb_lo, rb_hi, Lyd, Lyu, Lzd, Lzu))
+    # lmp.command("region rid_bot block {} {} {} {} {} {} units box".format(Lzd, Lzu, Lyd, Lyu, bb_lo, bb_hi))
+    # lmp.command("region rid_top block {} {} {} {} {} {} units box".format(Lzd, Lzu, Lyd, Lyu, tb_lo, tb_hi))
     # lmp.command("group lbuff dynamic all region rid_left  every {}".format(n_md))
     # lmp.command("group rbuff dynamic all region rid_right every {}".format(n_md))
-    # lmp.command("fix hf_left  lbuff addforce v_hfx v_hfy v_hfz every 1 region rid_left")
-    lmp.command("fix hf_right all addforce v_hfx v_hfy v_hfz every 1 region rid_right")
+    # lmp.command("fix hf_top all addforce v_hfx v_hfy v_hfz every 1 region rid_top")
+    lmp.command("compute grid all chunk/atom bin/3d x lower {} y lower {} z lower {} ids every units box".format(dx,dy,dz))
+    lmp.command("compute ctest all property/chunk grid count coord1 coord2 coord3")
+    lmp.command("fix ftest all ave/chunk {} {} {} grid density/number norm sample ave one file {}".format(neve, nrep, nfre, grid_file))
+
+    lmp.command("fix hforce all addforce v_hfx v_hfy v_hfz every 1")
 
     for i in xrange(1):
         lmp = run_lammps(lmp, 10000, dt=dt_md, nout=100)

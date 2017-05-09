@@ -3,30 +3,30 @@ module input
 
     ! Physical system dimensions
     real, parameter :: Lbox = 3.0e1
-    real, parameter :: lxd = (5./3.)*Lbox/2. - (5./3.)*Lbox/5.
-    real, parameter :: lyd = -Lbox/2.
-    real, parameter :: lzd = -Lbox/2.
-    real, parameter :: lxu =  lxd + (6./3.)*Lbox  !1.5*3.468e1
-    real, parameter :: lyu = -lyd  !3.468e1
-    real, parameter :: lzu = -lzd  !3.468e1
+    real, parameter :: lxu =  Lbox/2.
+    real, parameter :: lyu =  Lbox/2.
+    real, parameter :: lzu =  Lbox
+    real, parameter :: lxd = -lxu
+    real, parameter :: lyd = -lyu
+    real, parameter :: lzd = -lzu
     real, parameter :: lx = lxu-lxd
     real, parameter :: ly = lyu-lyd
     real, parameter :: lz = lzu-lzd
 
-    real, parameter :: vy_max = 5.0e-1 !0.2
-    real, parameter :: vy_min = vy_max*0.4 !0.1*4./9.
+    real, parameter :: vy_max = 1.0e0
+    real, parameter :: vy_min = 0.0
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad  = 2
     integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 5
-    integer, parameter :: ny = 5
-    integer, parameter :: nz = 5
+    integer, parameter :: nx = 3
+    integer, parameter :: ny = 3
+    integer, parameter :: nz = 3
 
     ! Set number of MPI domains per spatial dimension
-    integer :: mpi_nx = 4
+    integer :: mpi_nx = 2
     integer :: mpi_ny = 2
 
     ! Temporal integration order
@@ -43,12 +43,12 @@ module input
     integer, parameter :: icid = 10
 
     ! Boundary conditions
-    character(*), parameter :: xlobc = 'mwall'
-    character(*), parameter :: xhibc = 'mwall'
+    character(*), parameter :: xlobc = 'periodic'
+    character(*), parameter :: xhibc = 'periodic'
     character(*), parameter :: ylobc = 'periodic'
     character(*), parameter :: yhibc = 'periodic'
-    character(*), parameter :: zlobc = 'periodic'
-    character(*), parameter :: zhibc = 'periodic'
+    character(*), parameter :: zlobc = 'mwall'
+    character(*), parameter :: zhibc = 'mwall'
 
     ! Simulation time
     real, parameter :: tf = 1.0e2

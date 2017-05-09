@@ -463,21 +463,22 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k
-        real dn,vx,vy,vz,te,pr
+        real dn,vx,vy,vz,te,pr, zlo,zhi
 
-        call init_random_seed(iam, 123456789)
-
-        dn = 1.0          ! ambient density
-        te = T_base       ! ambient temperature
-        vx = 0.0           ! ambient x-velocity  1.0/aindex**0.5
+        dn = 1.0            ! ambient density
+        te = T_base         ! ambient temperature
+        vx = 0.0            ! ambient x-velocity  1.0/aindex**0.5
         vz = 0.0            ! ambient z-velocity
-        nu    = dn*te/eta  ! global
-        nueta = dn*te      ! pr = nu*eta  (also global)
+        nu    = dn*te/eta   ! global
+        nueta = dn*te       ! pr = nu*eta  (also global)
+
+        zlo = lzd + 0.5*dz  ! start at cell centers
+        zhi = lzu - 0.5*dz  ! start at cell centers
 
         do k = 1,nz
         do j = 1,ny
         do i = 1,nx
-            vy = vy_min + (vy_max - vy_min)/lx * (xc(i) - lxd)
+            vy = vy_min + (vy_max - vy_min)/(zhi - zlo) * (zc(k) - zlo)
             pr = dn*te
 
             Q_r(i,j,k,rh,1) = dn

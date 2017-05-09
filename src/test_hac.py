@@ -56,7 +56,7 @@ if __name__ == "__main__":
     lmp.command("variable kt    equal {}".format(1.9872036e-3*te_sim))  # gas constant in kcal/mol
     lmp.command("variable sigma equal sqrt(2*v_kt*v_zeta/v_dt)")
     lmp.command("variable ux equal 0.0")
-    lmp.command("variable uy equal 0.01")
+    lmp.command("variable uy equal 0.001")
     lmp.command("variable uz equal 0.0")
     lmp.command("variable hfx atom \"-v_zeta*(vx - v_ux) + normal(0.0, v_sigma, {})\"".format(seed))
     lmp.command("variable hfy atom \"-v_zeta*(vy - v_uy) + normal(0.0, v_sigma, {})\"".format(seed))
@@ -69,6 +69,9 @@ if __name__ == "__main__":
     lmp.command("variable yc atom y ")
     lmp.command("variable zc atom z ")
 
+    # lmp.command("compute cid_left  all chunk/atom bin/1d x {} {} discard yes bound x {} {} units box".format(lb_lo, bdx, lb_lo, lb_hi))
+    # lmp.command("compute cid_right all chunk/atom bin/1d x {} {} discard yes bound x {} {} units box".format(rb_lo, bdx, rb_lo, rb_hi))
+
     ### HERMESHD ################################
     dt = np.array(1.0e-2, dtype=float)
     hermeshd.hermeshd.setup(Qio, t, dt, t1, t_start, dtout, nout, fcomm)
@@ -80,7 +83,7 @@ if __name__ == "__main__":
 
         # HERMES
         run_hermes(10, Qio, Q1, Q2, t, dt_hd, t1, dtout, nout)
-        # Get velocities in buffer from Qio
+        # Get velocities in reservoir (from Qio)
         # Set velocity variables using the LAMMPS command
 
 

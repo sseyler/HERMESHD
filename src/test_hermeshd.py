@@ -44,9 +44,9 @@ step = hermeshd.hermeshd.step
 generate_output = hermeshd.hermeshd.generate_output
 cleanup = hermeshd.hermeshd.cleanup
 
-xc = hermeshd.spatial.xc
-yc = hermeshd.spatial.yc
-zc = hermeshd.spatial.zc
+# xc = hermeshd.spatial.xc
+# yc = hermeshd.spatial.yc
+# zc = hermeshd.spatial.zc
 
 # Instantiate some global parameters
 # nx, ny, nz = 10, 10, 10
@@ -90,20 +90,28 @@ while ( t < tf ):
 cleanup(t_start)
 
 
-def get_overlap():
+# def get_overlap():
+#
+#     for k in xrange(1, nz):
+#         for j in xrange(1, ny):
+#             for i in xrange(1, nx):
+#                 if (xc(i) > rb_lo and xc(i) < rb_hi):
+#                     Qio(i,k,j,3,1)
 
-    for k in xrange(1, nz):
-        for j in xrange(1, ny):
-            for i in xrange(1, nx):
-                if (xc(i) > rb_lo and xc(i) < rb_hi):
-                    Qio(i,k,j,3,1)
 
-
-def get_cell(x, y, z):
-    i = np.floor((x - lxd) / dx)
-    j = np.floor((y - lyd) / dy)
-    k = np.floor((z - lzd) / dz)
+def get_global_cell_id(x, y, z):
+    i = np.ceil((x - lxd) / dx)
+    j = np.ceil((y - lyd) / dy)
+    k = np.ceil((z - lzd) / dz)
     return i, j, k
+
+
+def get_local_cell_id(x, y, z):
+    i = np.ceil((x - loc_lxd) / dx)
+    j = np.ceil((y - loc_lyd) / dy)
+    k = np.ceil((z - loc_lzd) / dz)
+    return i, j, k
+
 
 def get_mpidom_and_cell(i, j, k):
     i = i % mpi_nx

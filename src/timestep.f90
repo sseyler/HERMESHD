@@ -57,10 +57,10 @@ contains
                 call MPI_ISend(dt_min,mpi_size,MPI_TT,i,0,cartcomm,loc_reqs(i),ierr)
             enddo
             call MPI_WaitAll(numprocs-1,loc_reqs,loc_stats,ierr)
-            else
-                call MPI_ISend(dt_min,mpi_size,MPI_TT,main_proc,0,cartcomm,reqs(1),ierr)
+        else
+            call MPI_ISend(dt_min,mpi_size,MPI_TT,main_proc,0,cartcomm,reqs(1),ierr)
             call MPI_Wait(reqs(1),stats(:,1),ierr)
-                call MPI_IRecv(dt_min,mpi_size,MPI_TT,main_proc,0,cartcomm,reqs(1),ierr)
+            call MPI_IRecv(dt_min,mpi_size,MPI_TT,main_proc,0,cartcomm,reqs(1),ierr)
             call MPI_Wait(reqs(1),stats(:,1),ierr)
         end if
 
