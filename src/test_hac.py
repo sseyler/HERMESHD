@@ -69,8 +69,9 @@ if __name__ == "__main__":
     lmp.command("variable yc atom y ")
     lmp.command("variable zc atom z ")
 
-    # lmp.command("compute cid_left  all chunk/atom bin/1d x {} {} discard yes bound x {} {} units box".format(lb_lo, bdx, lb_lo, lb_hi))
-    # lmp.command("compute cid_right all chunk/atom bin/1d x {} {} discard yes bound x {} {} units box".format(rb_lo, bdx, rb_lo, rb_hi))
+    lmp.command("compute grid all chunk/atom bin/3d x lower {} y lower {} z lower {} ids every units box".format(dx,dy,dz))
+    lmp.command("compute ctest all property/chunk grid count coord1 coord2 coord3")
+    lmp.command("fix ftest all ave/chunk {} {} {} grid density/number norm sample ave one file {}".format(neve, nrep, nfre, grid_file))
 
     ### HERMESHD ################################
     dt = np.array(1.0e-2, dtype=float)

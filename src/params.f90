@@ -131,8 +131,8 @@ module params
     real, parameter :: zeta_base  = zeta    ! bulk viscosity---will need to adjust this!
     real, parameter :: kappa_base = 1.e-1
 
-    real, parameter :: eta_sd   = (2.*eta_base*T_base)**0.5  ! stdev of flucs for shear visc terms
-    real, parameter :: zeta_sd  = (zeta_base*T_base/3.)**0.5  ! stdev of flucs for bulk visc term
+    real, parameter :: eta_sd   = sqrt2 * (2.*eta_base*T_base)**0.5   ! stdev of flucs for shear visc, sqrt(2) due to temporal avging
+    real, parameter :: zeta_sd  = sqrt2 * (zeta_base*T_base/3.)**0.5  ! stdev of flucs for bulk visc, sqrt(2) due to temporal avging
     real, parameter :: kappa_sd = (2.*kappa_base*T_base**2)**0.5
     !===========================================================================
 
