@@ -469,6 +469,7 @@ contains
 
         dn = 1.0            ! ambient density
         te = T_base         ! ambient temperature
+        pr = dn*te
         vy = 0.0            ! ambient y-velocity
         vz = 0.0            ! ambient z-velocity
         nu    = dn*te/eta   ! global
@@ -481,8 +482,6 @@ contains
         do j = 1,ny
         do i = 1,nx
             vx = vx_min + (vx_max - vx_min)/(yhi - ylo) * (yc(j) - ylo)
-            pr = dn*te
-
             Q_r(i,j,k,rh,1) = dn
             Q_r(i,j,k,mx,1) = dn*vx
             Q_r(i,j,k,my,1) = dn*vy
@@ -508,6 +507,7 @@ contains
 
         dn = 1.0            ! ambient density
         te = T_base         ! ambient temperature
+        pr = dn*te
         vx = 0.0            ! ambient x-velocity
         vz = 0.0            ! ambient z-velocity
         nu    = dn*te/eta   ! global
@@ -520,8 +520,6 @@ contains
         do j = 1,ny
         do i = 1,nx
             vy = vy_min + (vy_max - vy_min)/(zhi - zlo) * (zc(k) - zlo)
-            pr = dn*te
-
             Q_r(i,j,k,rh,1) = dn
             Q_r(i,j,k,mx,1) = dn*vx
             Q_r(i,j,k,my,1) = dn*vy

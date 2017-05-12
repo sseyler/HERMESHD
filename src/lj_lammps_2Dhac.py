@@ -97,7 +97,7 @@ te_b_file = "{}/te.bbuffer".format(datdir)
 te_t_file = "{}/te.tbuffer".format(datdir)
 
 
-def setup(lmp):
+def setup_md(lmp):
     print_mpi("Setting up simulation...\n")
 
     inputfile = read(sys.argv[1:])
@@ -253,49 +253,43 @@ def print_mpi(msg, iam=iam, print_id=0):
 
 
 
-mpi_nx, mpi_ny, mpi_nz = 4, 4, 1
-nx, ny, nz = 2, 2, 1
-nQ, nB = 11, 8
-
-def get_gid(x, y, z):
-    gid_i = int(np.ceil((x - Lxd) / dx))
-    gid_j = int(np.ceil((y - Lyd) / dy))
-    gid_k = int(np.ceil((z - Lzd) / dz))
-    return gid_i, gid_j, gid_k
-
-# def get_local_cell_idx(x, y, z):
-#     lid_i = int(np.ceil((x - loc_Lxd) / dx))
-#     lid_j = int(np.ceil((y - loc_Lyd) / dy))
-#     lid_k = int(np.ceil((z - loc_Lzd) / dz))
-#     return lid_i, lid_j, lid_k
-
-def get_mpi_idx_from_gid(gid_i, gid_j, gid_k):
-    mpi_i = int( np.ceil(gid_i / nx) )
-    mpi_j = int( np.ceil(gid_j / ny) )
-    mpi_k = int( np.ceil(gid_k / nz) )
-    return mpi_i, mpi_j, mpi_k
-
-def get_lid_from_gid(gid_i, gid_j, gid_k, mpi_i, mpi_j, mpi_k):
-    i = int( gid_i - (mpi_i-1)*nx )
-    j = int( gid_j - (mpi_j-1)*ny )
-    k = int( gid_k - (mpi_k-1)*nz )
-    return i, j, k
-
-def get_mpi_idx_and_lid(gid_i, gid_j, gid_k):
-    mpi_i, mpi_j, mpi_k = get_mpi_idx_from_gid(gid_i, gid_j, gid_k)
-    i = int( gid_i - (mpi_i-1)*nx )
-    j = int( gid_j - (mpi_j-1)*ny )
-    k = int( gid_k - (mpi_k-1)*nz )
-    return [(mpi_i, i), (mpi_j, j), (mpi_k, k)]
-
-def get_mpi_rank(mpi_i, mpi_j, mpi_k):
-    return mpi_ny*mpi_nx*(mpi_k-1) + mpi_nx*(mpi_j-1) + (mpi_i-1)
+# mpi_nx, mpi_ny, mpi_nz = 4, 4, 1
+# nx, ny, nz = 2, 2, 1
+# nQ, nB = 11, 8
+#
+# def get_gid(x, y, z):
+#     gid_i = int(np.ceil((x - Lxd) / dx))
+#     gid_j = int(np.ceil((y - Lyd) / dy))
+#     gid_k = int(np.ceil((z - Lzd) / dz))
+#     return gid_i, gid_j, gid_k
+#
+# def get_mpi_idx_from_gid(gid_i, gid_j, gid_k):
+#     mpi_i = int( np.ceil(gid_i / nx) )
+#     mpi_j = int( np.ceil(gid_j / ny) )
+#     mpi_k = int( np.ceil(gid_k / nz) )
+#     return mpi_i, mpi_j, mpi_k
+#
+# def get_local_idx(gid_i, gid_j, gid_k, mpi_i, mpi_j, mpi_k):
+#     i = int( gid_i - (mpi_i-1)*nx )
+#     j = int( gid_j - (mpi_j-1)*ny )
+#     k = int( gid_k - (mpi_k-1)*nz )
+#     return i, j, k
+#
+# def get_mpi_idx_and_lid(gid_i, gid_j, gid_k):
+#     mpi_i, mpi_j, mpi_k = get_mpi_idx_from_gid(gid_i, gid_j, gid_k)
+#     i = int( gid_i - (mpi_i-1)*nx )
+#     j = int( gid_j - (mpi_j-1)*ny )
+#     k = int( gid_k - (mpi_k-1)*nz )
+#     return [(mpi_i, i), (mpi_j, j), (mpi_k, k)]
+#
+# def get_mpi_rank(mpi_i, mpi_j, mpi_k):
+#     return mpi_ny*mpi_nx*(mpi_k-1) + mpi_nx*(mpi_j-1) + (mpi_i-1)
 
 
 if __name__ == "__main__":
     lmp = lammps()
 
-    lmp = setup(lmp)
+    lmp = setup_md(lmp)
     lmp = setup_wall(lmp)
     lmp = setup_buffer(lmp)
     lmp = setup_md_region(lmp)
@@ -311,49 +305,24 @@ if __name__ == "__main__":
     lmp.command("variable zeta  equal {}".format(0.1))
     lmp.command("variable kt    equal {}".format(1.9872036e-3*te_sim))  # gas constant in kcal/mol
     lmp.command("variable sigma equal sqrt(2*v_kt*v_zeta/v_dt)")
-    lmp.command("variable ux equal 0.0")
-    lmp.command("variable uy equal 0.01")
+    lmp.command("variable ux equal 0.01")
+    lmp.command("variable uy equal 0.0")
     lmp.command("variable hfx atom \"-v_zeta*(vx - v_ux) + normal(0.0, v_sigma, {})\"".format(seed))
     lmp.command("variable hfy atom \"-v_zeta*(vy - v_uy) + normal(0.0, v_sigma, {})\"".format(seed))
 
-
-
-
     ################################################################################
-    from ctypes import *
     natoms = lmp.get_natoms()
     atom_pos = None
 
     xc_md = lmp.gather_atoms("x", 1, 2)  # WARN: Must be executed by all MPI ranks
-    # x_md_ptr = lmp.extract_atom("x", 3)
-    # lmp.command("variable xc atom x")
-    # lmp.command("variable yc atom y")
-    # x_md = lmp.extract_variable("xc", "all", 1)
-    # y_md = lmp.extract_variable("yc", "all", 1)
-    # if iam == 0:
-    #     # atom_pos = np.zeros((natoms,2))
-    #     # for aid in xrange(natoms):
-    #     #     atom_pos[aid,0] = xc_md[2*aid]
-    #     #     atom_pos[aid,1] = xc_md[2*aid+1]
-    #     atom_pos = np.fromiter(xc_md, dtype=np.float, count=2*natoms).reshape((natoms,2)) # copy
-    #     for aid in xrange(natoms):
-    #         xc = atom_pos[aid,0]
-    #         yc = atom_pos[aid,1]
-    #         print( aid+1, xc, yc, ' | ', get_gid(xc, yc, 0), ' | ', get_mpi_idx_and_lid(*get_gid(xc, yc, 0)))
 
     Qres_shape = (nx, ny, nz, nQ, 1)
-    # Qres = np.empty(Qres_shape, order='F', dtype=np.float32)
-
-    Qres = np.zeros(Qres_shape, dtype=np.float32) + iam
+    Qres = np.zeros(Qres_shape, order='F', dtype=np.float32) + iam
 
     sendbuf = Qres
     recvbuf = None
-
-    if iam == 0:
-        recvbuf = np.empty((nproc,)+Qres_shape, dtype=np.float32)
-
-    # Gather Qres from each rank
-    comm.Gather(sendbuf, recvbuf, root=0)
+    if iam == 0:  recvbuf = np.empty((nproc,)+Qres_shape, dtype=np.float32)
+    comm.Gather(sendbuf, recvbuf, root=0)  # Gather Qres from each rank
 
     if iam == 0:
         atom_pos = np.fromiter(xc_md, dtype=np.float, count=2*natoms).reshape((natoms,2)) # copy
@@ -366,18 +335,12 @@ if __name__ == "__main__":
             gid_i, gid_j, gid_k = get_gid(xc, yc, zc)
             mpi_i, mpi_j, mpi_k = get_mpi_idx_from_gid(gid_i, gid_j, gid_k)
 
-            i, j, k = get_lid_from_gid(gid_i, gid_j, gid_k, mpi_i, mpi_j, mpi_k)
+            i, j, k = get_local_idx(gid_i, gid_j, gid_k, mpi_i, mpi_j, mpi_k)
             rank = get_mpi_rank(mpi_i, mpi_j, mpi_k)
-
+            # print( aid+1, xc, yc, ' | ', get_gid(xc, yc, 0), ' | ', get_mpi_idx_and_lid(*get_gid(xc, yc, 0)))
             print("Hello, I'm atom",aid,"in rank",rank,"and I have a Qres value of",recvbuf[rank,i-1,j-1,k-1,0,:]) # WARNING: Sean, your indices start at 1, idiot
 
-
-
-    ################################################################################
-
-
-
-
+    ############################################################################
 
 
     ### Run #######################
