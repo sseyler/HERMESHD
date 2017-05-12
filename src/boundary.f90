@@ -179,7 +179,33 @@ contains
         end do
         end do
     end subroutine xhibc_mwall
-    !---------------------------------------------------------------------------
+    !--------------------------------------------------------
+    subroutine ylobc_mwall(Qylo_i, Qylo_e)
+        real, dimension(nx,nz,nface,nQ), intent(in) :: Qylo_i
+        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qylo_e
+        integer i,k
+        do k = 1,nz
+        do i = 1,nx
+            Qylo_e(i,k,1:nface,:) = Qylo_i(i,k,1:nface,:)
+            Qylo_e(i,k,1:nface,my) = 0.0
+            Qylo_e(i,k,1:nface,mx) = vx_min
+        end do
+        end do
+    end subroutine ylobc_mwall
+    !--------------------------------------------------------
+    subroutine yhibc_mwall(Qyhi_i, Qyhi_e)
+        real, dimension(nx,nz,nface,nQ), intent(in) :: Qyhi_i
+        real, dimension(nx,nz,nface,nQ), intent(inout) :: Qyhi_e
+        integer i,k
+        do k = 1,nz
+        do i = 1,nx
+            Qyhi_e(i,k,1:nface,:) = Qyhi_i(i,k,1:nface,:)
+            Qyhi_e(i,k,1:nface,my) = 0.0
+            Qyhi_e(i,k,1:nface,mx) = vx_max
+        end do
+        end do
+    end subroutine yhibc_mwall
+    !--------------------------------------------------------
     subroutine zlobc_mwall(Qzlo_i, Qzlo_e)
         real, dimension(nx,ny,nface,nQ), intent(in) :: Qzlo_i
         real, dimension(nx,ny,nface,nQ), intent(inout) :: Qzlo_e
@@ -874,6 +900,8 @@ contains
                 ylobc_ptr => ylobc_outflow
             case ('wall')
                 ylobc_ptr => ylobc_wall
+            case ('mwall')
+                ylobc_ptr => ylobc_mwall
             case ('noslip')
                 ylobc_ptr => ylobc_noslip
             case default
@@ -886,6 +914,8 @@ contains
                 yhibc_ptr => yhibc_outflow
             case ('wall')
                 yhibc_ptr => yhibc_wall
+            case ('mwall')
+                yhibc_ptr => yhibc_mwall
             case ('noslip')
                 yhibc_ptr => yhibc_noslip
             case default

@@ -557,12 +557,12 @@ contains
             print *, '---------------------------------------------------------'
             print *, 'Starting simulation...'
             print *, '---------------------------------------------------------'
-            write(*,'(A13,I10,I7,I7)') ' total dim = ', mpi_nx*nx, mpi_ny*ny, mpi_nz*nz
-            write(*,'(A13,I10,I7,I7)') ' mpi dim   = ', mpi_nx,    mpi_ny,    mpi_nz
-            write(*,'(A13,ES10.3)')    ' te0 is    = ', te0
-            write(*,'(A13,ES10.3)')    ' dx is     = ', ly/(ny*mpi_ny)*L0
-            write(*,'(A13,I10)')       ' iquad is  = ', iquad
-            write(*,'(A13,I10)')       ' nbasis is = ', nbasis
+            write(*,'(A13,I10,I7,I7)')          ' total dim = ', mpi_nx*nx, mpi_ny*ny, mpi_nz*nz
+            write(*,'(A13,I10,I7,I7)')          ' mpi dim   = ', mpi_nx,    mpi_ny,    mpi_nz
+            write(*,'(A13,ES10.3,A7,F5.1,A2)')  ' te0 is    = ', te0,'   (T =',T_base,'K)'
+            write(*,'(A13,ES10.3)')             ' dx is     = ', ly/(ny*mpi_ny)*L0
+            write(*,'(A13,I10)')                ' iquad is  = ', iquad
+            write(*,'(A13,I10)')                ' nbasis is = ', nbasis
             print *, '----------------------------------------------'
             write(*,'(A16,A8,A13,A8)') ' X BC:  lower = ', xlobc, '  |  upper = ', xhibc
             write(*,'(A16,A8,A13,A8)') ' Y BC:  lower = ', ylobc, '  |  upper = ', yhibc

@@ -23,7 +23,7 @@ endif
 
 ifndef $(RUNDIR)
 	# RUNDIR = /scratch/sseyler/WORK/PERSEUSHD_testing
-	RUNDIR = /scratch/sseyler/WORK/HERMESHD_testing
+	RUNDIR = /scratch/sseyler/WORK/HAC_testing
 endif
 #-----------------------------------------------------------------
 
@@ -82,7 +82,7 @@ ifeq ($(VERS),py)
 	SRC     = $(NAME).f90
 	F90WRAPSRC = f90wrap_$(NAME).f90
 
-	PYMAIN    = test_$(NAME).py
+	PYMAIN    = test_$(NAME)2D.py   # DEBUG WARN
 	PYWRAPSRC = $(NAME).py
 	PYSHARED  = _$(NAME).so
 	PYOBJS    = $(PYMAIN) $(PYWRAPSRC) $(PYSHARED)

@@ -2,10 +2,10 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: Lbox = 3.0e1
+    real, parameter :: Lbox = 80.0
     real, parameter :: lxu =  Lbox/2.
     real, parameter :: lyu =  Lbox/2.
-    real, parameter :: lzu =  Lbox
+    real, parameter :: lzu =  Lbox/120.
     real, parameter :: lxd = -lxu
     real, parameter :: lyd = -lyu
     real, parameter :: lzd = -lzu
@@ -13,26 +13,26 @@ module input
     real, parameter :: ly = lyu-lyd
     real, parameter :: lz = lzu-lzd
 
-    real, parameter :: vy_max = 1.0e0
-    real, parameter :: vy_min = 0.0
+    real, parameter :: vx_max = 2.0e-1, vy_max = 1.0e0
+    real, parameter :: vx_min = 0.0,    vy_min = 0.0
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad  = 2
     integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 3
-    integer, parameter :: ny = 3
-    integer, parameter :: nz = 3
+    integer, parameter :: nx = 4
+    integer, parameter :: ny = 4
+    integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
-    integer :: mpi_nx = 2
-    integer :: mpi_ny = 2
+    integer :: mpi_nx = 4
+    integer :: mpi_ny = 4
 
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK
     !   * 3 or 'shu-osher' for 3rd-order RK
-    integer, parameter :: iorder = 2
+    integer, parameter :: iorder = 3
     character(*), parameter :: iname = 'heun'
 
     ! Fluctuating hydrodynamics
@@ -45,10 +45,10 @@ module input
     ! Boundary conditions
     character(*), parameter :: xlobc = 'periodic'
     character(*), parameter :: xhibc = 'periodic'
-    character(*), parameter :: ylobc = 'periodic'
-    character(*), parameter :: yhibc = 'periodic'
-    character(*), parameter :: zlobc = 'mwall'
-    character(*), parameter :: zhibc = 'mwall'
+    character(*), parameter :: ylobc = 'mwall'
+    character(*), parameter :: yhibc = 'mwall'
+    character(*), parameter :: zlobc = 'periodic'
+    character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
     real, parameter :: tf = 1.0e2
@@ -65,7 +65,7 @@ module input
     integer, parameter :: ieos = 1
 
     ! Thermodynamic, constitutive, and transport parameters
-    real, parameter :: TK     = 94.4     ! in Kelvin
+    real, parameter :: TK     = 94.4    ! in Kelvin
     real, parameter :: mu     = 39.948   ! AMU per molecule
     real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
     real, parameter :: clt    = 2.0      ! numerical speed of sound

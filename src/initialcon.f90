@@ -72,9 +72,12 @@ contains
                 call mpi_print(iam, 'Setting up 2D Landau-Lifschitz Navier-Stokes test...')
                 call test_llns(Q_r, 1)
             case(10)
-                call mpi_print(iam, 'Setting up 3D LJ HAC test...')
-                call test_hac(Q_r)
+                call mpi_print(iam, 'Setting up 2D LJ fluid HAC test...')
+                call test_2Dhac(Q_r)
             case(11)
+                call mpi_print(iam, 'Setting up 3D LJ fluid HAC test...')
+                call test_3Dhac(Q_r)
+            case(12)
                 call mpi_print(iam, 'Setting up 2D turbulence test...')
                 call turbulence_2d(Q_r)
         end select
@@ -453,13 +456,51 @@ contains
     end subroutine test_llns
     !---------------------------------------------------------------------------
 
+    !===========================================================================
+    ! 2D HAC test (for Blue Waters Symposium 2017)
+    !------------------------------------------------------------
+    !
+    !---------------------------------------------------------------------------
+    subroutine test_2Dhac(Q_r)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
+        integer i,j,k
+        real dn,vx,vy,vz,te,pr, ylo,yhi
+
+        dn = 1.0            ! ambient density
+        te = T_base         ! ambient temperature
+        vy = 0.0            ! ambient y-velocity
+        vz = 0.0            ! ambient z-velocity
+        nu    = dn*te/eta   ! global
+        nueta = dn*te       ! pr = nu*eta  (also global)
+
+        ylo = lyd + 0.5*dy  ! start at cell centers
+        yhi = lyu - 0.5*dy  ! start at cell centers
+
+        do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
+            vx = vx_min + (vx_max - vx_min)/(yhi - ylo) * (yc(j) - ylo)
+            pr = dn*te
+
+            Q_r(i,j,k,rh,1) = dn
+            Q_r(i,j,k,mx,1) = dn*vx
+            Q_r(i,j,k,my,1) = dn*vy
+            Q_r(i,j,k,mz,1) = dn*vz
+            Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*(vx**2 + vy**2 + vz**2)
+        end do
+        end do
+        end do
+
+    end subroutine test_2Dhac
+    !---------------------------------------------------------------------------
 
     !===========================================================================
     ! 3D HAC test (for Blue Waters Symposium 2017)
     !------------------------------------------------------------
     !
     !---------------------------------------------------------------------------
-    subroutine test_hac(Q_r)
+    subroutine test_3Dhac(Q_r)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k
@@ -467,7 +508,7 @@ contains
 
         dn = 1.0            ! ambient density
         te = T_base         ! ambient temperature
-        vx = 0.0            ! ambient x-velocity  1.0/aindex**0.5
+        vx = 0.0            ! ambient x-velocity
         vz = 0.0            ! ambient z-velocity
         nu    = dn*te/eta   ! global
         nueta = dn*te       ! pr = nu*eta  (also global)
@@ -490,7 +531,7 @@ contains
         end do
         end do
 
-    end subroutine test_hac
+    end subroutine test_3Dhac
     !---------------------------------------------------------------------------
 
 
