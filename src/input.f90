@@ -2,13 +2,13 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 3.0e2
+    real, parameter :: lx = 1.0e2
     real, parameter :: ly = lx
-    real, parameter :: lz = lx/200.
+    real, parameter :: lz = lx/100.
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad  = 2
-    integer, parameter :: nbasis = 4
+    integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
     integer, parameter :: nx = 30
@@ -23,10 +23,10 @@ module input
     !   * 2 or 'heun' for 2nd-order RK
     !   * 3 or 'shu-osher' for 3rd-order RK
     integer, parameter :: iorder = 2
-    character(*), parameter :: iname = 'heun'
+    character(*), parameter :: iname = 'shu-osher'
 
     ! Fluctuating hydrodynamics
-    logical, parameter :: llns = .false.
+    logical, parameter :: llns = .true.
 
     ! Initial conditions
     ! character(*), parameter :: icname = ''
@@ -70,7 +70,7 @@ module input
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "biophest_hdjet_00"
+    character (*), parameter :: outname = "nanojet_llns_i3q2b8"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density
