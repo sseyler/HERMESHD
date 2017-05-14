@@ -115,3 +115,355 @@ class Hermeshd(f90wrap.runtime.FortranModule):
 
 hermeshd = Hermeshd()
 
+class Spatial(f90wrap.runtime.FortranModule):
+    """
+    Module spatial
+    
+    
+    Defined at spatial.f90 lines 1-119
+    
+    """
+    @staticmethod
+    def xc(i):
+        """
+        xc = xc(i)
+        
+        
+        Defined at spatial.f90 lines 90-93
+        
+        Parameters
+        ----------
+        i : int
+        
+        Returns
+        -------
+        xc : float
+        
+        """
+        xc = _hermeshd.f90wrap_xc(i=i)
+        return xc
+    
+    @staticmethod
+    def yc(j):
+        """
+        yc = yc(j)
+        
+        
+        Defined at spatial.f90 lines 95-98
+        
+        Parameters
+        ----------
+        j : int
+        
+        Returns
+        -------
+        yc : float
+        
+        """
+        yc = _hermeshd.f90wrap_yc(j=j)
+        return yc
+    
+    @staticmethod
+    def zc(k):
+        """
+        zc = zc(k)
+        
+        
+        Defined at spatial.f90 lines 100-103
+        
+        Parameters
+        ----------
+        k : int
+        
+        Returns
+        -------
+        zc : float
+        
+        """
+        zc = _hermeshd.f90wrap_zc(k=k)
+        return zc
+    
+    @property
+    def q_r0(self):
+        """
+        Element q_r0 ftype=real pytype=float
+        
+        
+        Defined at spatial.f90 line 14
+        
+        """
+        array_ndim, array_type, array_shape, array_handle = \
+            _hermeshd.f90wrap_spatial__array__q_r0(f90wrap.runtime.empty_handle)
+        if array_handle in self._arrays:
+            q_r0 = self._arrays[array_handle]
+        else:
+            q_r0 = f90wrap.runtime.get_array(f90wrap.runtime.sizeof_fortran_t,
+                                    f90wrap.runtime.empty_handle,
+                                    _hermeshd.f90wrap_spatial__array__q_r0)
+            self._arrays[array_handle] = q_r0
+        return q_r0
+    
+    @q_r0.setter
+    def q_r0(self, q_r0):
+        self.q_r0[...] = q_r0
+    
+    @property
+    def q_r1(self):
+        """
+        Element q_r1 ftype=real pytype=float
+        
+        
+        Defined at spatial.f90 line 14
+        
+        """
+        array_ndim, array_type, array_shape, array_handle = \
+            _hermeshd.f90wrap_spatial__array__q_r1(f90wrap.runtime.empty_handle)
+        if array_handle in self._arrays:
+            q_r1 = self._arrays[array_handle]
+        else:
+            q_r1 = f90wrap.runtime.get_array(f90wrap.runtime.sizeof_fortran_t,
+                                    f90wrap.runtime.empty_handle,
+                                    _hermeshd.f90wrap_spatial__array__q_r1)
+            self._arrays[array_handle] = q_r1
+        return q_r1
+    
+    @q_r1.setter
+    def q_r1(self, q_r1):
+        self.q_r1[...] = q_r1
+    
+    @property
+    def q_r2(self):
+        """
+        Element q_r2 ftype=real pytype=float
+        
+        
+        Defined at spatial.f90 line 14
+        
+        """
+        array_ndim, array_type, array_shape, array_handle = \
+            _hermeshd.f90wrap_spatial__array__q_r2(f90wrap.runtime.empty_handle)
+        if array_handle in self._arrays:
+            q_r2 = self._arrays[array_handle]
+        else:
+            q_r2 = f90wrap.runtime.get_array(f90wrap.runtime.sizeof_fortran_t,
+                                    f90wrap.runtime.empty_handle,
+                                    _hermeshd.f90wrap_spatial__array__q_r2)
+            self._arrays[array_handle] = q_r2
+        return q_r2
+    
+    @q_r2.setter
+    def q_r2(self, q_r2):
+        self.q_r2[...] = q_r2
+    
+    @property
+    def q_r3(self):
+        """
+        Element q_r3 ftype=real pytype=float
+        
+        
+        Defined at spatial.f90 line 14
+        
+        """
+        array_ndim, array_type, array_shape, array_handle = \
+            _hermeshd.f90wrap_spatial__array__q_r3(f90wrap.runtime.empty_handle)
+        if array_handle in self._arrays:
+            q_r3 = self._arrays[array_handle]
+        else:
+            q_r3 = f90wrap.runtime.get_array(f90wrap.runtime.sizeof_fortran_t,
+                                    f90wrap.runtime.empty_handle,
+                                    _hermeshd.f90wrap_spatial__array__q_r3)
+            self._arrays[array_handle] = q_r3
+        return q_r3
+    
+    @q_r3.setter
+    def q_r3(self, q_r3):
+        self.q_r3[...] = q_r3
+    
+    @property
+    def dz(self):
+        """
+        Element dz ftype=real  pytype=float
+        
+        
+        Defined at spatial.f90 line 17
+        
+        """
+        return _hermeshd.f90wrap_spatial__get__dz()
+    
+    @dz.setter
+    def dz(self, dz):
+        _hermeshd.f90wrap_spatial__set__dz(dz)
+    
+    @property
+    def dy(self):
+        """
+        Element dy ftype=real  pytype=float
+        
+        
+        Defined at spatial.f90 line 17
+        
+        """
+        return _hermeshd.f90wrap_spatial__get__dy()
+    
+    @dy.setter
+    def dy(self, dy):
+        _hermeshd.f90wrap_spatial__set__dy(dy)
+    
+    @property
+    def dx(self):
+        """
+        Element dx ftype=real  pytype=float
+        
+        
+        Defined at spatial.f90 line 17
+        
+        """
+        return _hermeshd.f90wrap_spatial__get__dx()
+    
+    @dx.setter
+    def dx(self, dx):
+        _hermeshd.f90wrap_spatial__set__dx(dx)
+    
+    @property
+    def dxi(self):
+        """
+        Element dxi ftype=real  pytype=float
+        
+        
+        Defined at spatial.f90 line 17
+        
+        """
+        return _hermeshd.f90wrap_spatial__get__dxi()
+    
+    @dxi.setter
+    def dxi(self, dxi):
+        _hermeshd.f90wrap_spatial__set__dxi(dxi)
+    
+    @property
+    def dyi(self):
+        """
+        Element dyi ftype=real  pytype=float
+        
+        
+        Defined at spatial.f90 line 17
+        
+        """
+        return _hermeshd.f90wrap_spatial__get__dyi()
+    
+    @dyi.setter
+    def dyi(self, dyi):
+        _hermeshd.f90wrap_spatial__set__dyi(dyi)
+    
+    @property
+    def dzi(self):
+        """
+        Element dzi ftype=real  pytype=float
+        
+        
+        Defined at spatial.f90 line 17
+        
+        """
+        return _hermeshd.f90wrap_spatial__get__dzi()
+    
+    @dzi.setter
+    def dzi(self, dzi):
+        _hermeshd.f90wrap_spatial__set__dzi(dzi)
+    
+    @property
+    def dvi(self):
+        """
+        Element dvi ftype=real  pytype=float
+        
+        
+        Defined at spatial.f90 line 17
+        
+        """
+        return _hermeshd.f90wrap_spatial__get__dvi()
+    
+    @dvi.setter
+    def dvi(self, dvi):
+        _hermeshd.f90wrap_spatial__set__dvi(dvi)
+    
+    @property
+    def loc_lxd(self):
+        """
+        Element loc_lxd ftype=real  pytype=float
+        
+        
+        Defined at spatial.f90 line 20
+        
+        """
+        return _hermeshd.f90wrap_spatial__get__loc_lxd()
+    
+    @loc_lxd.setter
+    def loc_lxd(self, loc_lxd):
+        _hermeshd.f90wrap_spatial__set__loc_lxd(loc_lxd)
+    
+    @property
+    def loc_lyd(self):
+        """
+        Element loc_lyd ftype=real  pytype=float
+        
+        
+        Defined at spatial.f90 line 20
+        
+        """
+        return _hermeshd.f90wrap_spatial__get__loc_lyd()
+    
+    @loc_lyd.setter
+    def loc_lyd(self, loc_lyd):
+        _hermeshd.f90wrap_spatial__set__loc_lyd(loc_lyd)
+    
+    @property
+    def loc_lzd(self):
+        """
+        Element loc_lzd ftype=real  pytype=float
+        
+        
+        Defined at spatial.f90 line 20
+        
+        """
+        return _hermeshd.f90wrap_spatial__get__loc_lzd()
+    
+    @loc_lzd.setter
+    def loc_lzd(self, loc_lzd):
+        _hermeshd.f90wrap_spatial__set__loc_lzd(loc_lzd)
+    
+    def __str__(self):
+        ret = ['<spatial>{\n']
+        ret.append('    q_r0 : ')
+        ret.append(repr(self.q_r0))
+        ret.append(',\n    q_r1 : ')
+        ret.append(repr(self.q_r1))
+        ret.append(',\n    q_r2 : ')
+        ret.append(repr(self.q_r2))
+        ret.append(',\n    q_r3 : ')
+        ret.append(repr(self.q_r3))
+        ret.append(',\n    dz : ')
+        ret.append(repr(self.dz))
+        ret.append(',\n    dy : ')
+        ret.append(repr(self.dy))
+        ret.append(',\n    dx : ')
+        ret.append(repr(self.dx))
+        ret.append(',\n    dxi : ')
+        ret.append(repr(self.dxi))
+        ret.append(',\n    dyi : ')
+        ret.append(repr(self.dyi))
+        ret.append(',\n    dzi : ')
+        ret.append(repr(self.dzi))
+        ret.append(',\n    dvi : ')
+        ret.append(repr(self.dvi))
+        ret.append(',\n    loc_lxd : ')
+        ret.append(repr(self.loc_lxd))
+        ret.append(',\n    loc_lyd : ')
+        ret.append(repr(self.loc_lyd))
+        ret.append(',\n    loc_lzd : ')
+        ret.append(repr(self.loc_lzd))
+        ret.append('}')
+        return ''.join(ret)
+    
+    _dt_array_initialisers = []
+    
+
+spatial = Spatial()
+

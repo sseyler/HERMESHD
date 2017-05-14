@@ -5,30 +5,30 @@ from mpi4py import MPI
 import os, sys, getopt
 
 import numpy as np
-from lammps import lammps, PyLammps
+from lammps import lammps
 
 comm = MPI.COMM_WORLD
 iam = comm.Get_rank()
 nproc = comm.Get_size()
 
-seed = 12345
+seed = 123456
 
-bname  = "lj_pylmp_2Dhac"  # base name of simulation files
-datdir = "data/{}_test".format(bname)    # name of output data directory
+bname  = "2Dhac_lammps"  # base name of simulation files
+datdir = "data/test_{}".format(bname)    # name of output data directory
 
 ### Vars #######################
-eta = 2.084e-3  # in Poise (= 0.1 Pascal-seconds = 0.1 Pa s = g/cm/s)
-g = 45.5  # lattice geometry factor (from Giupponi, et al. JCP 2007)
-dx = 10.0  # HD cell size in Angstroms
-zeta_bare = 1.0  # bare friction coefficient
-zeta_eff = 1./zeta_bare + 1/(g*eta*dx)
+Lbox = 80.0       # length of single box dimension in A  # 34.68 or 78.45
+Lx = Ly = Lbox
+Lz = Lbox/12       # + 2*bdz   # z direction length is 4*Lbox/3 + total height of top/bottom reservoirs
+dy = dx = 10.0     # grid cell dimensions in A
+dz = Lz
 
-te_init = 50.0
-te_sim  = 100.0
+te_init = 40.0
+te_sim  = 94.4
 pr_init = 1.0
 pr_sim  = 1.0
 
-dt_md  = 10.0      # timestep in fs
+dt_md  = 1.0      # timestep in fs
 n_md = 10
 t_md = n_md*dt_md
 
@@ -37,16 +37,14 @@ nmin   = 200      # number of emin steps
 nsteps = 10000     # number of timesteps
 nout   = 100      # output frequency
 
+eta = 2.084e-3  # in Poise (= 0.1 Pascal-seconds = 0.1 Pa s = g/cm/s)
+g  = 45.5  # lattice geometry factor (from Giupponi, et al. JCP 2007)
+zeta_bare = 1.0  # bare friction coefficient
+zeta_eff = 1./zeta_bare + 1/(g*eta*dx)
 mass = 39.948
 La  = 6.0          # lattice spacing in A
 bdy = 10.0         # buffer dz (height of each reservoir)
 a   = bdy/1.0      # grid cell dimensions in A
-
-L  = 80.0              # length of single box dimension in A  # 34.68 or 78.45
-Lx = Ly = L
-Lz = L/12  # + 2*bdz   # z direction length is 4*L/3 + total height of top/bottom reservoirs
-dy = dx            # grid cell dimensions in A
-dz = Lz
 
 Lxu =  Lx/2.0
 Lxd = -Lx/2.0
@@ -96,6 +94,7 @@ uy_t_file = "{}/uy.tbuffer".format(datdir)
 te_b_file = "{}/te.bbuffer".format(datdir)
 te_t_file = "{}/te.tbuffer".format(datdir)
 
+barstr = '---------------------------------------------------------\n'
 
 def setup_md(lmp):
     print_mpi("Setting up simulation...\n")
@@ -105,21 +104,20 @@ def setup_md(lmp):
 
     lmp.command("units real")
     lmp.command("newton on")
-
-    lmp = create_box(lmp)
+    create_box(lmp)
 
     lmp.command("pair_style  lj/cut {}".format(LJc))
     lmp.command("pair_coeff  1 1 {} {} {}".format(LJe, LJs, LJc))
     lmp.command("pair_modify shift yes")
     lmp.command("neighbor     3.0 bin")
-    lmp.command("neigh_modify delay 0 every 20 check no")
-    lmp.command("thermo_style multi")
+    lmp.command("neigh_modify delay 0 every 10 check no")
+    # lmp.command("thermo_style multi")
+    lmp.command("thermo_style custom step density temp press ")
 
     # WARN: LAMMPS claims the system must be init before write_dump can be used...
     lmp.command("write_dump all xyz {}/init_{}.xyz".format(datdir, bname))
     xyz_to_pdb("{}/init_{}.xyz".format(datdir, bname))
     lmp.command("restart {} {}_a.res {}_b.res".format(1000, bname, bname))
-    return lmp
 
 def create_box(lmp):
     lmp.command("dimension    2")
@@ -133,13 +131,9 @@ def create_box(lmp):
     lmp.command("create_box   1 simreg")
     lmp.command("create_atoms 1 region latreg units box")
     lmp.command("mass  1 {}".format(mass))
-    return lmp
 
-
-def init_velocities(lmp):
-    lmp.command("velocity all create {} 87287 loop geom".format(te_init))
-    return lmp
-
+def init_velocities(lmp, te_i):
+    lmp.command("velocity all create {} 87287 loop geom".format(te_i))
 
 def setup_buffer(lmp):
     # STEP 1: Define a "chunk" of atoms with an implicit buffer region
@@ -158,68 +152,61 @@ def setup_buffer(lmp):
     lmp.command("compute te_top_t all temp/chunk cid_top temp com yes")
     lmp.command("fix te_bot all ave/time {} {} {} c_te_bot_t ave one file {}".format(neve, nrep, nfre, te_b_file))
     lmp.command("fix te_top all ave/time {} {} {} c_te_top_t ave one file {}".format(neve, nrep, nfre, te_t_file))
-    return lmp
-
 
 def setup_md_region(lmp):
     lmp.command("compute cid_sim all chunk/atom bin/1d y {} {} discard yes bound y {} {} units box".format(bb_hi, tb_lo-bb_hi, bb_hi, tb_lo))
     lmp.command("fix rh_sim  all ave/chunk {} {} {} cid_sim density/mass norm sample ave one file {}".format(neve, nrep, nfre, rh_s_file))
-    return lmp
-
 
 def setup_wall(lmp):
     lmp.command("fix wall_ylo all wall/lj126 ylo {} {} {} {} units box".format(Lyd, LJWe, LJWs, LJWc))
     lmp.command("fix wall_yhi all wall/lj126 yhi {} {} {} {} units box".format(Lyu, LJWe, LJWs, LJWc))
-    return lmp
-
 
 def finalize(lmp):
     lmp.close()
     MPI.Finalize()
 
-
-def minimize(lmp, style='cg'):
-    print_mpi(">>> Minimizing for {} steps...".format(nmin))
+def minimize(lmp, nstep, style='cg'):
+    print_mpi("\n{}>>> Minimizing for {} steps...\n{}".format(barstr,nstep,barstr))
     lmp.command("thermo     100")
-    lmp.command("dump       emin all dcd {} {}/em_{}.dcd".format(10, datdir, bname))
+    lmp.command("dump       emin all dcd {} {}/em_{}.dcd".format(1, datdir, bname))
 
     lmp.command("min_style {}".format(style))
-    lmp.command("minimize   0.0 0.0 {} {}".format(nmin, 100*nmin))
+    lmp.command("minimize   0.0 0.0 {} {}".format(nstep, 10*nstep))
     lmp.command("write_dump all xyz {}/em_{}.xyz".format(datdir, bname))
     xyz_to_pdb("{}/em_{}.xyz".format(datdir, bname))
     lmp.command("undump emin")
-    return lmp
 
-
-def equilibrate(lmp, te_i, te_f, fast=False):
-    nsteps_eq = 1000 if fast else 25000
-    print_mpi(">>> NVT equilibration for {} steps...".format(nsteps_eq))
-    lmp.command("thermo   5000")
+def equilibrate(lmp, te_i, te_f, fast=False, verbose=False):
+    nsteps_eq = 5000 if fast else 25000
+    print_mpi("\n{}>>> NVT equilibration for {} steps...\n{}".format(barstr,nsteps_eq,barstr))
+    lmp.command("thermo   0")
     lmp.command("timestep 1.0")
-    lmp.command("fix  1   all nvt temp {} {} 100.0 tchain 1".format(te_i, te_f))
+
+    lmp.command("fix 1    all nvt temp {} {} 100.0 tchain 1".format(te_i, te_f))
+    # lmp.command("fix 1    all nve")
+    # lmp.command("fix 2    all temp/berendsen {} {} 100.0".format(te_i, te_f))
+
     lmp.command("fix  e2d all enforce2d")
     lmp.command("dump eq1 all dcd {} {}/eq1_{}.dcd".format(100, datdir, bname))
 
-    lmp.command("run      {}".format(nsteps_eq))
+    post = 'yes' if verbose else 'no'
+    lmp.command("run      {} post {}".format(nsteps_eq, post))
     lmp.command("write_dump all xyz {}/eq1_{}.xyz".format(datdir, bname))
     xyz_to_pdb("{}/eq1_{}.xyz".format(datdir, bname))
     lmp.command("unfix 1")
     lmp.command("undump eq1")
-    return lmp
 
-
-def run_lammps(lmp, nstep, dt=dt_md, nout=nout):
-    print_mpi(">>> Running NVE simulation for {} steps...".format(nstep))
+def run_lammps(lmp, nstep, dt=dt_md, nout=nout, pre='yes', post='yes'):
+    # print_mpi("\n{}>>> Running NVE simulation for {} steps...\n{}".format(barstr,nstep,barstr))
     lmp.command("thermo   {}".format(nout))
     lmp.command("timestep {}".format(dt))
     lmp.command("fix  1   all nve")
     lmp.command("fix  e2d all enforce2d")
 
-    lmp.command("run      {}".format(nstep))
+    lmp.command("run {} pre {} post {}".format(nstep, pre, post))
     # lmp.command("write_dump all xyz {}/md_{}.xyz".format(datdir, bname))
     # xyz_to_pdb("{}/md_{}.xyz".format(datdir, bname))
     lmp.command("write_restart {}.res".format(bname))
-    return lmp
 
 
 def read(argv):
@@ -252,40 +239,41 @@ def print_mpi(msg, iam=iam, print_id=0):
     if (iam == print_id): print(msg)
 
 
+"""
+mpi_nx, mpi_ny, mpi_nz = 4, 4, 1
+nx, ny, nz = 2, 2, 1
+nQ, nB = 11, 8
 
-# mpi_nx, mpi_ny, mpi_nz = 4, 4, 1
-# nx, ny, nz = 2, 2, 1
-# nQ, nB = 11, 8
-#
-# def get_gid(x, y, z):
-#     gid_i = int(np.ceil((x - Lxd) / dx))
-#     gid_j = int(np.ceil((y - Lyd) / dy))
-#     gid_k = int(np.ceil((z - Lzd) / dz))
-#     return gid_i, gid_j, gid_k
-#
-# def get_mpi_idx_from_gid(gid_i, gid_j, gid_k):
-#     mpi_i = int( np.ceil(gid_i / nx) )
-#     mpi_j = int( np.ceil(gid_j / ny) )
-#     mpi_k = int( np.ceil(gid_k / nz) )
-#     return mpi_i, mpi_j, mpi_k
-#
-# def get_local_idx(gid_i, gid_j, gid_k, mpi_i, mpi_j, mpi_k):
-#     i = int( gid_i - (mpi_i-1)*nx )
-#     j = int( gid_j - (mpi_j-1)*ny )
-#     k = int( gid_k - (mpi_k-1)*nz )
-#     return i, j, k
-#
-# def get_mpi_idx_and_lid(gid_i, gid_j, gid_k):
-#     mpi_i, mpi_j, mpi_k = get_mpi_idx_from_gid(gid_i, gid_j, gid_k)
-#     i = int( gid_i - (mpi_i-1)*nx )
-#     j = int( gid_j - (mpi_j-1)*ny )
-#     k = int( gid_k - (mpi_k-1)*nz )
-#     return [(mpi_i, i), (mpi_j, j), (mpi_k, k)]
-#
-# def get_mpi_rank(mpi_i, mpi_j, mpi_k):
-#     return mpi_ny*mpi_nx*(mpi_k-1) + mpi_nx*(mpi_j-1) + (mpi_i-1)
+def get_gid(x, y, z):
+    gid_i = int(np.ceil((x - Lxd) / dx))
+    gid_j = int(np.ceil((y - Lyd) / dy))
+    gid_k = int(np.ceil((z - Lzd) / dz))
+    return gid_i, gid_j, gid_k
 
+def get_mpi_idx_from_gid(gid_i, gid_j, gid_k):
+    mpi_i = int( np.ceil(gid_i / nx) )
+    mpi_j = int( np.ceil(gid_j / ny) )
+    mpi_k = int( np.ceil(gid_k / nz) )
+    return mpi_i, mpi_j, mpi_k
 
+def get_local_idx(gid_i, gid_j, gid_k, mpi_i, mpi_j, mpi_k):
+    i = int( gid_i - (mpi_i-1)*nx )
+    j = int( gid_j - (mpi_j-1)*ny )
+    k = int( gid_k - (mpi_k-1)*nz )
+    return i, j, k
+
+def get_mpi_idx_and_lid(gid_i, gid_j, gid_k):
+    mpi_i, mpi_j, mpi_k = get_mpi_idx_from_gid(gid_i, gid_j, gid_k)
+    i = int( gid_i - (mpi_i-1)*nx )
+    j = int( gid_j - (mpi_j-1)*ny )
+    k = int( gid_k - (mpi_k-1)*nz )
+    return [(mpi_i, i), (mpi_j, j), (mpi_k, k)]
+
+def get_mpi_rank(mpi_i, mpi_j, mpi_k):
+    return mpi_ny*mpi_nx*(mpi_k-1) + mpi_nx*(mpi_j-1) + (mpi_i-1)
+"""
+
+"""
 if __name__ == "__main__":
     lmp = lammps()
 
@@ -305,6 +293,24 @@ if __name__ == "__main__":
     lmp.command("variable zeta  equal {}".format(0.1))
     lmp.command("variable kt    equal {}".format(1.9872036e-3*te_sim))  # gas constant in kcal/mol
     lmp.command("variable sigma equal sqrt(2*v_kt*v_zeta/v_dt)")
+
+    # lmp.command("variable gidx_i atom \"ceil((x + {})/{})\"".format(-Lxd, dx))
+    # lmp.command("variable gidx_j atom \"ceil((y + {})/{})\"".format(-Lyd, dy))
+    # lmp.command("variable mpiidx_i atom \"ceil((v_gidx_i)/{})\"".format(nx))
+    # lmp.command("variable mpiidx_j atom \"ceil((v_gidy_i)/{})\"".format(ny))
+    # lmp.command("variable locidx_i atom \"(v_gidx_i) - (v_mpiidx_i-1)*{}\"".format(nx))
+    # lmp.command("variable locidx_j atom \"(v_gidy_i) - (v_mpiidx_j-1)*{}\"".format(ny))
+    # lmp.command("variable mpi_rank atom \"{}*(v_mpiidx_j-1) + (v_mpiidx_i-1)\"".format(mpi_nx))
+    # lmp.command("variable crd2ux atom \" \"".format())
+
+    # lmp.command('print \"{}\"'.format(barstr))
+    # for i in xrange(natoms):
+    #     lmp.command("variable print_var_i_{:d} equal v_gidx_i[{:d}]".format(i+1,i+1))
+    #     lmp.command("variable print_var_j_{:d} equal v_gidx_j[{:d}]".format(i+1,i+1))
+    #     strout = " >>> gidx_ij[{:d}] is: ${{print_var_i_{:d}}} ${{print_var_j_{:d}}}".format(i+1,i+1,i+1)  # {{}} for literal curlies
+    #     lmp.command('print \"{}\"'.format(strout))  # L.lmp_print(printstr)
+    # lmp.command('print \"{}\"'.format(barstr))
+
     lmp.command("variable ux equal 0.01")
     lmp.command("variable uy equal 0.0")
     lmp.command("variable hfx atom \"-v_zeta*(vx - v_ux) + normal(0.0, v_sigma, {})\"".format(seed))
@@ -344,6 +350,12 @@ if __name__ == "__main__":
 
 
     ### Run #######################
+    # lmp.command("region  rid_right block {} {} {} {} {} {} units box".format(tb_lo, tb_hi, Lyd, Lyu, Lzd, Lzu))
+    # lmp.command("fix hf_right all addforce v_hfx v_hfy 0 every 1 region rid_right")
+    # lmp.command("compute grid all chunk/atom bin/3d x lower {} y lower {} z lower {} ids every units box".format(dx,dy,dz))
+    # lmp.command("compute ctest all property/chunk grid count coord1 coord2 coord3")
+    # lmp.command("fix ftest all ave/chunk {} {} {} grid density/number norm sample ave one file {}".format(neve, nrep, nfre, grid_file))
+
     # lmp.command("region rid_bot block {} {} {} {} {} {} units box".format(Lzd, Lzu, Lyd, Lyu, bb_lo, bb_hi))
     # lmp.command("region rid_top block {} {} {} {} {} {} units box".format(Lzd, Lzu, Lyd, Lyu, tb_lo, tb_hi))
     # lmp.command("group lbuff dynamic all region rid_left  every {}".format(n_md))
@@ -358,3 +370,17 @@ if __name__ == "__main__":
 
     for i in xrange(1):
         lmp = run_lammps(lmp, 10000, dt=dt_md, nout=500)
+"""
+
+
+
+# @contextmanager
+# def atomvel_tempfile(data):
+#     temp = tempfile.NamedTemporaryFile(delete=False)
+#     temp.write(data)
+#     temp.close()
+#     try:
+#         yield temp.name
+#     finally:
+#         os.unlink(temp.name)
+# with atomvel_tempfile('atom velocity data.\nFrom HERMES.') as avfile:

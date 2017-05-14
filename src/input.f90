@@ -13,7 +13,7 @@ module input
     real, parameter :: ly = lyu-lyd
     real, parameter :: lz = lzu-lzd
 
-    real, parameter :: vx_max = 2.0e-1, vy_max = 1.0e0
+    real, parameter :: vx_max = 1.0e0, vy_max = 1.0e0
     real, parameter :: vx_min = 0.0,    vy_min = 0.0
 
     ! Number of Gaussian quadrature points per spatial dimension
@@ -21,8 +21,8 @@ module input
     integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 4
-    integer, parameter :: ny = 4
+    integer, parameter :: nx = 2
+    integer, parameter :: ny = 2
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
@@ -33,10 +33,10 @@ module input
     !   * 2 or 'heun' for 2nd-order RK
     !   * 3 or 'shu-osher' for 3rd-order RK
     integer, parameter :: iorder = 3
-    character(*), parameter :: iname = 'heun'
+    character(*), parameter :: iname = 'shu-osher'
 
     ! Fluctuating hydrodynamics
-    logical, parameter :: llns = .true.
+    logical, parameter :: llns = .false.
 
     ! Initial conditions
     ! character(*), parameter :: icname = ''
@@ -80,7 +80,7 @@ module input
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_hac_pytemp"
+    character (*), parameter :: outname = "test_2Dhac_hermes"
     character (*), parameter :: outdir  = trim(datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density

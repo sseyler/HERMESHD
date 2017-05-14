@@ -44,6 +44,8 @@ contains
         ! integer, intent(in) :: npts
         integer, optional, intent(in) :: seed
 
+        call mpi_print(iam, 'Selected fluctuating hydrodynamics (LLNS) model')
+
         if (present(seed)) then
             vsl_errcode = vslnewstream(vsl_stream, vsl_brng, seed + iam)
         else
