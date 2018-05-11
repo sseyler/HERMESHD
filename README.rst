@@ -38,7 +38,7 @@ Overview
 
   * 5 variables describing viscous stresses and 3 for heat flux
   
-    * stress (``sxx``, ``syy``, ``szz``, ``sxy``, ``sxz``, ``syz``) – 5 independent for symmetric, traceless stress
+    * stress (``pxx``, ``pyy``, ``pzz``, ``pxy``, ``pxz``, ``pyz``) – 5 independent for symmetric, traceless stress
     * heat flux (``qx``, ``qy``, ``qz``)
 
 * Units—a value of unity for each variable or parameter corresponds to the following dimensional units
