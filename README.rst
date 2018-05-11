@@ -4,14 +4,21 @@ HERMESHD
 
 HERMESHD is a Discontinuous Galerkin (DG) numerical code written in Fortran and Python for simulating 3D compressible hydrodynamics.
 
-Note: The original hydrodynamics code, derived from the PERSEUS XMHD code, was written by Charles Seyler; HERMESHD is based on the PERSEUS hydrodynamics derivative and will be adapted to fluctuating hydrodynamics (FH) simulations by Sean Seyler. See Background below!
-
 :Authors:      Sean L. Seyler (FH and modularized code), Charles Seyler (original code), 
 :Organization: Arizona State University, Cornell University
 :Contact:      slseyler@asu.edu, ces7@cornell.edu
 :Year:         2017
 :License:      MIT License
 :Copyright:    © 2017 Sean L. Seyler
+
+
+Using this work
+================
+
+This work is currently distributed under the terms of the MIT license, though this may change in the near feature. If you choose to use any part of this work or these ideas, I kindly request that you cite `my talk presented at APS March Meeting 2018`_ [3]_—at least until we make our manuscript (in preparation) available! Many thanks for your consideration!
+
+**Important note**: The original hydrodynamics code, derived from the PERSEUS XMHD code, was written by Charles E. Seyler; HERMESHD is based on the PERSEUS hydrodynamics derivative and will be adapted to fluctuating hydrodynamics (FH) simulations by Sean Seyler. See Background below!
+
 
 Background
 ===========
@@ -47,12 +54,6 @@ Extension to Fluctuating Hydrodynamics
 =======================================
 
 More to come soon!
-
-
-Using this work
-================
-
-This work is currently distributed under the terms of the MIT license, though this may change in the near feature. If you choose to use any part of this work or these ideas, please cite `my talk presented at APS March Meeting 2018`_ [3]_—at least until we make our manuscript (in preparation) available! Many thanks for your consideration!
 
 
 References
