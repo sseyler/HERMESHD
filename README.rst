@@ -6,7 +6,7 @@ HERMESHD is a Discontinuous Galerkin (DG) numerical code written in Fortran and 
 
 Note: The original hydrodynamics code, derived from the PERSEUS XMHD code, was written by Charles Seyler; HERMESHD is based on the PERSEUS hydrodynamics derivative and will be adapted to fluctuating hydrodynamics (FH) simulations by Sean Seyler. See Background below!
 
-:Authors:      Sean L. Seyler (FH and modularized code), Charles Seyler (original code)
+:Authors:      Sean L. Seyler (FH and modularized code), Charles Seyler (original code), 
 :Organization: Arizona State University, Cornell University
 :Contact:      slseyler@asu.edu, ces7@cornell.edu
 :Year:         2017
@@ -21,11 +21,18 @@ The original PERSEUS (Physics of the Extended-mhd Relaxation System using an Eff
 Overview
 =========
 
-* Variables—there are 5 independent field variables
+* Variables (5, 10, or 13 moment-equations):
 
-  * density (``rh``)
-  * velocity (``vx``, ``vy``, ``vz``)
-  * energy (``en``)
+  * 5 independent field variables from conventional hydrodynamics
+  
+    * density (``rh``)
+    * velocity (``vx``, ``vy``, ``vz``)
+    * energy (``en``)
+
+  * 5 variables describing viscous stresses and 3 for heat flux
+  
+    * stress (``sxx``, ``syy``, ``szz``, ``sxy``, ``sxz``, ``syz``) – 5 independent for symmetric, traceless stress
+    * heat flux (``qx``, ``qy``, ``qz``)
 
 * Units—a value of unity for each variable or parameter corresponds to the following dimensional units
 
@@ -35,10 +42,18 @@ Overview
   * velocity (``v0``)
   * temperature (``te0``)
 
+
 Extension to Fluctuating Hydrodynamics
 =======================================
 
 More to come soon!
+
+
+Using this work
+================
+
+This work is currently distributed under the terms of the MIT license, though this may change in the near feature. If you choose to use any part of this work or these ideas, please cite `my talk presented at APS March Meeting 2018`_ [3]_—at least until we make our manuscript (in preparation) available! Many thanks for your consideration!
+
 
 References
 ===========
@@ -46,16 +61,26 @@ References
 .. Articles
 .. --------
 
-.. [1] Seyler, C. E. & Martin, M. R.
+.. [1] C. E. Seyler & M. R. Martin.
    Relaxation model for extended magnetohydrodynamics: Comparison
-   to magnetohydrodynamics for dense Z-pinches. Phys. Plasmas 18,
+   to magnetohydrodynamics for dense Z-pinches. *Phys. Plasmas* **18**,
    012703 (2011). doi:`10.1063/1.3543799`_.
 
 .. _`10.1063/1.3543799`: http://dx.doi.org/10.1063/1.3543799
 
-.. [2] Zhao, X., Yang, Y. & Seyler, C. E.
+.. [2] X. Zhao, Y. Yang & C. E. Seyler.
    A positivity-preserving semi-implicit discontinuous Galerkin scheme
-   for solving extended magnetohydrodynamics equations. J. Comput. Phys.
-   278, 400–415 (2014). doi:`10.1016/j.jcp.2014.08.044`_.
+   for solving extended magnetohydrodynamics equations. *J. Comput. Phys.*
+   **278**, 400–415 (2014). doi:`10.1016/j.jcp.2014.08.044`_.
 
 .. _`10.1016/j.jcp.2014.08.044`: http://dx.doi.org/10.1016/j.jcp.2014.08.044
+
+.. [3] S. L. Seyler, C. E. Seyler & O. Beckstein.
+    *Fluctuating Hydrodynamics in the 13-moment Approximation for
+    Simulating Biomacromolecular Nanomachines*. Talk, APS March Meeting 2018.
+    url:`meetings.aps.org/Meeting/MAR18/Session/S51.5`_.
+
+.. _`meetings.aps.org/Meeting/MAR18/Session/S51.5`: https://meetings.aps.org/Meeting/MAR18/Session/S51.5
+
+
+.. _`my talk presented at APS March Meeting 2018`: https://meetings.aps.org/Meeting/MAR18/Session/S51.5
