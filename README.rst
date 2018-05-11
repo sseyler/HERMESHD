@@ -56,6 +56,12 @@ Extension to Fluctuating Hydrodynamics
 More to come soon!
 
 
+Acknowledgements
+=================
+
+This work was funded by a `2016 Blue Waters Graduate Fellowship`_ for `Developing a hybrid continuum-particle method for simulating large-scale heterogeneous biomolecular systems`_. Sean Seyler also expresses his eternal gratitude to Professor Oliver Beckstein who, as his doctoral advisor, was very generous in allowing him to pursue this project in his final year of graduate school.
+
+
 References
 ===========
 
@@ -83,5 +89,8 @@ References
 
 .. _`meetings.aps.org/Meeting/MAR18/Session/S51.5`: https://meetings.aps.org/Meeting/MAR18/Session/S51.5
 
+.. _`2016 Blue Waters Graduate Fellowship`: https://bluewaters.ncsa.illinois.edu/fellowships/2016
+
+.. _`Developing a hybrid continuum-particle method for simulating large-scale heterogeneous biomolecular systems`: https://bluewaters.ncsa.illinois.edu/science-teams?page=detail&psn=bafh
 
 .. _`my talk presented at APS March Meeting 2018`: https://meetings.aps.org/Meeting/MAR18/Session/S51.5
