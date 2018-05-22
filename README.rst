@@ -17,7 +17,7 @@ Using this work
 
 This work is currently distributed under the terms of the MIT license, though this may change in the near feature. If you choose to use any part of this work or these ideas, I kindly request that you cite `my talk presented at APS March Meeting 2018`_ [3]_—at least until we make our manuscript (in preparation) available! Many thanks for your consideration!
 
-**Important note**: The original hydrodynamics code, derived from the PERSEUS XMHD code, was written by Charles E. Seyler; HERMESHD is based on the PERSEUS hydrodynamics derivative and will be adapted to fluctuating hydrodynamics (FH) simulations by Sean Seyler. See Background below!
+**Important note**: The original hydrodynamics code, derived from the PERSEUS XMHD code, was written by Charles E. Seyler and Matthew R. Martin [1]_; HERMESHD is based on the PERSEUS hydrodynamics derivative and will be adapted to fluctuating hydrodynamics (FH) simulations by Sean Seyler. See Background below!
 
 
 Background
@@ -68,21 +68,21 @@ References
 .. Articles
 .. --------
 
-.. [1] C. E. Seyler & M. R. Martin.
+.. [1] C.E. Seyler & M.R. Martin.
    Relaxation model for extended magnetohydrodynamics: Comparison
    to magnetohydrodynamics for dense Z-pinches. *Phys. Plasmas* **18**,
    012703 (2011). doi:`10.1063/1.3543799`_.
 
 .. _`10.1063/1.3543799`: http://dx.doi.org/10.1063/1.3543799
 
-.. [2] X. Zhao, Y. Yang & C. E. Seyler.
+.. [2] X. Zhao, Y. Yang & C.E. Seyler.
    A positivity-preserving semi-implicit discontinuous Galerkin scheme
    for solving extended magnetohydrodynamics equations. *J. Comput. Phys.*
    **278**, 400–415 (2014). doi:`10.1016/j.jcp.2014.08.044`_.
 
 .. _`10.1016/j.jcp.2014.08.044`: http://dx.doi.org/10.1016/j.jcp.2014.08.044
 
-.. [3] S. L. Seyler, C. E. Seyler & O. Beckstein.
+.. [3] S.L. Seyler, C.E. Seyler & O. Beckstein.
     *Fluctuating Hydrodynamics in the 13-moment Approximation for
     Simulating Biomacromolecular Nanomachines*. Talk, APS March Meeting 2018.
     url:`meetings.aps.org/Meeting/MAR18/Session/S51.5`_.
