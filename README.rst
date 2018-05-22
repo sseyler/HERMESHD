@@ -25,6 +25,7 @@ Background
 
 The original PERSEUS (Physics of the Extended-mhd Relaxation System using an Efficient Upwind Scheme) numerical code is a 3D finite volume (FV) method developed by Matt Martin and Charles Seyler in 2011 for solving the extended magnetohydrodynamics (XMHD) equations [1]_. PERSEUS finds applications in simulating High Energy Density (HED) plasmas, such as dense z-pinches, where a wide range of dynamical length scales and densities are encountered. In 2014, Xuan Zhao, Nat Hamlin, and Charles Seyler developed a discontinuous Galerkin method extending the original PERSEUS FV algorithm, further improving its accuracy and computational efficiency in HED applications [2]_. HERMESHD (Hyperbolic Equations and Relaxation Model for Extended Systems of HydroDynamics) is a specialized extension of the PERSEUS XMHD DG algorithm that solves the compressible Euler, Navier-Stokes, and higher-moment equations in three dimensions. The code is actively being extended by Sean Seyler (as part of his Blue Waters Graduate Fellowship Project) to (1) model fluctuating hydrodynamics, and (2) form a basis for hybrid atomistic-continuum simulation (with a view toward biological macromolecular simulation).
 
+
 ---------
 Overview
 ---------
@@ -50,6 +51,8 @@ Overview
   * velocity (``v0``)
   * temperature (``te0``)
 
+
+
 ----------------
 Getting Started
 ----------------
@@ -59,30 +62,36 @@ Getting Started
 Prerequisites
 ==============
 
-1. `cmake` (version 3.6.2 or higher)
+1. `CMake utility`_ (version 3.6.2 or higher)
+
 1. A Fortran compiler:
-    *  Intel Fortran compiler (`ifort`)
-    *  GNU Fortran (`gfortran`)
+    *  Intel Fortran compiler (``ifort``)
+    *  GNU Fortran (``gfortran``)
 1. **Optional**: Python 2.7.11 or higher (to use the Python front end)
 
-1. `git clone git@github.com:sseyler/HERMESHD.git`
-1. `cd /path/to/HERMESHD`
-1. `cmake .`
+From GitHub to simulation
+==========================
 
-Extension to Fluctuating Hydrodynamics
-=======================================
+1. Clone the repository
+    ``git clone git@github.com:sseyler/HERMESHD.git``
 
-More to come soon!
+1. Change to toplevel HERMESHD directory (should contain ``CMakeLists.txt``)
+    ``cd /path/to/HERMESHD``
+
+1. Generate a ``Makefile`` using ``cmake``
+    ``cmake .``
 
 
+
+-----------------
 Acknowledgements
-=================
+-----------------
 
 This work was funded by a `2016 Blue Waters Graduate Fellowship`_ for `Developing a hybrid continuum-particle method for simulating large-scale heterogeneous biomolecular systems`_. Sean Seyler also expresses his eternal gratitude to Professor Oliver Beckstein who, as his doctoral advisor, was very generous in allowing him to pursue this project in his final year of graduate school.
 
-
+-----------
 References
-===========
+-----------
 
 .. Articles
 .. --------
@@ -113,3 +122,5 @@ References
 .. _`Developing a hybrid continuum-particle method for simulating large-scale heterogeneous biomolecular systems`: https://bluewaters.ncsa.illinois.edu/science-teams?page=detail&psn=bafh
 
 .. _`my talk presented at APS March Meeting 2018`: https://meetings.aps.org/Meeting/MAR18/Session/S51.5
+
+.. _`CMake utility`: https://cmake.org/
