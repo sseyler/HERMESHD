@@ -57,17 +57,24 @@ Overview
 Getting Started
 ----------------
 
-**Note**: this section (and README.rst) are a work-in-progress and will be continuously updated and refined.
+**Note**: this section (and this README.rst) are a work-in-progress and will be continuously updated and refined. Feedback and contributions are welcome!
 
 Prerequisites
 ==============
 
 1. `CMake utility`_ (version 3.6.2 or higher)
 
-1. A Fortran compiler:
+1. Fortran compiler:
     *  Intel Fortran compiler (``ifort``)
     *  GNU Fortran (``gfortran``)
-1. **Optional**: Python 2.7.11 or higher (to use the Python front end)
+
+1. MPI library: Any should work, but OpenMPI is a good starting point.
+
+1. To use the Python front end (optional)
+    *  Python 2.7.11 or higher
+    *  ``f2py`` (part of ``numpy``)
+    *  ``f90wrap`` (see the `f90wrap GitHub page`_)
+
 
 From GitHub to simulation
 ==========================
@@ -79,8 +86,12 @@ From GitHub to simulation
     ``cd /path/to/HERMESHD``
 
 1. Generate a ``Makefile`` using ``cmake``
-    ``cmake .``
+    .. code-block:: console
 
+        mkdir build && cd build
+        cmake ..
+        make
+        mpirun -n 6 hermes
 
 
 -----------------
@@ -124,3 +135,5 @@ References
 .. _`my talk presented at APS March Meeting 2018`: https://meetings.aps.org/Meeting/MAR18/Session/S51.5
 
 .. _`CMake utility`: https://cmake.org/
+
+.. _`f90wrap GitHub page`: https://github.com/jameskermode/f90wrap
