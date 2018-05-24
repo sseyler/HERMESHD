@@ -57,7 +57,9 @@ Overview
 Getting Started
 ----------------
 
-**Note**: this section (and this README.rst) are a work-in-progress and will be continuously updated and refined. Feedback and contributions are welcome!
+**Important note**: HERMESHD is currently only working with the Intel Fortran compiler. In particular, the random number generation requires the Intel MKL since the applicable data structures and subprograms are hard-coded to interact with Intel MKL. This is **not** going to be a permanent feature and will change so as to accommodate other architectures and math libraries.
+
+**Important note**: this section (and this README.rst) are a work-in-progress and will be continuously updated and refined. Feedback and contributions are welcome!
 
 Prerequisites
 ==============
