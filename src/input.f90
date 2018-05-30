@@ -79,9 +79,10 @@ module input
     real, parameter    :: zeta = 1.823e-3   ! bulk viscosity
 
     ! Output control: location/naming and VTK output
+    character (*), parameter :: basedir = "/scratch/sseyler/WORK/BWAnnualReport2018"
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_2Dhac_hermes"
-    character (*), parameter :: outdir  = trim(datadir//"/"//outname)
+    character (*), parameter :: outname = "test000"
+    character (*), parameter :: outdir  = trim(basedir//"/"//datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density
     integer, parameter :: nstldout = 0     ! log density
