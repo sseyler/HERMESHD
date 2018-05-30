@@ -21,7 +21,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # FFLAGS depend on the compiler
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 
-set (SCRATCH "/scratch/sseyler/WORK/HERMESHD_testing/")
+set (SCRATCH "/scratch/sseyler/WORK/BWAnnualReport2018/")
 set (CMAKE_INSTALL_PREFIX ${SCRATCH})
 # set (EXECUTABLE_OUTPUT_PATH ${SCRATCH}/bin)
 # set (LIBRARY_OUTPUT_PATH ${SCRATCH}/lib)
@@ -140,6 +140,8 @@ set (PROG "hermes")
 set(module_sources ${sources})
 list(REMOVE_ITEM module_sources ${SOURCE_DIR}/main.f90)
 list(REMOVE_ITEM module_sources ${SOURCE_DIR}/f90wrap_hermeshd.f90)
+list(REMOVE_ITEM module_sources ${SOURCE_DIR}/reservoir.f90)
+list(REMOVE_ITEM module_sources ${SOURCE_DIR}/flux.f90)
 # list(REMOVE_ITEM module_sources ${SOURCE_DIR}/spatial.f90)
 
 set (LIB_NAME "hermeshd")

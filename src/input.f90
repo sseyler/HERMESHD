@@ -32,8 +32,8 @@ module input
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK
     !   * 3 or 'shu-osher' for 3rd-order RK
-    integer, parameter :: iorder = 3
-    character(*), parameter :: iname = 'shu-osher'
+    integer, parameter :: iorder = 2
+    character(*), parameter :: iname = 'heun'
 
     ! Fluctuating hydrodynamics
     logical, parameter :: llns = .false.
