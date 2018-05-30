@@ -2,49 +2,59 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 1.0e0 !1.0e6 !4.1e2
-    real, parameter :: ly = lx/12. !1.0e6 !4.1e2
-    real, parameter :: lz = lx/120. !1.0e6/120. !4.1e2/120.
+    real, parameter :: Lbox = 80.0
+    real, parameter :: lxu =  Lbox/2.
+    real, parameter :: lyu =  Lbox/2.
+    real, parameter :: lzu =  Lbox/120.
+    real, parameter :: lxd = -lxu
+    real, parameter :: lyd = -lyu
+    real, parameter :: lzd = -lzu
+    real, parameter :: lx = lxu-lxd
+    real, parameter :: ly = lyu-lyd
+    real, parameter :: lz = lzu-lzd
+
+    real, parameter :: vx_max = 1.0e0, vy_max = 1.0e0
+    real, parameter :: vx_min = 0.0,    vy_min = 0.0
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad  = 2
-    integer, parameter :: nbasis = 8 ! 8
+    integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 50
-    integer, parameter :: ny = 1
+    integer, parameter :: nx = 2
+    integer, parameter :: ny = 2
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
-    integer :: mpi_nx = 16
-    integer :: mpi_ny = 1
+    integer :: mpi_nx = 4
+    integer :: mpi_ny = 4
 
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK
     !   * 3 or 'shu-osher' for 3rd-order RK
-    integer, parameter :: iorder = 2
-    character(*), parameter :: iname = 'heun'
+    integer, parameter :: iorder = 3
+    character(*), parameter :: iname = 'shu-osher'
 
     ! Fluctuating hydrodynamics
     logical, parameter :: llns = .false.
 
     ! Initial conditions
     ! character(*), parameter :: icname = ''
-    integer, parameter :: icid = 3
+    integer, parameter :: icid = 10
 
     ! Boundary conditions
-    character(*), parameter :: xlobc = 'wall'
-    character(*), parameter :: xhibc = 'wall'
-    character(*), parameter :: ylobc = 'periodic'
-    character(*), parameter :: yhibc = 'periodic'
+    character(*), parameter :: xlobc = 'periodic'
+    character(*), parameter :: xhibc = 'periodic'
+    character(*), parameter :: ylobc = 'mwall'
+    character(*), parameter :: yhibc = 'mwall'
     character(*), parameter :: zlobc = 'periodic'
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 7.0e-4
+    real, parameter :: tf = 1.0e2
 
     ! Console output frequency
-    integer, parameter :: ntout = 200
+    integer, parameter :: ntout = 100
 
     ! Riemann solver
     logical, parameter :: ihllc = .true.
@@ -55,8 +65,8 @@ module input
     integer, parameter :: ieos = 1
 
     ! Thermodynamic, constitutive, and transport parameters
-    real, parameter :: TK     = 300.0    ! in Kelvin
-    real, parameter :: mu     = 18.0     ! AMU per molecule
+    real, parameter :: TK     = 94.4    ! in Kelvin
+    real, parameter :: mu     = 39.948   ! AMU per molecule
     real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
     real, parameter :: clt    = 2.0      ! numerical speed of sound
 
@@ -64,14 +74,15 @@ module input
     !   * 0 for explicit integration
     !   * 1 for semi-implicit integration of stress terms
     !   * 2 for full 10-moment formulation (NOTE: not finished!)
-    integer, parameter :: ivis = 0
-    real, parameter    :: vis  = 0       ! dynamic viscosity
-    real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
+    integer, parameter :: ivis = 1
+    real, parameter    :: eta  = 5.474e-3   ! dynamic viscosity
+    real, parameter    :: zeta = 1.823e-3   ! bulk viscosity
 
     ! Output control: location/naming and VTK output
+    character (*), parameter :: basedir = "/scratch/sseyler/WORK/"
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_sod_python1"
-    character (*), parameter :: outdir  = trim(datadir//"/"//outname)
+    character (*), parameter :: outname = "test000"
+    character (*), parameter :: outdir  = trim(basedir//"/"//datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density
     integer, parameter :: nstldout = 0     ! log density
