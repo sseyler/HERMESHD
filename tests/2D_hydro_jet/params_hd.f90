@@ -116,16 +116,16 @@ module params
     real :: c2d3cv, c4d3cv  ! probably want to set in set_ic (not currently used)
 
     ! NOTE: Old way of handling relaxation system
-    real, parameter :: nu = epsi*vis
-    real, parameter :: c2d3nu=c2d3*nu, c4d3nu=c4d3*nu
-
+    ! real, parameter :: nu = epsi*vis
+    ! real, parameter :: c2d3nu=c2d3*nu, c4d3nu=c4d3*nu
+    real, parameter :: gr         = 0 !9.807e3*t0**2/L0  ! DEBUG: gravitational accel
     real, parameter :: T_base     = TK*eV_per_K/te0 ! te*eV_per_K/te0  ! temp (isothermal)
-    real, parameter :: eta_base   = vis    ! dynamic viscosity
-    real, parameter :: zeta_base  = 0.  ! bulk viscosity---will need to adjust this!
+    real, parameter :: eta_base   = eta     ! dynamic viscosity
+    real, parameter :: zeta_base  = zeta    ! bulk viscosity---will need to adjust this!
     real, parameter :: kappa_base = 1.e-1
 
-    real, parameter :: eta_sd   = (4.*eta_base*T_base)**0.5  ! stdev of flucs for shear visc terms
-    real, parameter :: zeta_sd  = (zeta_base*T_base/3.)**0.5  ! stdev of flucs for bulk visc term
+    real, parameter :: eta_sd   = sqrt2 * (2.*eta_base*T_base)**0.5   ! stdev of flucs for shear visc, sqrt(2) due to temporal avging
+    real, parameter :: zeta_sd  = sqrt2 * (zeta_base*T_base/3.)**0.5  ! stdev of flucs for bulk visc, sqrt(2) due to temporal avging
     real, parameter :: kappa_sd = (2.*kappa_base*T_base**2)**0.5
     !===========================================================================
 

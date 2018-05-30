@@ -132,6 +132,12 @@ file(GLOB sources ${SOURCE_DIR}/*.f90)
 set(default_sources ${sources})
 list(REMOVE_ITEM default_sources ${SOURCE_DIR}/hermeshd.f90)
 list(REMOVE_ITEM default_sources ${SOURCE_DIR}/f90wrap_hermeshd.f90)
+list(REMOVE_ITEM default_sources ${SOURCE_DIR}/f90wrap_spatial.f90)
+
+list(REMOVE_ITEM default_sources ${SOURCE_DIR}/input.f90)  # use input_hd.f90
+list(REMOVE_ITEM default_sources ${SOURCE_DIR}/params.f90) # use params_hd.f90
+list(REMOVE_ITEM default_sources ${SOURCE_DIR}/flux.f90)   # use flux_new.f90
+list(REMOVE_ITEM default_sources ${SOURCE_DIR}/reservoir.f90)  # don't use
 # list(REMOVE_ITEM default_sources ${SOURCE_DIR}/spatial.f90)
 
 set (PROG "hermes")
@@ -140,8 +146,12 @@ set (PROG "hermes")
 set(module_sources ${sources})
 list(REMOVE_ITEM module_sources ${SOURCE_DIR}/main.f90)
 list(REMOVE_ITEM module_sources ${SOURCE_DIR}/f90wrap_hermeshd.f90)
-list(REMOVE_ITEM module_sources ${SOURCE_DIR}/reservoir.f90)
-list(REMOVE_ITEM module_sources ${SOURCE_DIR}/flux.f90)
+list(REMOVE_ITEM module_sources ${SOURCE_DIR}/f90wrap_spatial.f90)
+
+list(REMOVE_ITEM module_sources ${SOURCE_DIR}/input.f90)  # use input_hd.f90
+list(REMOVE_ITEM module_sources ${SOURCE_DIR}/params.f90) # use params_hd.f90
+list(REMOVE_ITEM module_sources ${SOURCE_DIR}/flux.f90)   # use flux_new.f90
+list(REMOVE_ITEM module_sources ${SOURCE_DIR}/reservoir.f90)  # don't use
 # list(REMOVE_ITEM module_sources ${SOURCE_DIR}/spatial.f90)
 
 set (LIB_NAME "hermeshd")

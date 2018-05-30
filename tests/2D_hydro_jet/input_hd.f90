@@ -2,9 +2,19 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: lx = 3.0e2
-    real, parameter :: ly = lx
-    real, parameter :: lz = lx/200.
+    real, parameter :: Lbox = 3.0e2
+    real, parameter :: lxu =  Lbox/2.
+    real, parameter :: lyu =  Lbox/2.
+    real, parameter :: lzu =  Lbox/200.
+    real, parameter :: lxd = -lxu
+    real, parameter :: lyd = -lyu
+    real, parameter :: lzd = -lzu
+    real, parameter :: lx = lxu-lxd
+    real, parameter :: ly = lyu-lyd
+    real, parameter :: lz = lzu-lzd
+
+    real, parameter :: vx_max = 1.0e0, vy_max = 1.0e0
+    real, parameter :: vx_min = 0.0,   vy_min = 0.0
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad  = 2
@@ -65,13 +75,15 @@ module input
     !   * 1 for semi-implicit integration of stress terms
     !   * 2 for full 10-moment formulation (NOTE: not finished!)
     integer, parameter :: ivis = 1
-    real, parameter    :: vis  = 1.e-4   ! dynamic viscosity
-    real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
+    real, parameter    :: eta  = 1.e-4   ! dynamic viscosity
+    real, parameter    :: zeta = 1.823e-3   ! bulk viscosity
+    ! real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
 
     ! Output control: location/naming and VTK output
+    character (*), parameter :: basedir = "/scratch/sseyler/WORK/BWAnnualReport2018"
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_newflux_22"
-    character (*), parameter :: outdir  = trim(datadir//"/"//outname)
+    character (*), parameter :: outname = "test000"
+    character (*), parameter :: outdir  = trim(basedir//"/"//datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density
     integer, parameter :: nstldout = 0     ! log density

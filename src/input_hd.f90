@@ -2,10 +2,10 @@
 module input
 
     ! Physical system dimensions
-    real, parameter :: Lbox = 3.0e1
+    real, parameter :: Lbox = 3.0e2
     real, parameter :: lxu =  Lbox/2.
     real, parameter :: lyu =  Lbox/2.
-    real, parameter :: lzu =  Lbox
+    real, parameter :: lzu =  Lbox/200.
     real, parameter :: lxd = -lxu
     real, parameter :: lyd = -lyu
     real, parameter :: lzd = -lzu
@@ -13,21 +13,21 @@ module input
     real, parameter :: ly = lyu-lyd
     real, parameter :: lz = lzu-lzd
 
-    real, parameter :: vy_max = 1.0e0
-    real, parameter :: vy_min = 0.0
+    real, parameter :: vx_max = 1.0e0, vy_max = 1.0e0
+    real, parameter :: vx_min = 0.0,   vy_min = 0.0
 
     ! Number of Gaussian quadrature points per spatial dimension
     integer, parameter :: iquad  = 2
     integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 3
-    integer, parameter :: ny = 3
-    integer, parameter :: nz = 3
+    integer, parameter :: nx = 20
+    integer, parameter :: ny = 20
+    integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
-    integer :: mpi_nx = 2
-    integer :: mpi_ny = 2
+    integer :: mpi_nx = 4
+    integer :: mpi_ny = 4
 
     ! Temporal integration order
     !   * 2 or 'heun' for 2nd-order RK
@@ -36,25 +36,25 @@ module input
     character(*), parameter :: iname = 'heun'
 
     ! Fluctuating hydrodynamics
-    logical, parameter :: llns = .true.
+    logical, parameter :: llns = .false.
 
     ! Initial conditions
     ! character(*), parameter :: icname = ''
-    integer, parameter :: icid = 10
+    integer, parameter :: icid = 0
 
     ! Boundary conditions
     character(*), parameter :: xlobc = 'periodic'
     character(*), parameter :: xhibc = 'periodic'
     character(*), parameter :: ylobc = 'periodic'
     character(*), parameter :: yhibc = 'periodic'
-    character(*), parameter :: zlobc = 'mwall'
-    character(*), parameter :: zhibc = 'mwall'
+    character(*), parameter :: zlobc = 'periodic'
+    character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 1.0e2
+    real, parameter :: tf = 1.0e3
 
     ! Console output frequency
-    integer, parameter :: ntout = 100
+    integer, parameter :: ntout = 200
 
     ! Riemann solver
     logical, parameter :: ihllc = .true.
@@ -65,8 +65,8 @@ module input
     integer, parameter :: ieos = 1
 
     ! Thermodynamic, constitutive, and transport parameters
-    real, parameter :: TK     = 94.4     ! in Kelvin
-    real, parameter :: mu     = 39.948   ! AMU per molecule
+    real, parameter :: TK     = 40.0    ! in Kelvin
+    real, parameter :: mu     = 22.0     ! AMU per molecule
     real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
     real, parameter :: clt    = 2.0      ! numerical speed of sound
 
@@ -75,13 +75,15 @@ module input
     !   * 1 for semi-implicit integration of stress terms
     !   * 2 for full 10-moment formulation (NOTE: not finished!)
     integer, parameter :: ivis = 1
-    real, parameter    :: eta  = 5.474e-3   ! dynamic viscosity
+    real, parameter    :: eta  = 1.e-4   ! dynamic viscosity
     real, parameter    :: zeta = 1.823e-3   ! bulk viscosity
+    ! real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
 
     ! Output control: location/naming and VTK output
+    character (*), parameter :: basedir = "/scratch/sseyler/WORK/BWAnnualReport2018"
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test_hac_pytemp"
-    character (*), parameter :: outdir  = trim(datadir//"/"//outname)
+    character (*), parameter :: outname = "test000"
+    character (*), parameter :: outdir  = trim(basedir//"/"//datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density
     integer, parameter :: nstldout = 0     ! log density

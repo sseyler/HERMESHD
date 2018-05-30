@@ -1,5 +1,5 @@
-!***** PREPARE_STEP.F90 ******************************************************************
-module prepare_step
+!***** PREP_STEP.F90 ******************************************************************
+module prep_step
 
 use params
 use helpers
@@ -179,4 +179,4 @@ contains
     end subroutine perform_flux_exchange
     !---------------------------------------------------------------------------
 
-end module prepare_step
+end module prep_step

@@ -3,6 +3,7 @@
 !##### boundary_defs ###########################################################
 module boundary_defs
 
+use input
 use params
 use spatial
 
