@@ -60,7 +60,7 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2
         real, intent(inout) :: t, dt
 
-        dt = 0.01 !get_min_dt(Q_r0)  WARNING, this is a HACK
+        dt = get_min_dt(Q_r0)
         call update(Q_io, Q_1, Q_2, dt)
         t = t + dt
     end subroutine step
