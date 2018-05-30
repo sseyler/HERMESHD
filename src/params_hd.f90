@@ -111,9 +111,11 @@ module params
     !------------------------------------------------------------
     ! NOTE: New way of handling relaxation system:
     !   coll -- plays same role as epsi (from old approach)
-    !   colvis = coll*vis = density*temp  (vis is dynamic viscosity, e.g. eta)
-    real :: coll, colvis    ! values set in set_ic
-    real :: c2d3cv, c4d3cv  ! probably want to set in set_ic (not currently used)
+    !   coleta = coll*eta = density*temp  (eta is dynamic viscosity, or sometimes mu)
+    real :: nu, nueta, c2d3ne, c4d3ne
+    real :: coll, coleta   ! values set in set_ic
+    real :: c2d3cv, c4d3cv ! probably want to set in set_ic (not currently used)
+
 
     ! NOTE: Old way of handling relaxation system
     ! real, parameter :: nu = epsi*vis

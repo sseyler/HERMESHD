@@ -77,7 +77,7 @@ call output_vtk(Q_r0, nout, iam)
 !----------------------------------------------------------------
 do while( t < tf )
 
-    dt = 0.01 !get_min_dt(Q_r0)  WARNING, this is a HACK
+    dt = get_min_dt(Q_r0)  ! WARNING, this is a HACK
     call update(Q_r0, Q_r1, Q_r2, dt)
     t = t + dt
 

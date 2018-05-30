@@ -29,7 +29,7 @@ contains
         real(R4P), dimension(nnx,nny,nnz) :: qvtk_dxvy,qvtk_dyvx
         real dn,dni, vx,vy,vz, U,P, dxrh,dyrh,dxmy,dymx
         integer(I4P):: E_IO,i,j,k,l,num,iam,igrid,ir,jr,kr,ib,jb,kb,ieq
-        character (70) :: out_name
+        character (80) :: out_name  ! Ensure this char array is long enough for outdir
         character (4) :: tname
         character (5) :: tname1
         character (4) :: pname
@@ -347,7 +347,7 @@ contains
         real(R4P), dimension(nnx*nny*nnz):: var_xml_val_z
         real P, vx, vy, vz,  dni
         integer(I4P):: E_IO,i,j,k,l,num,iam
-        character (50) :: out_name
+        character (80) :: out_name
         character (4) :: tname
         character (5) :: tname1
         character (4) :: pname

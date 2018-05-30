@@ -92,7 +92,8 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k
-        real dn,vx,vy,vz,te,pr,dni,smx,smy,smz,rand_num,rnum,beta,beta2,beta3
+        real dn,vx,vy,vz,te,pr,v2,dni,smx,smy,smz,rand_num,rnum
+        real beta,beta2,beta3
 
         call init_random_seed(iam, 123456789)
 
@@ -105,9 +106,9 @@ contains
         nu    = pr/eta  ! global
         nueta = pr      ! pr = nu*eta  (also global)
 
-        beta  = 1.0e1   ! jet strength
-        beta2 = 1.0e-3  ! y-momentum perturbation strength
-        beta3 = 1.0e-2  ! pressure perturbation strength
+        beta  = 1.0e0   ! jet strength
+        beta2 = 1.0e-4  ! y-momentum perturbation strength
+        beta3 = 1.0e-3  ! pressure perturbation strength
 
         do k = 1,nz
         do j = 1,ny
@@ -121,6 +122,7 @@ contains
             vx = Q_r(i,j,k,mx,1)*dni
             vy = Q_r(i,j,k,my,1)*dni
             vz = Q_r(i,j,k,mz,1)*dni
+            v2 = vx**2 + vy**2 + vz**2
 
             Q_r(i,j,k,rh,1) = dn
             Q_r(i,j,k,mx,1) = smx
@@ -128,12 +130,14 @@ contains
             Q_r(i,j,k,mz,1) = smz
             Q_r(i,j,k,en,1) = (1 + beta3*rnum)*pr/aindm1 + 0.5*dni*(smx**2 + smy**2 + smz**2)
 
-            ! Q_r(i,j,k,exx,1) = pr + dn*vx**2
-            ! Q_r(i,j,k,eyy,1) = pr + dn*vy**2
-            ! Q_r(i,j,k,ezz,1) = pr + dn*vz**2
-            ! Q_r(i,j,k,exy,1) = dn*vx*vy
-            ! Q_r(i,j,k,exz,1) = dn*vx*vz
-            ! Q_r(i,j,k,eyz,1) = dn*vy*vz
+            if (ivis .eq. 0) then
+                Q_r(i,j,k,exx,1) = dn*(vx**2 - c1d3*v2) !+ pr
+                Q_r(i,j,k,eyy,1) = dn*(vy**2 - c1d3*v2) !+ pr
+                Q_r(i,j,k,ezz,1) = dn*(vz**2 - c1d3*v2) !+ pr
+                Q_r(i,j,k,exy,1) = dn*vx*vy
+                Q_r(i,j,k,exz,1) = dn*vx*vz
+                Q_r(i,j,k,eyz,1) = dn*vy*vz
+            end if
         end do
         end do
         end do

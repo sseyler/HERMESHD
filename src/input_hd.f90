@@ -21,8 +21,8 @@ module input
     integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 20
-    integer, parameter :: ny = 20
+    integer, parameter :: nx = 40
+    integer, parameter :: ny = 40
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
@@ -51,7 +51,7 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 1.0e3
+    real, parameter :: tf = 2.0e3
 
     ! Console output frequency
     integer, parameter :: ntout = 200
@@ -65,7 +65,7 @@ module input
     integer, parameter :: ieos = 1
 
     ! Thermodynamic, constitutive, and transport parameters
-    real, parameter :: TK     = 40.0    ! in Kelvin
+    real, parameter :: TK     = 120.0    ! in Kelvin
     real, parameter :: mu     = 22.0     ! AMU per molecule
     real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
     real, parameter :: clt    = 2.0      ! numerical speed of sound
