@@ -12,9 +12,9 @@ contains
     !===========================================================================
     ! Get the smallest time step required by CFL condition
     !------------------------------------------------------------
-    real function get_min_dt(Q_r)
+    real function get_min_dt(Q_in)
         implicit none
-        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_in
 
         real dt_min,dt_val(numprocs-1),tt,cfl,vmax,vmag,valf,vmag0,valf0
         real vex,vey,vez,vem,vem0,dni,dn,vx,vy,vz,Pr,sqdni,vacc,vacc0,cs
@@ -27,12 +27,12 @@ contains
         do k=1,nz
         do j=1,ny
         do i=1,nx
-            dn = Q_r(i,j,k,rh,1)
+            dn = Q_in(i,j,k,rh,1)
             dni = 1./dn
-            vx = Q_r(i,j,k,mx,1)*dni
-            vy = Q_r(i,j,k,my,1)*dni
-            vz = Q_r(i,j,k,mz,1)*dni
-            if (ieos == 1) cs = sqrt(aindex*(Q_r(i,j,k,en,1)*dni - 0.5*(vx**2 + vy**2 + vz**2)))
+            vx = Q_in(i,j,k,mx,1)*dni
+            vy = Q_in(i,j,k,my,1)*dni
+            vz = Q_in(i,j,k,mz,1)*dni
+            if (ieos == 1) cs = sqrt(aindex*(Q_in(i,j,k,en,1)*dni - 0.5*(vx**2 + vy**2 + vz**2)))
             if (ieos == 2) cs = sqrt(7.2*P_1*dn**6.2 + T_floor)
 
             vmag0 = max( abs(vx)+cs, abs(vy)+cs, abs(vz)+cs )

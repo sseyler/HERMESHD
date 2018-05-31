@@ -51,6 +51,11 @@ contains
         ! Initialize various parameters
         call setup_MPI(comm, mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
         call init_spatial_params(dx,dy,dz, dxi,dyi,dzi, loc_lxd,loc_lyd,loc_lzd)
+
+        dxid4 = 0.25*dxi
+        dyid4 = 0.25*dyi
+        dzid4 = 0.25*dzi
+
         ! call set_mxa_mya_mza(mxa, mya, mza)  ! not needed anymore probably
         call init_temporal_params(t, dt, nout)
         !-----------------------------------------
@@ -334,7 +339,6 @@ contains
         integer, intent(out)   :: mpi_P, mpi_Q, mpi_R
 
         integer :: comm
-
         integer, dimension(3) :: dims, coords, periods ! only used in init for MPI things
         integer reorder
 
@@ -437,8 +441,8 @@ contains
     !===========================================================================
     subroutine init_temporal_params(t, dt, nout)
         implicit none
-        real, intent(out) :: t
-        real, intent(inout) :: dt
+        real, intent(out)    :: t
+        real, intent(inout)  :: dt
         integer, intent(out) :: nout
         ! NOTE: USES the following global parameters
         !   * dx (set by init_spatial_params)
@@ -505,17 +509,16 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         real, intent(inout) :: t, dt, dtout
         integer, intent(inout) :: nout
-
-        real t_p,dt_p,dtout_p
-        integer nout_p,mpi_nx_p,mpi_ny_p,mpi_nz_p
+        real :: t_p,dt_p,dtout_p
+        integer :: nout_p,mpi_nx_p,mpi_ny_p,mpi_nz_p
         ! This applies only if the initial data are being read from an input file.
         ! - If resuming a run, keep the previous clock (i.e., t at nout) running.
         ! - If not resuming a run, treat input as initial conditions at t=0, nout=0.
         call readQ(fpre,iam,iread,Q_r,t_p,dt_p,nout_p,mpi_nx_p,mpi_ny_p,mpi_nz_p)
 
         if (resuming) then
-            t = t_p
-            dt = dt_p
+            t    = t_p
+            dt   = dt_p
             nout = nout_p
         end if
         ! Note, nout=1 corresponds to t=dt, but nout=2 corresponds to t~dtout, etc.
@@ -559,8 +562,9 @@ contains
             print *, '---------------------------------------------------------'
             write(*,'(A13,I10,I7,I7)')          ' total dim = ', mpi_nx*nx, mpi_ny*ny, mpi_nz*nz
             write(*,'(A13,I10,I7,I7)')          ' mpi dim   = ', mpi_nx,    mpi_ny,    mpi_nz
-            write(*,'(A13,ES10.3,A7,F5.1,A2)')  ' te0 is    = ', te0,'   (T =',T_base,'K)'
-            write(*,'(A13,ES10.3)')             ' dx is     = ', ly/(ny*mpi_ny)*L0
+            print *, '-------------------------------------'
+            write(*,'(A13,ES10.3,A7,F5.1,A2)')  ' te0 is    = ', te0,'  (T =',TK,'K)'
+            write(*,'(A13,ES10.3)')             ' dx is     = ', ly/(ny*mpi_ny)*Lbox
             write(*,'(A13,I10)')                ' iquad is  = ', iquad
             write(*,'(A13,I10)')                ' nbasis is = ', nbasis
             print *, '----------------------------------------------'

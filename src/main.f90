@@ -53,7 +53,7 @@ endif
 !-------------------------------------------------
 ! 4. Select integration method
 !-------------------------------------------------
-call select_integrator(iname, update)
+call select_integrator(iname, step)
 
 !-------------------------------------------------
 ! 5. Select boundary conditions
@@ -78,7 +78,7 @@ call output_vtk(Q_r0, nout, iam)
 do while( t < tf )
 
     dt = get_min_dt(Q_r0)
-    call update(Q_r0, Q_r1, Q_r2, dt)
+    call step(Q_r0, Q_r1, Q_r2, dt)
     t = t + dt
 
     call generate_output(Q_r0, t, nout)  ! determines when output should be generated
@@ -119,8 +119,7 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
         real, intent(in) :: t
         integer, intent(inout) :: nout
-
-        integer ioe
+        integer :: ioe
 
         ! TODO: dtout may be deprecated once improved output scheme is used
         ! TODO: consider using init_temporal_params() to initialize the
@@ -165,7 +164,7 @@ contains
 
             if (iam == print_mpi) then
                 t2 = get_clock_time()
-                print *, '  >> Output time', (t2-t1), 'seconds'
+                print *, '  >> Output (I/O) time', (t2-t1), 'seconds'
                 print *, ''
                 t1 = t2
             end if

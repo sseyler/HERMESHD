@@ -827,7 +827,7 @@ contains
     ! Apply boundary conditions (specified by user at runtime)
     !------------------------------------------------------------
     subroutine apply_boundaries
-        real ux_scale
+        real :: ux_scale
         if ( mpi_P == 1 ) then
             call apply_xlobc(Qxlo_int, Qxlo_ext)
         end if

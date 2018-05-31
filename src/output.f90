@@ -29,7 +29,7 @@ contains
         real(R4P), dimension(nnx,nny,nnz) :: qvtk_dxvy,qvtk_dyvx
         real dn,dni, vx,vy,vz, U,P, dxrh,dyrh,dxmy,dymx
         integer(I4P):: E_IO,i,j,k,l,num,iam,igrid,ir,jr,kr,ib,jb,kb,ieq
-        character (80) :: out_name  ! Ensure this char array is long enough for outdir
+        character (90) :: out_name  ! Ensure this char array is long enough for outdir
         character (4) :: tname
         character (5) :: tname1
         character (4) :: pname
@@ -50,7 +50,7 @@ contains
         pname = adjustr(pname)
 
         ! "outdir" is a global variable specifying the output directory
-        out_name=''//outdir//'/perseus_p'//pname//'_t'//tname//'.vtr'
+        out_name=''//outdir//'/hermes_p'//pname//'_t'//tname//'.vtr'
 
         if (iam .eq. print_mpi) print *, '  Data written to:  ', out_name
         out_name = trim(out_name)
@@ -347,7 +347,7 @@ contains
         real(R4P), dimension(nnx*nny*nnz):: var_xml_val_z
         real P, vx, vy, vz,  dni
         integer(I4P):: E_IO,i,j,k,l,num,iam
-        character (80) :: out_name
+        character (90) :: out_name
         character (4) :: tname
         character (5) :: tname1
         character (4) :: pname
@@ -366,8 +366,8 @@ contains
         pname=pname1(2:5)
         pname = trim(pname)
         pname = adjustr(pname)
-        out_name='data/data3/perseus_p'//pname//'_t'//tname//'.vtr'
-        ! out_name='data/data4/perseus_p'//pname//'_t'//tname//'.vtr'
+        out_name='data/data3/hermes_p'//pname//'_t'//tname//'.vtr'
+        ! out_name='data/data4/hermes_p'//pname//'_t'//tname//'.vtr'
         print *, '  Data written to:  ', out_name
         out_name = trim(out_name)
         out_name = adjustr(out_name)

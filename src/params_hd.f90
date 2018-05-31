@@ -60,6 +60,12 @@ module params
     integer, parameter :: nfe   = 2*nface        ! # of cell face quad points per direction
     integer, parameter :: npge  = 6*nface        ! total # of cell face quad points
     integer, parameter :: nslim = npg + 6*nface  ! total # of quad points per cell
+
+    integer, parameter :: nfc1 = nface + 1       ! Compact shortcut for nface + 1
+    ! Grid cell dimensions parameters (mostly for Sflux_xyz)
+    integer, parameter :: nx1 = nx + 1
+    integer, parameter :: ny1 = ny + 1
+    integer, parameter :: nz1 = nz + 1
     !---------------------------------------------------------------------------
 
 
@@ -78,9 +84,9 @@ module params
     real, parameter :: cp = aindex/aindm1   ! specific heat at constant pressure
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
-    real, parameter :: L0 = 1.0e4                  ! length
-    real, parameter :: t0 = 1.0e2                  ! time
-    real, parameter :: n0 = 6.0e18                 ! number density
+    real, parameter :: L0 = 1.0e4                 ! length
+    real, parameter :: t0 = 1.0e2                 ! time
+    real, parameter :: n0 = 6.0e18                ! number density
 
     ! Derived units
     real, parameter :: v0  = L0/t0                 ! velocity
@@ -116,7 +122,6 @@ module params
     real :: coll, coleta   ! values set in set_ic
     real :: c2d3cv, c4d3cv ! probably want to set in set_ic (not currently used)
 
-
     ! NOTE: Old way of handling relaxation system
     ! real, parameter :: nu = epsi*vis
     ! real, parameter :: c2d3nu=c2d3*nu, c4d3nu=c4d3*nu
@@ -126,9 +131,12 @@ module params
     real, parameter :: zeta_base  = zeta    ! bulk viscosity---will need to adjust this!
     real, parameter :: kappa_base = 1.e-1
 
-    real, parameter :: eta_sd   = sqrt2 * (2.*eta_base*T_base)**0.5   ! stdev of flucs for shear visc, sqrt(2) due to temporal avging
-    real, parameter :: zeta_sd  = sqrt2 * (zeta_base*T_base/3.)**0.5  ! stdev of flucs for bulk visc, sqrt(2) due to temporal avging
-    real, parameter :: kappa_sd = (2.*kappa_base*T_base**2)**0.5
+    ! NOTE: factors of sqrt(2) below are due to temporal(?) averaging; isn't this
+    !       just due to averaging two random samples on both sides of the face of
+    !       a grid cell? (Decreases std by sqrt(2), so multiply to correct it.)
+    real, parameter :: eta_sd   = sqrt2 * (2  *  eta_base*T_base)**0.5   ! fluc std for shear visc
+    real, parameter :: zeta_sd  = sqrt2 * (c1d3*zeta_base*T_base)**0.5  ! fluc std for bulk visc
+    real, parameter :: kappa_sd = sqrt2 * (2 * kappa_base*T_base**2)**0.5
     !===========================================================================
 
 

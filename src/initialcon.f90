@@ -80,6 +80,9 @@ contains
             case(12)
                 call mpi_print(iam, 'Setting up 2D turbulence test...')
                 call turbulence_2d(Q_r)
+            case(13)
+                call mpi_print(iam, 'Setting up 2D + epsilon test...')
+                call twoD_plus_epsilon(Q_r)
         end select
     end subroutine set_ic
     !---------------------------------------------------------------------------
@@ -103,9 +106,9 @@ contains
 
         dni = 1.0/dn
 
+        ! NOTE: "nu" in CES' code is te*rh, which is "nueta" here; "coll" is nueta/vis
         nu    = pr/eta  ! global
         nueta = pr      ! pr = nu*eta  (also global)
-
         beta  = 1.0e0   ! jet strength
         beta2 = 1.0e-4  ! y-momentum perturbation strength
         beta3 = 1.0e-3  ! pressure perturbation strength
@@ -352,10 +355,10 @@ contains
         cyl_rad = ly/8.
 
         select case(version)
-            case(0)
-                ux_amb = 0.3
-            case(1)
-                ux_amb = 1.5
+        case(0)
+            ux_amb = 0.3
+        case(1)
+            ux_amb = 1.5
         end select
 
         !-------------------------------------------------------
@@ -589,6 +592,118 @@ contains
         end do
 
     end subroutine turbulence_2d
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
+    ! 2D plus epsilon test
+    !------------------------------------------------------------
+    ! Set 2D or 3D
+    !   * ver = 0 for 2D test
+    !   * ver = 1 for 3D test
+    !---------------------------------------------------------------------------
+    subroutine twoD_plus_epsilon(Q_r)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
+        integer i,j,k
+        real dn,vx,vy,vz,te,pr,v2, rand_num,rnum,beta
+
+        call init_random_seed(iam, 123456789)
+
+        dn = 1.0          ! ambient density
+        te = T_floor       ! ambient temperature
+        pr = dn*te
+        vz = 0.0            ! ambient z-velocity
+        nu    = dn*te/eta  ! global
+
+        beta = 1.0e-1
+
+        do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
+            call random_number(rand_num)
+            rnum = (rand_num - 0.5)
+            vx = beta*rnum
+
+            call random_number(rand_num)
+            rnum = (rand_num - 0.5)
+            vy = beta*rnum
+
+            v2 = vx*vx + vy*vy + vz*vz
+
+            Q_r(i,j,k,rh,1) = dn
+            Q_r(i,j,k,mx,1) = dn*vx
+            Q_r(i,j,k,my,1) = dn*vy
+            Q_r(i,j,k,mz,1) = dn*vz
+            Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*v2
+
+            if (ivis .eq. 0) then
+                Q_r(i,j,k,exx,1) = dn*(vx*vx - c1d3*v2) !+ pr
+                Q_r(i,j,k,eyy,1) = dn*(vy*vy - c1d3*v2) !+ pr
+                Q_r(i,j,k,ezz,1) = dn*(vz*vz - c1d3*v2) !+ pr
+                Q_r(i,j,k,exy,1) = dn*vx*vy
+                Q_r(i,j,k,exz,1) = dn*vx*vz
+                Q_r(i,j,k,eyz,1) = dn*vy*vz
+            end if
+        end do
+        end do
+        end do
+
+    end subroutine twoD_plus_epsilon
+    !---------------------------------------------------------------------------
+
+
+    !===========================================================================
+    ! 2D plus epsilon test
+    !------------------------------------------------------------
+    ! Set 2D or 3D
+    !   * ver = 0 for 2D test
+    !   * ver = 1 for 3D test
+    !---------------------------------------------------------------------------
+    subroutine twoD_plus_epsilon_circ(Q_r)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
+        integer i,j,k
+        real dn,vx,vy,vz,te,pr,v2, rand_num,rnum,beta
+
+        call init_random_seed(iam, 123456789)
+
+        dn = 1.0          ! ambient density
+        te = T_floor       ! ambient temperature
+        pr = dn*te
+        vz = 0.0            ! ambient z-velocity
+        nu    = dn*te/eta  ! global
+
+        beta = 1.0e-1
+
+        do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
+
+            vx =  beta*yc(j)
+            vy = -beta*xc(i)
+
+            v2 = vx*vx + vy*vy + vz*vz
+
+            Q_r(i,j,k,rh,1) = dn
+            Q_r(i,j,k,mx,1) = dn*vx
+            Q_r(i,j,k,my,1) = dn*vy
+            Q_r(i,j,k,mz,1) = dn*vz
+            Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*v2
+
+            if (ivis .eq. 0) then
+                Q_r(i,j,k,exx,1) = dn*(vx*vx - c1d3*v2) !+ pr
+                Q_r(i,j,k,eyy,1) = dn*(vy*vy - c1d3*v2) !+ pr
+                Q_r(i,j,k,ezz,1) = dn*(vz*vz - c1d3*v2) !+ pr
+                Q_r(i,j,k,exy,1) = dn*vx*vy
+                Q_r(i,j,k,exz,1) = dn*vx*vz
+                Q_r(i,j,k,eyz,1) = dn*vy*vz
+            end if
+        end do
+        end do
+        end do
+
+    end subroutine twoD_plus_epsilon_circ
     !---------------------------------------------------------------------------
 
 

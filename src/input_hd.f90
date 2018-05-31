@@ -5,7 +5,7 @@ module input
     real, parameter :: Lbox = 3.0e2
     real, parameter :: lxu =  Lbox/2.
     real, parameter :: lyu =  Lbox/2.
-    real, parameter :: lzu =  Lbox/200.
+    real, parameter :: lzu =  Lbox/120.
     real, parameter :: lxd = -lxu
     real, parameter :: lyd = -lyu
     real, parameter :: lzd = -lzu
@@ -36,7 +36,7 @@ module input
     character(*), parameter :: iname = 'heun'
 
     ! Fluctuating hydrodynamics
-    logical, parameter :: llns = .false.
+    logical, parameter :: llns = .true.
 
     ! Initial conditions
     ! character(*), parameter :: icname = ''
@@ -51,7 +51,7 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time
-    real, parameter :: tf = 2.0e3
+    real, parameter :: tf = 1.0e3
 
     ! Console output frequency
     integer, parameter :: ntout = 200
@@ -74,15 +74,15 @@ module input
     !   * 0 for explicit integration
     !   * 1 for semi-implicit integration of stress terms
     !   * 2 for full 10-moment formulation (NOTE: not finished!)
-    integer, parameter :: ivis = 1
-    real, parameter    :: eta  = 1.e-4   ! dynamic viscosity
+    integer, parameter :: ivis = 2
+    real, parameter    :: eta  = 1.000e-4   ! dynamic viscosity
     real, parameter    :: zeta = 1.823e-3   ! bulk viscosity
     ! real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: basedir = "/scratch/sseyler/WORK/BWAnnualReport2018"
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "test000"
+    character (*), parameter :: outname = "hydrojet004"
     character (*), parameter :: outdir  = trim(basedir//"/"//datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density

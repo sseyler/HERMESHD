@@ -18,7 +18,7 @@ use timestep
 real :: vsl_errcode
 TYPE (VSL_STREAM_STATE) :: vsl_stream
 
-integer, parameter :: vsl_brng   = VSL_BRNG_MCG31
+integer, parameter :: vsl_brng   = VSL_BRNG_MCG31 !VSL_BRNG_MT19937 !VSL_BRNG_MCG31
 integer, parameter :: vsl_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
 real, parameter :: vsl_mean  = 0.0
 real, parameter :: vsl_sigma = 1.0
@@ -30,12 +30,12 @@ real :: dvdti, sqrt_dvdti
 
 ! NOTE: It might make sense to use global arrays for stochastic
 !   stuff at some point, especially if in separate module
-real :: GRM_x(npts_llns, 1:nx+1, ny,     nz,     3,3)
-real :: GRM_y(npts_llns, nx,     1:ny+1, nz,     3,3)
-real :: GRM_z(npts_llns, nx,     ny,     1:nz+1, 3,3)
-real :: Sflux_x(npts_llns, 1:nx+1, ny,     nz,     3,3)
-real :: Sflux_y(npts_llns, nx,     1:ny+1, nz,     3,3)
-real :: Sflux_z(npts_llns, nx,     ny,     1:nz+1, 3,3)
+real ::   GRM_x(npts_llns, 1:nx1, ny,    nz,    3,3)
+real ::   GRM_y(npts_llns, nx,    1:ny1, nz,    3,3)
+real ::   GRM_z(npts_llns, nx,    ny,    1:nz1, 3,3)
+real :: Sflux_x(npts_llns, 1:nx1, ny,    nz,    3,3)
+real :: Sflux_y(npts_llns, nx,    1:ny1, nz,    3,3)
+real :: Sflux_z(npts_llns, nx,    ny,    1:nz1, 3,3)
 
 contains
 
@@ -47,12 +47,12 @@ contains
         call mpi_print(iam, 'Selected fluctuating hydrodynamics (LLNS) model')
 
         if (present(seed)) then
-            vsl_errcode = vslnewstream(vsl_stream, vsl_brng, seed + iam)
+            vsl_errcode = vslnewstream(vsl_stream, vsl_brng, seed + mod(seed, iam))
         else
             vsl_errcode = vslnewstream(vsl_stream, vsl_brng, iam)
         end if
 
-        dvi   = (dxi*dyi*dzi) * npts_llns !npg  ! NOTE: taking cell volume to be 1/(# internal quad pts)
+        dvi   = (dxi*dyi*dzi) * npts_llns ! NOTE: taking cell volume as 1/(# internal quad pts)
         dvdti = dvi/dt
         sqrt_dvdti = sqrt(dvdti)
     end subroutine random_init
@@ -69,31 +69,29 @@ contains
 !-------------------------------------------------------------------------------
     subroutine get_region_GRM_xyz(GRM_x, GRM_y, GRM_z)
         implicit none
-
-        real, dimension(npts_llns, 1:nx+1, ny,     nz,     3,3), intent(out) :: GRM_x
-        real, dimension(npts_llns, nx,     1:ny+1, nz,     3,3), intent(out) :: GRM_y
-        real, dimension(npts_llns, nx,     ny,     1:nz+1, 3,3), intent(out) :: GRM_z
+        real, dimension(npts_llns, 1:nx1, ny,    nz,    3,3), intent(out) :: GRM_x
+        real, dimension(npts_llns, nx,    1:ny1, nz,    3,3), intent(out) :: GRM_y
+        real, dimension(npts_llns, nx,    ny,    1:nz1, 3,3), intent(out) :: GRM_z
         real, allocatable :: grn(:)
         integer vsl_ndim
 
-        vsl_ndim = npts_llns * (nx+1) * ny     * nz     * 9
+        vsl_ndim = npts_llns * nx1 * ny  * nz  * 9
         allocate(grn(vsl_ndim))
         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
-        GRM_x = reshape( grn, (/ npts_llns, (nx+1), ny, nz, 3, 3 /) )
+        GRM_x = reshape( grn, (/ npts_llns, nx1, ny, nz, 3, 3 /) )
         deallocate(grn)
 
-        vsl_ndim = npts_llns * nx     * (ny+1) * nz     * 9
+        vsl_ndim = npts_llns * nx  * ny1 * nz  * 9
         allocate(grn(vsl_ndim))
         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
-        GRM_y = reshape( grn, (/ npts_llns, nx, (ny+1), nz, 3, 3 /) )
+        GRM_y = reshape( grn, (/ npts_llns, nx, ny1, nz, 3, 3 /) )
         deallocate(grn)
 
-        vsl_ndim = npts_llns * nx     * ny     * (nz+1) * 9
+        vsl_ndim = npts_llns * nx  * ny  * nz1 * 9
         allocate(grn(vsl_ndim))
         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
-        GRM_z = reshape( grn, (/ npts_llns, nx, ny, (nz+1), 3, 3 /) )
+        GRM_z = reshape( grn, (/ npts_llns, nx, ny, nz1, 3, 3 /) )
         deallocate(grn)
-
     end subroutine get_region_GRM_xyz
 !-------------------------------------------------------------------------------
 
@@ -101,32 +99,27 @@ contains
 !-------------------------------------------------------------------------------
     subroutine get_region_Sflux_xyz(Sflux_x, Sflux_y, Sflux_z, dt)
         implicit none
-        real, dimension(npts_llns, 1:nx+1, ny,     nz,     3,3), intent(out) :: Sflux_x
-        real, dimension(npts_llns, nx,     1:ny+1, nz,     3,3), intent(out) :: Sflux_y
-        real, dimension(npts_llns, nx,     ny,     1:nz+1, 3,3), intent(out) :: Sflux_z
-
+        real, dimension(npts_llns, 1:nx1, ny,    nz,    3,3), intent(out) :: Sflux_x
+        real, dimension(npts_llns, nx,    1:ny1, nz,    3,3), intent(out) :: Sflux_y
+        real, dimension(npts_llns, nx,    ny,    1:nz1, 3,3), intent(out) :: Sflux_z
         real, intent(inout) :: dt
-
-        real, dimension(npts_llns, 1:nx+1, ny,     nz,     3,3) :: GRM_x
-        real, dimension(npts_llns, nx,     1:ny+1, nz,     3,3) :: GRM_y
-        real, dimension(npts_llns, nx,     ny,     1:nz+1, 3,3) :: GRM_z
-
-        integer i,j,k,ipnt
-        real Gxx,Gyy,Gzz,Gxy,Gxz,Gyz
-        real eta_d,zeta_d
-        real trG,trGd3,trG_zeta
+        real, dimension(npts_llns, 1:nx1, ny,    nz,    3,3) :: GRM_x
+        real, dimension(npts_llns, nx,    1:ny1, nz,    3,3) :: GRM_y
+        real, dimension(npts_llns, nx,    ny,    1:nz1, 3,3) :: GRM_z
+        integer :: i,j,k,ipnt
+        real :: Gxx,Gyy,Gzz,Gxy,Gxz,Gyz
+        real :: eta_d,zeta_d
+        real :: trG,trGd3,trG_zeta
 
         dvdti = npts_llns*(dxi*dyi*dzi)/dt
         sqrt_dvdti = sqrt(dvdti)
-
-        eta_d = eta_sd * sqrt_dvdti
-        ! if (iam == 0) print *,eta_d
+        eta_d  = eta_sd  * sqrt_dvdti
         zeta_d = zeta_sd * sqrt_dvdti
         call get_region_GRM_xyz(GRM_x, GRM_y, GRM_z)
 
         do k=1,nz
         do j=1,ny
-        do i=1,nx+1
+        do i=1,nx1
             do ipnt=1,npts_llns
                 Gxx = GRM_x(ipnt,i,j,k,1,1)
                 Gyy = GRM_x(ipnt,i,j,k,2,2)
@@ -143,8 +136,8 @@ contains
                 Sflux_x(ipnt,i,j,k,3,1) = Sflux_x(ipnt,i,j,k,1,3)
                 Sflux_x(ipnt,i,j,k,3,2) = Sflux_x(ipnt,i,j,k,2,3)
 
-                trG = (Gxx + Gyy + Gzz)
-                trGd3 = trG/3.0
+                trG   = (Gxx + Gyy + Gzz)
+                trGd3 = c1d3*trG
                 trG_zeta = zeta_d*trG
 
                 Sflux_x(ipnt,i,j,k,1,1) = eta_d*(Gxx - trGd3) + trG_zeta
@@ -156,7 +149,7 @@ contains
         enddo
 
         do k=1,nz
-        do j=1,ny+1
+        do j=1,ny1
         do i=1,nx
             do ipnt=1,npts_llns
                 Gxx = GRM_y(ipnt,i,j,k,1,1)
@@ -174,8 +167,8 @@ contains
                 Sflux_y(ipnt,i,j,k,3,1) = Sflux_y(ipnt,i,j,k,1,3)
                 Sflux_y(ipnt,i,j,k,3,2) = Sflux_y(ipnt,i,j,k,2,3)
 
-                trG = (Gxx + Gyy + Gzz)
-                trGd3 = trG/3.0
+                trG   = (Gxx + Gyy + Gzz)
+                trGd3 = c1d3*trG
                 trG_zeta = zeta_d*trG
 
                 Sflux_y(ipnt,i,j,k,1,1) = eta_d*(Gxx - trGd3) + trG_zeta
@@ -186,7 +179,7 @@ contains
         enddo
         enddo
 
-        do k=1,nz+1
+        do k=1,nz1
         do j=1,ny
         do i=1,nx
             do ipnt=1,npts_llns
@@ -205,8 +198,8 @@ contains
                 Sflux_z(ipnt,i,j,k,3,1) = Sflux_z(ipnt,i,j,k,1,3)
                 Sflux_z(ipnt,i,j,k,3,2) = Sflux_z(ipnt,i,j,k,2,3)
 
-                trG = (Gxx + Gyy + Gzz)
-                trGd3 = trG/3.0
+                trG   = (Gxx + Gyy + Gzz)
+                trGd3 = c1d3*trG
                 trG_zeta = zeta_d*trG
 
                 Sflux_z(ipnt,i,j,k,1,1) = eta_d*(Gxx - trGd3) + trG_zeta
@@ -278,7 +271,7 @@ contains
     !         Spnts_r(ife,3,2) = Spnts_r(ife,2,3)
     !
     !         trG = (Gxx + Gyy + Gzz)
-    !         trGd3 = trG/3.0
+    !         trGd3 = c1d3*trG
     !         trG_zeta = zeta_d*trG
     !
     !         Spnts_r(ife,1,1) = eta_d*(Gxx - trGd3) + trG_zeta
@@ -294,8 +287,8 @@ contains
     subroutine get_GRM_symmetric(GRMpnts_r)
         implicit none
         real, dimension(npts_llns,3,3), intent(out) :: GRMpnts_r
-        integer ife,b,e,vsl_ndim
         real, dimension(6*npts_llns) :: grn
+        integer :: ife,b,e,vsl_ndim
         ! real, allocatable :: grn(:)
 
         vsl_ndim = 6*npts_llns
@@ -329,9 +322,7 @@ contains
 
         dvdti = npg*(dxi*dyi*dzi)/dt
         sqrt_dvdti = sqrt(dvdti)
-
-        ! if (iam == 0) print *,sqrt_dvdti
-        eta_d = eta_sd * sqrt_dvdti
+        eta_d  = eta_sd * sqrt_dvdti
         zeta_d = zeta_sd * sqrt_dvdti
         call get_GRM_symmetric(GRMpnts_r)  ! NOTE: using nptns = 1 (FV approach)
 
@@ -345,8 +336,8 @@ contains
             Gxz = GRMpnts_r(ife,1,3)
             Gyz = GRMpnts_r(ife,2,3)
 
-            trG = (Gxx + Gyy + Gzz)
-            trGd3 = trG/3.0
+            trG   = (Gxx + Gyy + Gzz)
+            trGd3 = c1d3*trG
             trG_zeta = zeta_d*trG
 
             Spnts_r(ife,1,1) = eta_d*(Gxx - trGd3) + trG_zeta
