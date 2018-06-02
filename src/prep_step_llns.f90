@@ -6,6 +6,7 @@ use helpers
 use basis
 
 use boundary
+use random
 
 ! write(*,'(A11,I1,A2,2ES9.1,A3,2ES9.1)') 'Qylo_ext (',iam,'):',Qylo_ext(1:2,1,1,exx),' | ',Qylo_ext(nx-1:nx,1,1,exx)
 ! write(*,'(A12,I1,A2,2ES9.1,A3,2ES9.1)') 'Qyhi_ext (',iam,'):',Qyhi_ext(1:2,1,1,exx),' | ',Qyhi_ext(nx-1:nx,1,1,exx)
@@ -22,7 +23,7 @@ contains
         integer :: ieq, i, j, k, ipnt
 
         !#########################################################
-        ! Step 1: Get fluxes at the boundaries of this MPI domain
+        ! Step 1a: Get fluxes at the boundaries of this MPI domain
         !---------------------------------------------------------
         do ieq = 1,nQ
         do k = 1,nz
@@ -59,9 +60,45 @@ contains
         !#########################################################
 
         !#########################################################
-        ! Step 2: Exchange fluxes with (neighboring) MPI domains
+        ! Step 1b: Get stochastic fluxes at the boundaries of this MPI domain
+        !---------------------------------------------------------
+        ! WARNING: indexing might be slow since last two (slow) indices are implicit
+        do k = 1,nz
+        do j = 1,ny
+          do ipnt=1,nface
+            Sfxlo(ipnt,j,k,1:3,1:3) = Sflux(ipnt,1,j,k,1:3,1:3)
+            ! Sfxhi(ipnt,j,k,1:3,1:3) = Sflux(ipnt,nx1,j,k,1:3,1:3)
+          end do
+        end do
+        end do
+
+        do k = 1,nz
+        do i = 1,nx
+          do ipnt=1,nface
+            Sfylo(ipnt,i,k,1:3,1:3) = Sflux(ipnt,i,1,k,1:3,1:3)
+            ! Sfyhi(ipnt,i,k,1:3,1:3) = Sflux(ipnt,i,ny1,k,1:3,1:3)
+          end do
+        end do
+        end do
+
+        do j = 1,ny
+        do i = 1,nx
+          do ipnt=1,nface
+            Sfzlo(ipnt,i,j,1:3,1:3) = Sflux(ipnt,i,j,1,1:3,1:3)
+            ! Sfzhi(ipnt,i,j,1:3,1:3) = Sflux(ipnt,i,j,nz1,1:3,1:3)
+          end do
+        end do
+        end do
+        !#########################################################
+
+        !#########################################################
+        ! Step 2a: Exchange fluxes with (neighboring) MPI domains
         !---------------------------------------------------------
         call perform_flux_exchange
+
+        ! Step 2b: Exchange fluxes with (neighboring) MPI domains
+        !---------------------------------------------------------
+        call perform_Sflux_exchange
         !#########################################################
     end subroutine exchange_flux
     !---------------------------------------------------------------------------
@@ -101,13 +138,6 @@ contains
             call MPI_Wait(reqs(4),stats(:,4),ierr)
         endif
 
-        ! if (xlobc == 'outflow' and mpi_P == 1) then
-        !     Qxlo_ext = Qxlo_int
-    	! end if
-    	! if (xhibc == 'outflow' and mpi_P == nx) then
-    	! 	Qxhi_ext = Qxhi_int
-    	! end if
-
         !---------------------------------------------
         mpi_size = nface*nx*nz*nQ
 
@@ -133,13 +163,6 @@ contains
         if (nbrs(SOUTH) .ne. MPI_PROC_NULL) then
             call MPI_Wait(reqs(4),stats(:,4),ierr)
         endif
-
-        ! if (ylobc == 'outflow' and mpi_Q == 1) then
-        !     Qylo_ext = Qylo_int
-    	! end if
-    	! if (yhibc == 'outflow' and mpi_Q == ny) then
-    	! 	Qyhi_ext = Qyhi_int
-    	! end if
 
         !---------------------------------------------
         mpi_size = nface*nx*ny*nQ
@@ -167,14 +190,95 @@ contains
             call MPI_Wait(reqs(4),stats(:,4),ierr)
         endif
 
-        ! if (zlobc == 'outflow' and mpi_R == 1) then
-        !     Qzlo_ext = Qzlo_int
-    	! end if
-    	! if (zhibc == 'outflow' and mpi_R == nz) then
-    	! 	Qzhi_ext = Qzhi_int
-    	! end if
-
     end subroutine perform_flux_exchange
+    !---------------------------------------------------------------------------
+
+    !===========================================================================
+    ! perform_Sflux_exchange : exchange fluxes between MPI domains
+    !------------------------------------------------------------
+    subroutine perform_Sflux_exchange
+        integer :: mpi_size
+
+        call MPI_BARRIER(cartcomm,ierr)
+
+        !---------------------------------------------
+        mpi_size = nface*ny*nz*9
+
+        if (nbrs(WEST) .ne. MPI_PROC_NULL) then
+            call MPI_ISend(Sfxlo,mpi_size,MPI_TT,nbrs(WEST),0,cartcomm,reqs(1),ierr)
+        endif
+        if (nbrs(EAST) .ne. MPI_PROC_NULL) then
+            call MPI_IRecv(Sfxhi,mpi_size,MPI_TT,nbrs(EAST),0,cartcomm,reqs(2),ierr)
+        endif
+
+        if (nbrs(WEST) .ne. MPI_PROC_NULL) then
+            call MPI_Wait(reqs(1),stats(:,1),ierr)
+        endif
+        if (nbrs(EAST) .ne. MPI_PROC_NULL) then
+            call MPI_Wait(reqs(2),stats(:,2),ierr)
+        endif
+
+        !---------------------------------------------
+        mpi_size = nface*nx*nz*9
+
+        if (nbrs(SOUTH) .ne. MPI_PROC_NULL) then
+            call MPI_ISend(Sfylo,mpi_size,MPI_TT,nbrs(SOUTH),0,cartcomm,reqs(1),ierr)
+        endif
+        if (nbrs(NORTH) .ne. MPI_PROC_NULL) then
+            call MPI_IRecv(Sfyhi,mpi_size,MPI_TT,nbrs(NORTH),0,cartcomm,reqs(2),ierr)
+        endif
+
+        if (nbrs(SOUTH) .ne. MPI_PROC_NULL) then
+            call MPI_Wait(reqs(1),stats(:,1),ierr)
+        endif
+        if (nbrs(NORTH) .ne. MPI_PROC_NULL) then
+            call MPI_Wait(reqs(2),stats(:,2),ierr)
+        endif
+
+        !---------------------------------------------
+        mpi_size = nface*nx*ny*9
+
+        if (nbrs(DOWN) .ne. MPI_PROC_NULL) then
+            call MPI_ISend(Sfzlo,mpi_size,MPI_TT,nbrs(DOWN),0,cartcomm,reqs(1),ierr)
+        endif
+        if (nbrs(UP) .ne. MPI_PROC_NULL) then
+            call MPI_IRecv(Sfzhi,mpi_size,MPI_TT,nbrs(UP),0,cartcomm,reqs(2),ierr)
+        endif
+
+        if (nbrs(DOWN) .ne. MPI_PROC_NULL) then
+            call MPI_Wait(reqs(1),stats(:,1),ierr)
+        endif
+        if (nbrs(UP) .ne. MPI_PROC_NULL) then
+            call MPI_Wait(reqs(2),stats(:,2),ierr)
+        endif
+
+        ! Set "hi" (upper) values of Sflux for THIS MPI domain based on the
+        ! "lo" (lower) values sent by the WEST/SOUTH/DOWN domain:
+        do k = 1,nz
+        do j = 1,ny
+          do ipnt=1,nface
+            Sflux(ipnt,nx1,j,k,1:3,1:3) = Sfxhi(ipnt,j,k,1:3,1:3)
+          end do
+        end do
+        end do
+
+        do k = 1,nz
+        do i = 1,nx
+          do ipnt=1,nface
+            Sflux(ipnt,i,ny1,k,1:3,1:3) = Sfyhi(ipnt,i,k,1:3,1:3)
+          end do
+        end do
+        end do
+
+        do j = 1,ny
+        do i = 1,nx
+          do ipnt=1,nface
+            Sflux(ipnt,i,j,nz1,1:3,1:3) = Sfzhi(ipnt,i,j,1:3,1:3)
+          end do
+        end do
+        end do
+
+    end subroutine perform_Sflux_exchange
     !---------------------------------------------------------------------------
 
 end module prep_step

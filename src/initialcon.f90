@@ -95,21 +95,21 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_r
         integer i,j,k
-        real dn,vx,vy,vz,te,pr,v2,dni,smx,smy,smz,rand_num,rnum
-        real beta,beta2,beta3
+        real dn,vx,vy,vz,te,P,vsq,dni,rand_num,rnum
+        real beta1,beta2,beta3
 
         call init_random_seed(iam, 123456789)
 
         dn = 1.0
         te = T_base
-        pr = te*dn
+        P  = te*dn
 
         dni = 1.0/dn
 
         ! NOTE: "nu" in CES' code is te*rh, which is "nueta" here; "coll" is nueta/vis
-        nu    = pr/eta  ! global
-        nueta = pr      ! pr = nu*eta  (also global)
-        beta  = 1.0e0   ! jet strength
+        nu    = P/eta   ! global
+        nueta = P       ! P = nu*eta  (also global)
+        beta1 = 1.0e0   ! jet strength
         beta2 = 1.0e-4  ! y-momentum perturbation strength
         beta3 = 1.0e-3  ! pressure perturbation strength
 
@@ -119,24 +119,21 @@ contains
             call random_number(rand_num)
             rnum = (rand_num - 0.5)
 
-            smx = beta*dn/cosh(20*yc(j)/lyu)
-            smy = beta2*rnum/cosh(20*yc(j)/lyu)**2
-            smz = 0
-            vx = Q_r(i,j,k,mx,1)*dni
-            vy = Q_r(i,j,k,my,1)*dni
-            vz = Q_r(i,j,k,mz,1)*dni
-            v2 = vx**2 + vy**2 + vz**2
+            vx = beta1 / cosh(20*yc(j)/lyu)
+            vy = beta2*rnum / cosh(20*yc(j)/lyu)**2
+            vz = 0
+            vsq = vx**2 + vy**2 + vz**2
 
             Q_r(i,j,k,rh,1) = dn
-            Q_r(i,j,k,mx,1) = smx
-            Q_r(i,j,k,my,1) = smy
-            Q_r(i,j,k,mz,1) = smz
-            Q_r(i,j,k,en,1) = (1 + beta3*rnum)*pr/aindm1 + 0.5*dni*(smx**2 + smy**2 + smz**2)
+            Q_r(i,j,k,mx,1) = dn*vx
+            Q_r(i,j,k,my,1) = dn*vy
+            Q_r(i,j,k,mz,1) = dn*vz
+            Q_r(i,j,k,en,1) = (1 + beta3*rnum)*P/aindm1 + 0.5*dn*vsq
 
-            if (ivis .eq. 0) then
-                Q_r(i,j,k,exx,1) = dn*(vx**2 - c1d3*v2) !+ pr
-                Q_r(i,j,k,eyy,1) = dn*(vy**2 - c1d3*v2) !+ pr
-                Q_r(i,j,k,ezz,1) = dn*(vz**2 - c1d3*v2) !+ pr
+            if (ivis == 2) then
+                Q_r(i,j,k,exx,1) = dn*(vx**2 - c1d3*vsq) + c4d3*P
+                Q_r(i,j,k,eyy,1) = dn*(vy**2 - c1d3*vsq) - c2d3*P
+                Q_r(i,j,k,ezz,1) = dn*(vz**2 - c1d3*vsq) - c2d3*P
                 Q_r(i,j,k,exy,1) = dn*vx*vy
                 Q_r(i,j,k,exz,1) = dn*vx*vz
                 Q_r(i,j,k,eyz,1) = dn*vy*vz

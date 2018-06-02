@@ -21,8 +21,8 @@ module input
     integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 40
-    integer, parameter :: ny = 40
+    integer, parameter :: nx = 20
+    integer, parameter :: ny = 20
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
@@ -56,9 +56,6 @@ module input
     ! Console output frequency
     integer, parameter :: ntout = 200
 
-    ! Riemann solver
-    logical, parameter :: ihllc = .true.
-
     ! Equation of state:
     !   * 1 for ideal gas
     !   * 2 for Murnaghan-Tait for water
@@ -74,15 +71,18 @@ module input
     !   * 0 for explicit integration
     !   * 1 for semi-implicit integration of stress terms
     !   * 2 for full 10-moment formulation (NOTE: not finished!)
-    integer, parameter :: ivis = 2
+    integer, parameter :: ivis = 1
     real, parameter    :: eta  = 1.000e-4   ! dynamic viscosity
     real, parameter    :: zeta = 1.823e-3   ! bulk viscosity
     ! real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
 
+    ! Riemann solver
+    logical, parameter :: ihllc = .true.
+
     ! Output control: location/naming and VTK output
     character (*), parameter :: basedir = "/scratch/sseyler/WORK/BWAnnualReport2018"
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "hydrojet004"
+    character (*), parameter :: outname = "hydrojet001"
     character (*), parameter :: outdir  = trim(basedir//"/"//datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density

@@ -53,7 +53,7 @@ endif
 !-------------------------------------------------
 ! 4. Select integration method
 !-------------------------------------------------
-call select_integrator(iname, step)
+call select_integrator(iname, update)
 
 !-------------------------------------------------
 ! 5. Select boundary conditions
@@ -76,13 +76,8 @@ call output_vtk(Q_r0, nout, iam)
 ! II. SIMULATION
 !----------------------------------------------------------------
 do while( t < tf )
-
-    dt = get_min_dt(Q_r0)
-    call step(Q_r0, Q_r1, Q_r2, dt)
-    t = t + dt
-
-    call generate_output(Q_r0, t, nout)  ! determines when output should be generated
-
+    call step(Q_r0, Q_r1, Q_r2, t, dt)
+    call generate_output(Q_r0, t, dt, t1, dtout, nout) ! determines when to output
 end do
 !-------------------------------------------------------------------------------
 
@@ -112,13 +107,28 @@ call report_wall_time(iam, t_stop-t_start)
 contains
 
     !===========================================================================
+    subroutine step(Q_io, Q_1, Q_2, t, dt)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2
+        real, intent(inout) :: t, dt
+
+        dt = get_min_dt(Q_r0)
+        call update(Q_io, Q_1, Q_2, dt)
+        t = t + dt
+    end subroutine step
+    !---------------------------------------------------------------------------
+
+    !===========================================================================
     ! Generate console and VTK output
     !------------------------------------------------------------
-    subroutine generate_output(Q_r, t, nout)
+    subroutine generate_output(Q_r, t, dt, t1, dtout, nout)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_r
-        real, intent(in) :: t
+        real, intent(inout) :: t, dt, t1, dtout
         integer, intent(inout) :: nout
+
+        real    :: t2
         integer :: ioe
 
         ! TODO: dtout may be deprecated once improved output scheme is used
@@ -141,9 +151,9 @@ contains
         ! end if
 
         if (t > dtout*nout) then
-
             nout = nout + 1
             if (iam == print_mpi) then
+                print *,''
                 print *, 'nout = ', nout
                 print *, '   t = ',t,'         dt= ',dt
                 t2 = get_clock_time()
@@ -156,7 +166,7 @@ contains
 
             ! write checkpoint files; assign an odd/even id to ensure last two sets are kept
             if (iwrite == 1) then
-                ioe = 2 - mod(nout,2)
+                ioe = 2 - mod(nout, 2)
                 call writeQ(fpre,iam,ioe,Q_r,t,dt,nout,mpi_nx,mpi_ny,mpi_nz)
             end if
 
@@ -164,11 +174,9 @@ contains
 
             if (iam == print_mpi) then
                 t2 = get_clock_time()
-                print *, '  >> Output (I/O) time', (t2-t1), 'seconds'
-                print *, ''
+                print *, '  >> Output time', (t2-t1), 'seconds'
                 t1 = t2
             end if
-
             ! if (mpi_P == 1) print *,Qxlo_ext_def(:,1,1,mx)
 
         end if

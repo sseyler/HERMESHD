@@ -1117,13 +1117,13 @@
                     fpnts_r(ife,exz) = nu*vz
                     fpnts_r(ife,eyz) = 0
                 else
-                    fpnts_r(ife,exx) = vx*(3*E_xx - 2*vx*Qpnts_r(ife,mx))                                       ! term 1
-                    fpnts_r(ife,eyy) = 2*vy*(E_xy - vy*Qpnts_r(ife,mx)) + vx*E_yy                               ! term 4
-                    fpnts_r(ife,ezz) = 2*vz*(E_xz - vz*Qpnts_r(ife,mx)) + vx*E_zz                               ! term 7
+                    fpnts_r(ife,exx) = vx*(3*E_xx - 2*vx*Qpnts_r(ife,mx))    ! term 1
+                    fpnts_r(ife,eyy) = 2*vy*(E_xy - vy*Qpnts_r(ife,mx)) + vx*E_yy  ! term 4
+                    fpnts_r(ife,ezz) = 2*vz*(E_xz - vz*Qpnts_r(ife,mx)) + vx*E_zz  ! term 7
 
-                    fpnts_r(ife,exy) = 2*vx*(E_xy - vy*Qpnts_r(ife,mx)) + vy*E_xx                               ! term 10
-                    fpnts_r(ife,exz) = 2*vx*(E_xz - vz*Qpnts_r(ife,mx)) + vz*E_xx                               ! term 13
-                    fpnts_r(ife,eyz) = vx*E_yz + vy*E_xz + vz*E_xy - 2*vy*vz*Qpnts_r(ife,mx)                    ! term 16
+                    fpnts_r(ife,exy) = 2*vx*(E_xy - vy*Qpnts_r(ife,mx)) + vy*E_xx  ! term 10
+                    fpnts_r(ife,exz) = 2*vx*(E_xz - vz*Qpnts_r(ife,mx)) + vz*E_xx  ! term 13
+                    fpnts_r(ife,eyz) = vx*E_yz + vy*E_xz + vz*E_xy - 2*vy*vz*Qpnts_r(ife,mx)  ! term 16
                 end if
             end if
 

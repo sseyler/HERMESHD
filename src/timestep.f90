@@ -32,8 +32,12 @@ contains
             vx = Q_in(i,j,k,mx,1)*dni
             vy = Q_in(i,j,k,my,1)*dni
             vz = Q_in(i,j,k,mz,1)*dni
-            if (ieos == 1) cs = sqrt(aindex*(Q_in(i,j,k,en,1)*dni - 0.5*(vx**2 + vy**2 + vz**2)))
-            if (ieos == 2) cs = sqrt(7.2*P_1*dn**6.2 + T_floor)
+            select case(ieos)
+            case(1)
+                cs = sqrt(aindex*(Q_in(i,j,k,en,1)*dni - 0.5*(vx**2 + vy**2 + vz**2)))
+            case(2)
+                cs = sqrt(7.2*P_1*dn**6.2 + T_floor)
+            end select
 
             vmag0 = max( abs(vx)+cs, abs(vy)+cs, abs(vz)+cs )
             if (vmag0 > vmag .and. dn > rh_mult*rh_floor) vmag = vmag0  ! NOTE: from newCES (excluded dn thing)

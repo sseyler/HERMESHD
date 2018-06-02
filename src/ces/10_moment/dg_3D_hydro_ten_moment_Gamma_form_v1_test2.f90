@@ -748,7 +748,8 @@
     implicit none
     integer i,j,k,ieq,ipg,ir
     real, dimension(nx,ny,nz,nQ,nbasis) :: Q_ri
-    real t,source(npg,nQ),Qin(nQ),dn,dni,Zin,vx,vy,vz,alpha,temp,dne,eta_a,Teev,Tiev,etaJ2,nuei,TemR,Tev,vmax,P
+    real :: source(npg,nQ),Qin(nQ)
+    real t,dn,dni,Zin,vx,vy,vz,alpha,temp,dne,eta_a,Teev,Tiev,etaJ2,nuei,TemR,Tev,vmax,P
     real Tcoef,fac,en_floor,gyro,Pres,rh_buf,oth,v2
 
 	source_r(:,:,:,:,:) = 0.0

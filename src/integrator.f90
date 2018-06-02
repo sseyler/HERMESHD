@@ -15,14 +15,14 @@ use flux
     ! ABSTRACT INTERFACE to subroutine for temporal integration
     !-----------------------------------------------------------------
     abstract interface
-        subroutine step_ptr(Q_io, Q_1, Q_2, dt)
+        subroutine update_ptr(Q_io, Q_1, Q_2, dt)
             use input, only : nx,ny,nz
             use params, only : nQ,nbasis
 
             real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
             real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_1, Q_2
             real, intent(inout) :: dt
-        end subroutine step_ptr
+        end subroutine update_ptr
     end interface
     !---------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ use flux
     !===========================================================================
     ! Initialize pointer to temporal integration subroutine
     !-----------------------------------------------------------------
-    procedure (step_ptr), pointer :: step => null ()
+    procedure (update_ptr), pointer :: update => null ()
     !---------------------------------------------------------------------------
 
 contains
@@ -41,7 +41,7 @@ contains
     subroutine select_integrator(name, integrator)
         implicit none
         character(*), intent(in) :: name
-        procedure(step_ptr), pointer :: integrator
+        procedure(update_ptr), pointer :: integrator
 
         select case (name)
             case ('heun')
@@ -98,19 +98,22 @@ contains
         real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
         real, intent(inout) :: dt
 
-        call prep_advance(Q_in)
+        call prep_advance(Q_in, dt)
         call calc_rhs(Q_in, dt)
-        call adv_time_lvl(Q_in, Q_out, dt)
+        call advance_time(Q_in, Q_out, dt)
+        ! if (ivis == 2) call advance_time_src_v1(Q_out, Q_out, dt)
         call check_for_NaNs(Q_out)
     end subroutine euler_step
 
 
     !----------------------------------------------------
-    subroutine prep_advance(Q_io)
+    subroutine prep_advance(Q_io, dt)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
+        real, intent(inout) :: dt
 
         if (ieos == 1 .or. ieos == 2) call limiter(Q_io)
+        if (llns) call get_region_Sflux(Sflux, dt)
         call exchange_flux(Q_io)
         call apply_boundaries
     end subroutine prep_advance
@@ -127,7 +130,7 @@ contains
 
 
     !---------------------------------------------------------------------------
-    subroutine adv_time_lvl(Q_in, Q_out, dt)
+    subroutine advance_time(Q_in, Q_out, dt)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in)  :: Q_in
         real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
@@ -151,65 +154,62 @@ contains
           !--------------------------------
           do ieq = 1,en
             do ir=1,nbasis
-                ! NOTE: from GFV1
-                ! Q_out(i,j,k,ieq,ir) = Q_in(i,j,k,ieq,ir) - dt*(glflux_r(i,j,k,ieq,ir) - source_r(i,j,k,ieq,ir))
-                Q_out(i,j,k,ieq,ir) = Q_in(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir)
+                Q_out(i,j,k,ieq,ir) = Q_in(i,j,k,ieq,ir) &
+                    - dt*( glflux_r(i,j,k,ieq,ir) - source_r(i,j,k,ieq,ir) )
+                ! Q_out(i,j,k,ieq,ir) = Q_in(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir) ! NOTE: GFV1
             end do
           end do
           !--------------------------------
           do ieq = exx,nQ
             do ir=1,nbasis
+                Q_out(i,j,k,ieq,ir) = fac *                                                       &
+                    (                                                                             &
+                      Q_in(i,j,k,ieq,ir) - dt*( glflux_r(i,j,k,ieq,ir) - source_r(i,j,k,ieq,ir) ) &
+                    )
                 ! NOTE: from GFV1
-                ! Q_out(i,j,k,ieq,ir) = (Q_in(i,j,k,ieq,ir) - dt*(glflux_r(i,j,k,ieq,ir) - source_r(i,j,k,ieq,ir)))*fac
-                Q_out(i,j,k,ieq,ir) = (Q_in(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir))*fac
+                ! Q_out(i,j,k,ieq,ir) = (Q_in(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir))*fac
             end do
           end do
           !--------------------------------
         end do
         end do
         end do
-
-        if (ivis == 2) then ! NOTE: only for FULL NONLINEAR IMEX code
-            call adv_time_lvl_src_v1(Q_out, Q_out, dt)
-        end if
-    end subroutine adv_time_lvl
+    end subroutine advance_time
     !---------------------------------------------------------------------------
 
 
     !---------------------------------------------------------------------------
-    subroutine adv_time_lvl_src_v1(Q_in, Q_out, dt)
-        implicit none
-        real, dimension(nx,ny,nz,nQ,nbasis), intent(in)  :: Q_in
-        real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
-        real, intent(inout) :: dt
-        real, dimension(npg,nQ) :: source, Qout
-        real, dimension(nQ) :: Qin
-        integer i,j,k,ieq,ipg,ir
-        real dn,dni,vx,vy,vz,P, vx2,vy2,vz2,vsq,fac
-
-        fac = 1./(1. + nu*dt)
-
-        do k = 1,nz
-        do j = 1,ny
-        do i = 1,nx
-          do ir=1,nbasis
-            Q_out(i,j,k,exx,ir) = ( Q_in(i,j,k,exx,ir) + dt*source_r(i,j,k,exx,ir) ) * fac
-            Q_out(i,j,k,eyy,ir) = ( Q_in(i,j,k,eyy,ir) + dt*source_r(i,j,k,eyy,ir) ) * fac
-            Q_out(i,j,k,ezz,ir) = ( Q_in(i,j,k,ezz,ir) + dt*source_r(i,j,k,ezz,ir) ) * fac
-            Q_out(i,j,k,exy,ir) = ( Q_in(i,j,k,exy,ir) + dt*source_r(i,j,k,exy,ir) ) * fac
-            Q_out(i,j,k,exz,ir) = ( Q_in(i,j,k,exz,ir) + dt*source_r(i,j,k,exz,ir) ) * fac
-            Q_out(i,j,k,eyz,ir) = ( Q_in(i,j,k,eyz,ir) + dt*source_r(i,j,k,eyz,ir) ) * fac
-          end do
-        end do
-        end do
-        end do
-    end subroutine adv_time_lvl_src_v1
+    ! subroutine advance_time_src_v1(Q_in, Q_out, dt)
+    !     implicit none
+    !     real, dimension(nx,ny,nz,nQ,nbasis), intent(in)  :: Q_in
+    !     real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
+    !     real, intent(inout) :: dt
+    !     integer :: i,j,k,ir
+    !     real :: dn,dni,vx,vy,vz,P, vx2,vy2,vz2,vsq,fac
+    !
+    !     fac = 1./(1. + nu*dt)
+    !
+    !     do k = 1,nz
+    !     do j = 1,ny
+    !     do i = 1,nx
+    !       do ir=1,nbasis
+    !         Q_out(i,j,k,exx,ir) = ( Q_in(i,j,k,exx,ir) + dt*source_r(i,j,k,exx,ir) ) * fac
+    !         Q_out(i,j,k,eyy,ir) = ( Q_in(i,j,k,eyy,ir) + dt*source_r(i,j,k,eyy,ir) ) * fac
+    !         Q_out(i,j,k,ezz,ir) = ( Q_in(i,j,k,ezz,ir) + dt*source_r(i,j,k,ezz,ir) ) * fac
+    !         Q_out(i,j,k,exy,ir) = ( Q_in(i,j,k,exy,ir) + dt*source_r(i,j,k,exy,ir) ) * fac
+    !         Q_out(i,j,k,exz,ir) = ( Q_in(i,j,k,exz,ir) + dt*source_r(i,j,k,exz,ir) ) * fac
+    !         Q_out(i,j,k,eyz,ir) = ( Q_in(i,j,k,eyz,ir) + dt*source_r(i,j,k,eyz,ir) ) * fac
+    !       end do
+    !     end do
+    !     end do
+    !     end do
+    ! end subroutine advance_time_src_v1
     !---------------------------------------------------------------------------
 
     !---------------------------------------------------------------------------
     ! NOTE: may be able to make functions from Qin loop and final loop w/
-    !       0.125*cbasis(...) for re-use by adv_time_lvl_src & source_calc
-    subroutine adv_time_lvl_src_v0(Q_in, Q_out, dt)
+    !       0.125*cbasis(...) for re-use by advance_time_src & source_calc
+    subroutine advance_time_src_v0(Q_in, Q_out, dt)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in)  :: Q_in
         real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
@@ -254,12 +254,14 @@ contains
             do ieq=exx,nQ
                 do ir=1,nbasis
                     Q_out(i,j,k,ieq,ir) = 0.125*cbasis(ir)*sum(wgt3d(1:npg)*bfvals_int(1:npg,ir)*Qout(1:npg,ieq))
+                    ! This is probably faster
+                    ! Q_out(i,j,k,ieq,ir) = 0.125*cbasis(ir)*sum(bval_int_wgt(1:npg,ir)*Qout(1:npg,ieq))
                 end do
             end do
         end do
         end do
         end do
-    end subroutine adv_time_lvl_src_v0
+    end subroutine advance_time_src_v0
     !---------------------------------------------------------------------------
 
 

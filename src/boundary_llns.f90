@@ -826,11 +826,20 @@ module boundary
     real, dimension(nx,ny,nface,nQ) :: Qzlo_int, Qzhi_int
     !---------------------------------------------------------------------------
 
+    !===========================================================================
+    ! Initialize arrays to store stochastic flux boundary conditions
+    !------------------------------------------------------------
+    real, dimension(nface,ny,nz,3,3) :: Sfxlo, Sfxhi
+    real, dimension(nface,nx,nz,3,3) :: Sfylo, Sfyhi
+    real, dimension(nface,nx,ny,3,3) :: Sfzlo, Sfzhi
+    !---------------------------------------------------------------------------
+
 contains
 
     !===========================================================================
     ! Apply boundary conditions (specified by user at runtime)
     !------------------------------------------------------------
+    ! WARNING: still don't have a way of setting stochastic fluxes as BCs
     subroutine apply_boundaries
         real :: ux_scale
         if ( mpi_P == 1 ) then

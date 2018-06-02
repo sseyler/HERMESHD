@@ -16,7 +16,6 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
         real, intent(inout) :: dt
-
         real, dimension(npg,nQ) :: source
         real, dimension(nQ) :: Qin
         real dn,dni, vx,vy,vz,vx2,vy2,vz2,vsqd3, pr,te, nudn,nudnd3
@@ -48,12 +47,12 @@ contains
                     source(ipg,exz) = -nu*Qin(exz)
                     source(ipg,eyz) = -nu*Qin(eyz)
                 case(1)  ! NOTE: LINEARIZED 10-moment-eqns (IMEX)
-                    source(ipg,exx) = 0 ! impl solv w/ sources next step in advance_time_level_gl
-                    source(ipg,eyy) = 0 ! impl solv w/ sources next step in advance_time_level_gl
-                    source(ipg,ezz) = 0 ! impl solv w/ sources next step in advance_time_level_gl
-                    source(ipg,exy) = 0 ! impl solv w/ sources next step in advance_time_level_gl
-                    source(ipg,exz) = 0 ! impl solv w/ sources next step in advance_time_level_gl
-                    source(ipg,eyz) = 0 ! impl solv w/ sources next step in advance_time_level_gl
+                    source(ipg,exx) = 0 ! impl solv w/ sources next step in adv_time_lvl
+                    source(ipg,eyy) = 0 ! impl solv w/ sources next step in adv_time_lvl
+                    source(ipg,ezz) = 0 ! impl solv w/ sources next step in adv_time_lvl
+                    source(ipg,exy) = 0 ! impl solv w/ sources next step in adv_time_lvl
+                    source(ipg,exz) = 0 ! impl solv w/ sources next step in adv_time_lvl
+                    source(ipg,eyz) = 0 ! impl solv w/ sources next step in adv_time_lvl
                 case(2) ! NOTE: FULL NONLINEAR 10-moment-eqns
                     dn  = Qin(rh)
                     dni = 1./dn

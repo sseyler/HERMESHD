@@ -104,7 +104,7 @@ set (MKL_LIBS mkl_intel_lp64 mkl_sequential mkl_core mkl_vml_avx)
 if (CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
     set(dialect "-stand f08 -free -implicitnone")
     set(bounds "-check bounds")
-    set(flags "-O2 -xHost -mkl -diag-disable 13003")
+    set(flags "-g -O2 -xHost -mkl -diag-disable 13003")
 endif()
 if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
     set(dialect "-ffree-form -std=f2008 -fimplicit-none")
@@ -136,7 +136,10 @@ list(REMOVE_ITEM default_sources ${SOURCE_DIR}/f90wrap_spatial.f90)
 
 list(REMOVE_ITEM default_sources ${SOURCE_DIR}/input.f90)  # use input_hd.f90
 list(REMOVE_ITEM default_sources ${SOURCE_DIR}/params.f90) # use params_hd.f90
-list(REMOVE_ITEM default_sources ${SOURCE_DIR}/flux.f90)   # use flux_new.f90
+list(REMOVE_ITEM default_sources ${SOURCE_DIR}/boundary.f90) # use boundary_llns.f90
+list(REMOVE_ITEM default_sources ${SOURCE_DIR}/prep_step.f90) # use prep_step_llns.f90
+list(REMOVE_ITEM default_sources ${SOURCE_DIR}/flux.f90)   # use flux_llns.f90
+list(REMOVE_ITEM default_sources ${SOURCE_DIR}/flux_new.f90)   # use flux_llns.f90
 list(REMOVE_ITEM default_sources ${SOURCE_DIR}/reservoir.f90)  # don't use
 # list(REMOVE_ITEM default_sources ${SOURCE_DIR}/spatial.f90)
 
@@ -150,7 +153,10 @@ list(REMOVE_ITEM module_sources ${SOURCE_DIR}/f90wrap_spatial.f90)
 
 list(REMOVE_ITEM module_sources ${SOURCE_DIR}/input.f90)  # use input_hd.f90
 list(REMOVE_ITEM module_sources ${SOURCE_DIR}/params.f90) # use params_hd.f90
-list(REMOVE_ITEM module_sources ${SOURCE_DIR}/flux.f90)   # use flux_new.f90
+list(REMOVE_ITEM module_sources ${SOURCE_DIR}/boundary.f90) # use boundary_llns.f90
+list(REMOVE_ITEM module_sources ${SOURCE_DIR}/prep_step.f90) # use prep_step_llns.f90
+list(REMOVE_ITEM module_sources ${SOURCE_DIR}/flux.f90)   # use flux_llns.f90
+list(REMOVE_ITEM module_sources ${SOURCE_DIR}/flux_new.f90)   # use flux_llns.f90
 list(REMOVE_ITEM module_sources ${SOURCE_DIR}/reservoir.f90)  # don't use
 # list(REMOVE_ITEM module_sources ${SOURCE_DIR}/spatial.f90)
 

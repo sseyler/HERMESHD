@@ -14,7 +14,7 @@ use random
 
 implicit none
 
-integer, parameter :: iseed = 123456789  ! 1317345*mpi_P + 5438432*mpi_Q + 38472613*mpi_R
+integer, parameter :: iseed = 1234567  ! 1317345*mpi_P + 5438432*mpi_Q + 38472613*mpi_R
 
 ! integer :: nout
 
@@ -49,12 +49,12 @@ contains
 
         !-----------------------------------------
         ! Initialize various parameters
-        call setup_MPI(comm, mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
+        call setup_MPI(comm, iam, mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
         call init_spatial_params(dx,dy,dz, dxi,dyi,dzi, loc_lxd,loc_lyd,loc_lzd)
 
-        dxid4 = 0.25*dxi
-        dyid4 = 0.25*dyi
-        dzid4 = 0.25*dzi
+        dxid4 = 0.25*dxi  ! global variables declared in spatial module
+        dyid4 = 0.25*dyi  ! global variables declared in spatial module
+        dzid4 = 0.25*dzi  ! global variables declared in spatial module
 
         ! call set_mxa_mya_mza(mxa, mya, mza)  ! not needed anymore probably
         call init_temporal_params(t, dt, nout)
@@ -332,13 +332,13 @@ contains
 
 
     !===========================================================================
-    subroutine setup_MPI(comm, mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
+    subroutine setup_MPI(comm, iam, mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
         implicit none
         integer, intent(inout) :: mpi_nx, mpi_ny
         integer, intent(out)   :: mpi_nz
         integer, intent(out)   :: mpi_P, mpi_Q, mpi_R
 
-        integer :: comm
+        integer :: comm, iam
         integer, dimension(3) :: dims, coords, periods ! only used in init for MPI things
         integer reorder
 
@@ -560,17 +560,19 @@ contains
             print *, '---------------------------------------------------------'
             print *, 'Starting simulation...'
             print *, '---------------------------------------------------------'
-            write(*,'(A13,I10,I7,I7)')          ' total dim = ', mpi_nx*nx, mpi_ny*ny, mpi_nz*nz
-            write(*,'(A13,I10,I7,I7)')          ' mpi dim   = ', mpi_nx,    mpi_ny,    mpi_nz
+            write(*,'(A13,A10,A7,A7)')          '             ','         X','      Y','      Z'
+            write(*,'(A13,I10,I7,I7)')          ' num cells = ', mpi_nx*nx, mpi_ny*ny, mpi_nz*nz
+            write(*,'(A13,I10,I7,I7)')          ' mpi ranks = ', mpi_nx,    mpi_ny,    mpi_nz
             print *, '-------------------------------------'
-            write(*,'(A13,ES10.3,A7,F5.1,A2)')  ' te0 is    = ', te0,'  (T =',TK,'K)'
-            write(*,'(A13,ES10.3)')             ' dx is     = ', ly/(ny*mpi_ny)*Lbox
-            write(*,'(A13,I10)')                ' iquad is  = ', iquad
-            write(*,'(A13,I10)')                ' nbasis is = ', nbasis
+            write(*,'(A13,ES10.3,A7,F5.1,A2)')  ' te0       = ', te0,'  (T = ',TK,'K)'
+            write(*,'(A13,ES10.3)')             ' dx        = ', ly/(ny*mpi_ny)*Lbox
+            write(*,'(A13,I10)')                ' iquad     = ', iquad
+            write(*,'(A13,I10)')                ' nbasis    = ', nbasis
             print *, '----------------------------------------------'
-            write(*,'(A16,A8,A13,A8)') ' X BC:  lower = ', xlobc, '  |  upper = ', xhibc
-            write(*,'(A16,A8,A13,A8)') ' Y BC:  lower = ', ylobc, '  |  upper = ', yhibc
-            write(*,'(A16,A8,A13,A8)') ' Z BC:  lower = ', zlobc, '  |  upper = ', zhibc
+            write(*,'(A8,A8,A5,A8)') '        ','LOWER   ','  |  ','UPPER   '
+            write(*,'(A8,A8,A5,A8)') ' X BC:  ',    xlobc, '  |  ',  xhibc
+            write(*,'(A8,A8,A5,A8)') ' Y BC:  ',    ylobc, '  |  ',  yhibc
+            write(*,'(A8,A8,A5,A8)') ' Z BC:  ',    zlobc, '  |  ',  zhibc
             print *, '---------------------------------------------------------'
             print *, ''
         end if

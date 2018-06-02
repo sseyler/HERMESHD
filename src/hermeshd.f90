@@ -41,7 +41,7 @@ contains
         !-----------------------------
         do while( t < tf )
             call step(Q_r0, Q_r1, Q_r2, t, dt)
-            call generate_output(Q_r0, t, dt, t1, dtout, nout)  ! determines when output should be generated
+            call generate_output(Q_r0, t, dt, t1, dtout, nout) ! determines when to output
         end do
 
         !#############################

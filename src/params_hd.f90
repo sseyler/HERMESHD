@@ -61,7 +61,7 @@ module params
     integer, parameter :: npge  = 6*nface        ! total # of cell face quad points
     integer, parameter :: nslim = npg + 6*nface  ! total # of quad points per cell
 
-    integer, parameter :: nfc1 = nface + 1       ! Compact shortcut for nface + 1
+    integer, parameter :: nface1 = nface + 1     ! Compact shortcut for nface + 1
     ! Grid cell dimensions parameters (mostly for Sflux_xyz)
     integer, parameter :: nx1 = nx + 1
     integer, parameter :: ny1 = ny + 1
