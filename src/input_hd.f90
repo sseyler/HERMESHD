@@ -35,9 +35,6 @@ module input
     integer, parameter :: iorder = 2
     character(*), parameter :: iname = 'heun'
 
-    ! Fluctuating hydrodynamics
-    logical, parameter :: llns = .true.
-
     ! Initial conditions
     ! character(*), parameter :: icname = ''
     integer, parameter :: icid = 0
@@ -56,16 +53,14 @@ module input
     ! Console output frequency
     integer, parameter :: ntout = 200
 
+
     ! Equation of state:
     !   * 1 for ideal gas
     !   * 2 for Murnaghan-Tait for water
     integer, parameter :: ieos = 1
 
-    ! Thermodynamic, constitutive, and transport parameters
-    real, parameter :: TK     = 120.0    ! in Kelvin
-    real, parameter :: mu     = 22.0     ! AMU per molecule
-    real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
-    real, parameter :: clt    = 2.0      ! numerical speed of sound
+    ! Fluctuating hydrodynamics
+    logical, parameter :: llns = .true.
 
     ! Viscosity control
     !   * 0 for explicit integration
@@ -76,13 +71,19 @@ module input
     real, parameter    :: zeta = 1.823e-3   ! bulk viscosity
     ! real, parameter    :: epsi = 5.0     ! inverse relaxation coefficient
 
+    ! Thermodynamic, constitutive, and transport parameters
+    real, parameter :: TK     = 120.0    ! in Kelvin
+    real, parameter :: mu     = 22.0     ! AMU per molecule
+    real, parameter :: aindex = 5./3.    ! adiabatic index (gamma)
+    real, parameter :: clt    = 2.0      ! numerical speed of sound
+
     ! Riemann solver
     logical, parameter :: ihllc = .true.
 
     ! Output control: location/naming and VTK output
     character (*), parameter :: basedir = "/scratch/sseyler/WORK/BWAnnualReport2018"
     character (*), parameter :: datadir = "data"
-    character (*), parameter :: outname = "hydrojet001"
+    character (*), parameter :: outname = "hydrojet009"
     character (*), parameter :: outdir  = trim(basedir//"/"//datadir//"/"//outname)
 
     integer, parameter :: nstdout  = ntout ! density

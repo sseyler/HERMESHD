@@ -88,9 +88,12 @@ contains
             case (2)
                 ! WARNING/TODO
                 call mpi_print(iam, 'ivis = 2: Selected full (nonlinear) 10-moment system')
-                flux_x_pts => Fpts_x_2 ! DEBUG
-                flux_y_pts => Fpts_y_2 ! DEBUG
-                flux_z_pts => Fpts_z_2 ! DEBUG
+                ! flux_x_pts => Fpts_x_2 ! DEBUG
+                ! flux_y_pts => Fpts_y_2 ! DEBUG
+                ! flux_z_pts => Fpts_z_2 ! DEBUG
+                flux_x_pts => FSpts_x_2 ! DEBUG
+                flux_y_pts => FSpts_y_2 ! DEBUG
+                flux_z_pts => FSpts_z_2 ! DEBUG
                 ! call exit(-1)
             case default
                 call mpi_print(iam, 'ivis not set: Defaulting to Euler equations (inviscid fluid)')
@@ -472,6 +475,178 @@ contains
 
 
     !===========================================================================
+    ! Nonlinear 10 moment-eqns fluxes WITH RANDOM STRESSES!!!
+    !---------------------------------------------------------------------------
+    subroutine FSpts_x_2(Qpts, Fpts, i,j,k, npts)
+        integer, intent(in) :: i,j,k,npts
+        real, dimension(npts,nQ), intent(in)  :: Qpts
+        real, dimension(npts,nQ), intent(out) :: Fpts
+        real :: dn,M_x,M_y,M_z,Ener
+        real :: dni, vx,vy,vz, E_xx,E_xy,E_xz, P
+        real :: c2d3_Pvx, vx2,vy2,vz2,vsq,vsqd3, Mxvx,Mxvy,Mxvz
+        real :: S_xx,S_xy,S_xz, EmS_xx,EmS_xy,EmS_xz
+
+        S_xx = Sflux(npts_llns,i,j,k,1,1)
+        S_xy = Sflux(npts_llns,i,j,k,1,2)
+        S_xz = Sflux(npts_llns,i,j,k,1,3)
+
+        do ife = 1,npts
+            dn   = Qpts(ife,rh)
+            M_x  = Qpts(ife,mx)
+            M_y  = Qpts(ife,my)
+            M_z  = Qpts(ife,mz)
+            Ener = Qpts(ife,en)
+            E_xx = Qpts(ife,exx)
+            E_xy = Qpts(ife,exy)
+            E_xz = Qpts(ife,exz)
+            EmS_xx = E_xx - S_xx
+            EmS_xy = E_xy - S_xy
+            EmS_xz = E_xz - S_xz
+            !-----------------
+            dni = 1./dn
+            vx  = M_x*dni
+            vy  = M_y*dni
+            vz  = M_z*dni
+            vx2 = vx*vx
+            vy2 = vy*vy
+            vz2 = vz*vz
+            vsq = vx2 + vy2 + vz2
+            vsqd3 = c1d3*vsq
+            Mxvx = M_x*vx
+            Mxvy = M_x*vy
+            Mxvz = M_x*vz
+            P    = aindm1 * ( Ener - 0.5*dn*vsq )
+            if (P < P_floor) P = P_floor
+            c2d3_Pvx = c2d3*P*vx
+            !------------------------------------
+            Fpts(ife,rh)  = M_x
+            Fpts(ife,mx)  = Mxvx + EmS_xx + P
+            Fpts(ife,my)  = Mxvy + EmS_xy
+            Fpts(ife,mz)  = Mxvz + EmS_xz
+            Fpts(ife,en)  = (Ener + P)*vx
+            Fpts(ife,exx) = M_x*(vx2 - vsqd3) + 2*c2d3_Pvx
+            Fpts(ife,eyy) = M_x*(vy2 - vsqd3) -   c2d3_Pvx
+            Fpts(ife,ezz) = M_x*(vz2 - vsqd3) -   c2d3_Pvx
+            Fpts(ife,exy) = Mxvx*vy + P*vy
+            Fpts(ife,exz) = Mxvz*vx + P*vz
+            Fpts(ife,eyz) = Mxvy*vz
+        end do
+    end subroutine FSpts_x_2
+    !---------------------------------------------------------------------------
+    subroutine FSpts_y_2(Qpts, Fpts, i,j,k, npts)
+        integer, intent(in) :: i,j,k,npts
+        real, dimension(npts,nQ), intent(in)  :: Qpts
+        real, dimension(npts,nQ), intent(out) :: Fpts
+        real :: dn,M_x,M_y,M_z,Ener
+        real :: dni, vx,vy,vz, E_xy,E_yy,E_yz, P
+        real :: c2d3_Pvy, vx2,vy2,vz2,vsq,vsqd3, Myvx,Myvy,Myvz
+        real :: S_xy,S_yy,S_yz, EmS_xy,EmS_yy,EmS_yz
+
+        S_xy = Sflux(npts_llns,i,j,k,1,2)
+        S_yy = Sflux(npts_llns,i,j,k,2,2)
+        S_yz = Sflux(npts_llns,i,j,k,2,3)
+
+        do ife = 1,npts
+            dn   = Qpts(ife,rh)
+            M_x  = Qpts(ife,mx)
+            M_y  = Qpts(ife,my)
+            M_z  = Qpts(ife,mz)
+            Ener = Qpts(ife,en)
+            E_xy = Qpts(ife,exy)
+            E_yy = Qpts(ife,eyy)
+            E_yz = Qpts(ife,eyz)
+            EmS_xy = E_xy - S_xy
+            EmS_yy = E_yy - S_yy
+            EmS_yz = E_yz - S_yz
+            !-----------------
+            dni = 1./dn
+            vx  = M_x*dni
+            vy  = M_y*dni
+            vz  = M_z*dni
+            vx2 = vx*vx
+            vy2 = vy*vy
+            vz2 = vz*vz
+            vsq = vx2 + vy2 + vz2
+            vsqd3 = c1d3*vsq
+            Myvx = M_y*vx
+            Myvy = M_y*vy
+            Myvz = M_y*vz
+            P    = aindm1 * ( Ener - 0.5*dn*vsq )
+            if (P < P_floor) P = P_floor
+            c2d3_Pvy = c2d3*P*vy
+            !------------------------------------
+            Fpts(ife,rh)  = M_y
+            Fpts(ife,mx)  = Myvx + EmS_xy
+            Fpts(ife,my)  = Myvy + EmS_yy + P
+            Fpts(ife,mz)  = Myvz + EmS_yz
+            Fpts(ife,en)  = (Ener + P)*vy
+            Fpts(ife,exx) = M_y*(vx2 - vsqd3) -   c2d3_Pvy
+            Fpts(ife,eyy) = M_y*(vy2 - vsqd3) + 2*c2d3_Pvy
+            Fpts(ife,ezz) = M_y*(vz2 - vsqd3) -   c2d3_Pvy
+            Fpts(ife,exy) = Myvy*vx + P*vx
+            Fpts(ife,exz) = Myvx*vz
+            Fpts(ife,eyz) = Myvz*vy + P*vz
+        end do
+    end subroutine FSpts_y_2
+    !---------------------------------------------------------------------------
+    subroutine FSpts_z_2(Qpts, Fpts, i,j,k, npts)
+        integer, intent(in) :: i,j,k,npts
+        real, dimension(npts,nQ), intent(in)  :: Qpts
+        real, dimension(npts,nQ), intent(out) :: Fpts
+        real :: dn,M_x,M_y,M_z,Ener
+        real :: dni, vx,vy,vz, E_xz,E_yz,E_zz, P
+        real :: c2d3_Pvz, vx2,vy2,vz2,vsq,vsqd3, Mzvx,Mzvy,Mzvz
+        real :: S_xz,S_yz,S_zz, EmS_xz,EmS_yz,EmS_zz
+
+        S_xz = Sflux(npts_llns,i,j,k,1,3)
+        S_yz = Sflux(npts_llns,i,j,k,2,3)
+        S_zz = Sflux(npts_llns,i,j,k,3,3)
+
+        do ife = 1,npts
+            dn   = Qpts(ife,rh)
+            M_x  = Qpts(ife,mx)
+            M_y  = Qpts(ife,my)
+            M_z  = Qpts(ife,mz)
+            Ener = Qpts(ife,en)
+            E_xz = Qpts(ife,exz)
+            E_yz = Qpts(ife,eyz)
+            E_zz = Qpts(ife,ezz)
+            EmS_xz = E_xz - S_xz
+            EmS_yz = E_yz - S_yz
+            EmS_zz = E_zz - S_zz
+            !-----------------
+            dni = 1./dn
+            vx  = M_x*dni
+            vy  = M_y*dni
+            vz  = M_z*dni
+            vx2 = vx*vx
+            vy2 = vy*vy
+            vz2 = vz*vz
+            vsq = vx2 + vy2 + vz2
+            vsqd3 = c1d3*vsq
+            Myvx = M_y*vx
+            Myvy = M_y*vy
+            Myvz = M_y*vz
+            P    = aindm1 * ( Ener - 0.5*dn*vsq )
+            if (P < P_floor) P = P_floor
+            c2d3_Pvz = c2d3*P*vz
+            !------------------------------------
+            Fpts(ife,rh)  = M_z
+            Fpts(ife,mx)  = Mzvx + EmS_xz
+            Fpts(ife,my)  = Mzvy + EmS_yz
+            Fpts(ife,mz)  = Mzvz + EmS_zz + P
+            Fpts(ife,en)  = (Ener + P)*vz
+            Fpts(ife,exx) = M_z*(vx2 - vsqd3) -   c2d3_Pvz
+            Fpts(ife,eyy) = M_z*(vy2 - vsqd3) -   c2d3_Pvz
+            Fpts(ife,ezz) = M_z*(vz2 - vsqd3) + 2*c2d3_Pvz
+            Fpts(ife,exy) = Mzvy*vx
+            Fpts(ife,exz) = Mzvx*vz + P*vx
+            Fpts(ife,eyz) = Mzvz*vy + P*vy
+        end do
+    end subroutine FSpts_z_2
+    !---------------------------------------------------------------------------
+
+    !===========================================================================
     ! Nonlinear 10 moment-eqns fluxes
     !---------------------------------------------------------------------------
     subroutine Fpts_x_2(Qpts, Fpts, i,j,k, npts)
@@ -520,6 +695,17 @@ contains
             Fpts(ife,exy) = Mxvx*vy + P*vy
             Fpts(ife,exz) = Mxvz*vx + P*vz
             Fpts(ife,eyz) = Mxvy*vz
+            ! Fpts(ife,rh)  = M_x
+            ! Fpts(ife,mx)  = E_xx + P + c1d3*dn*v2 ! + Mxvx
+            ! Fpts(ife,my)  = E_xy                  ! + Mxvy
+            ! Fpts(ife,mz)  = E_xz                  ! + Mxvz
+            ! Fpts(ife,en)  = (Ener + P)*vx
+            ! Fpts(ife,exx) = + 2*c2d3_Pvx ! + M_x*(vx2 - vsqd3) + 2*c2d3_Pvx
+            ! Fpts(ife,eyy) = -   c2d3_Pvx ! + M_x*(vy2 - vsqd3) -   c2d3_Pvx
+            ! Fpts(ife,ezz) = -   c2d3_Pvx ! + M_x*(vz2 - vsqd3) -   c2d3_Pvx
+            ! Fpts(ife,exy) = P*vy ! + Mxvx*vy
+            ! Fpts(ife,exz) = P*vz ! + Mxvz*vx
+            ! Fpts(ife,eyz) = 0    ! + Mxvy*vz
         end do
     end subroutine Fpts_x_2
     !---------------------------------------------------------------------------
@@ -569,6 +755,17 @@ contains
             Fpts(ife,exy) = Myvy*vx + P*vx
             Fpts(ife,exz) = Myvx*vz
             Fpts(ife,eyz) = Myvz*vy + P*vz
+            ! Fpts(ife,rh)  = M_y
+            ! Fpts(ife,mx)  = E_xy                  ! + Myvx
+            ! Fpts(ife,my)  = E_yy + P + c1d3*dn*v2 ! + Myvy
+            ! Fpts(ife,mz)  = E_yz                  ! + Myvz
+            ! Fpts(ife,en)  = (Ener + P)*vy
+            ! Fpts(ife,exx) = -   c2d3_Pvy ! + M_y*(vx2 - vsqd3)
+            ! Fpts(ife,eyy) = + 2*c2d3_Pvy ! + M_y*(vy2 - vsqd3)
+            ! Fpts(ife,ezz) = -   c2d3_Pvy ! + M_y*(vz2 - vsqd3)
+            ! Fpts(ife,exy) = P*vx ! + Myvy*vx
+            ! Fpts(ife,exz) = 0    ! + Myvx*vz
+            ! Fpts(ife,eyz) = P*vz ! + Myvz*vy
         end do
     end subroutine Fpts_y_2
     !---------------------------------------------------------------------------
@@ -618,6 +815,17 @@ contains
             Fpts(ife,exy) = Mzvy*vx
             Fpts(ife,exz) = Mzvx*vz + P*vx
             Fpts(ife,eyz) = Mzvz*vy + P*vy
+            ! Fpts(ife,rh)  = M_z
+            ! Fpts(ife,mx)  = E_xz                  ! + Mzvx
+            ! Fpts(ife,my)  = E_yz                  ! + Mzvy
+            ! Fpts(ife,mz)  = E_zz + P + c1d3*dn*v2 ! + Mzvz
+            ! Fpts(ife,en)  = (Ener + P)*vz
+            ! Fpts(ife,exx) = -   c2d3_Pvz ! + M_z*(vx2 - vsqd3)
+            ! Fpts(ife,eyy) = -   c2d3_Pvz ! + M_z*(vy2 - vsqd3)
+            ! Fpts(ife,ezz) = + 2*c2d3_Pvz ! + M_z*(vz2 - vsqd3)
+            ! Fpts(ife,exy) = 0    ! + Mzvy*vx
+            ! Fpts(ife,exz) = P*vx ! + Mzvx*vz
+            ! Fpts(ife,eyz) = P*vy ! + Mzvz*vy
         end do
     end subroutine Fpts_z_2
     !---------------------------------------------------------------------------
@@ -1088,9 +1296,6 @@ contains
             call Fpts_x(Qinner, finner_x, i,j,k, npg)
             call Fpts_y(Qinner, finner_y, i,j,k, npg)
             call Fpts_z(Qinner, finner_z, i,j,k, npg)
-            ! call flux_calc_pnts_r_v0(Qinner,finner_x,1,npg)
-            ! call flux_calc_pnts_r_v0(Qinner,finner_y,2,npg)
-            ! call flux_calc_pnts_r_v0(Qinner,finner_z,3,npg)
 
           do ieq = 1,nQ
             wgt3d_fin_x_ieq(1:npg) = wgt3d(1:npg) * finner_x(1:npg,ieq)
@@ -1314,77 +1519,6 @@ contains
         end do
         end do   !$OMP END PARALLEL DO
     end subroutine glflux
-!-------------------------------------------------------------------------------
-
-
-!-------------------------------------------------------------------------------
-    ! subroutine glflux(Q_io, dt)
-    !     implicit none
-    !     real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
-    !     real, intent(inout) :: dt
-    !     real :: sumx,sumy,sumz
-    !     integer i,j,k,ieq,ir,ifa, i1,j1,k1
-    !
-    !     if (llns) call get_region_Sflux_xyz(Sflux_x, Sflux_y, Sflux_z, dt)
-    !
-    !     !#########################################################
-    !     ! Step 1: Calculate fluxes for boundaries of each cell
-    !     !   --> flux_x, flux_y, flux_z  (used only in flux.f90)
-    !     !---------------------------------------------------------
-    !     ! call flux_calc(Q_io)
-    !     call calc_flux_x(Q_io, flux_x)
-    !     call calc_flux_y(Q_io, flux_y)
-    !     call calc_flux_z(Q_io, flux_z)
-    !
-    !     !#########################################################
-    !     ! Step 2: Calc inner integral for each cell
-    !     !   --> integral_r  (used only in flux.f90)
-    !     !---------------------------------------------------------
-    !     call innerintegral(Q_io)  ! call innerintegral_v0(Q_io)
-    !
-    !     !#########################################################
-    !     ! Step 3: Calc (total) "Gauss-Legendre flux" for each cell
-    !     !   --> glflux_r  (used by advance_time_level_gl)
-    !     !   --
-    !     !---------------------------------------------------------
-    !     do ieq = 1,nQ
-    !     do k = 1,nz       !FIRSTPRIVATE(flux_x,flux_y,flux_z)  !$OMP PARALLEL DO DEFAULT(SHARED)
-    !         k1 = k+1
-    !     do j = 1,ny
-    !         j1 = j+1
-    !     do i = 1,nx
-    !         i1 = i+1
-    !         sumx = 0
-    !         sumy = 0
-    !         sumz = 0
-    ! 	    do ifa = 1,nface
-    !     		sumx = sumx + dxid4*wgt2d(ifa)*( flux_x(ifa,i1,j,k,ieq)-flux_x(ifa,i,j,k,ieq) )
-    !     		sumy = sumy + dyid4*wgt2d(ifa)*( flux_y(ifa,i,j1,k,ieq)-flux_y(ifa,i,j,k,ieq) )
-    !     		sumz = sumz + dzid4*wgt2d(ifa)*( flux_z(ifa,i,j,k1,ieq)-flux_z(ifa,i,j,k,ieq) )
-    ! 	    end do
-    ! 	    glflux_r(i,j,k,ieq,1) = sumx + sumy + sumz
-    !     end do
-    !     do ir=2,nbasis
-    !         do i = 1,nx
-    !             i1 = i+1
-    !             sumx = 0
-    !             sumy = 0
-    !             sumz = 0
-    !             do ifa = 1,nface
-    !         		sumx = sumx + wgtbf_xmp(ifa,1,ir)*flux_x(ifa,i,j,k,ieq)                     &
-    !                             + wgtbf_xmp(ifa,2,ir)*flux_x(ifa,i1,j,k,ieq)
-    !         		sumy = sumy + wgtbf_ymp(ifa,1,ir)*flux_y(ifa,i,j,k,ieq)                     &
-    !                             + wgtbf_ymp(ifa,2,ir)*flux_y(ifa,i,j1,k,ieq)
-    !         		sumz = sumz + wgtbf_zmp(ifa,1,ir)*flux_z(ifa,i,j,k,ieq)                     &
-    !                             + wgtbf_zmp(ifa,2,ir)*flux_z(ifa,i,j,k1,ieq)
-    !     	    end do
-    !     	    glflux_r(i,j,k,ieq,ir) = sumx + sumy + sumz - integral_r(i,j,k,ieq,ir)
-    !         end do
-    !     end do
-    !     end do
-    !     end do
-    !     end do   !$OMP END PARALLEL DO
-    ! end subroutine glflux
 !-------------------------------------------------------------------------------
 
 

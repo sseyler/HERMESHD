@@ -144,8 +144,8 @@ contains
             fac = 1.
         case(1)  ! LINEARNIZED (IMEX)
             fac = 1./(1. + nu*dt)
-        case(2)  ! NONLINEAR (IMEX)
-            fac = 1
+        case(2)  ! New NONLINEAR (IMEX)??? WARNING: not sure...
+            fac = 1./(1. + nu*dt)
         end select
 
         do k = 1,nz

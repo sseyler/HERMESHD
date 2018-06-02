@@ -111,7 +111,7 @@ contains
         nueta = P       ! P = nu*eta  (also global)
         beta1 = 1.0e0   ! jet strength
         beta2 = 1.0e-4  ! y-momentum perturbation strength
-        beta3 = 1.0e-3  ! pressure perturbation strength
+        beta3 = 0.0e-3  ! pressure perturbation strength
 
         do k = 1,nz
         do j = 1,ny
@@ -130,14 +130,14 @@ contains
             Q_r(i,j,k,mz,1) = dn*vz
             Q_r(i,j,k,en,1) = (1 + beta3*rnum)*P/aindm1 + 0.5*dn*vsq
 
-            if (ivis == 2) then
-                Q_r(i,j,k,exx,1) = dn*(vx**2 - c1d3*vsq) + c4d3*P
-                Q_r(i,j,k,eyy,1) = dn*(vy**2 - c1d3*vsq) - c2d3*P
-                Q_r(i,j,k,ezz,1) = dn*(vz**2 - c1d3*vsq) - c2d3*P
-                Q_r(i,j,k,exy,1) = dn*vx*vy
-                Q_r(i,j,k,exz,1) = dn*vx*vz
-                Q_r(i,j,k,eyz,1) = dn*vy*vz
-            end if
+            ! if (ivis == 2) then
+            !     Q_r(i,j,k,exx,1) = dn*(vx**2 - c1d3*vsq) + c4d3*P
+            !     Q_r(i,j,k,eyy,1) = dn*(vy**2 - c1d3*vsq) - c2d3*P
+            !     Q_r(i,j,k,ezz,1) = dn*(vz**2 - c1d3*vsq) - c2d3*P
+            !     Q_r(i,j,k,exy,1) = dn*vx*vy
+            !     Q_r(i,j,k,exz,1) = dn*vx*vz
+            !     Q_r(i,j,k,eyz,1) = dn*vy*vz
+            ! end if
         end do
         end do
         end do
