@@ -144,7 +144,7 @@ contains
         	    if (iquad == 3) set_cflm_3D = 0.08
         	    if (iquad == 4) set_cflm_3D = 0.05
         	case (1)  ! coefficients for basis functions {P2(x)P2(y)P2(z)}
-        	    if (iquad == 2) set_cflm_3D = 0.10  ! 0.14
+        	    if (iquad == 2) set_cflm_3D = 0.11  ! 0.14
         	    if (iquad == 3) set_cflm_3D = 0.06  ! 0.06  ! NOTE: used to be 0.08
         	    if (iquad == 4) set_cflm_3D = 0.05  ! 0.05
         end select

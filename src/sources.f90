@@ -30,12 +30,14 @@ contains
         do k = 1,nz
         do j = 1,ny
         do i = 1,nx
-            S_xx = Sflux(npts_llns,i,j,k,1,1)
-            S_yy = Sflux(npts_llns,i,j,k,2,2)
-            S_zz = Sflux(npts_llns,i,j,k,3,3)
-            S_xy = Sflux(npts_llns,i,j,k,1,2)
-            S_xz = Sflux(npts_llns,i,j,k,1,3)
-            S_yz = Sflux(npts_llns,i,j,k,2,3)
+            if (ivis == 'linear_src') then
+                S_xx = Sflux(npts_llns,i,j,k,1,1)
+                S_yy = Sflux(npts_llns,i,j,k,2,2)
+                S_zz = Sflux(npts_llns,i,j,k,3,3)
+                S_xy = Sflux(npts_llns,i,j,k,1,2)
+                S_xz = Sflux(npts_llns,i,j,k,1,3)
+                S_yz = Sflux(npts_llns,i,j,k,2,3)
+            end if
 
             do ipg = 1,npg
                 do ieq = 1,nQ

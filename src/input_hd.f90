@@ -6,18 +6,18 @@ module input
     integer, parameter :: nbasis = 8
 
     ! Grid cell dimensions per MPI domain
-    integer, parameter :: nx = 24
-    integer, parameter :: ny = 30
+    integer, parameter :: nx = 25
+    integer, parameter :: ny = 20
     integer, parameter :: nz = 1
 
     ! Set number of MPI domains per spatial dimension
-    integer, parameter :: mpi_nx = 5
+    integer, parameter :: mpi_nx = 4
     integer, parameter :: mpi_ny = 4
 
     ! Physical system dimensions
     real, parameter :: Lbox = 2.0e3
     real, parameter :: lxu =  Lbox/2.
-    real, parameter :: lyu =  Lbox/2.
+    real, parameter :: lyu =  Lbox/2.*(4./5.)
     real, parameter :: lzu =  Lbox/2./(mpi_nx*nx)
 
     ! Temporal integration order
@@ -39,7 +39,7 @@ module input
     character(*), parameter :: zhibc = 'periodic'
 
     ! Simulation time and console output frequency
-    real, parameter :: tf = 2.5e2
+    real, parameter :: tf = 5.0e2
     integer, parameter :: ntout = 200
 
     ! Fluid model: equation of state and fluctuations:
@@ -64,7 +64,7 @@ module input
     real, parameter :: clt    = 3.0      ! numerical speed of sound
 
     ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
-    real, parameter :: L0 = 2.5e-9                 ! length
+    real, parameter :: L0 = 1.0e-8                 ! length
     real, parameter :: t0 = 1.0e-9                 ! time
     real, parameter :: n0 = 2.3e28                 ! number density
 

@@ -110,8 +110,8 @@ contains
         ! NOTE: "nu" in CES' code is te*rh, which is "nueta" here; "coll" is nueta/vis
         nu    = P/eta_base   ! global
         nueta = P       ! P = nu*eta  (also global)
-        beta1 = 4.0e1   ! jet strength
-        beta2 = 2.5e-4  ! xy-momentum perturbation strength
+        beta1 = 2.0e1   ! jet strength
+        beta2 = 1.0e-2  ! xy-momentum perturbation strength
         beta3 = 0.0e-3  ! pressure perturbation strength
 
         do k = 1,nz
