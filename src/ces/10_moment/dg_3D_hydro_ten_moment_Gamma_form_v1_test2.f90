@@ -826,9 +826,9 @@
     real c1d3, c1d5
 
 	oth = 1./3.
-        dti = 1./dt
-        fac = 1.
-        if(ivis .eq. 1)fac = 1./(1. + coll*dt)
+    dti = 1./dt
+    fac = 1.
+    if (ivis .eq. 1) fac = 1./(1. + coll*dt)
 
 	do k = 1,nz
 	do j = 1,ny
@@ -881,7 +881,7 @@
 	do j = 1,ny
 	do i = 1,nx
 
-        if(ivis .eq. 0)then
+      if (ivis .eq. 0) then
 
 	    do ir=1,nbasis
            Q_rp(i,j,k,gxx,ir) = (Q_ri(i,j,k,gxx,ir) + dt*source_r(i,j,k,gxx,ir))/(1. + dt*coll)
@@ -892,14 +892,14 @@
            Q_rp(i,j,k,gyz,ir) = (Q_ri(i,j,k,gyz,ir) + dt*source_r(i,j,k,gyz,ir))/(1. + dt*coll)
         end do
 
-        end if
+      end if
 
-        do ieq = 1,nQ
+      do ieq = 1,nQ
         if ( Q_rp(i,j,k,ieq,1) .ne. Q_rp(i,j,k,ieq,1)) then
 	        print *,'NaN. Bailing out...','  xc  =',xc(i),'  yc  =',yc(j),'  zc  =',zc(k),'  ieq  =',ieq
         call exit(-1)
         endif
-        end do
+      end do
 
 	end do
 	end do

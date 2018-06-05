@@ -1,5 +1,6 @@
 module timestep
 
+use input
 use params
 use spatial
 
@@ -15,9 +16,9 @@ contains
     real function get_min_dt(Q_in)
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in) :: Q_in
-
-        real dt_min,dt_val(numprocs-1),tt,cfl,vmax,vmag,valf,vmag0,valf0
-        real vex,vey,vez,vem,vem0,dni,dn,vx,vy,vz,Pr,sqdni,vacc,vacc0,cs
+        real :: Ener,dP_drho
+        real :: dt_min,dt_val(numprocs-1),tt,cfl,vmax,vmag,valf,vmag0,valf0
+        real :: vex,vey,vez,vem,vem0,dni,dn,vx,vy,vz,Pr,sqdni,vacc,vacc0,cs
         integer :: i,j,k,main_proc=0,mpi_size=1
         integer :: loc_reqs(numprocs-1),loc_stats(MPI_STATUS_SIZE,numprocs-1)
         ! NOTE: uses the global variable cflm (set in initialize.f90)
@@ -32,21 +33,24 @@ contains
             vx = Q_in(i,j,k,mx,1)*dni
             vy = Q_in(i,j,k,my,1)*dni
             vz = Q_in(i,j,k,mz,1)*dni
+            Ener = Q_in(i,j,k,en,1)
+            dP_drho = aindex*(Ener*dni - 0.5*(vx*vx + vy*vy + vz*vz))
             select case(ieos)
             case(1)
-                cs = sqrt(aindex*(Q_in(i,j,k,en,1)*dni - 0.5*(vx**2 + vy**2 + vz**2)))
+                cs = sqrt(dP_drho)
             case(2)
                 cs = sqrt(7.2*P_1*dn**6.2 + T_floor)
             end select
 
-            vmag0 = max( abs(vx)+cs, abs(vy)+cs, abs(vz)+cs )
-            if (vmag0 > vmag .and. dn > rh_mult*rh_floor) vmag = vmag0  ! NOTE: from newCES (excluded dn thing)
+            vmag0 = max( abs(vx), abs(vy), abs(vz) )
+            if (vmag0 > vmag) vmag = vmag0
+            ! if (vmag0 > vmag .and. dn > rh_mult*rh_floor) vmag = vmag0
         end do
         end do
         end do
 
-        vmax = (vmag + cs)*dxi  ! NOTE: from newCES  (was vmag*dxi)
-        dt_min = cflm/vmax  ! time step determined by maximum flow + sound speed in the domain
+        vmax = max( (vmag + cs), clt) ! max(clt,vmag)
+        dt_min = cflm/(vmax*dxi)  ! time step determined by maximum flow + sound speed in the domain
 
         call MPI_BARRIER(cartcomm,ierr)
         if (iam == main_proc) then

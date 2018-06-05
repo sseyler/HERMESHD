@@ -510,8 +510,8 @@ contains
         implicit none
         real, dimension(nx,ny,nz,nQ,nbasis), intent(in)  :: Q_r
         real, dimension(nface,nx1,ny,nz,nQ), intent(out) :: flux_x
-        real, dimension(nfe,nQ) :: Qface_x,Fface_x,Fface_x1
-        real, dimension(nfe,3,3) :: Sface_x
+        real, dimension(nfe,nQ) :: Qface_x,Fface_x,Fface_x1,Sface_x
+        ! real, dimension(nfe,3,3) :: Sface_x
         real, dimension(nface,nQ) :: cfrx
         integer :: i,j,k,ieq,im1,i4,i4p,ipnt,ife
         real :: cwavex(nfe),fhllc_x(nface,5),qvin(nQ)

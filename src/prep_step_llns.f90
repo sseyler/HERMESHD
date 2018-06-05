@@ -1,6 +1,7 @@
 !***** PREP_STEP.F90 ******************************************************************
 module prep_step
 
+use input
 use params
 use helpers
 use basis
@@ -8,10 +9,6 @@ use basis
 use boundary
 use random
 
-! write(*,'(A11,I1,A2,2ES9.1,A3,2ES9.1)') 'Qylo_ext (',iam,'):',Qylo_ext(1:2,1,1,exx),' | ',Qylo_ext(nx-1:nx,1,1,exx)
-! write(*,'(A12,I1,A2,2ES9.1,A3,2ES9.1)') 'Qyhi_ext (',iam,'):',Qyhi_ext(1:2,1,1,exx),' | ',Qyhi_ext(nx-1:nx,1,1,exx)
-! write(*,'(A11,I1,A2,2ES9.1,A3,2ES9.1)') 'Qylo_int (',iam,'):',Qylo_int(1:2,1,1,exx),' | ',Qylo_int(nx-1:nx,1,1,exx)
-! write(*,'(A12,I1,A2,2ES9.1,A3,2ES9.1)') 'Qyhi_int (',iam,'):',Qyhi_int(1:2,1,1,exx),' | ',Qyhi_int(nx-1:nx,1,1,exx)
 
 contains
 

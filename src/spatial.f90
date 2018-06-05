@@ -1,5 +1,6 @@
 module spatial
 
+use input
 use params
 
 implicit none

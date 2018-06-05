@@ -144,9 +144,9 @@ contains
         	    if (iquad == 3) set_cflm_3D = 0.08
         	    if (iquad == 4) set_cflm_3D = 0.05
         	case (1)  ! coefficients for basis functions {P2(x)P2(y)P2(z)}
-        	    if (iquad == 2) set_cflm_3D = 0.14
-        	    if (iquad == 3) set_cflm_3D = 0.06  ! NOTE: used to be 0.08
-        	    if (iquad == 4) set_cflm_3D = 0.05
+        	    if (iquad == 2) set_cflm_3D = 0.10  ! 0.14
+        	    if (iquad == 3) set_cflm_3D = 0.06  ! 0.06  ! NOTE: used to be 0.08
+        	    if (iquad == 4) set_cflm_3D = 0.05  ! 0.05
         end select
         return
     end function set_cflm_3D
@@ -334,7 +334,7 @@ contains
     !===========================================================================
     subroutine setup_MPI(comm, iam, mpi_nx, mpi_ny, mpi_nz, mpi_P, mpi_Q, mpi_R)
         implicit none
-        integer, intent(inout) :: mpi_nx, mpi_ny
+        integer, intent(in) :: mpi_nx, mpi_ny
         integer, intent(out)   :: mpi_nz
         integer, intent(out)   :: mpi_P, mpi_Q, mpi_R
 
@@ -564,10 +564,11 @@ contains
             write(*,'(A13,I10,I7,I7)')          ' num cells = ', mpi_nx*nx, mpi_ny*ny, mpi_nz*nz
             write(*,'(A13,I10,I7,I7)')          ' mpi ranks = ', mpi_nx,    mpi_ny,    mpi_nz
             print *, '-------------------------------------'
-            write(*,'(A13,ES10.3,A7,F5.1,A2)')  ' te0       = ', te0,'  (T = ',TK,'K)'
-            write(*,'(A13,ES10.3)')             ' dx        = ', ly/(ny*mpi_ny)*Lbox
-            write(*,'(A13,I10)')                ' iquad     = ', iquad
-            write(*,'(A13,I10)')                ' nbasis    = ', nbasis
+            write(*,'(A10,ES10.3,A2,F5.1,A2)')   ' te0    = ', te0,' (', TK, 'K)'
+            write(*,'(A10,ES10.3,A2,ES10.3,A2)') ' dx     = ', dx, ' (', dx*L0, 'm)'
+            write(*,'(A10,ES10.3,A2,ES10.3,A2)') ' dt     = ', dt, ' (', dt*t0, 's)'
+            write(*,'(A10,I10)')                 ' iquad  = ', iquad
+            write(*,'(A10,I10)')                 ' nbasis = ', nbasis
             print *, '----------------------------------------------'
             write(*,'(A8,A8,A5,A8)') '        ','LOWER   ','  |  ','UPPER   '
             write(*,'(A8,A8,A5,A8)') ' X BC:  ',    xlobc, '  |  ',  xhibc

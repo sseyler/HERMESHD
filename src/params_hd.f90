@@ -46,7 +46,7 @@ module params
     integer, parameter :: exy= 9, exz= 10, eyz= 11  ! deviatoric stress
     integer, parameter :: nQ = 11                   ! number of field variables
 
-    integer, parameter :: nbastot = 30
+    integer, parameter :: nbastot = 35
     integer, parameter :: ngu = 0  ! TODO: only used in output_vtk()
 
     ! iquad: # of Gaussian quadrature points per direction. iquad should not be:
@@ -72,6 +72,14 @@ module params
     !===========================================================================
     ! Constants, and physical and numerical parameters
     !------------------------------------------------------------
+    ! Physical system dimensions
+    real, parameter :: lxd = -lxu
+    real, parameter :: lyd = -lyu
+    real, parameter :: lzd = -lzu
+    real, parameter :: lx = lxu-lxd
+    real, parameter :: ly = lyu-lyd
+    real, parameter :: lz = lzu-lzd
+
     ! Useful constants
     real, parameter :: pi = 4.0*atan(1.0)
     real, parameter :: sqrt2 = 2**0.5, sqrt2i = 1.0/sqrt2
@@ -83,11 +91,6 @@ module params
     real, parameter :: aindm1 = aindex - 1. ! gamma - 1
     real, parameter :: cp = aindex/aindm1   ! specific heat at constant pressure
 
-    ! Dimensional units -- expressed in MKS. NOTE: temperature (te0) in eV!
-    real, parameter :: L0 = 1.0e4                 ! length
-    real, parameter :: t0 = 1.0e2                 ! time
-    real, parameter :: n0 = 6.0e18                ! number density
-
     ! Derived units
     real, parameter :: v0  = L0/t0                 ! velocity
     real, parameter :: p0  = mu*1.67e-27*n0*v0**2  ! pressure
@@ -96,7 +99,7 @@ module params
     ! rh_min is a min density to be used for ideal gas EOS, rh_min is min density
     ! below which the pressure becomes negative for the MT water EOS.
     ! The DG-based subroutine "limiter" keeps density above rh_mult*rh_min.
-    real, parameter :: rh_floor = 5.0e-6     ! 1.0e-1 was old value
+    real, parameter :: rh_floor = 1.0e-3     ! 1.0e-1 was old value
     real, parameter :: T_floor  = TK*eV_per_K/te0  ! 0.02585 eV ~ 300 K
     real, parameter :: P_floor  = T_floor*rh_floor
 
@@ -127,17 +130,16 @@ module params
     ! real, parameter :: c2d3nu=c2d3*nu, c4d3nu=c4d3*nu
     real, parameter :: gr         = 0 !9.807e3*t0**2/L0  ! DEBUG: gravitational accel
     real, parameter :: T_base     = TK*eV_per_K/te0 ! te*eV_per_K/te0  ! temp (isothermal)
-    real, parameter :: eta_base   = eta     ! dynamic viscosity
-    real, parameter :: zeta_base  = zeta    ! bulk viscosity---will need to adjust this!
+    real, parameter :: eta_base   = eta/(p0*t0)     ! dynamic viscosity
+    real, parameter :: zeta_base  = zeta/(p0*t0)    ! bulk viscosity---will need to adjust this!
     real, parameter :: kappa_base = 1.e-1
 
     ! NOTE: factors of sqrt(2) below are due to temporal(?) averaging; isn't this
     !       just due to averaging two random samples on both sides of the face of
     !       a grid cell? (Decreases std by sqrt(2), so multiply to correct it.)
-    real, parameter :: eta_sd   = sqrt2 * (2  *  eta_base*T_base)**0.5   ! fluc std for shear visc
-    real, parameter :: zeta_sd  = sqrt2 * (c1d3*zeta_base*T_base)**0.5  ! fluc std for bulk visc
-    real, parameter :: kappa_sd = sqrt2 * (2 * kappa_base*T_base**2)**0.5
-    !===========================================================================
+    real, parameter :: eta_sd   = (2  *  eta_base*T_base)**0.5    ! sqrt2 fluc std for shear visc
+    real, parameter :: zeta_sd  = (c1d3*zeta_base*T_base)**0.5    ! sqrt2 fluc std for bulk visc
+    real, parameter :: kappa_sd = (2 * kappa_base*T_base**2)**0.5 ! sqrt2    !===========================================================================
 
 
     !===========================================================================

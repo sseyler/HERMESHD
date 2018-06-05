@@ -7,6 +7,7 @@ module random
 use MKL_VSL_TYPE
 use MKL_VSL
 
+use input
 use helpers
 use params
 use spatial
@@ -38,7 +39,7 @@ real :: dvdti, sqrt_dvdti
 real ::   GRM(nface,1:nx1,1:ny1,1:nz1,3,3)
 real :: Sflux(nface,1:nx1,1:ny1,1:nz1,3,3)
 
-! NOTE: It might make sense to use global arrays for stochastic
+! NOTE: It might make sense to use global arrays for stochastic2
 !   stuff at some point, especially if in separate module
 real ::   GRM_x(npts_llns, 1:nx1, ny,    nz,    3,3)
 real ::   GRM_y(npts_llns, nx,    1:ny1, nz,    3,3)
@@ -83,10 +84,10 @@ contains
 
 
 !-------------------------------------------------------------------------------
-    subroutine get_region_GRM(GRM)
+    subroutine get_region_GRM(GRM_out)
         ! NOTE: this currently only populates a since face point!
         implicit none
-        real, dimension(nface,1:nx1,1:ny1,1:nz1,3,3), intent(out) :: GRM
+        real, dimension(nface,1:nx1,1:ny1,1:nz1,3,3), intent(out) :: GRM_out
         real, allocatable :: grn(:)
         integer :: ipnt, vsl_ndim
 
@@ -94,11 +95,49 @@ contains
         allocate(grn(vsl_ndim))
         vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
         do ipnt = 1,nface
-            ! GRM(ipnt,:,:,:,:,:) = reshape( grn, (/ npts_llns,nx1,ny1,nz1,3,3 /) )
-            GRM(ipnt,:,:,:,:,:) = reshape( grn, (/ nx1,ny1,nz1,3,3 /) )
+            ! GRM_out(ipnt,:,:,:,:,:) = reshape( grn, (/ npts_llns,nx1,ny1,nz1,3,3 /) )
+            GRM_out(ipnt,:,:,:,:,:) = reshape( grn, (/ nx1,ny1,nz1,3,3 /) )
         end do
         deallocate(grn)
     end subroutine get_region_GRM
+!-------------------------------------------------------------------------------
+
+
+!-------------------------------------------------------------------------------
+    subroutine get_region_GRM_symmetric(GRM_out)
+        implicit none
+        real, dimension(nface,1:nx1,1:ny1,1:nz1,3,3), intent(out) :: GRM_out
+        real, allocatable :: grn(:)
+        real, dimension(nface,1:nx1,1:ny1,1:nz1,6) :: grn_rs
+        integer :: i,j,k,ipnt,b,e,vsl_ndim
+
+        vsl_ndim = npts_llns*nx1*ny1*nz1*6
+        allocate(grn(vsl_ndim))
+        vsl_errcode = vsRngGaussian(vsl_method, vsl_stream, vsl_ndim, grn, vsl_mean, vsl_sigma)
+
+        do ipnt = 1,nface
+            grn_rs(ipnt,:,:,:,:) = reshape( grn, (/ nx1,ny1,nz1,6 /) )
+        end do
+
+        do k=1,nz1
+        do j=1,ny1
+        do i=1,nx1
+          do ipnt = 1,npts_llns
+            e = 6*ipnt
+            b = e - 5
+            GRM_out(ipnt,i,j,k,1,1:3) = grn_rs(ipnt,i,j,k,b:b+2)
+            GRM_out(ipnt,i,j,k,2,2:3) = grn_rs(ipnt,i,j,k,b+3:b+4)
+            GRM_out(ipnt,i,j,k,3,3)   = grn_rs(ipnt,i,j,k,e)
+
+            GRM_out(ipnt,i,j,k,2,1)   = GRM_out(ipnt,i,j,k,1,2)
+            GRM_out(ipnt,i,j,k,3,1)   = GRM_out(ipnt,i,j,k,1,3)
+            GRM_out(ipnt,i,j,k,3,2)   = GRM_out(ipnt,i,j,k,2,3)
+          end do
+        enddo
+        enddo
+        enddo
+        deallocate(grn)
+    end subroutine get_region_GRM_symmetric
 !-------------------------------------------------------------------------------
 
 
@@ -113,6 +152,11 @@ contains
         real :: eta_d,zeta_d
         real :: trG,trGd3,trG_zeta
 
+        ! if (mpi_nz*nz == 1) then
+        !     dvdti = npts_llns*(dxi*dyi)/dt
+        ! else
+        !     dvdti = npts_llns*(dxi*dyi*dzi)/dt
+        ! end if
         dvdti = npts_llns*(dxi*dyi*dzi)/dt
         sqrt_dvdti = sqrt(dvdti)
         eta_d  = eta_sd  * sqrt_dvdti

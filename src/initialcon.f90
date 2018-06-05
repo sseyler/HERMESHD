@@ -1,6 +1,7 @@
 !***** INITIALCON.F90 ********************************************************************
 module initialcon
 
+use input
 use params
 use helpers
 use spatial
@@ -24,7 +25,7 @@ contains
         ! character(*), intent(in) :: name
         integer i,j,k,id
 
-        if (ivis == 0) then
+        if (ivis == 'linear_ex') then
             coll = 0
             coleta = 0
             nu = 0
@@ -107,10 +108,10 @@ contains
         dni = 1.0/dn
 
         ! NOTE: "nu" in CES' code is te*rh, which is "nueta" here; "coll" is nueta/vis
-        nu    = P/eta   ! global
+        nu    = P/eta_base   ! global
         nueta = P       ! P = nu*eta  (also global)
-        beta1 = 1.0e0   ! jet strength
-        beta2 = 1.0e-4  ! y-momentum perturbation strength
+        beta1 = 4.0e1   ! jet strength
+        beta2 = 2.5e-4  ! xy-momentum perturbation strength
         beta3 = 0.0e-3  ! pressure perturbation strength
 
         do k = 1,nz
@@ -118,8 +119,10 @@ contains
         do i = 1,nx
             call random_number(rand_num)
             rnum = (rand_num - 0.5)
+            vx = (beta1 + beta2*rnum) / cosh(20*yc(j)/lyu)
 
-            vx = beta1 / cosh(20*yc(j)/lyu)
+            call random_number(rand_num)
+            rnum = (rand_num - 0.5)
             vy = beta2*rnum / cosh(20*yc(j)/lyu)**2
             vz = 0
             vsq = vx**2 + vy**2 + vz**2
@@ -130,14 +133,14 @@ contains
             Q_r(i,j,k,mz,1) = dn*vz
             Q_r(i,j,k,en,1) = (1 + beta3*rnum)*P/aindm1 + 0.5*dn*vsq
 
-            ! if (ivis == 2) then
-            !     Q_r(i,j,k,exx,1) = dn*(vx**2 - c1d3*vsq) + c4d3*P
-            !     Q_r(i,j,k,eyy,1) = dn*(vy**2 - c1d3*vsq) - c2d3*P
-            !     Q_r(i,j,k,ezz,1) = dn*(vz**2 - c1d3*vsq) - c2d3*P
-            !     Q_r(i,j,k,exy,1) = dn*vx*vy
-            !     Q_r(i,j,k,exz,1) = dn*vx*vz
-            !     Q_r(i,j,k,eyz,1) = dn*vy*vz
-            ! end if
+            if (ivis == 'full') then
+                Q_r(i,j,k,exx,1) = dn*(vx**2 - c1d3*vsq)
+                Q_r(i,j,k,eyy,1) = dn*(vy**2 - c1d3*vsq)
+                Q_r(i,j,k,ezz,1) = dn*(vz**2 - c1d3*vsq)
+                Q_r(i,j,k,exy,1) = dn*vx*vy
+                Q_r(i,j,k,exz,1) = dn*vx*vz
+                Q_r(i,j,k,eyz,1) = dn*vy*vz
+            end if
         end do
         end do
         end do
@@ -286,7 +289,7 @@ contains
         te = T_floor
         pr = dn*te  ! 1.0*P_base  ! can be adjusted to get stable results
 
-        nu    = pr/eta  ! global (CES' nu = rh_fluid*T_floor)
+        nu    = pr/eta_base  ! global (CES' nu = rh_fluid*T_floor)
         nueta = pr      ! pr = nu*eta  (also global)
 
         vx = 0.0
@@ -342,7 +345,7 @@ contains
         vy = 0.0
         vz = 0.0
 
-        nu    = pr/eta  ! global
+        nu    = pr/eta_base  ! global
         nueta = pr      ! pr = nu*eta  (also global)
 
         xp0 = lxd              ! set zero-value of x-coordinate to left of domain
@@ -412,7 +415,7 @@ contains
         vx = 0.0           ! ambient x-velocity  1.0/aindex**0.5
         vy = 0.0
         vz = 0.0            ! ambient z-velocity
-        nu    = rho*te/eta  ! global
+        nu    = rho*te/eta_base  ! global
         nueta = rho*te      ! pr = nu*eta  (also global)
 
         beta = 0.0e-2
@@ -476,7 +479,7 @@ contains
         pr = dn*te
         vy = 0.0            ! ambient y-velocity
         vz = 0.0            ! ambient z-velocity
-        nu    = dn*te/eta   ! global
+        nu    = dn*te/eta_base   ! global
         nueta = dn*te       ! pr = nu*eta  (also global)
 
         ylo = lyd + 0.5*dy  ! start at cell centers
@@ -514,7 +517,7 @@ contains
         pr = dn*te
         vx = 0.0            ! ambient x-velocity
         vz = 0.0            ! ambient z-velocity
-        nu    = dn*te/eta   ! global
+        nu    = dn*te/eta_base   ! global
         nueta = dn*te       ! pr = nu*eta  (also global)
 
         zlo = lzd + 0.5*dz  ! start at cell centers
@@ -556,7 +559,7 @@ contains
         te = T_floor       ! ambient temperature
         pr = dn*te
         vz = 0.0            ! ambient z-velocity
-        nu    = dn*te/eta  ! global
+        nu    = dn*te/eta_base  ! global
         nueta = pr      ! pr = nu*eta  (also global)
 
         beta = 1.0e-1
@@ -611,7 +614,7 @@ contains
         te = T_floor       ! ambient temperature
         pr = dn*te
         vz = 0.0            ! ambient z-velocity
-        nu    = dn*te/eta  ! global
+        nu    = dn*te/eta_base  ! global
 
         beta = 1.0e-1
 
@@ -634,7 +637,7 @@ contains
             Q_r(i,j,k,mz,1) = dn*vz
             Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*v2
 
-            if (ivis .eq. 0) then
+            if (ivis == 'full') then
                 Q_r(i,j,k,exx,1) = dn*(vx*vx - c1d3*v2) !+ pr
                 Q_r(i,j,k,eyy,1) = dn*(vy*vy - c1d3*v2) !+ pr
                 Q_r(i,j,k,ezz,1) = dn*(vz*vz - c1d3*v2) !+ pr
@@ -669,7 +672,7 @@ contains
         te = T_floor       ! ambient temperature
         pr = dn*te
         vz = 0.0            ! ambient z-velocity
-        nu    = dn*te/eta  ! global
+        nu    = dn*te/eta_base  ! global
 
         beta = 1.0e-1
 
@@ -688,7 +691,7 @@ contains
             Q_r(i,j,k,mz,1) = dn*vz
             Q_r(i,j,k,en,1) = pr/aindm1 + 0.5*dn*v2
 
-            if (ivis .eq. 0) then
+            if (ivis == 'full') then
                 Q_r(i,j,k,exx,1) = dn*(vx*vx - c1d3*v2) !+ pr
                 Q_r(i,j,k,eyy,1) = dn*(vy*vy - c1d3*v2) !+ pr
                 Q_r(i,j,k,ezz,1) = dn*(vz*vz - c1d3*v2) !+ pr
@@ -724,7 +727,7 @@ contains
         vx = 0.0           ! ambient x-velocity  1.0/aindex**0.5
         vy = 0.0
         vz = 0.0            ! ambient z-velocity
-        nu    = rho*te/eta  ! global
+        nu    = rho*te/eta_base  ! global
         nueta = rho*te      ! pr = nu*eta  (also global)
 
         beta = 1.0e-2

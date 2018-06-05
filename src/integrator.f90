@@ -99,9 +99,13 @@ contains
         real, intent(inout) :: dt
 
         call prep_advance(Q_in, dt)
-        call calc_rhs(Q_in, dt)
+        call glflux(Q_in, dt)
+        ! call source_calc(Q_in, dt)
         call advance_time(Q_in, Q_out, dt)
-        ! if (ivis == 2) call advance_time_src_v1(Q_out, Q_out, dt)
+        if (ivis == 'full') then
+           call source_calc(Q_out, t)
+           call advance_time_source(Q_out, Q_out, dt)
+        end if
         call check_for_NaNs(Q_out)
     end subroutine euler_step
 
@@ -119,15 +123,14 @@ contains
     end subroutine prep_advance
 
     !----------------------------------------------------
-    subroutine calc_rhs(Q_io, dt)
-        implicit none
-        real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
-        real, intent(inout) :: dt
-
-        call glflux(Q_io, dt)
-        call source_calc(Q_io, dt)
-    end subroutine calc_rhs
-
+    ! subroutine calc_rhs(Q_io, dt)
+    !     implicit none
+    !     real, dimension(nx,ny,nz,nQ,nbasis), intent(inout) :: Q_io
+    !     real, intent(inout) :: dt
+    !
+    !     call glflux(Q_io, dt)
+    !     call source_calc(Q_io, dt)
+    ! end subroutine calc_rhs
 
     !---------------------------------------------------------------------------
     subroutine advance_time(Q_in, Q_out, dt)
@@ -140,70 +143,102 @@ contains
         real :: fac
 
         select case(ivis)
-        case(0)  ! LINEARNIZED (explicit)
+        case('linear_ex')  ! LINEARNIZED (explicit)
             fac = 1.
-        case(1)  ! LINEARNIZED (IMEX)
+        case('linear')     ! LINEARNIZED (IMEX)
             fac = 1./(1. + nu*dt)
-        case(2)  ! New NONLINEAR (IMEX)??? WARNING: not sure...
+        case('linear_src')     ! LINEARNIZED (IMEX)
             fac = 1./(1. + nu*dt)
+        case('full')       ! New NONLINEAR (IMEX)??? WARNING: not sure...
+            fac = 1.
         end select
 
+        if (ivis .ne. 'linear_src') then
+        do ir=1,nbasis
         do k = 1,nz
         do j = 1,ny
         do i = 1,nx
           !--------------------------------
-          do ieq = 1,en
-            do ir=1,nbasis
-                Q_out(i,j,k,ieq,ir) = Q_in(i,j,k,ieq,ir) &
-                    - dt*( glflux_r(i,j,k,ieq,ir) - source_r(i,j,k,ieq,ir) )
-                ! Q_out(i,j,k,ieq,ir) = Q_in(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir) ! NOTE: GFV1
-            end do
-          end do
+          Q_out(i,j,k,rh,ir) = Q_in(i,j,k,rh,ir) - dt*(glflux_r(i,j,k,rh,ir)-source_r(i,j,k,rh,ir))
+          Q_out(i,j,k,mx,ir) = Q_in(i,j,k,mx,ir) - dt*(glflux_r(i,j,k,mx,ir)-source_r(i,j,k,mx,ir))
+          Q_out(i,j,k,my,ir) = Q_in(i,j,k,my,ir) - dt*(glflux_r(i,j,k,my,ir)-source_r(i,j,k,my,ir))
+          Q_out(i,j,k,mz,ir) = Q_in(i,j,k,mz,ir) - dt*(glflux_r(i,j,k,mz,ir)-source_r(i,j,k,mz,ir))
+          Q_out(i,j,k,en,ir) = Q_in(i,j,k,en,ir) - dt*(glflux_r(i,j,k,en,ir)-source_r(i,j,k,en,ir))
           !--------------------------------
-          do ieq = exx,nQ
-            do ir=1,nbasis
-                Q_out(i,j,k,ieq,ir) = fac *                                                       &
-                    (                                                                             &
-                      Q_in(i,j,k,ieq,ir) - dt*( glflux_r(i,j,k,ieq,ir) - source_r(i,j,k,ieq,ir) ) &
-                    )
-                ! NOTE: from GFV1
-                ! Q_out(i,j,k,ieq,ir) = (Q_in(i,j,k,ieq,ir) - dt*glflux_r(i,j,k,ieq,ir))*fac
-            end do
-          end do
+          Q_out(i,j,k,exx,ir) = fac * ( Q_in(i,j,k,exx,ir) - dt*glflux_r(i,j,k,exx,ir) )
+          Q_out(i,j,k,eyy,ir) = fac * ( Q_in(i,j,k,eyy,ir) - dt*glflux_r(i,j,k,eyy,ir) )
+          Q_out(i,j,k,ezz,ir) = fac * ( Q_in(i,j,k,ezz,ir) - dt*glflux_r(i,j,k,ezz,ir) )
+          Q_out(i,j,k,exy,ir) = fac * ( Q_in(i,j,k,exy,ir) - dt*glflux_r(i,j,k,exy,ir) )
+          Q_out(i,j,k,exz,ir) = fac * ( Q_in(i,j,k,exz,ir) - dt*glflux_r(i,j,k,exz,ir) )
+          Q_out(i,j,k,eyz,ir) = fac * ( Q_in(i,j,k,eyz,ir) - dt*glflux_r(i,j,k,eyz,ir) )
           !--------------------------------
         end do
         end do
         end do
+        end do
+
+        else
+
+        do ir=1,nbasis
+        do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
+          !--------------------------------
+          Q_out(i,j,k,rh,ir) = Q_in(i,j,k,rh,ir) - dt*(glflux_r(i,j,k,rh,ir)-source_r(i,j,k,rh,ir))
+          Q_out(i,j,k,mx,ir) = Q_in(i,j,k,mx,ir) - dt*(glflux_r(i,j,k,mx,ir)-source_r(i,j,k,mx,ir))
+          Q_out(i,j,k,my,ir) = Q_in(i,j,k,my,ir) - dt*(glflux_r(i,j,k,my,ir)-source_r(i,j,k,my,ir))
+          Q_out(i,j,k,mz,ir) = Q_in(i,j,k,mz,ir) - dt*(glflux_r(i,j,k,mz,ir)-source_r(i,j,k,mz,ir))
+          Q_out(i,j,k,en,ir) = Q_in(i,j,k,en,ir) - dt*(glflux_r(i,j,k,en,ir)-source_r(i,j,k,en,ir))
+          !--------------------------------
+          Q_out(i,j,k,exx,ir) = fac*( Q_in(i,j,k,exx,ir) -                                      &
+                                      dt*(glflux_r(i,j,k,exx,ir) - source_r(i,j,k,exx,ir)) )
+          Q_out(i,j,k,eyy,ir) = fac*( Q_in(i,j,k,eyy,ir) -                                      &
+                                      dt*(glflux_r(i,j,k,eyy,ir) - source_r(i,j,k,eyy,ir)) )
+          Q_out(i,j,k,ezz,ir) = fac*( Q_in(i,j,k,ezz,ir) -                                      &
+                                      dt*(glflux_r(i,j,k,ezz,ir) - source_r(i,j,k,ezz,ir)) )
+          Q_out(i,j,k,exy,ir) = fac*( Q_in(i,j,k,exy,ir) -                                      &
+                                      dt*(glflux_r(i,j,k,exy,ir) - source_r(i,j,k,exy,ir)) )
+          Q_out(i,j,k,exz,ir) = fac*( Q_in(i,j,k,exz,ir) -                                      &
+                                      dt*(glflux_r(i,j,k,exz,ir) - source_r(i,j,k,exz,ir)) )
+          Q_out(i,j,k,eyz,ir) = fac*( Q_in(i,j,k,eyz,ir) -                                      &
+                                      dt*(glflux_r(i,j,k,eyz,ir) - source_r(i,j,k,eyz,ir)) )
+          !--------------------------------
+        end do
+        end do
+        end do
+        end do
+        end if
     end subroutine advance_time
     !---------------------------------------------------------------------------
 
 
     !---------------------------------------------------------------------------
-    ! subroutine advance_time_src_v1(Q_in, Q_out, dt)
-    !     implicit none
-    !     real, dimension(nx,ny,nz,nQ,nbasis), intent(in)  :: Q_in
-    !     real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
-    !     real, intent(inout) :: dt
-    !     integer :: i,j,k,ir
-    !     real :: dn,dni,vx,vy,vz,P, vx2,vy2,vz2,vsq,fac
-    !
-    !     fac = 1./(1. + nu*dt)
-    !
-    !     do k = 1,nz
-    !     do j = 1,ny
-    !     do i = 1,nx
-    !       do ir=1,nbasis
-    !         Q_out(i,j,k,exx,ir) = ( Q_in(i,j,k,exx,ir) + dt*source_r(i,j,k,exx,ir) ) * fac
-    !         Q_out(i,j,k,eyy,ir) = ( Q_in(i,j,k,eyy,ir) + dt*source_r(i,j,k,eyy,ir) ) * fac
-    !         Q_out(i,j,k,ezz,ir) = ( Q_in(i,j,k,ezz,ir) + dt*source_r(i,j,k,ezz,ir) ) * fac
-    !         Q_out(i,j,k,exy,ir) = ( Q_in(i,j,k,exy,ir) + dt*source_r(i,j,k,exy,ir) ) * fac
-    !         Q_out(i,j,k,exz,ir) = ( Q_in(i,j,k,exz,ir) + dt*source_r(i,j,k,exz,ir) ) * fac
-    !         Q_out(i,j,k,eyz,ir) = ( Q_in(i,j,k,eyz,ir) + dt*source_r(i,j,k,eyz,ir) ) * fac
-    !       end do
-    !     end do
-    !     end do
-    !     end do
-    ! end subroutine advance_time_src_v1
+    subroutine advance_time_source(Q_in, Q_out, dt)
+        implicit none
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(in)  :: Q_in
+        real, dimension(nx,ny,nz,nQ,nbasis), intent(out) :: Q_out
+        real, intent(inout) :: dt
+        integer :: i,j,k,ir
+        real :: dn,dni,vx,vy,vz,P, vx2,vy2,vz2,vsq,nu_dt,fac
+
+        nu_dt = nu*dt
+        fac = 1./(1. + nu_dt)
+
+        do k = 1,nz
+        do j = 1,ny
+        do i = 1,nx
+          do ir=1,nbasis
+            Q_out(i,j,k,exx,ir) = ( Q_in(i,j,k,exx,ir) + nu_dt*source_r(i,j,k,exx,ir) ) * fac
+            Q_out(i,j,k,eyy,ir) = ( Q_in(i,j,k,eyy,ir) + nu_dt*source_r(i,j,k,eyy,ir) ) * fac
+            Q_out(i,j,k,ezz,ir) = ( Q_in(i,j,k,ezz,ir) + nu_dt*source_r(i,j,k,ezz,ir) ) * fac
+            Q_out(i,j,k,exy,ir) = ( Q_in(i,j,k,exy,ir) + nu_dt*source_r(i,j,k,exy,ir) ) * fac
+            Q_out(i,j,k,exz,ir) = ( Q_in(i,j,k,exz,ir) + nu_dt*source_r(i,j,k,exz,ir) ) * fac
+            Q_out(i,j,k,eyz,ir) = ( Q_in(i,j,k,eyz,ir) + nu_dt*source_r(i,j,k,eyz,ir) ) * fac
+          end do
+        end do
+        end do
+        end do
+    end subroutine advance_time_source
     !---------------------------------------------------------------------------
 
     !---------------------------------------------------------------------------

@@ -155,7 +155,7 @@ contains
             if (iam == print_mpi) then
                 print *,''
                 print *, 'nout = ', nout
-                print *, '   t = ',t,'         dt= ',dt
+                print *, '   t = ',t,'       dt = ',dt
                 t2 = get_clock_time()
                 print *, '  >> Iteration time', (t2-t1), 'seconds'
                 t1 = t2
@@ -172,11 +172,11 @@ contains
 
             call MPI_BARRIER(cartcomm,ierr)
 
-            if (iam == print_mpi) then
-                t2 = get_clock_time()
-                print *, '  >> Output time', (t2-t1), 'seconds'
-                t1 = t2
-            end if
+            ! if (iam == print_mpi) then
+            !     t2 = get_clock_time()
+            !     print *, '  >> Output time', (t2-t1), 'seconds'
+            !     t1 = t2
+            ! end if
             ! if (mpi_P == 1) print *,Qxlo_ext_def(:,1,1,mx)
 
         end if
