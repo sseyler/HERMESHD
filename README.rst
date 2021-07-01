@@ -2,7 +2,7 @@
 HERMESHD
 ======================
 
-HERMESHD is a Discontinuous Galerkin (DG) numerical code written in Fortran and Python for simulating 3D compressible hydrodynamics.
+HERMESHD is a 3D Discontinuous Galerkin (DG) numerical code written in Fortran and Python for simulating fully compressible hydrodynamics and fluctuating hydrodynamics.
 
 :Authors:      Sean L. Seyler (FH and modularized code), Charles Seyler (original code),
 :Organization: Arizona State University, Cornell University
